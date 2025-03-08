@@ -1,0 +1,287 @@
+tacos and burritos:
+  ingredients:
+    - onion
+    - bell pepper
+    - tortillas, large:
+        brand: Mission
+    - taco sauce:
+        brand: Ortega
+    - beans, seasoned:
+        brand: Rosarita
+        vendor: Safeway
+    - avocados:
+        amount: 2
+    - ground beef
+    - shredded cheese:
+        amount: 8 oz
+    - cilantro
+    - lime: 
+        amount: 1
+    - sour cream:
+        amount: 4 oz
+
+take-out:
+  directions: order from Chipotle or Taste of Thailand
+
+sloppy joes:
+  ingredients:
+    - ground beef:
+        amount: 1 lb
+    - hamburger buns:
+        amount: 5 buns
+    - Sloppy Joe Seasoning Packet
+    - tomato paste:
+        amount: 1 can 
+
+tofu joe:
+  ingredients:
+    - Sloppy Joe Seasoning Packet
+    - tofu:
+        amount: 1 lb
+    - onion
+    - celery:
+        amount: 2 ribs
+    - carrot
+    - bell pepper:
+        amount: .5
+    - hamburger buns:
+        amount: 2 buns
+    - tomato paste:
+        amount: 1 can
+
+stir fry:
+  description:
+  directions:
+  ingredients:
+    - rice:
+        amount: 1 cup
+    - onion
+    - ginger:
+        amount: small piece
+    - garlic:
+        amount: 2 cloves
+    - bell pepper
+    - carrot:
+        optional: true
+    - shiitake mushrooms:
+        amount: 8 oz
+        optional: true
+    - eggs:
+        amount: 4
+        optional: true
+    - canned pineapple:
+        optional: true
+    - broccoli:
+        amount: 1 head
+        optional: true
+    - stir fry sauce:
+        amount: 6 oz
+        optional: true
+    - ketchup:
+        amount: 1 cup
+        optional: true
+    - tofu:
+        amount: 1 lb
+        optional: true
+    - soy sauce:
+        amount: 2 oz
+        optional: true
+
+taco soup:
+  description:
+  directions:
+  ingredients:
+    - tomato paste:
+        amount: 1 can
+    - frozen corn:
+        amount: 8 oz
+    - cannelini beans:
+        amount: 1 can
+    - shredded cheese:
+        amount: 4 oz
+    - avocado
+    - lime
+    - onion
+    - carrots:
+        amount: 3
+    - canned green chili:
+        amount: 7 oz
+    - sour cream:
+        amount: 2 oz
+    - cilantro:
+        amount: .5 bunch
+    - tortilla chips:
+        amount: .25 bag
+    - radishes:
+        optional: true
+
+meatloaf:
+  ingredients:
+    - ground beef:
+        amount: 1 lb
+    - onion:
+        amount: .25
+    - eggs:
+        amount: 2
+    - bread crumbs, italian:
+        amount: .75 cup
+    - milk:
+        amount: 6 oz
+    - garlic:
+        amount: 3 cloves
+        optional: true
+
+mashed potatoes:
+  ingredients:
+    - Russet potatoes:
+        amount: 6
+    - butter:
+        amount: 1 stick
+    - garlic powder:
+        amount: 1 teaspoon
+        optional: true
+    - milk:
+        amount: 2 oz
+
+spaghetti:
+  ingredients:
+    - spaghetti
+    - marinara sauce:
+        brand: Bertolli
+    - parmesan cheese:
+        optional: true
+
+meatballs:
+  ingredients:
+    - ground beef:
+        amount: 1 lb
+    - bread crumbs:
+        amount: .3 cup
+    - onion:
+        amount: .3
+    - egg
+    - milk:
+        amount: 2 oz
+    - garlic:
+        amount: 2 cloves
+
+pancakes:
+  ingredients:
+    - flour:
+        amount: 1.5 cup
+    - leavening:
+        amount: 1 Tbsp
+    - sugar:
+        amount: 1 Tbsp
+    - butter:
+        amount: 3 Tbsp
+    - milk:
+        amount: 1 cup
+    - egg
+
+smashburgers:
+  ingredients:
+    - hamburger buns:
+        amount: 4 buns
+    - ground beef:
+        amount: 1 lb
+    - onion
+    - sliced cheese:
+        amount: 5 slices
+    - ketchup:
+        amount: 2 oz
+    - mustard:
+        amount: 2 oz
+    - mayonnaise:
+        amount: 2 oz
+    - pickle juice:
+        amount: 1 splash
+    - black pepper:
+        amount: 1 pinch
+    - paprika:
+        amount: 1 pinch
+    - steak sauce:
+        amount: 1 oz
+        optional: true
+    - pickles:
+        amount: 3 slices
+
+black bean burger:
+  ingredients:
+    - black bean patty
+    - burger bun
+    - cheddar cheese:
+        amount: 2 oz
+    - pickle:
+        amount: 1 slice
+    - onion:
+        amount: 2 oz
+    - ketchup:
+        amount: 1 oz
+    - mustard:
+        amount: 1 oz
+
+buckwheat:
+  ingredients:
+    - buckwheat:
+        amount: 1 cup
+    - butter:
+        amount: 2 tbsp
+          
+salad with butter lettuce:
+  ingredients:
+    - sour cream:
+        amount: 3 oz
+    - garlic powder:
+        amount: 1 tsp
+    - italian seasoning:
+        amount: 1 tsp
+    - salt:
+        amount: 1 pinch
+    - butter lettuce:
+        amount: .5 head
+    - cucumbers:
+        amount: .25
+        optioanl: true
+    - carrots:
+        amount: .33
+        optional: true
+    - egg:
+        optional: true
+    - cheese crisps:
+        amount: .25 bag
+        optional: true
+
+fried egg:
+  ingredients:
+    - egg
+
+slow cooked chicken:
+  ingredients:
+    - chicken thighs:
+        amount: 4
+
+steak:
+  ingredients:
+    - steak:
+        amount: 1 lb
+    - butter:
+        amount: 2 oz
+    - garlic:
+        amount: 1 clove
+    - herbs, fresh:
+        optional: true
+    
+mashed potatioes:
+  ingredients: 
+    - potatoes, Russet:
+        amount: 6
+    - butter:
+        amount: 8 oz
+    - milk:
+        amount: 1 oz
+    - herbs, fresh:
+        optional: true
+    - garlic powder:
+        amount: 1 tsp
+     

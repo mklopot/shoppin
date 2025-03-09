@@ -97,7 +97,7 @@ class ShoppingListItem:
 
     def combine(self, other):
         self.amount += other.amount
-        self.ingredients.append(other.ingredients)
+        self.ingredients.extend(other.ingredients)
 
     def __str__(self):
         result = self.name
@@ -112,6 +112,8 @@ class ShoppingListItem:
             result += "\n    brand: " + self.brand  
         if self.vendor:
             result += "\n    best vendor: " + self.vendor  
+        recipe_names = [ingredient.recipe.name for ingredient in self.ingredients]
+        result += "\n    For " + ", ".join(recipe_names)
         return result
 
     def __repr__(self):

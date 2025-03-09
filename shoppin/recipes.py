@@ -5,23 +5,24 @@ from yaml.scanner import ScannerError
 
 from util import parse_amount
 
+
+@dataclass
+class Recipe:
+    name: str
+    ingredients: list["Ingredient"]
+    directions: str = ""
+    description: str = ""
+
 @dataclass
 class Ingredient:
     name: str
+    recipe: Recipe
     amount: float = 1
     amount_unit: str = ""
     optional: bool = False
     brand: str = ""
     vendor: str = ""
-    
-
-@dataclass
-class Recipe:
-    name: str
-    ingredients: list[Ingredient]
-    directions: str = ""
-    description: str = ""
-
+ 
 class Recipes:
     def __init__(self, recipes: list[Recipe] = {}) -> None:
         self.recipes = recipes
@@ -37,9 +38,13 @@ class Recipes:
             directions = loaded_recipes[loaded_recipe].get("directions", "")
             description = loaded_recipes[loaded_recipe].get("description", "")
             loaded_ingredients = loaded_recipes[loaded_recipe].get("ingredients", [])
+            self.recipes[loaded_recipe] = (Recipe(name=loaded_recipe,
+                                                  ingredients=[],
+                                                  directions=directions,
+                                                  description=description))
             for ingredient in loaded_ingredients:
                 if type(ingredient) is str:
-                    ingredients.append(Ingredient(name=ingredient))
+                    ingredients.append(Ingredient(name=ingredient, recipe=self.recipes[loaded_recipe]))
                 else:
                     name = list(ingredient.keys())[0].strip()
                     amount_with_unit = str(ingredient[name].get("amount", "1"))
@@ -54,9 +59,7 @@ class Recipes:
                                                   amount_unit=amount_unit,
                                                   optional=optional,
                                                   brand=brand,
-                                                  vendor=vendor))
+                                                  vendor=vendor,
+                                                  recipe=self.recipes[loaded_recipe]))
 
-            self.recipes[loaded_recipe] = (Recipe(name=loaded_recipe,
-                                                  ingredients=ingredients,
-                                                  directions=directions,
-                                                  description=description))
+            self.recipes[loaded_recipe].ingredients = ingredients

@@ -41,21 +41,22 @@ class Recipes:
                 if type(ingredient) is str:
                     ingredients.append(Ingredient(name=ingredient))
                 else:
-                    name = list(ingredient.keys())[0]
+                    name = list(ingredient.keys())[0].strip()
                     amount_with_unit = str(ingredient[name].get("amount", "1"))
                     amount, amount_unit = parse_amount(amount_with_unit)
+                    amount_unit = amount_unit.strip()
                     print("parsed", amount_with_unit, "into", amount, amount_unit)
                     optional = ingredient[name].get("optional", False)
-                    brand = ingredient[name].get("brand", "")
-                    vendor = ingredient[name].get("vendor", "")
+                    brand = ingredient[name].get("brand", "").strip()
+                    vendor = ingredient[name].get("vendor", "").strip()
                     ingredients.append(Ingredient(name=name,
                                                   amount=amount,
                                                   amount_unit=amount_unit,
                                                   optional=optional,
                                                   brand=brand,
                                                   vendor=vendor))
+
             self.recipes[loaded_recipe] = (Recipe(name=loaded_recipe,
                                                   ingredients=ingredients,
                                                   directions=directions,
                                                   description=description))
-

@@ -1,7 +1,7 @@
 from enum import Enum
 from collections import defaultdict
-import inflection
 
+from util import pluralize, singularize
 
 class ItemStatus(Enum):
     NEED = 1
@@ -24,7 +24,8 @@ class ShoppingList:
         self._map()
 
     def deduplicate(self):
-        self.ingredients.sort(key=lambda item: (item.name.lower(), item.amount_unit))
+        self.ingredients.sort(key=lambda item: (singularize(item.name.lower()),
+                                                singularize(item.amount_unit)))
         marked_for_deduplication = defaultdict(list)
         current_item = None
         print("current item:", current_item)
@@ -32,8 +33,8 @@ class ShoppingList:
             print("Processing", item.name, id(item))
             if current_item:
                 print("comparing items:", current_item.name, id(current_item), "&&", item.name, id(item))
-                if item.name.lower() == current_item.name.lower() and \
-                        item.amount_unit == current_item.amount_unit:
+                if singularize(item.name.lower()) == singularize(current_item.name.lower()) and \
+                        singularize(item.amount_unit) == singularize(current_item.amount_unit):
                     print("found matching ingredients:", item.name, current_item.name)
                     # if current_item.combine(item):
                         # self.ingredients.remove(item)
@@ -47,8 +48,8 @@ class ShoppingList:
                 print("this is the first item:", item.name)
         for item_to_keep in marked_for_deduplication:
             for duplicate in marked_for_deduplication[item_to_keep]:
-                item_to_keep.combine(duplicate)
-                self.ingredients.remove(duplicate)
+                if item_to_keep.combine(duplicate):
+                    self.ingredients.remove(duplicate)
 
     def _map(self):
         if self.sequence:
@@ -71,7 +72,7 @@ class ShoppingList:
 class ShoppingListItem:
     def __init__(self, ingredient):
         self.list = None
-        self.name = inflection.singularize(ingredient.name)
+        self.name = ingredient.name
         self.amount = ingredient.amount
         self.amount_unit = ingredient.amount_unit
         self.vendor = ingredient.vendor
@@ -82,8 +83,8 @@ class ShoppingListItem:
         self.status = ItemStatus.NEED 
 
     def combine(self, other):
-        if self.name == other.name and \
-                self.amount_unit == other.amount_unit and\
+        if singularize(self.name.lower()) == singularize(other.name.lower()) and \
+                singularize(self.amount_unit) == singularize(other.amount_unit) and\
                 self is not other:
             self.amount += other.amount
             self.ingredients.append(other.ingredients)
@@ -92,14 +93,17 @@ class ShoppingListItem:
 
     def __str__(self):
         result = self.name
+        amount_str = f"{self.amount:.2g}"
         if self.amount != 1:
-            result += ("\n    " + str(self.amount).removesuffix(".0") + " " + self.amount_unit)
+            result += "\n    " + amount_str + " " + pluralize(self.amount_unit)
+        else:
+            result += "\n    " + amount_str + " " + self.amount_unit
         if self.optional:
             result += "\n    optional"
         if self.brand:
-            result += ("\n    brand: " + self.brand)  
+            result += "\n    brand: " + self.brand  
         if self.vendor:
-            result += ("\n    best vendor: " + self.vendor)  
+            result += "\n    best vendor: " + self.vendor  
         return result
 
     def __repr__(self):

@@ -11,7 +11,8 @@ tacos and burritos:
         vendor: Safeway
     - avocados:
         amount: 2
-    - ground beef
+    - ground beef:
+        amount: 1 lb
     - shredded cheese:
         amount: 8 oz
     - cilantro
@@ -145,7 +146,8 @@ mashed potatoes:
 
 spaghetti:
   ingredients:
-    - spaghetti
+    - spaghetti:
+        amount: 1 package
     - marinara sauce:
         brand: Bertolli
     - parmesan cheese:
@@ -209,7 +211,8 @@ smashburgers:
 black bean burger:
   ingredients:
     - black bean patty
-    - burger bun
+    - hamburger bun:
+        amount: 1 bun
     - cheddar cheese:
         amount: 2 oz
     - pickle:

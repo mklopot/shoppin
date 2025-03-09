@@ -17,16 +17,21 @@ def parse_amount(amount_with_unit: str) -> tuple[float, str]:
 
 
 def pluralize(word: str) -> str:
-    exceptions = ('oz', 'tsp', 'tbsp', 'lb', "C", "c",
+    exclusions = ('oz', 'tsp', 'tbsp', 'lb', "C", "c",
             "qt", "fl oz", "fl. oz", "doz", "qt", "pt",
             "pkg", "ml", "l", "L", "gal", "Gal", "Doz")
-    if word in exceptions:
+    exceptions = {"slice": "slices"}
+    if word in exclusions:
         return word
+    if word in exceptions:
+        return exceptions[word]
     return inflection.pluralize(word)
 
 
 def singularize(word: str) -> str:
-    exceptions = {'cloves': 'clove'}
+    exceptions = {'cloves': 'clove',
+                  'slices': 'slice',
+                  'slice': 'slice'}
     if word in exceptions:
         return exceptions[word]
     return inflection.singularize(word)

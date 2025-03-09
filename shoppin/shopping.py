@@ -25,7 +25,10 @@ class ShoppingList:
 
     def deduplicate(self):
         self.ingredients.sort(key=lambda item: (singularize(item.name.lower()),
-                                                singularize(item.amount_unit)))
+                                                singularize(item.amount_unit),
+                                                item.brand,
+                                                item.vendor,
+                                                item.optional))
         marked_for_deduplication = defaultdict(list)
         current_item = None
         print("current item:", current_item)
@@ -33,8 +36,7 @@ class ShoppingList:
             print("Processing", item.name, id(item))
             if current_item:
                 print("comparing items:", current_item.name, id(current_item), "&&", item.name, id(item))
-                if singularize(item.name.lower()) == singularize(current_item.name.lower()) and \
-                        singularize(item.amount_unit) == singularize(current_item.amount_unit):
+                if ShoppingListItem.can_combine(item, current_item): 
                     print("found matching ingredients:", item.name, current_item.name)
                     # if current_item.combine(item):
                         # self.ingredients.remove(item)
@@ -48,8 +50,8 @@ class ShoppingList:
                 print("this is the first item:", item.name)
         for item_to_keep in marked_for_deduplication:
             for duplicate in marked_for_deduplication[item_to_keep]:
-                if item_to_keep.combine(duplicate):
-                    self.ingredients.remove(duplicate)
+                item_to_keep.combine(duplicate)
+                self.ingredients.remove(duplicate)
 
     def _map(self):
         if self.sequence:
@@ -82,14 +84,20 @@ class ShoppingListItem:
         ingredient.shopping_list_item = self
         self.status = ItemStatus.NEED 
 
-    def combine(self, other):
-        if singularize(self.name.lower()) == singularize(other.name.lower()) and \
-                singularize(self.amount_unit) == singularize(other.amount_unit) and\
-                self is not other:
-            self.amount += other.amount
-            self.ingredients.append(other.ingredients)
+    @staticmethod
+    def can_combine(listitem, otheritem):
+        if singularize(listitem.name.lower()) == singularize(otheritem.name.lower()) and \
+                singularize(listitem.amount_unit) == singularize(otheritem.amount_unit) and\
+                listitem.brand.lower() == otheritem.brand.lower() and\
+                listitem.vendor.lower() == otheritem.vendor.lower() and\
+                listitem.optional == otheritem.optional and\
+                listitem is not otheritem:
             return True
         return False
+
+    def combine(self, other):
+        self.amount += other.amount
+        self.ingredients.append(other.ingredients)
 
     def __str__(self):
         result = self.name

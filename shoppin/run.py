@@ -3,6 +3,7 @@ import yaml
 import meal
 import recipes
 import shopping
+import shopping_list_file
 import sequence
 
 my_recipes = recipes.Recipes()
@@ -21,11 +22,16 @@ for m in dinnerlist:
     
 my_mealplan =  meal.MealPlan("mealplan", meals)
 
+my_file = shopping_list_file.ShoppingListFile()
+my_file.load()
+
 my_sequence = sequence.Sequence()
 my_sequence.load()
 
 my_shopping_list = shopping.ShoppingList(my_sequence)
 my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
+my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+
 
 for i in my_shopping_list.ingredients:
     print(i)

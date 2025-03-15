@@ -16,7 +16,7 @@ class Recipe:
 @dataclass
 class Ingredient:
     name: str
-    recipe: Recipe
+    attribution: Recipe
     amount: float = 1
     amount_unit: str = ""
     optional: bool = False
@@ -31,8 +31,8 @@ class Recipes:
         with open(recipe_db_filepath) as f:
             try:
                 loaded_recipes = yaml.load(f)
-            except ScannerError:
-                print("Could not parse recipe database from file")
+            except ScannerError as e:
+                print("Could not parse recipe database from file", recipe_db_filepath, ":\n", e)
         for loaded_recipe in loaded_recipes:
             ingredients = []
             directions = loaded_recipes[loaded_recipe].get("directions", "")
@@ -44,7 +44,7 @@ class Recipes:
                                                   description=description))
             for ingredient in loaded_ingredients:
                 if type(ingredient) is str:
-                    ingredients.append(Ingredient(name=ingredient, recipe=self.recipes[loaded_recipe]))
+                    ingredients.append(Ingredient(name=ingredient, attribution=self.recipes[loaded_recipe]))
                 else:
                     name = list(ingredient.keys())[0].strip()
                     amount_with_unit = str(ingredient[name].get("amount", "1"))
@@ -60,6 +60,6 @@ class Recipes:
                                                   optional=optional,
                                                   brand=brand,
                                                   vendor=vendor,
-                                                  recipe=self.recipes[loaded_recipe]))
+                                                  attribution=self.recipes[loaded_recipe]))
 
             self.recipes[loaded_recipe].ingredients = ingredients

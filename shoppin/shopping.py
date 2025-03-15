@@ -112,7 +112,7 @@ class ShoppingListItem:
             result += "\n    brand: " + self.brand  
         if self.vendor:
             result += "\n    best vendor: " + self.vendor  
-        recipe_names = [ingredient.recipe.name for ingredient in self.ingredients]
+        recipe_names = [ingredient.attribution.name for ingredient in self.ingredients]
         result += "\n    For " + ", ".join(recipe_names)
         return result
 

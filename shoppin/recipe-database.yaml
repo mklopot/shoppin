@@ -22,7 +22,7 @@ tacos and burritos:
         amount: 4 oz
 
 take-out:
-  directions: order from Chipotle or Taste of Thailand
+  directions: order from Chipotle, Dominos, or Taste of Thailand
 
 sloppy joes:
   ingredients:
@@ -190,23 +190,32 @@ smashburgers:
     - onion
     - sliced cheese:
         amount: 5 slices
+    - pickles:
+        amount: 3 slices
+
+burger sauce:
+  description: Ian's Burger Sauce
+  ingredients:
     - ketchup:
         amount: 2 oz
     - mustard:
-        amount: 2 oz
+        amount: 1 tsp
     - mayonnaise:
-        amount: 2 oz
+        amount: 4 oz
     - pickle juice:
         amount: 1 splash
     - black pepper:
+        amount: 1 pinch
+    - salt: 
         amount: 1 pinch
     - paprika:
         amount: 1 pinch
     - steak sauce:
         amount: 1 oz
         optional: true
-    - pickles:
-        amount: 3 slices
+    - sriracha:
+        amount: .5 tsp
+        optional: true
 
 black bean burger:
   ingredients:
@@ -288,3 +297,116 @@ mashed potatioes:
     - garlic powder:
         amount: 1 tsp
      
+zucchini casserole:
+    ingredients:
+      - corn tortillas:
+          amount: .5 package
+      - enchilada sauce:
+          amount: 1 small can
+      - ground beef:
+          amount: 1 lb
+      - seasoned beans:
+          amount: 1 can
+      - shredded cheese:
+          amount: 8 oz
+      - onion:
+          amount: .5
+      - zucchini:
+          amount: 1
+
+vegetarian zucchini casserole:
+    ingredients:
+      - corn tortillas:
+          amount: .5 package
+      - enchilada sauce:
+          amount: 1 small can
+      - seasoned beans:
+          amount: 1 can
+      - shredded cheese:
+          amount: 8 oz
+      - onion:
+          amount: .5
+      - zucchini:
+          amount: 1
+      - carrot:
+          amount: 2
+      - bell pepper:
+          amount: 1
+          optional: true
+
+twice baked potatoes:
+  directions: >
+    Preheat the oven to 400°F. Wash and dry the potatoes well, then use a fork to prick each potato several times.
+    Place the potatoes on a parchment lined baking sheet. Drizzle the olive oil over the potatoes, then use your hands or a silicone brush to brush the oil over each potato until it is fully coated. Season the potatoes with a pinch of salt.
+    Bake in the preheated oven for 50-60 minutes, or until the potatoes can be pierced easily with a fork. Total baking time will depend on the size of your potatoes.
+    Optionally, while the potatoes are baking, cook the bacon in a skillet over medium heat until brown and crispy. Remove the cooked bacon from the skillet and allow it to drain on a paper-towel lined plate.
+    Once cool enough to handle, rough chop the bacon into smaller pieces. nce the potatoes are done baking, remove them from the oven and allow them to cool slightly. When the potatoes are cool enough to handle, slice them in half lengthwise. Carefully scoop out the potato flesh, leaving a thin rim of potato (about ¼ inch rim) around the edges to help the skin hold its shape.
+    Place the scooped out potato flesh in a large bowl and add the butter, sour cream, milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes until light and fluffy.
+    Add the chopped bacon, half of the sliced green onions, and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold to combine.
+    Fill the potato skins with about 1/3 cup of the potato mixture, then sprinkle the remaining cheddar cheese over the top of each potato.
+    Bake the potatoes in the oven a second time, just until heated through and the cheddar cheese is melted on top, about 20 minutes. Top with the remaining green onions and enjoy!
+  ingredients:
+    - potatoes, Russet:
+        amount: 4
+    - olive oil:
+        amount: 1 tbsp
+    - bacon:
+        amount: 4 oz
+        optional: yes
+    - butter:
+        amount: 4 tbsp
+    - sour cream:
+        amount: 4 oz
+    - milk:
+        amount: .25 cup
+    - salt:
+        amount: .5 tsp
+    - pepper:
+        amount: .25 tsp
+    - green onion:
+        amount: .5 bunch
+    - shredded cheese:
+        amount: 8 oz
+
+cabbage and egg salad with cucumber:
+  ingredients:
+    - egg
+    - cucumber:
+        amount: .25
+    - cabbage:
+        amount: .25 head
+
+tahini miso dressing:
+  ingredients:
+    - tahini:
+        amount: .33 cup
+    - ginger:
+        amount: 1 tbsp
+    - garlic:
+        amount: 2 cloves
+    - miso:
+        amount: 1 tsp
+    - soy sauce:
+        amount: 1 tbsp
+    - vinegar:
+        amount: 1 tbsp
+    - sesame oil:
+        amount: 1 tsp
+    - maple syrup:
+        amount: 2 tsp
+    - water:
+        amount: 3 tbsp
+    - salt:
+        amount: 1 pinch
+
+lima beans:
+  ingredients:
+    - lima beans:
+        amount: 1 package
+    - olive oil:
+        amount: 1 tbsp
+    - cumin:
+        amount: 1 pinch
+    - tomato paste:
+        amount: 4 oz
+

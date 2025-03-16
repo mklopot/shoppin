@@ -127,6 +127,13 @@ class ShoppingListItem:
         result += "\n    For " + ", ".join(recipe_names)
         return result
 
+    def get_amount_with_unit(self):
+        amount_str = f"{self.amount:.2g}"
+        if self.amount == 1:
+            return  amount_str + " " + self.amount_unit
+        else:
+            return  amount_str + " " + pluralize(self.amount_unit)
+
     def __repr__(self):
         return self.__str__()
 

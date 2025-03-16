@@ -93,7 +93,7 @@ taco soup:
   directions:
   ingredients:
     - tomato paste:
-        amount: 1 can
+        amount: 8 oz
     - frozen corn:
         amount: 8 oz
     - cannellini beans:
@@ -172,11 +172,11 @@ pancakes:
     - flour:
         amount: 1.5 cup
     - leavening:
-        amount: 1 Tbsp
+        amount: 1 tbsp
     - sugar:
-        amount: 1 Tbsp
+        amount: 1 tbsp
     - butter:
-        amount: 3 Tbsp
+        amount: 3 tbsp
     - milk:
         amount: 1 cup
     - egg
@@ -278,7 +278,7 @@ steak:
     - steak:
         amount: 1 lb
     - butter:
-        amount: 2 oz
+        amount: 2 tbsp
     - garlic:
         amount: 1 clove
     - herbs, fresh:

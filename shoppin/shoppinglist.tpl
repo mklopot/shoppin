@@ -16,6 +16,12 @@ table, th, td {
 th, td {
   padding: 10px;
 }
+span.attribution{
+  font-style: italic;
+  font-size: 13px;
+  color: gray;
+}
+
 </style>
 </head>
 <body>
@@ -25,8 +31,9 @@ th, td {
   <table style="width:50%">
   % for item in need:
   <tr>
-     <td>{{item.name}} &nbsp;&nbsp;{{item.amount}} {{item.amount_unit}}
-         &nbsp;&nbsp;<i>For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</i>
+     <td>{{item.name}}
+         &nbsp;&nbsp;{{item.get_amount_with_unit()}}
+         &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;optional
     % end
@@ -50,8 +57,8 @@ th, td {
   % for item in got:
   <tr>
      <td>{{item.name}}
-         &nbsp;&nbsp;{{item.amount}} {{item.amount_unit}}
-         &nbsp;&nbsp;<i>For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</i>
+         &nbsp;&nbsp;{{item.get_amount_with_unit()}}
+         &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;optional
     % end
@@ -72,9 +79,9 @@ th, td {
   <table style="width:50%">
   % for item in have:
   <tr>
-     <td>{{item.name}}<br>
-         &nbsp;&nbsp;{{item.amount}} {{item.amount_unit}}
-         &nbsp;&nbsp;<i>For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</i>
+     <td>{{item.name}}
+         &nbsp;&nbsp;{{item.get_amount_with_unit()}}
+         &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;optional
     % end

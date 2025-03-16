@@ -51,14 +51,26 @@ def shoppinnglist():
 
 @app.route('/got/<item_id:int>')
 def got(item_id):
-    print("Got ID:", item_id)
     item = my_shopping_list.find_by_id(item_id)
-    print("Found:", item)
-    if not item:
-        raise(ValueError)
-    item.set_got()
-
+    if item:
+        item.set_got()
     redirect('/')
+
+@app.route('/have/<item_id:int>')
+def have(item_id):
+    item = my_shopping_list.find_by_id(item_id)
+    if item:
+        item.set_have()
+    redirect('/')
+
+@app.route('/need/<item_id:int>')
+def need(item_id):
+    item = my_shopping_list.find_by_id(item_id)
+    if item:
+        item.set_need()
+    redirect('/')
+
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True, reloader=True)

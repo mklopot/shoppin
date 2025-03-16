@@ -6,7 +6,7 @@ tacos and burritos:
         brand: Mission
     - taco sauce:
         brand: Ortega
-    - beans, seasoned:
+    - seasoned beans:
         brand: Rosarita
         vendor: Safeway
     - avocados:
@@ -307,6 +307,7 @@ zucchini casserole:
           amount: 1 lb
       - seasoned beans:
           amount: 1 can
+          brand: Rosarita
       - shredded cheese:
           amount: 8 oz
       - onion:
@@ -399,7 +400,7 @@ tahini miso dressing:
     - salt:
         amount: 1 pinch
 
-lima beans:
+lima bean side dish:
   ingredients:
     - lima beans:
         amount: 1 package

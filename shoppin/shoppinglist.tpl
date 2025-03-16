@@ -38,6 +38,7 @@ th, td {
     % end
      </td>
      <td style="width:10%"><a href="/got/{{item.id}}">Got it!</a></td>
+     <td style="width:10%"><a href="/have/{{item.id}}">Have it!</a></td>
   </tr>
   % end
 </table>
@@ -84,6 +85,7 @@ th, td {
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
+     <td style="width:10%"><a href="/need/{{item.id}}">Need it!</a></td>
   </tr>
   % end
 </table>

@@ -63,16 +63,27 @@ class ShoppingList:
         if self.sequence:
             self.sequence.update(item_name)
 
-    def order(self, sequence):
+    def order(self):
         if self.sequence:
             ordered = []
-            for item in self.sequence:
+            for item in self.sequence.data:
                 if item in self.mapping:
-                    ordered.append(self.mapping["item"])
+                    ordered.append(self.mapping[item])
+            for item in self.mapping:
+                if self.mapping[item] not in ordered:
+                    ordered.append(self.mapping[item])
             self.ingredients = ordered
+
+    def find_by_id(self, item_id):
+        result = [item for item in self.ingredients if item.id == item_id]
+        if result:
+            print("Found by ID:", result)
+            return result[0]
+        return None
 
 class ShoppingListItem:
     def __init__(self, ingredient):
+        self.id = id(self)
         self.list = None
         self.name = ingredient.name
         self.amount = ingredient.amount
@@ -126,10 +137,6 @@ class ShoppingListItem:
 
     def set_have(self):
         self.status = ItemStatus.HAVE
-        self.list.update_sequence(self.name.lower())
-        self.list.order()
 
     def set_need(self):
         self.status = ItemStatus.NEED
-        self.list.update_sequence(self.name.lower())
-        self.list.order()

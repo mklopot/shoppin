@@ -22,6 +22,7 @@ class ShoppingList:
             self.ingredients.append(newitem)
         self.deduplicate()
         self._map()
+        self.order()
 
     def deduplicate(self):
         self.ingredients.sort(key=lambda item: (singularize(item.name.lower()),
@@ -62,6 +63,7 @@ class ShoppingList:
     def update_sequence(self, item_name):
         if self.sequence:
             self.sequence.update(item_name)
+            self.sequence.save()
 
     def order(self):
         if self.sequence:

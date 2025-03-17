@@ -17,6 +17,7 @@ class Sequence:
             return
         if item not in self.data:
             self.add(item)
+            self.last_updated = item
             return
 
         self.data.remove(item)

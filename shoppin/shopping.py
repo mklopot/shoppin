@@ -34,23 +34,16 @@ class ShoppingList:
                                                 item.optional))
         marked_for_deduplication = defaultdict(list)
         current_item = None
-        print("current item:", current_item)
         for item in self.ingredients:
-            print("Processing", item.name, id(item))
             if current_item:
-                print("comparing items:", current_item.name, id(current_item), "&&", item.name, id(item))
                 if ShoppingListItem.can_combine(item, current_item): 
-                    print("found matching ingredients:", item.name, current_item.name)
                     # if current_item.combine(item):
                         # self.ingredients.remove(item)
                     marked_for_deduplication[current_item].append(item)
-                    print("marked duplicate for deduplication:", item.name, id(item))
                 else:
                     current_item = item
-                    print("moving to next type of ingredient")
             else:        
                 current_item = item
-                print("this is the first item:", item.name)
         for item_to_keep in marked_for_deduplication:
             for duplicate in marked_for_deduplication[item_to_keep]:
                 item_to_keep.combine(duplicate)
@@ -81,7 +74,6 @@ class ShoppingList:
     def find_by_id(self, item_id):
         result = [item for item in self.ingredients if item.id == item_id]
         if result:
-            print("Found by ID:", result)
             return result[0]
         return None
 

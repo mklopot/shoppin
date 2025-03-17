@@ -29,6 +29,9 @@ class Sequence:
 
     def get_sequence(self) -> None:
         return self.data
+
+    def reset_pointer(self) -> None:
+        self.last_updated = None
     
     def save(self, filename="sequence-default.yaml"):
         with open(filename, 'w') as f:

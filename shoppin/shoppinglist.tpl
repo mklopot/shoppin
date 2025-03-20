@@ -22,20 +22,41 @@ span.attribution{
   color: gray;
 }
 
+.column {
+  float: left;
+  width: 50%;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+span.optional{
+  color: gray;
+}
+
 </style>
 </head>
 <body>
+<div class="row">
+  <div class="column">
+    <h1>Meal Plan</h1>
+  </div>
+
+  <div class="column">
   <h1>Shopping List</h1>
 % if need:
   <h2>To Get</h2>
-  <table style="width:50%">
+  <table style="width:100%">
   % for item in need:
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
          &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
     % if item.optional:
-         <br>&nbsp;&nbsp;optional
+         <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end
     % if item.brand:
          <br>&nbsp;&nbsp;Brand: {{item.brand}}
@@ -60,7 +81,7 @@ span.attribution{
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
          &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
     % if item.optional:
-         <br>&nbsp;&nbsp;optional
+         <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end
     % if item.brand:
          <br>&nbsp;&nbsp;Brand: {{item.brand}}
@@ -83,7 +104,7 @@ span.attribution{
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
          &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
     % if item.optional:
-         <br>&nbsp;&nbsp;optional
+         <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end
     % if item.brand:
          <br>&nbsp;&nbsp;Brand: {{item.brand}}
@@ -98,5 +119,7 @@ span.attribution{
 </table>
 % end
 
+</div>
+</div>
 </body>
 </html>

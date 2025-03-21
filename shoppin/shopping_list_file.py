@@ -44,7 +44,6 @@ class ShoppingListFile:
                     amount_with_unit = str(item[name].get("amount", "1"))
                     amount, amount_unit = parse_amount(amount_with_unit)
                     amount_unit = amount_unit.strip()
-                    print("parsed", amount_with_unit, "into", amount, amount_unit)
                     optional = item[name].get("optional", False)
                     brand = item[name].get("brand", "").strip()
                     vendor = item[name].get("vendor", "").strip()

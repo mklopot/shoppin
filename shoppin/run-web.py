@@ -1,6 +1,6 @@
 import yaml
 
-import meal
+import mealplan
 import recipes
 import shopping
 import shopping_list_file
@@ -9,18 +9,8 @@ import sequence
 my_recipes = recipes.Recipes()
 my_recipes.load()
 
-with open("dinnerlist.yaml") as f:
-    dinnerlist = yaml.load(f)
-
-meals = []
-for m in dinnerlist:
-    recipelist = []
-    for recipe in m:
-        recipelist.append(my_recipes.recipes[recipe])
-    my_meal = meal.Meal("Dinner", recipelist)
-    meals.append(my_meal)
-    
-my_mealplan =  meal.MealPlan("mealplan", meals)
+my_mealplan =  mealplan.MealPlan("Weekly Meal Plan")
+my_mealplan.load(recipe_database=my_recipes)
 
 my_file = shopping_list_file.ShoppingListFile()
 my_file.load()
@@ -47,7 +37,7 @@ def shoppinnglist():
     need = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.NEED]
     got = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.GOT]
     have = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.HAVE]
-    return template("shoppinglist", need=need, got=got, have=have)
+    return template("shoppinglist", need=need, got=got, have=have, mealplan=my_mealplan)
 
 @app.route('/got/<item_id:int>')
 def got(item_id):

@@ -1,6 +1,6 @@
 import yaml
 
-import meal
+import mealplan
 import recipes
 import shopping
 import shopping_list_file

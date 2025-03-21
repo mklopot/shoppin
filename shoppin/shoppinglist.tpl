@@ -43,6 +43,18 @@ span.optional{
 <div class="row">
   <div class="column">
     <h1>Meal Plan</h1>
+    % if mealplan:
+      <h2>{{mealplan.name}}</h2>
+      % for meal in mealplan.meals:
+        <h3>{{meal.name}}</h3>
+        <ul>
+        % for recipe in meal.recipes:
+          <li>{{recipe.name}}</li>
+        % end
+        </ul>
+      % end
+    % end 
+
   </div>
 
   <div class="column">
@@ -74,7 +86,7 @@ span.optional{
 
 % if got:
   <h2>Got</h2>
-  <table style="width:50%">
+  <table style="width:100%">
   % for item in got:
   <tr>
      <td>{{item.name}}
@@ -97,7 +109,7 @@ span.optional{
 
 % if have:
   <h2>Already Have</h2>
-  <table style="width:50%">
+  <table style="width:100%">
   % for item in have:
   <tr>
      <td>{{item.name}}

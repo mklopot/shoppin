@@ -53,13 +53,28 @@ a.x{
     % if mealplan:
       <h2>{{mealplan.name}}</h2>
       % for meal_index, meal in enumerate(mealplan.meals):
-        <h3>{{meal.name}} <a class="x" href="/delete-meal/{{meal_index}}"> ☒</a></h3>
+        <h3>{{meal.name}} <a class="x" href="/delete-meal/{{meal_index}}"> &#9447;</a></h3>
         <ul>
         % for recipe_index, recipe in enumerate(meal.recipes):
-          <li>{{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> ☒</a></li>
+          <li>{{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
         % end
+        <li><form action="/add-recipe" method="POST">
+            <input list="recipelist" name="recipe" method="POST">
+            <input type="hidden" name="meal_index" value={{meal_index}}>
+            <input type="submit" value="Add Recipe">
+            <datalist id="recipelist">
+            % for recipename in recipelist:
+            <option value="{{recipename}}">
+            % end
+            </datalist>
+            </form>
+        </li>
         </ul>
       % end
+      <form action="/add-meal" method="POST">
+      <!--label for="meal"><h3>Add meal:</h3></label-->
+      <input type="text" id="meal" name="meal">
+      <input type="submit" value="Add Meal"></form>
     % end 
 
   </div>

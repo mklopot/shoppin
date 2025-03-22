@@ -32,7 +32,7 @@ def shoppinnglist():
     need = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.NEED]
     got = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.GOT]
     have = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.HAVE]
-    return template("shoppinglist", need=need, got=got, have=have, mealplan=my_mealplan)
+    return template("shoppinglist", need=need, got=got, have=have, mealplan=my_mealplan, recipelist=list(my_recipes.recipes.keys()))
 
 @app.route('/got/<item_id:int>')
 def got(item_id):
@@ -56,13 +56,16 @@ def need(item_id):
     redirect('/')
 
 @app.route('/add-meal', method=['POST'])
-def add_meal(meal):
+def add_meal():
     my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
     redirect('/')
 
 @app.route('/add-recipe', method=['POST'])
-def add_meal(meal):
-    my_mealplan.meals[request.POST.meal_index].recipes.append(recipes.Recipe(name=request.POST.recipe))
+def add_recipe():
+    print("meal index", request.POST.meal_index)
+    print("recipe", request.POST.recipe)
+    new_recipe = my_recipes.recipes[request.POST.recipe]
+    my_mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
     redirect('/')
 
 @app.route('/delete-meal/<meal_index:int>')

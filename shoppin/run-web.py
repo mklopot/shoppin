@@ -22,11 +22,6 @@ my_shopping_list = shopping.ShoppingList(my_sequence)
 my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
 my_shopping_list.load_ingredients(my_file.make_shopping_plan())
 
-
-for i in my_shopping_list.ingredients:
-    print(i)
-    print()
-
 ##############
 from bottle import Bottle, template, request, redirect
 
@@ -58,6 +53,32 @@ def need(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_need()
+    redirect('/')
+
+@app.route('/add-meal', method=['POST'])
+def add_meal(meal):
+    my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
+    redirect('/')
+
+@app.route('/add-recipe', method=['POST'])
+def add_meal(meal):
+    my_mealplan.meals[request.POST.meal_index].recipes.append(recipes.Recipe(name=request.POST.recipe))
+    redirect('/')
+
+@app.route('/delete-meal/<meal_index:int>')
+def delete_meal(meal_index):
+    try:
+        del my_mealplan.meals[meal_index]
+    except:
+        pass
+    redirect('/')
+
+@app.route('/delete-recipe-from-meal/<meal_index:int>/<recipe_index:int>')
+def delete_meal(meal_index, recipe_index):
+    try:
+        del my_mealplan.meals[meal_index].recipes[recipe_index]
+    except Exception as e:
+        print(e)
     redirect('/')
 
 

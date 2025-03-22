@@ -37,6 +37,13 @@ span.optional{
   color: gray;
 }
 
+a.x{
+  opacity: 0.5;
+  font-size: 0.8em;
+  bottom: 0.3em;
+  position: relative;
+}
+
 </style>
 </head>
 <body>
@@ -45,11 +52,11 @@ span.optional{
     <h1>Meal Plan</h1>
     % if mealplan:
       <h2>{{mealplan.name}}</h2>
-      % for meal in mealplan.meals:
-        <h3>{{meal.name}}</h3>
+      % for meal_index, meal in enumerate(mealplan.meals):
+        <h3>{{meal.name}} <a class="x" href="/delete-meal/{{meal_index}}"> ☒</a></h3>
         <ul>
-        % for recipe in meal.recipes:
-          <li>{{recipe.name}}</li>
+        % for recipe_index, recipe in enumerate(meal.recipes):
+          <li>{{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> ☒</a></li>
         % end
         </ul>
       % end
@@ -77,8 +84,8 @@ span.optional{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
-     <td style="width:10%"><a href="/got/{{item.id}}">Got it!</a></td>
-     <td style="width:10%"><a href="/have/{{item.id}}">Have it!</a></td>
+     <td style="width:20%"><a href="/got/{{item.id}}">☐</a></td>
+     <td style="width:20%;opacity:0.5" ><a href="/have/{{item.id}}">Already&nbsp;have&nbsp;it!</a></td>
   </tr>
   % end
 </table>
@@ -102,6 +109,8 @@ span.optional{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
+     <td style="width:20%">&#x2705;</td>
+     <td style="width:20%;opacity:0.5"><a href="/need/{{item.id}}">Need it!</a></td>
   </tr>
   % end
 </table>
@@ -125,7 +134,7 @@ span.optional{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
-     <td style="width:10%"><a href="/need/{{item.id}}">Need it!</a></td>
+     <td style="width:20%;opacity:0.5"><a href="/need/{{item.id}}">Need it!</a></td>
   </tr>
   % end
 </table>

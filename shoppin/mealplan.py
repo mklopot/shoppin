@@ -8,7 +8,8 @@ import yaml
 @dataclass
 class Meal:
     name: str
-    recipes: list[Recipe]
+    recipes: list[Recipe] = field(default_factory=list)
+
 
 @dataclass
 class MealPlan:

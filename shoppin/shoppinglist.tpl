@@ -1,5 +1,17 @@
 <html>
 <head>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function(event) { 
+            var scrollpos = localStorage.getItem('scrollpos');
+            if (scrollpos) window.scrollTo(0, scrollpos);
+        });
+
+        window.onbeforeunload = function(e) {
+            localStorage.setItem('scrollpos', window.scrollY);
+        };
+    </script>
+
 <style>
 a:visited{
   color:blue;
@@ -73,7 +85,11 @@ a.x{
       % end
       <form action="/add-meal" method="POST">
       <!--label for="meal"><h3>Add meal:</h3></label-->
+      % if mealplan.meals:
       <input type="text" id="meal" name="meal">
+      % else:
+      <input type="text" id="meal" name="meal" value="Taco Tuesday Dinner">
+      % end
       <input type="submit" value="Add Meal"></form>
     % end 
 
@@ -100,7 +116,7 @@ a.x{
     % end
      </td>
      <td style="width:20%"><a href="/got/{{item.id}}">☐</a></td>
-     <td style="width:20%;opacity:0.5" ><a href="/have/{{item.id}}">Already&nbsp;have&nbsp;it!</a></td>
+     <td style="width:20%;opacity:0.5" ><a style="border:1px solid blue" href="/have/{{item.id}}">Already&nbsp;have&nbsp;it!</a></td>
   </tr>
   % end
 </table>

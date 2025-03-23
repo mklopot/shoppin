@@ -58,28 +58,37 @@ def need(item_id):
 @app.route('/add-meal', method=['POST'])
 def add_meal():
     my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
+    my_shopping_list.clear()
+    my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
+    my_shopping_list.load_ingredients(my_file.make_shopping_plan())
     redirect('/')
 
 @app.route('/add-recipe', method=['POST'])
 def add_recipe():
-    print("meal index", request.POST.meal_index)
-    print("recipe", request.POST.recipe)
-    new_recipe = my_recipes.recipes[request.POST.recipe]
-    my_mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
-    redirect('/')
-
-@app.route('/delete-meal/<meal_index:int>')
-def delete_meal(meal_index):
     try:
-        del my_mealplan.meals[meal_index]
+        new_recipe = my_recipes.recipes[request.POST.recipe]
+        my_mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
+        my_shopping_list.clear()
+        my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
+        my_shopping_list.load_ingredients(my_file.make_shopping_plan())
     except:
         pass
     redirect('/')
 
+@app.route('/delete-meal/<meal_index:int>')
+def delete_meal(meal_index):
+    meal = my_mealplan.meals[meal_index]
+    for recipe in meal.recipes:
+        my_shopping_list.delete_by_attribution(recipe)
+    del my_mealplan.meals[meal_index]
+    redirect('/')
+
 @app.route('/delete-recipe-from-meal/<meal_index:int>/<recipe_index:int>')
-def delete_meal(meal_index, recipe_index):
+def delete_recipe(meal_index, recipe_index):
     try:
+        recipe_to_delete = my_mealplan.meals[meal_index].recipes[recipe_index]
         del my_mealplan.meals[meal_index].recipes[recipe_index]
+        my_shopping_list.delete_by_attribution(recipe_to_delete)
     except Exception as e:
         print(e)
     redirect('/')

@@ -77,6 +77,33 @@ class ShoppingList:
             return result[0]
         return None
 
+    def delete_by_attribution(self, attribution):
+        mark_for_deletion = []
+        for item in self.ingredients:
+            print("looking at", item.name)
+            if len(item.ingredients) == 1:
+                if item.ingredients[0].attribution is attribution:
+                    print("attributed to", attribution.name)
+                    #self.ingredients.remove(item)
+                    mark_for_deletion.append(item)
+                    print("removing item", item.name)
+                else:
+                    print("not attributed to", attribution.name)
+                    continue
+            else:
+                affected_ingredient_list =[ingredient for ingredient in item.ingredients if ingredient.attribution is attribution] 
+                if affected_ingredient_list:
+                    print("reducing amount for", affected_ingredient_list[0].name)
+                    item.ingredients.remove(affected_ingredient_list[0])
+                    item.amount -= affected_ingredient_list[0].amount
+        for item in mark_for_deletion:
+            self.ingredients.remove(item)
+
+
+    def clear(self):
+        self.ingredients = []
+        self.mapping = {}
+
 class ShoppingListItem:
     def __init__(self, ingredient):
         self.id = id(self)

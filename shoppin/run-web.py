@@ -72,6 +72,14 @@ def need(item_id):
         item.set_need()
     redirect('/')
 
+@app.route('/lock/<item_id:int>')
+def need(item_id):
+    item = my_shopping_list.find_by_id(item_id)
+    if item:
+        item.lock()
+    redirect('/')
+
+
 @app.route('/add-meal', method=['POST'])
 def add_meal():
     if request.POST.meal == "":

@@ -139,8 +139,13 @@ a.x{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
+     % if item.locked:
+     <td style="width:20%"><a href="/got/{{item.id}}">☐</a></td>
+     % else:
      <td style="width:20%"><a href="/got/{{item.id}}">☐</a></td>
      <td style="width:20%;opacity:0.5" ><a style="border:1px solid blue" href="/have/{{item.id}}">Already&nbsp;have&nbsp;it!</a></td>
+     <td style="width:5%"><a href="/lock/{{item.id}}">&empty;</a></td>
+     % end
   </tr>
   % end
 </table>

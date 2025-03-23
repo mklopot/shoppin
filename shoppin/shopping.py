@@ -117,6 +117,7 @@ class ShoppingListItem:
         self.ingredients = ingredients
         self.status = ItemStatus.NEED 
         self.list = None
+        self.locked = False
 
     def from_ingredient(self, ingredient):
         self.name = ingredient.name
@@ -127,8 +128,6 @@ class ShoppingListItem:
         self.optional = ingredient.optional
         self.ingredients = [ingredient]
         self.status = ItemStatus.NEED 
-
-
 
     @staticmethod
     def can_combine(listitem, otheritem):
@@ -182,3 +181,6 @@ class ShoppingListItem:
 
     def set_need(self):
         self.status = ItemStatus.NEED
+
+    def lock(self):
+        self.locked = True

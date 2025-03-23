@@ -32,7 +32,23 @@ def shoppinnglist():
     need = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.NEED]
     got = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.GOT]
     have = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.HAVE]
-    return template("shoppinglist", need=need, got=got, have=have, mealplan=my_mealplan, recipelist=list(my_recipes.recipes.keys()))
+    recipes_ready_to_cook = []
+    for meal in my_mealplan.meals:
+        for recipe in meal.recipes:
+            if shopping.ItemStatus.NEED not in my_shopping_list.status_by_attribution(recipe):
+                recipes_ready_to_cook.append(recipe)
+    meals_ready_to_cook = []
+    for meal in my_mealplan.meals:
+        if len(meal.recipes) == len([recipe for recipe in meal.recipes if recipe in recipes_ready_to_cook]):
+            meals_ready_to_cook.append(meal)
+    return template("shoppinglist",
+                    need=need,
+                    got=got,
+                    have=have,
+                    mealplan=my_mealplan,
+                    recipelist=list(my_recipes.recipes.keys()),
+                    recipes_ready_to_cook=recipes_ready_to_cook,
+                    meals_ready_to_cook=meals_ready_to_cook)
 
 @app.route('/got/<item_id:int>')
 def got(item_id):

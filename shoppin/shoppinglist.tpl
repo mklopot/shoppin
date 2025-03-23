@@ -58,6 +58,7 @@ a.x{
 
 .greendot{
   opacity: 0.5;
+  font-size: 0.8em;
 }
 
 </style>
@@ -75,7 +76,7 @@ a.x{
           <li><span class="greendot">{{!"&#128994;" if recipe in recipes_ready_to_cook else ""}}</span> {{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
         % end
         <li><form action="/add-recipe" method="POST">
-            <input list="recipelist" name="recipe" method="POST">
+            <input list="recipelist" name="recipe" method="POST" required>
             <input type="hidden" name="meal_index" value={{meal_index}}>
             <input type="submit" value="Add Recipe">
             <datalist id="recipelist">
@@ -92,7 +93,7 @@ a.x{
       % if mealplan.meals:
       <input type="text" id="meal" name="meal">
       % else:
-      <input type="text" id="meal" name="meal" value="Taco Tuesday Dinner">
+      <input type="text" id="meal" name="meal" value="Taco Tuesday Dinner" required>
       % end
       <input type="submit" value="Add Meal"></form>
     % end 
@@ -101,6 +102,25 @@ a.x{
 
   <div class="column">
   <h1>Shopping List</h1>
+
+    <div>
+    <h2>Add Item</h2>
+    <form action="/add-item" method="POST">
+    <input type="text" id="name" name="name" method="POST" required>
+    <label for="name">Name</label><br>
+
+    <input type="text" id="amount" name="amount" value="1" method="POST">
+    <label for="amount">Amount</label><br>
+
+    <input type="text" id="brand" name="brand" method="POST">
+    <label for="brand">Brand <i>optional</i></label><br>
+
+    <input type="text" id="vendor" name="vendor" method="POST">
+    <label for="vendor">Best Vendor <i>optional</i></label><br>
+
+    <input type="submit" value="Add Item"><br>
+    </form>
+    </div>
 % if need:
   <h2>To Get</h2>
   <table style="width:100%">
@@ -108,7 +128,7 @@ a.x{
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
-         &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
+         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end

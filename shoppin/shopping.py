@@ -17,7 +17,8 @@ class ShoppingList:
 
     def load_ingredients(self, ingredients: list) -> None:
         for ingredient in ingredients:
-            newitem = ShoppingListItem(ingredient)
+            newitem = ShoppingListItem()
+            newitem.from_ingredient(ingredient)
             newitem.list = self
             self.ingredients.append(newitem)
         self.deduplicate()
@@ -28,10 +29,10 @@ class ShoppingList:
 
     def deduplicate(self):
         self.ingredients.sort(key=lambda item: (singularize(item.name.lower()),
-                                                singularize(item.amount_unit),
-                                                item.brand,
-                                                item.vendor,
-                                                item.optional))
+            singularize(item.amount_unit),
+            item.brand,
+            item.vendor,
+            item.optional))
         marked_for_deduplication = defaultdict(list)
         current_item = None
         for item in self.ingredients:
@@ -105,9 +106,19 @@ class ShoppingList:
         self.mapping = {}
 
 class ShoppingListItem:
-    def __init__(self, ingredient):
+    def __init__(self, name="", amount=1, amount_unit='', brand='', vendor='', optional=False, ingredients=[]):
         self.id = id(self)
+        self.name = name
+        self.amount = amount
+        self.amount_unit = amount_unit
+        self.vendor = vendor
+        self.brand = brand
+        self.optional = optional
+        self.ingredients = ingredients
+        self.status = ItemStatus.NEED 
         self.list = None
+
+    def from_ingredient(self, ingredient):
         self.name = ingredient.name
         self.amount = ingredient.amount
         self.amount_unit = ingredient.amount_unit
@@ -115,8 +126,9 @@ class ShoppingListItem:
         self.brand = ingredient.brand
         self.optional = ingredient.optional
         self.ingredients = [ingredient]
-        ingredient.shopping_list_item = self
         self.status = ItemStatus.NEED 
+
+
 
     @staticmethod
     def can_combine(listitem, otheritem):

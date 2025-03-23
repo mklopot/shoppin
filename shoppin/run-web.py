@@ -5,6 +5,7 @@ import recipes
 import shopping
 import shopping_list_file
 import sequence
+import util
 
 my_recipes = recipes.Recipes()
 my_recipes.load()
@@ -73,6 +74,8 @@ def need(item_id):
 
 @app.route('/add-meal', method=['POST'])
 def add_meal():
+    if request.POST.meal == "":
+        redirect('/')
     my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
     my_shopping_list.clear()
     my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
@@ -109,6 +112,22 @@ def delete_recipe(meal_index, recipe_index):
         print(e)
     redirect('/')
 
+@app.route('/add-item', method=['POST'])
+def add_item():
+    if request.POST.name == "":
+        redirect("/")
+    amount, amount_unit = util.parse_amount(request.POST.amount)
+    item = shopping.ShoppingListItem(name=request.POST.name,
+                                     amount=amount,
+                                     amount_unit=amount_unit,
+                                     brand=request.POST.brand,
+                                     vendor=request.POST.vendor)
+    my_shopping_list.ingredients.append(item)
+    item.list = my_shopping_list
+    my_shopping_list.deduplicate()
+    my_shopping_list._map()
+    my_shopping_list.order()
+    redirect('/')
 
 
 if __name__ == '__main__':

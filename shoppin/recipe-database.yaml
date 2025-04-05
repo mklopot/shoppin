@@ -411,3 +411,23 @@ lima bean side dish:
     - tomato paste:
         amount: 4 oz
 
+cheesy puff pastry rolls:
+    directions: Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano. Roll up and cut into 8 pieces. Combine egg yolk and cream to make an egg wash, brush generously. Bake at 350F for 35 to 40 min, rest for 10 min.
+    ingredients:
+      - puff pastry sheet, frozen:
+          amount: 1 pound
+      - cream cheese:
+          amount: 8 oz
+      - feta cheese:
+          amount: 8 oz
+      - mozzarella cheese:
+          amount: 8 oz
+      - mint:
+          amount: 2 tsp
+      - oregano:
+          amount: 2 tsp
+      - egg
+      - heavy cream:
+          amount: 2 tsp
+
+

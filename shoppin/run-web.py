@@ -1,4 +1,6 @@
 import yaml
+import pickle
+import os
 
 import mealplan
 import recipes
@@ -7,21 +9,32 @@ import shopping_list_file
 import sequence
 import util
 
+picklefile = "appstate.pickle"
+
+def save_state(shoppinglist, mealplan, path=picklefile):
+    with open(path, "wb") as f:
+        pickle.dump((shoppinglist, mealplan), f)
+
 my_recipes = recipes.Recipes()
 my_recipes.load()
-
-my_mealplan =  mealplan.MealPlan("Weekly Meal Plan")
-my_mealplan.load(recipe_database=my_recipes)
 
 my_file = shopping_list_file.ShoppingListFile()
 my_file.load()
 
-my_sequence = sequence.Sequence()
-my_sequence.load()
+if os.path.exists(picklefile):
+    with open(picklefile, "rb") as f:
+        my_shopping_list, my_mealplan = pickle.load(f)
+        my_mealplan.recipe_database = my_recipes
+else:
+    my_mealplan = mealplan.MealPlan("Weekly Meal Plan")
+    # my_mealplan.load(recipe_database=my_recipes)
 
-my_shopping_list = shopping.ShoppingList(my_sequence)
-my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
-my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+    my_sequence = sequence.Sequence()
+    my_sequence.load()
+
+    my_shopping_list = shopping.ShoppingList(my_sequence)
+    my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
+    my_shopping_list.load_ingredients(my_file.make_shopping_plan())
 
 ##############
 from bottle import Bottle, template, request, redirect
@@ -56,6 +69,7 @@ def got(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_got()
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/have/<item_id:int>')
@@ -63,6 +77,7 @@ def have(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_have()
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/need/<item_id:int>')
@@ -70,6 +85,7 @@ def need(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_need()
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/lock/<item_id:int>')
@@ -77,6 +93,7 @@ def need(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.lock()
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 
@@ -88,6 +105,8 @@ def add_meal():
     my_shopping_list.clear()
     my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
     my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/add-recipe', method=['POST'])
@@ -98,8 +117,10 @@ def add_recipe():
         my_shopping_list.clear()
         my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
         my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+
     except:
         pass
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/delete-meal/<meal_index:int>')
@@ -108,6 +129,7 @@ def delete_meal(meal_index):
     for recipe in meal.recipes:
         my_shopping_list.delete_by_attribution(recipe)
     del my_mealplan.meals[meal_index]
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/delete-recipe-from-meal/<meal_index:int>/<recipe_index:int>')
@@ -118,6 +140,7 @@ def delete_recipe(meal_index, recipe_index):
         my_shopping_list.delete_by_attribution(recipe_to_delete)
     except Exception as e:
         print(e)
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 @app.route('/add-item', method=['POST'])
@@ -135,6 +158,7 @@ def add_item():
     my_shopping_list.deduplicate()
     my_shopping_list._map()
     my_shopping_list.order()
+    save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
 

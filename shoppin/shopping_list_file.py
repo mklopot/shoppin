@@ -28,7 +28,7 @@ class ShoppingListFile:
     def load(self, shopping_list_filepath="shopping-list.yaml"):
         with open(shopping_list_filepath) as f:
             try:
-                loaded_sections = yaml.load(f)
+                loaded_sections = yaml.safe_load(f)
             except Exception as e:
                 print("Could not parse shopping list from file ", shopping_list_filepath, ":\n", e)
         for loaded_section in loaded_sections:

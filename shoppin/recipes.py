@@ -30,7 +30,7 @@ class Recipes:
     def load(self, recipe_db_filepath="recipe-database.yaml"):
         with open(recipe_db_filepath) as f:
             try:
-                loaded_recipes = yaml.load(f)
+                loaded_recipes = yaml.safe_load(f)
             except ScannerError as e:
                 print("Could not parse recipe database from file", recipe_db_filepath, ":\n", e)
         for loaded_recipe in loaded_recipes:

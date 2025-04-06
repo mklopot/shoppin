@@ -1,5 +1,7 @@
 from enum import Enum
 from collections import defaultdict
+import uuid
+
 
 from util import pluralize, singularize
 
@@ -7,7 +9,6 @@ class ItemStatus(Enum):
     NEED = 1
     GOT = 2
     HAVE = 3
-    HAVE_PARTIAL = 4
 
 
 class ShoppingList:
@@ -105,9 +106,10 @@ class ShoppingList:
         self.ingredients = []
         self.mapping = {}
 
+
 class ShoppingListItem:
     def __init__(self, name="", amount=1, amount_unit='', brand='', vendor='', optional=False, ingredients=[]):
-        self.id = id(self)
+        self.id = uuid.uuid4().int
         self.name = name
         self.amount = amount
         self.amount_unit = amount_unit

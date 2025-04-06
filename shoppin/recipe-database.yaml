@@ -284,7 +284,7 @@ steak:
     - herbs, fresh:
         optional: true
     
-mashed potatioes:
+mashed potatoes with herbs:
   ingredients: 
     - potatoes, Russet:
         amount: 6
@@ -430,4 +430,23 @@ cheesy puff pastry rolls:
       - heavy cream:
           amount: 2 tsp
 
+veggie nuggets:
+    ingredients:
+      - veggie nuggets:
+          amount: 1 package
+
+butternut squash soup:
+    ingredients:
+      - onion:
+          amount: 1 
+      - olive oil:
+          amount: 1 tbsp
+      - better than boullion, or other veggie broth:
+          amount: to make 2 cups
+      - butternut squash
+      - croutons:
+          optional: true
+      - cream:
+          amount: 1 cup
+          optional: true
 

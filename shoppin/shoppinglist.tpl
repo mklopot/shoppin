@@ -1,5 +1,6 @@
 <html>
 <head>
+    <meta http-equiv="refresh" content="1200">
 
     <script>
         document.addEventListener("DOMContentLoaded", function(event) { 
@@ -97,7 +98,7 @@ a.x{
       % if mealplan.meals:
       <input type="text" id="meal" name="meal">
       % else:
-      <input type="text" id="meal" name="meal" value="Taco Tuesday Dinner" required>
+      <input type="text" id="meal" name="meal" placeholder="Meal name, like 'Monday Dinner'" required style="min-width: 300px">
       % end
       <input type="submit" value="Add Meal"></form>
     % end 
@@ -162,7 +163,7 @@ a.x{
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
-         &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
+         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end
@@ -187,7 +188,7 @@ a.x{
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
-         &nbsp;&nbsp;<span class="attribution">For {{', '.join([ingredient.attribution.name for ingredient in item.ingredients])}}</span>
+         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end

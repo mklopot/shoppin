@@ -445,7 +445,7 @@ butternut squash soup:
           amount: to make 2 cups
       - butternut squash
       - croutons:
-          optiona: true
+          optional: true
       - cream:
           amount: 1 cup
           optional: true

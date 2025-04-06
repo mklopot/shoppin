@@ -284,7 +284,7 @@ steak:
     - herbs, fresh:
         optional: true
     
-mashed potatos with herbs:
+mashed potatoes with herbs:
   ingredients: 
     - potatoes, Russet:
         amount: 6

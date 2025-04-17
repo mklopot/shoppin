@@ -450,3 +450,98 @@ butternut squash soup:
           amount: 1 cup
           optional: true
 
+vanilla pudding:
+  directions: Mix everything and boil at low heat for ~5 minutes and whisk the entire time until thick.
+  ingredients:
+    - milk:
+        amount: 3 cups
+    - butter:
+        amount: 1 stick
+    - cinnamon:
+        amount: 1 tbsp
+    - vannila extract:
+        amount: 1/4 tbsp
+    - brown sugar:
+        amount: 1/2 tbsp
+    - cornstarch:
+        amount: 2 tbsp
+
+black bean patty with cheese:
+  ingredients:
+    - black bean patty:
+        amount: 1 patty
+    - cheese:
+        amount: 1 slice
+
+stir fry beef:
+  ingredients:
+    - beef, thinly sliced:
+        amount: 1 pound
+    - baking soda:
+        amount: 1 tsp
+    - corn starch:
+        amount: 1 tbsp
+    - soy sauce:
+        amount: 1 tbsp
+
+steamed broccoli:
+  ingredients:
+    - broccoli:
+        amount: 1 head
+         
+solyanka:
+  description: Eastern European "everything but the kitchen sink" soup with a multitude of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
+  ingredients:
+    - bay leaves:
+        amount: 2 large leaves
+    - peppercorns, whole:
+        amount: 6 peppercorns
+    - allspice berries, whole:
+        amount: 4 berries
+    - water:
+        amount: 10 cups
+    - concentrated beef base, or Better Than Boullion:
+        amount: 4 tablespoons
+    - cabbage:
+        amount: .25 head
+    - celery:
+        amount: 3 ribs
+    - avocado oil:
+        amount: 3 tbsp
+    - onions:
+        amount: 2
+    - carrots:
+        amount: 2
+    - ham or polish sausage:
+        amount: .5 pounds
+        optional: true
+    - chicken breast:
+        amount: 1
+        optional: true
+    - ham:
+        amount: .25 pounds
+        optional: true
+    - dill pickles:
+        amount: 3 pickles
+    - tomato paste:
+        amount: 6 oz
+    - canned stewed or diced tomatoes:
+        amount: 24 oz
+    - sliced black olives:
+        amount: 6 oz
+    - capers:
+        amount: 2 tbsp
+        optional: true
+    - dry white wine:
+        amount: 1 cup
+        optional: true
+    - salt:
+        amount: 1 pinch
+    - pepper:
+        amount: 1 pinch
+    - sour cream:
+        amount: .5 cup
+        optional: true
+    - dill:
+        amount: .33 cups
+        optional: true

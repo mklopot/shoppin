@@ -53,9 +53,9 @@ class ShoppingList:
 
     def _map(self):
         if self.sequence:
-            self.mapping = {}
+            self.mapping = defaultdict(list)
             for item in self.ingredients:
-                self.mapping[item.name] = item
+                self.mapping[item.name].append(item)
 
     def update_sequence(self, item_name):
         if self.sequence:
@@ -65,12 +65,12 @@ class ShoppingList:
     def order(self):
         if self.sequence:
             ordered = []
-            for item in self.sequence.data:
-                if item in self.mapping:
-                    ordered.append(self.mapping[item])
-            for item in self.mapping:
-                if self.mapping[item] not in ordered:
-                    ordered.append(self.mapping[item])
+            for name in self.sequence.data:
+                if name in self.mapping:
+                    ordered.extend(self.mapping[name])
+            for name in self.mapping:
+                if name not in self.sequence.data:
+                    ordered.extend(self.mapping[name])
             self.ingredients = ordered
 
     def find_by_id(self, item_id):

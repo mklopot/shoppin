@@ -186,3 +186,6 @@ class ShoppingListItem:
 
     def lock(self):
         self.locked = True
+
+    def unlock(self):
+        self.locked = False

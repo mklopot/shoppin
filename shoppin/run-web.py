@@ -69,6 +69,7 @@ def got(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_got()
+        item.unlock()
     save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
@@ -77,6 +78,7 @@ def have(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_have()
+        item.unlock()
     save_state(my_shopping_list, my_mealplan)
     redirect('/')
 

@@ -104,9 +104,9 @@ def add_meal():
     if request.POST.meal == "":
         redirect('/')
     my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
-    my_shopping_list.clear()
-    my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
-    my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+    # my_shopping_list.clear()
+    # my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
+    # my_shopping_list.load_ingredients(my_file.make_shopping_plan())
 
     save_state(my_shopping_list, my_mealplan)
     redirect('/')
@@ -116,9 +116,10 @@ def add_recipe():
     try:
         new_recipe = my_recipes.recipes[request.POST.recipe]
         my_mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
-        my_shopping_list.clear()
-        my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
-        my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+        # my_shopping_list.clear()
+        # my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
+        # my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+        my_shopping_list.load_ingredients(new_recipe.make_shopping_plan())
 
     except:
         pass

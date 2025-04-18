@@ -13,6 +13,10 @@ class Recipe:
     directions: str = ""
     description: str = ""
 
+    def make_shopping_plan(self):
+        return self.ingredients
+
+
 @dataclass
 class Ingredient:
     name: str

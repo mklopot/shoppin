@@ -164,6 +164,11 @@ def add_item():
     save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
+@app.route('/clear')
+def clear():
+    my_shopping_list.clear()
+    my_mealplan.meals = []
+    redirect('/')
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000, debug=True, reloader=True)

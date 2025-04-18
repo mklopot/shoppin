@@ -106,7 +106,7 @@ a.x{
   </div>
 
   <div class="column">
-  <h1>Shopping List</h1>
+  <h1>Shopping List <form action="/clear"><input type="submit" value="Clear All"></form></h1>
 
     <div>
     <h2>Add Item</h2>

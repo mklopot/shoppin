@@ -545,3 +545,56 @@ solyanka:
     - dill:
         amount: .33 cups
         optional: true
+
+mac-and-cheese casserole:
+  description: adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
+  directions: |
+    Preheat oven to 350F. Lightly grease a large 3 qt or 4 qt baking dish and set aside.Combine shredded cheeses in a large bowl and set aside.
+    Cook the pasta one minute shy of al dente according to the package instructions. Remove from heat, drain, and place in a large bowl.
+
+    Drizzle pasta with olive oil and stir to coat pasta. Set aside to cool while preparing cheese sauce.
+    Melt butter in a deep saucepan, dutch oven, or stock pot.
+    Whisk in flour over medium heat and continue whisking for about 1 minute until bubbly and golden.
+    Gradually whisk in the milk and heavy cream until nice and smooth. Continue whisking until you see bubbles on the surface and then continue cooking and whisking for another 2 minutes. Whisk in salt and pepper.
+    Add two cups of shredded cheese and whisk until smooth. Add another two cups of shredded cheese and continue whisking until creamy and smooth. Sauce should be nice and thick.
+    Stir in the cooled pasta until combined and pasta is fully coated with the cheese sauce.
+    Pour half of the mac and cheese into the prepared baking dish. Top with remaining 2 cups of shredded cheese and then the remaining mac and cheese.
+    In a small bowl, combine panko crumbs, Parmesan cheese, melted butter and paprika. Sprinkle over the top and bake until bubbly and golden brown, about 30 minutes. Serve immediately.
+
+    Tips for the Best Homemade Baked Mac and Cheese
+    Use block cheese and shred, do not buy the pre-shredded cheese. The pre-shredded cheese is great for so many things but not macaroni and cheese. It’s coated and won’t melt properly. You need to shred it yourself for the best result.
+    Cook your pasta to slightly less than al dente, about one minute shy is perfect. The reason is that this is baked mac and cheese so the pasta will continue to cook in the homemade cheese sauce in the oven. You don’t want soggy macaroni.
+    I used elbow pasta but really, any tubular past will work.
+    This mac and cheese recipe starts with a roux. The roux is super important to getting the creamiest cheese sauce of your life. 
+    The roux (equal parts butter and flour) is whisked together until bubbly and golden.
+    Whisk in cold milk – not warm – to prevent the flour from clumping.
+    Cook the roux until  you see bubbles on the surface and then continue cooking for an additional 2 minutes before adding the cheese.
+  ingredients:
+    - elbow macaroni, cooked (or other tubular pasta):
+        amount: 16 oz
+    - extra virgin olive oil:
+        amount: 1 tbsp
+    - unsalted butter:
+        amount: 6 tbsp
+    - all purpose flour:
+        amount: .33 cups
+    - whole milk:
+        amount: 3 cups
+    - heavy whipping cream:
+        amount: 1 cup
+    - sharp cheddar cheese shredded:
+        amount: 4 cups
+    - Gruyere cheese shredded:
+        amount: 2 cups
+    - salt: 
+        amount: 1 pinch
+    - pepper:
+        amount: 1 pinch
+    - panko crumbs:
+        amount: 1.5 cups
+    - butter melted:
+        amount: 4 tbsp
+    - Parmesan cheese shredded:
+        amount: .5 cup
+    - paprika:
+        amount: .25 tsp

@@ -107,9 +107,9 @@ a.x{
     <form action="/include-lists" method="POST">
     % for index, sublist in enumerate(list_manager.lists):
       % if sublist.include:
-    <h3> {{sublist.name}}<input type="checkbox" name={{index}} value="include" checked></h3>
+    <h3><input type="checkbox" name={{index}} value="include" checked> {{sublist.name}}</h3>
       % else:
-    <h3> {{sublist.name}}<input type="checkbox" name={{index}} value="include"></h3>
+    <h3><input type="checkbox" name={{index}} value="include"> {{sublist.name}}</h3>
       % end
     % end
     <input type="submit" value="Apply">

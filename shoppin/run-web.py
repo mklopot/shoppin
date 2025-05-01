@@ -8,6 +8,7 @@ import shopping
 import shopping_list_file
 import sequence
 import util
+import list_manager
 
 picklefile = "appstate.pickle"
 
@@ -17,9 +18,6 @@ def save_state(shoppinglist, mealplan, path=picklefile):
 
 my_recipes = recipes.Recipes()
 my_recipes.load()
-
-my_file = shopping_list_file.ShoppingListFile()
-my_file.load()
 
 if os.path.exists(picklefile):
     with open(picklefile, "rb") as f:
@@ -32,10 +30,10 @@ else:
     my_sequence = sequence.Sequence()
     my_sequence.load()
 
-    my_shopping_list = shopping.ShoppingList(my_sequence)
-    my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
-    my_shopping_list.load_ingredients(my_file.make_shopping_plan())
-
+my_list_manager = list_manager.ListManager("lists/")
+print("Loaded sublists:")
+for sublist in my_list_manager.lists:
+    print(sublist.name, len(sublist.make_shopping_plan()))
 ##############
 from bottle import Bottle, template, request, redirect
 
@@ -60,6 +58,7 @@ def shoppinnglist():
                     got=got,
                     have=have,
                     mealplan=my_mealplan,
+                    list_manager = my_list_manager,
                     recipelist=list(my_recipes.recipes.keys()),
                     recipes_ready_to_cook=recipes_ready_to_cook,
                     meals_ready_to_cook=meals_ready_to_cook)
@@ -164,10 +163,32 @@ def add_item():
     save_state(my_shopping_list, my_mealplan)
     redirect('/')
 
+@app.route('/include-lists', method=['POST'])
+def include_lists():
+    include_set = {int(i) for i in request.POST.keys()}
+    print("include_set:", include_set)
+    for index, sublist in enumerate(my_list_manager.lists):
+        print("before:", index, sublist, sublist.include)
+        if sublist.include:
+            if index not in include_set:
+                sublist.include = False
+                print("removing", index, sublist)
+                my_shopping_list.delete_by_attribution(sublist)
+        else:
+            if index in include_set:
+                sublist.include = True
+                print("loading", index, sublist)
+                my_shopping_list.load_ingredients(sublist.make_shopping_plan())
+        print("after:", index, sublist, sublist.include)
+    save_state(my_shopping_list, my_mealplan)
+    redirect('/')
+
 @app.route('/clear')
 def clear():
     my_shopping_list.clear()
     my_mealplan.meals = []
+    for sublist in my_list_manager.lists:
+        sublist.include = False
     redirect('/')
 
 if __name__ == '__main__':

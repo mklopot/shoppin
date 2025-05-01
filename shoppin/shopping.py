@@ -39,8 +39,6 @@ class ShoppingList:
         for item in self.ingredients:
             if current_item:
                 if ShoppingListItem.can_combine(item, current_item): 
-                    # if current_item.combine(item):
-                        # self.ingredients.remove(item)
                     marked_for_deduplication[current_item].append(item)
                 else:
                     current_item = item

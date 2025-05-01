@@ -1,7 +1,6 @@
 <html>
 <head>
     <meta http-equiv="refresh" content="1200">
-
     <script>
         document.addEventListener("DOMContentLoaded", function(event) { 
             var scrollpos = localStorage.getItem('scrollpos');
@@ -103,6 +102,19 @@ a.x{
       <input type="submit" value="Add Meal"></form>
     % end 
 
+    % if list_manager:
+    <h1>Include Lists</h1>
+    <form action="/include-lists" method="POST">
+    % for index, sublist in enumerate(list_manager.lists):
+      % if sublist.include:
+    <h3> {{sublist.name}}<input type="checkbox" name={{index}} value="include" checked></h3>
+      % else:
+    <h3> {{sublist.name}}<input type="checkbox" name={{index}} value="include"></h3>
+      % end
+    % end
+    <input type="submit" value="Apply">
+    </form>
+    % end
   </div>
 
   <div class="column">
@@ -111,7 +123,7 @@ a.x{
     <div>
     <h2>Add Item</h2>
     <form action="/add-item" method="POST">
-    <input type="text" id="name" name="name" method="POST" required>
+    <input type="text" id="name" name="name" method="POST" placeholder='Name of item, like "celery"' required>
     <label for="name">Name</label><br>
 
     <input type="text" id="amount" name="amount" value="1" method="POST">
@@ -121,7 +133,7 @@ a.x{
     <label for="brand">Brand <i>optional</i></label><br>
 
     <input type="text" id="vendor" name="vendor" method="POST">
-    <label for="vendor">Best Vendor <i>optional</i></label><br>
+    <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
 
     <input type="submit" value="Add Item"><br>
     </form>
@@ -133,7 +145,8 @@ a.x{
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
-         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
+         <!-- &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span -->
+         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.purpose for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end
@@ -163,7 +176,7 @@ a.x{
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
-         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
+         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.purpose for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end
@@ -188,7 +201,7 @@ a.x{
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
-         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.attribution.name for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
+         &nbsp;&nbsp;<span class="attribution">For {{(', '.join([ingredient.purpose for ingredient in item.ingredients]) if item.ingredients else "one-time purchase")}}</span>
     % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
     % end

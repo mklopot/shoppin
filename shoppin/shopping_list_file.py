@@ -11,24 +11,18 @@ class Section:
     name: str
     items: list["Item"]
 
-@dataclass
-class Item:
-    name: str
-    attribution: Section
-    amount: float = 1
-    amount_unit: str = ""
-    optional: bool = False
-    brand: str = ""
-    vendor: str = ""
  
 class ShoppingListFile:
-    def __init__(self, sections: list[Section] = {}) -> None:
-        self.sections = sections
+    def __init__(self) -> None:
+        self.sections = {}
+        self.name = ""
+        self.include = False
 
     def load(self, shopping_list_filepath="shopping-list.yaml"):
         with open(shopping_list_filepath) as f:
             try:
                 loaded_sections = yaml.safe_load(f)
+                self.name = shopping_list_filepath
             except Exception as e:
                 print("Could not parse shopping list from file ", shopping_list_filepath, ":\n", e)
         for loaded_section in loaded_sections:
@@ -37,8 +31,11 @@ class ShoppingListFile:
             self.sections[loaded_section] = (Section(name=loaded_section,
                                                   items=[]))
             for item in loaded_items:
+                print(self.sections[loaded_section].name)
                 if type(item) is str:
-                    items.append(Item(name=item, attribution=self.sections[loaded_section]))
+                    items.append(Item(name=item,
+                        purpose=self.sections[loaded_section].name,
+                        attribution=self))
                 else:
                     name = list(item.keys())[0].strip()
                     amount_with_unit = str(item[name].get("amount", "1"))
@@ -53,7 +50,8 @@ class ShoppingListFile:
                                       optional=optional,
                                       brand=brand,
                                       vendor=vendor,
-                                      attribution=self.sections[loaded_section]))
+                                      attribution=self,
+                                      purpose=self.sections[loaded_section].name))
 
             self.sections[loaded_section].items = items
 
@@ -63,3 +61,15 @@ class ShoppingListFile:
             for item in self.sections[section].items:
                     items_list.append(item)
         return items_list
+
+@dataclass
+class Item:
+    name: str
+    attribution: ShoppingListFile 
+    purpose: Section
+    amount: float = 1
+    amount_unit: str = ""
+    optional: bool = False
+    brand: str = ""
+    vendor: str = ""
+ 

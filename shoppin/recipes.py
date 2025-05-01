@@ -21,6 +21,7 @@ class Recipe:
 class Ingredient:
     name: str
     attribution: Recipe
+    purpose: str
     amount: float = 1
     amount_unit: str = ""
     optional: bool = False
@@ -48,7 +49,9 @@ class Recipes:
                                                   description=description))
             for ingredient in loaded_ingredients:
                 if type(ingredient) is str:
-                    ingredients.append(Ingredient(name=ingredient, attribution=self.recipes[loaded_recipe]))
+                    ingredients.append(Ingredient(name=ingredient,
+                        purpose=self.recipes[loaded_recipe].name,
+                        attribution=self.recipes[loaded_recipe]))
                 else:
                     name = list(ingredient.keys())[0].strip()
                     amount_with_unit = str(ingredient[name].get("amount", "1"))
@@ -63,6 +66,7 @@ class Recipes:
                                                   optional=optional,
                                                   brand=brand,
                                                   vendor=vendor,
+                                                  purpose=self.recipes[loaded_recipe].name,
                                                   attribution=self.recipes[loaded_recipe]))
 
             self.recipes[loaded_recipe].ingredients = ingredients

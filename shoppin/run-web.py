@@ -12,25 +12,25 @@ import list_manager
 
 picklefile = "appstate.pickle"
 
-def save_state(shoppinglist, mealplan, path=picklefile):
+def save_state(shoppinglist, mealplan, list_manager, path=picklefile):
     with open(path, "wb") as f:
-        pickle.dump((shoppinglist, mealplan), f)
+        pickle.dump((shoppinglist, mealplan, list_manager), f)
 
 my_recipes = recipes.Recipes()
 my_recipes.load()
 
 if os.path.exists(picklefile):
     with open(picklefile, "rb") as f:
-        my_shopping_list, my_mealplan = pickle.load(f)
+        my_shopping_list, my_mealplan, my_list_manager = pickle.load(f)
         my_mealplan.recipe_database = my_recipes
 else:
+    my_shopping_list = shopping.ShoppingList()
     my_mealplan = mealplan.MealPlan("Weekly Meal Plan")
-    # my_mealplan.load(recipe_database=my_recipes)
 
     my_sequence = sequence.Sequence()
     my_sequence.load()
 
-my_list_manager = list_manager.ListManager("lists/")
+    my_list_manager = list_manager.ListManager("lists/")
 print("Loaded sublists:")
 for sublist in my_list_manager.lists:
     print(sublist.name, len(sublist.make_shopping_plan()))
@@ -69,7 +69,7 @@ def got(item_id):
     if item:
         item.set_got()
         item.unlock()
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/have/<item_id:int>')
@@ -78,7 +78,7 @@ def have(item_id):
     if item:
         item.set_have()
         item.unlock()
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/need/<item_id:int>')
@@ -86,7 +86,7 @@ def need(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.set_need()
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/lock/<item_id:int>')
@@ -94,7 +94,7 @@ def need(item_id):
     item = my_shopping_list.find_by_id(item_id)
     if item:
         item.lock()
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 
@@ -107,7 +107,7 @@ def add_meal():
     # my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
     # my_shopping_list.load_ingredients(my_file.make_shopping_plan())
 
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/add-recipe', method=['POST'])
@@ -122,7 +122,7 @@ def add_recipe():
 
     except:
         pass
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/delete-meal/<meal_index:int>')
@@ -131,7 +131,7 @@ def delete_meal(meal_index):
     for recipe in meal.recipes:
         my_shopping_list.delete_by_attribution(recipe)
     del my_mealplan.meals[meal_index]
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/delete-recipe-from-meal/<meal_index:int>/<recipe_index:int>')
@@ -142,7 +142,7 @@ def delete_recipe(meal_index, recipe_index):
         my_shopping_list.delete_by_attribution(recipe_to_delete)
     except Exception as e:
         print(e)
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/add-item', method=['POST'])
@@ -154,13 +154,14 @@ def add_item():
                                      amount=amount,
                                      amount_unit=amount_unit,
                                      brand=request.POST.brand,
-                                     vendor=request.POST.vendor)
+                                     vendor=request.POST.vendor,
+                                     purpose="One-time purchase")
     my_shopping_list.ingredients.append(item)
     item.list = my_shopping_list
     my_shopping_list.deduplicate()
     my_shopping_list._map()
     my_shopping_list.order()
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/include-lists', method=['POST'])
@@ -180,7 +181,7 @@ def include_lists():
                 print("loading", index, sublist)
                 my_shopping_list.load_ingredients(sublist.make_shopping_plan())
         print("after:", index, sublist, sublist.include)
-    save_state(my_shopping_list, my_mealplan)
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 @app.route('/clear')
@@ -189,6 +190,7 @@ def clear():
     my_mealplan.meals = []
     for sublist in my_list_manager.lists:
         sublist.include = False
+    save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
 if __name__ == '__main__':

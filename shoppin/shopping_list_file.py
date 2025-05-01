@@ -22,7 +22,8 @@ class ShoppingListFile:
         with open(shopping_list_filepath) as f:
             try:
                 loaded_sections = yaml.safe_load(f)
-                self.name = shopping_list_filepath
+                self.name = shopping_list_filepath.split("/")[-1]
+                self.name = self.name.split(".")[0]
             except Exception as e:
                 print("Could not parse shopping list from file ", shopping_list_filepath, ":\n", e)
         for loaded_section in loaded_sections:

@@ -598,3 +598,42 @@ mac-and-cheese casserole:
         amount: .5 cup
     - paprika:
         amount: .25 tsp
+
+egg salad sandwiches:
+  ingredients:
+    - bread:
+        amount: 6 slices
+    - eggs:
+        amount: 8
+    - onion:
+        amount: .25
+        optional: true
+    - celery:
+        amount: 1 rib
+        optional: true
+    - mayonnaise:
+        amount: 3 oz
+    - salt:
+        amount: .25 tsp
+    - pepper:
+        amount: .25 tsp
+    - curry powder:
+        amount: .75 tsp
+        optiona: true
+
+roasted broccoli:
+  directions: Cut into florets, toss with olive oil and salt and pepper, bake at 15 to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with herbs.
+  ingredients:
+    - broccoli:
+        amount: 1 head
+    - olive oil:
+        amount: 2 tbsp
+    - salt:
+        amount: .5 tsp
+    - pepper: 
+        amount: .5 tsp
+    - parmesan cheese:
+        amount: 3 tbsp
+    - garlic: 
+        amount: 3 cloves
+    - fresh herbs

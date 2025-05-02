@@ -1,6 +1,7 @@
 import yaml
 import pickle
 import os
+from datetime import datetime
 
 import mealplan
 import recipes
@@ -25,7 +26,8 @@ if os.path.exists(picklefile):
         my_mealplan.recipe_database = my_recipes
 else:
     my_shopping_list = shopping.ShoppingList()
-    my_mealplan = mealplan.MealPlan("Weekly Meal Plan")
+    mealplan_name = datetime.now().strftime("Created %A, %B %d")
+    my_mealplan = mealplan.MealPlan(mealplan_name)
 
     my_sequence = sequence.Sequence()
     my_sequence.load()
@@ -113,6 +115,8 @@ def add_meal():
 @app.route('/add-recipe', method=['POST'])
 def add_recipe():
     try:
+        if not my_mealplan.meals:
+            my_mealplan.name = datetime.now().strftime("Created %A, %B %d")
         new_recipe = my_recipes.recipes[request.POST.recipe]
         my_mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
         # my_shopping_list.clear()
@@ -147,15 +151,15 @@ def delete_recipe(meal_index, recipe_index):
 
 @app.route('/add-item', method=['POST'])
 def add_item():
-    if request.POST.name == "":
+    item_name = request.POST.name.strip().strip("?").strip() # Hi Beth!
+    if item_name == "":
         redirect("/")
     amount, amount_unit = util.parse_amount(request.POST.amount)
-    item = shopping.ShoppingListItem(name=request.POST.name,
+    item = shopping.ShoppingListItem(name=item_name,
                                      amount=amount,
                                      amount_unit=amount_unit,
                                      brand=request.POST.brand,
-                                     vendor=request.POST.vendor,
-                                     purpose="One-time purchase")
+                                     vendor=request.POST.vendor)
     my_shopping_list.ingredients.append(item)
     item.list = my_shopping_list
     my_shopping_list.deduplicate()

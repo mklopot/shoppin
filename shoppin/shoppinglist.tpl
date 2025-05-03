@@ -74,10 +74,24 @@ a.x{
     % if mealplan:
       <h2>{{mealplan.name}}</h2>
       % for meal_index, meal in enumerate(mealplan.meals):
-        <h3><span class="greendot">{{!"&#128994;" if meal in meals_ready_to_cook else ""}}</span> {{meal.name}} <a class="x" href="/delete-meal/{{meal_index}}"> &#9447;</a></h3>
+        <h3><span class="greendot">\\
+        % if meal in meals_ready_to_cook:
+         &#128994;\\
+        % elif meal in meals_only_missing_optional:
+         &#128993;\\
+        % end
+        </span> {{meal.name}} <a class="x" href="/delete-meal/{{meal_index}}"> &#9447;</a></h3>
         <ul>
         % for recipe_index, recipe in enumerate(meal.recipes):
-          <li><span class="greendot">{{!"&#128994;" if recipe in recipes_ready_to_cook else ""}}</span> {{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
+          <li><span class="greendot">\\
+          % if  recipe in recipes_ready_to_cook:
+         &#128994;\\
+          % elif recipe in recipes_only_missing_optional:
+         &#128993;\\
+          % end
+          </span> {{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
+
+
         % end
         <li><form action="/add-recipe" method="POST">
             <input list="recipelist" name="recipe" method="POST" required>

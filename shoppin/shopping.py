@@ -95,10 +95,13 @@ class ShoppingList:
 
     def status_by_attribution(self, recipe):
         status = set()
+        status_ignore_optional = set()
         affected_ingredient_list =[item for item in self.ingredients if recipe in [ingredient.attribution for ingredient in item.ingredients]] 
         for item in affected_ingredient_list:
             status.add(item.status)
-        return status
+            if not item.optional:
+                status_ignore_optional.add(item.status)
+        return status, status_ignore_optional
 
     def clear(self):
         self.ingredients = []

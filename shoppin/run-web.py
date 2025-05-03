@@ -46,15 +46,26 @@ def shoppinnglist():
     need = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.NEED]
     got = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.GOT]
     have = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.HAVE]
+
     recipes_ready_to_cook = []
+    recipes_only_missing_optional = []
     for meal in my_mealplan.meals:
         for recipe in meal.recipes:
-            if shopping.ItemStatus.NEED not in my_shopping_list.status_by_attribution(recipe):
+            status, status_ignore_optional = my_shopping_list.status_by_attribution(recipe)
+            if shopping.ItemStatus.NEED not in status:
                 recipes_ready_to_cook.append(recipe)
+            elif shopping.ItemStatus.NEED not in status_ignore_optional:
+                recipes_only_missing_optional.append(recipe)
+
     meals_ready_to_cook = []
+    meals_only_missing_optional = []
     for meal in my_mealplan.meals:
-        if len(meal.recipes) == len([recipe for recipe in meal.recipes if recipe in recipes_ready_to_cook]):
+        num_ready = len([recipe for recipe in meal.recipes if recipe in recipes_ready_to_cook])
+        if len(meal.recipes) == num_ready:
             meals_ready_to_cook.append(meal)
+        if len(meal.recipes) == len([recipe for recipe in meal.recipes if recipe in recipes_only_missing_optional]) + num_ready:
+            meals_only_missing_optional.append(meal)
+
     return template("shoppinglist",
                     need=need,
                     got=got,
@@ -63,7 +74,9 @@ def shoppinnglist():
                     list_manager = my_list_manager,
                     recipelist=list(my_recipes.recipes.keys()),
                     recipes_ready_to_cook=recipes_ready_to_cook,
-                    meals_ready_to_cook=meals_ready_to_cook)
+                    recipes_only_missing_optional=recipes_only_missing_optional,
+                    meals_ready_to_cook=meals_ready_to_cook,
+                    meals_only_missing_optional=meals_only_missing_optional)
 
 @app.route('/got/<item_id:int>')
 def got(item_id):

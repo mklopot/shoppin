@@ -106,6 +106,8 @@ class ShoppingList:
     def clear(self):
         self.ingredients = []
         self.mapping = {}
+        if self.sequence:
+            self.sequence.reset_pointer()
 
 
 class ShoppingListItem:

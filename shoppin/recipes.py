@@ -4,6 +4,7 @@ from yaml.scanner import ScannerError
 
 
 from util import parse_amount
+import shopping
 
 
 @dataclass
@@ -27,6 +28,7 @@ class Ingredient:
     optional: bool = False
     brand: str = ""
     vendor: str = ""
+    item: shopping.ShoppingListItem | None = None
  
 class Recipes:
     def __init__(self, recipes: list[Recipe] = {}) -> None:

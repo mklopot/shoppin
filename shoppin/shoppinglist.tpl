@@ -89,7 +89,7 @@ a.x{
           % elif recipe in recipes_only_missing_optional:
          &#128993;\\
           % end
-          </span> {{recipe.name}} <a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
+          </span> <a href="/recipe/{{meal_index}}/{{recipe_index}}">{{recipe.name}}</a><a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
 
 
         % end

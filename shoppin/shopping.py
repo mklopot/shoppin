@@ -106,6 +106,8 @@ class ShoppingList:
     def clear(self):
         self.ingredients = []
         self.mapping = {}
+        if self.sequence:
+            self.sequence.reset_pointer()
 
 
 class ShoppingListItem:
@@ -131,6 +133,7 @@ class ShoppingListItem:
         self.optional = ingredient.optional
         self.ingredients = [ingredient]
         self.status = ItemStatus.NEED 
+        ingredient.item = self
 
     @staticmethod
     def can_combine(listitem, otheritem):

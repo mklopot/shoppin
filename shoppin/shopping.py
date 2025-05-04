@@ -133,6 +133,7 @@ class ShoppingListItem:
         self.optional = ingredient.optional
         self.ingredients = [ingredient]
         self.status = ItemStatus.NEED 
+        ingredient.item = self
 
     @staticmethod
     def can_combine(listitem, otheritem):

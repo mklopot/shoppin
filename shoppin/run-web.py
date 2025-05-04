@@ -210,5 +210,11 @@ def clear():
     save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
+@app.route('/recipe/<meal_index:int>/<recipe_index:int>')
+def recipe(meal_index, recipe_index):
+    recipe = my_mealplan.meals[meal_index].recipes[recipe_index]
+    return template("recipe", recipe=recipe)
+
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000, debug=True, reloader=True)

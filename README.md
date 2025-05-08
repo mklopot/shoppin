@@ -11,7 +11,7 @@
 - use sqlite
 - certbot auto-renew
 - ansible
-- mark recipes with only optional items not yet bought in yellow
-- display recipe directions on hover
+- ~~mark recipes with only optional items not yet bought in yellow~~
+- ~~display recipe directions~~
 - recipe editor
 - lists editor 

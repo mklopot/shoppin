@@ -142,6 +142,7 @@ class ShoppingListItem:
                 listitem.brand.lower() == otheritem.brand.lower() and\
                 listitem.vendor.lower() == otheritem.vendor.lower() and\
                 listitem.optional == otheritem.optional and\
+                listitem.status == otheritem.status and\
                 listitem is not otheritem:
             return True
         return False

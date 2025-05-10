@@ -150,6 +150,8 @@ class ShoppingListItem:
     def combine(self, other):
         self.amount += other.amount
         self.ingredients.extend(other.ingredients)
+        for ingredient in self.ingredients:
+            ingredient.item = self
 
     def __str__(self):
         result = self.name

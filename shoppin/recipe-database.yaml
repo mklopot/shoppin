@@ -637,3 +637,23 @@ roasted broccoli:
     - garlic: 
         amount: 3 cloves
     - fresh herbs
+
+cobb salad:
+  ingredients:
+    - lettuce
+    - cherry tomatoes
+    - bacon:
+        amount: 4 oz
+    - chicken breast:
+        amount: 8 oz
+    - shredded cheese:
+        amount: 4 oz
+    - baked tofu
+    - eggs:
+        amount: 4
+    - bell pepper
+    - cucumber:
+        amount: .5
+    - canned corn
+    - ranch dressing:
+        amount: 6 oz

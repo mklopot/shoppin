@@ -115,6 +115,8 @@ def need(item_id):
 
 @app.route('/add-meal', method=['POST'])
 def add_meal():
+    if not my_mealplan.meals:
+        my_mealplan.name = datetime.now().strftime("Created %A, %B %d")
     if request.POST.meal == "":
         redirect('/')
     my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
@@ -128,8 +130,6 @@ def add_meal():
 @app.route('/add-recipe', method=['POST'])
 def add_recipe():
     try:
-        if not my_mealplan.meals:
-            my_mealplan.name = datetime.now().strftime("Created %A, %B %d")
         new_recipe = my_recipes.recipes[request.POST.recipe]
         my_mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
         # my_shopping_list.clear()

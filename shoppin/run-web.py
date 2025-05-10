@@ -173,6 +173,7 @@ def add_item():
                                      amount_unit=amount_unit,
                                      brand=request.POST.brand,
                                      vendor=request.POST.vendor)
+    item.lock()
     my_shopping_list.ingredients.append(item)
     item.list = my_shopping_list
     my_shopping_list.deduplicate()

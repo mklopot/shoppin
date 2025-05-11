@@ -37,7 +37,7 @@ print("Loaded sublists:")
 for sublist in my_list_manager.lists:
     print(sublist.name, len(sublist.make_shopping_plan()))
 ##############
-from bottle import Bottle, template, request, redirect
+from bottle import Bottle, template, request, redirect, static_file
 
 app = Bottle()
 
@@ -216,6 +216,9 @@ def recipe(meal_index, recipe_index):
     recipe = my_mealplan.meals[meal_index].recipes[recipe_index]
     return template("recipe", recipe=recipe)
 
+@app.route('/images/<filename>')
+def static(filename):
+    return static_file(filename, "images/")
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000, debug=True, reloader=True)

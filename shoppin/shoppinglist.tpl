@@ -172,11 +172,11 @@ a.x{
     % end
      </td>
      % if item.locked:
-     <td style="width:5%"><a href="/got/{{item.id}}">☐</a></td>
+     <td style="width:10%"><a href="/got/{{item.id}}"><img src="images/cart3.svg"></a></td>
      % else:
-     <td style="width:5%"><a href="/got/{{item.id}}">☐</a></td>
-     <td style="width:20%;opacity:0.5" class="alreadyhave"><a style="border:1px solid blue" href="/have/{{item.id}}">Already&nbsp;have&nbsp;it!</a></td>
-     <td style="width:5%"><a href="/lock/{{item.id}}">&empty;</a></td>
+     <td style="width:10%"><a href="/got/{{item.id}}"><img src="images/cart3.svg"></a></td>
+     <td style="width:10%"><a href="/have/{{item.id}}"><img src="images/house-check-fill.svg"></a></td>
+     <td style="width:10%"><a href="/lock/{{item.id}}"><img src="images/house-dash.svg"></a></td>
      % end
   </tr>
   % end
@@ -201,8 +201,8 @@ a.x{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
-     <td style="width:20%">&#x2705;</td>
-     <td style="width:20%;opacity:0.5"><a href="/need/{{item.id}}">Need it!</a></td>
+     <td style="width:10%">&#x2705;</td>
+     <td style="width:20%"><a href="/need/{{item.id}}"><img src="images/house-dash.svg"></a></td>
   </tr>
   % end
 </table>
@@ -226,7 +226,7 @@ a.x{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
-     <td style="width:20%;opacity:0.5"><a href="/need/{{item.id}}">Need it!</a></td>
+     <td style="width:20%"><a href="/need/{{item.id}}"><img src="images/house-dash.svg"></a></td>
   </tr>
   % end
 </table>

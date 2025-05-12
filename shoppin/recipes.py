@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import yaml
 from yaml.scanner import ScannerError
+import fcntl
 
 
 from util import parse_amount
@@ -34,12 +35,51 @@ class Recipes:
     def __init__(self, recipes: list[Recipe] = {}) -> None:
         self.recipes = recipes
 
+    def save(self, recipe_db_filepath="recipe-database.yaml"):
+        with open(recipe_db_filepath, "w") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            for recipe in self.recipes:
+                f.write(f"{recipe}:\n")
+                if self.recipes[recipe].description:
+                    f.write("  description: |\n")
+                    f.write(self.recipes[recipe].description + "\n")
+                if self.recipes[recipe].directions:
+                    f.write("  directions: |\n")
+                    f.write(self.recipes[recipe].directions + "\n")
+                if self.recipes[recipe].ingredients:
+                    f.write("  ingredients:\n")
+                    for ingredient in self.recipes[recipe].ingredients:
+                        if ingredient.optional == False and \
+                                ingredient.amount == 1 and not \
+                                ingredient.amount_unit and not \
+                                ingredient.brand and not \
+                                ingredient.vendor:
+                            f.write(f"    - {ingredient.name}\n")
+                        else:
+                            f.write(f"    - {ingredient.name}:\n")
+                            if ingredient.amount != 1 or ingredient.amount_unit:
+                                f.write(f"        amount: {ingredient.amount:.2g}")
+                                if ingredient.amount_unit:
+                                    f.write(f" {ingredient.amount_unit}")
+                                f.write("\n")
+                        if ingredient.optional:
+                            f.write("        optional: True\n")
+                        if ingredient.brand:
+                            f.write(f"        brand: {ingredient.brand}\n")
+                        if ingredient.vendor:
+                            f.write(f"        vendor: {ingredient.vendor}\n")
+                        f.write("\n")
+                f.write("\n")
+            fcntl.flock(f, fcntl.LOCK_UN)
+
     def load(self, recipe_db_filepath="recipe-database.yaml"):
         with open(recipe_db_filepath) as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
             try:
                 loaded_recipes = yaml.safe_load(f)
             except ScannerError as e:
                 print("Could not parse recipe database from file", recipe_db_filepath, ":\n", e)
+            fcntl.flock(f, fcntl.LOCK_UN)
         for loaded_recipe in loaded_recipes:
             ingredients = []
             directions = loaded_recipes[loaded_recipe].get("directions", "")

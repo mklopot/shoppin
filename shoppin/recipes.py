@@ -42,10 +42,12 @@ class Recipes:
                 f.write(f"{recipe}:\n")
                 if self.recipes[recipe].description:
                     f.write("  description: |\n")
-                    f.write(self.recipes[recipe].description + "\n")
+                    description = "    " + "\n    ".join(self.recipes[recipe].description.split("\n"))
+                    f.write(description + "\n")
                 if self.recipes[recipe].directions:
                     f.write("  directions: |\n")
-                    f.write(self.recipes[recipe].directions + "\n")
+                    directions = "    " + "\n    ".join(self.recipes[recipe].directions.split("\n"))
+                    f.write(directions + "\n")
                 if self.recipes[recipe].ingredients:
                     f.write("  ingredients:\n")
                     for ingredient in self.recipes[recipe].ingredients:

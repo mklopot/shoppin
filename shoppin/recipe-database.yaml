@@ -771,3 +771,39 @@ esquites:
     - chili lime seasoning:
         optional: true
         amount: 1 tsp
+
+vegetarian kharcho:
+  description: A vegetarian version of a hearty soup with walnuts from Georgia in the Caucasus Mountains
+  directions: |
+    From food.com  
+    Mince and sautee the onion in butter until soft but not yet brown.
+    Add water, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice. Bring to boil.
+    Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
+    Add khmeli-suneli and salt. Cook for 1-2 minutes.
+    Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
+  ingredients:
+    - onion
+    - butter:
+        amount: 20 grams
+    - walnuts:
+        amount: 100 grams
+    - can crushed tomatoes:
+        amount: 16 oz
+    - cup rice:
+        amount: .5 cup
+    - water:
+        amount: 6 cups
+    - garlic cloves:
+        amount: 2 cloves
+    - red pepper flakes:
+        amount: .5 tsp
+    - khmeli-suneli spice blend:
+        amount: 1.5 tbsp
+    - salt:
+        amount: 1 tsp
+    - cilantro:
+        amount: 6 tbsp
+    - dill:
+        amount: 3 tbsp
+    - parsley:
+        amount: 3 tbsp

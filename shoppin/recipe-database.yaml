@@ -657,3 +657,117 @@ cobb salad:
     - canned corn
     - ranch dressing:
         amount: 6 oz
+
+schnitzel:
+  description: Simple breaded schnitzel recipe with chicken.
+  directions: Cut the chicken thin, and pound flat. Tenderize if desired. Dredge in flour, thoroughly coat in beaten eggs, and coat completely in Panko. Fry in oil on medium heat until golden, on both sides, do not over-brown. If not cooked all the way through, bake at 350F until cooked through, but do not over-cook. Garnish with herbs, serve with Tonkatsu sauce.
+  ingredients:
+    - chicken breast:
+        amount: 1 lb
+    - eggs:
+        amount: 2 
+    - flour:
+        amount: 1 cup
+    - Panko bread crumbs:
+        amount: 1.5 cup
+    - avocado oil:
+        amount: 4 tbsp
+    - Tonkatsu sauce:
+        amount: .5 cup
+        optional: true
+
+buttery lima beans:
+  directions: Saute the garlic and onions, add the pre-cooked lima beans, stir, add paprika.
+  ingredients:
+    - butter:
+        amount: 1 tbsp
+    - olive oil:
+        amount: 1 tbsp
+        optional: true
+    - lima beans:
+        amount: 1 package
+    - onion:
+        amount: .5
+    - garlic:
+        amount: 3 cloves
+    - smoked paprika:
+        amount: .25 tsp
+        optional: true
+
+cole slaw:
+  directions: Shred the cabbage on a mandoline, pound with a spatula for softness. add remaining ingredients, let rest for 30 minutes.
+  ingredients:
+    - cabbage:
+        amount: .25 head
+    - salt:
+        amount: .5 tsp
+    - olive oil:
+        amount: 2 tbsp
+    - vinegar:
+        amount: 2 tbsp
+    - mayonnaise:
+        optional: true
+        amount: 3 tbsp
+
+collard greens:
+  directions: Cut and de-stem collard greens, cook in Instant Pot for 5 min with quick release. Saute onions and garlic in oil until soft, add the collard greeens. Cook on high heat to crisp the edges. Add salt, pepper and spices.
+  ingredients:
+    - collard greens
+    - onion
+    - garlic:
+        amount: 4 cloves
+    - salt:
+        amount: .25 tsp
+    - pepper:
+        amount: .25 tsp
+    - avocado oil:
+        amount: 2 tbsp
+    - paprika:
+        amount: 1 pinch
+        optional: true
+
+pinto beans:
+  directions: Cook according to package instructions
+  ingredients:
+    - pinto beans
+    - salt:
+        amount: .5 tsp
+
+slow cooked turkey:
+    ingredients:
+          - turkey thighs:
+                    amount: 4
+
+esquites:
+  description: Mexican street corn salad
+  directions: |
+    Heat a large skillet over medium-high heat. Add the butter, fresh corn kernels (cut off the cob), minced garlic, and minced jalapeño. Cook, stirring occasionally, for 5 minutes. Transfer to a medium mixing bowl.
+    Add the mayonnaise, crumbled cotija cheese, chopped cilantro, salt, and lime juice. Add the chili powder and optional ingredients if using. Mix until fully combined. Taste and season with more salt and mayonnaise if desired.
+    Garnish with chili powder to your liking, a lime wedge, and a sprinkle cotija cheese.
+    Serve immediately in individual portions.
+  ingredients:
+    - butter:
+        amount: 4 tbsp
+    - corn on the cob:
+        amount: 4 ears 
+    - garlic:
+        amount: 2 cloves
+    - jalapeño pepper
+    - mayonnaise:
+        amount: ¼ cup
+    - cotija cheese:
+        amount: .5 cup
+    - cilantro:
+        amount: 2 tablespoons
+    - salt:
+        amount: ½ teaspoon
+    - lime:
+        amount: 2 
+    - Chili powder:
+        amount: 1 tsp
+    - paprika:
+        amount: 1 teaspoon
+        optional: true
+    - chili lime seasoning:
+        optional: true
+        amount: 1 tsp

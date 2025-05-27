@@ -216,6 +216,10 @@ def recipe(meal_index, recipe_index):
     recipe = my_mealplan.meals[meal_index].recipes[recipe_index]
     return template("recipe", recipe=recipe)
 
+@app.route('/edit-recipe/<recipe>')
+def edit_recipe(recipe):
+    return template("edit_recipe", recipe=recipe)
+
 @app.route('/images/<filename>')
 def static(filename):
     return static_file(filename, "images/")

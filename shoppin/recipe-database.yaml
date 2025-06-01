@@ -835,3 +835,20 @@ edible chalk sugar candy:
         amount: 2 tbsp
     - vanilla extract:
         amount: .25 tsp 
+
+refried beans:
+  directions: Cook beans with 3X water by volume in the Intant Pot, along with a chopped onion, salt, and a dried chili pepper. Pan-fry in oil while mashing, until the beans disintegrate.
+  ingredients:
+    - beans, dry:
+        amount: 1 lb
+    - onion
+    - salt:
+        amount: 1 tsp
+    - dried chili, whole:
+        amount: 1 piece
+    - avocado oil:
+        amount: 1 tbsp
+    - cotija cheese:
+        amount: 2 oz
+        optional: true
+

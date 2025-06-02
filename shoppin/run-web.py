@@ -212,6 +212,8 @@ def clear():
     global my_recipes
     global my_sequence
 
+    my_sequence.reset_pointer()
+
     my_recipes = recipes.Recipes()
     my_recipes.load()
 

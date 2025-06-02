@@ -2,6 +2,7 @@ import yaml
 import pickle
 import os
 from datetime import datetime
+import pytz
 
 import mealplan
 import recipes
@@ -11,6 +12,7 @@ import sequence
 import util
 import list_manager
 
+timezone = "America/Denver"
 picklefile = "appstate.pickle"
 
 def save_state(shoppinglist, mealplan, list_manager, path=picklefile):
@@ -29,7 +31,7 @@ if os.path.exists(picklefile):
         my_shopping_list.sequence = my_sequence
 else:
     my_shopping_list = shopping.ShoppingList(my_sequence)
-    mealplan_name = datetime.now().strftime("Created %A, %B %d")
+    mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
     my_mealplan = mealplan.MealPlan(mealplan_name)
     my_mealplan.recipe_database = my_recipes
 
@@ -219,7 +221,7 @@ def clear():
 
     my_shopping_list = shopping.ShoppingList(my_sequence)
 
-    mealplan_name = datetime.now().strftime("Created %A, %B %d")
+    mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
     my_mealplan = mealplan.MealPlan(mealplan_name)
     my_mealplan.recipe_database = my_recipes
 

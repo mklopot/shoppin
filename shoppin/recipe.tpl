@@ -1,17 +1,6 @@
 <html>
 <head>
     <meta http-equiv="refresh" content="1200">
-    <script>
-        document.addEventListener("DOMContentLoaded", function(event) { 
-            var scrollpos = localStorage.getItem('scrollpos');
-            if (scrollpos) window.scrollTo(0, scrollpos);
-        });
-
-        window.onbeforeunload = function(e) {
-            localStorage.setItem('scrollpos', window.scrollY);
-        };
-    </script>
-
 <style>
 p{
   width: 50%;
@@ -79,7 +68,7 @@ a.x{
 
     % if recipe.directions:
     <h2>Directions</h2>
-    <p>{{recipe.directions}}</p>
+    <p style="white-space:pre-wrap">{{recipe.directions}}</p>
     % end
 
     % if recipe.ingredients:

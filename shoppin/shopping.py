@@ -25,8 +25,6 @@ class ShoppingList:
         self.deduplicate()
         self._map()
         self.order()
-        if self.sequence:
-            self.sequence.reset_pointer()
 
     def deduplicate(self):
         self.ingredients.sort(key=lambda item: (singularize(item.name.lower()),

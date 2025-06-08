@@ -238,7 +238,8 @@ def recipe(meal_index, recipe_index):
 
 @app.route('/edit-recipe/<recipe>')
 def edit_recipe(recipe):
-    return template("edit_recipe", recipe=recipe)
+    recipe = my_recipes.recipes[recipe]
+    return template("edit-recipe", recipe=recipe)
 
 @app.route('/images/<filename>')
 def static(filename):

@@ -171,7 +171,7 @@ pancakes:
   ingredients:
     - flour:
         amount: 1.5 cup
-    - leavening:
+    - baking powder:
         amount: 1 tbsp
     - sugar:
         amount: 1 tbsp
@@ -852,3 +852,79 @@ refried beans:
         amount: 2 oz
         optional: true
 
+canellini bean side dish:
+  ingredients:
+    - canellini beans:
+        amount: 1 can
+    - onion:
+        amount: .5
+    - garlic:
+        amount: 2 cloves
+    - olive oil:
+        amount: 1 tbsp
+    - cumin:
+        amount: 1 pinch
+    - tomato paste:
+        amount: 4 oz
+
+stuffed shells:
+  directions: |
+    Cook jumbo shell pasta according to package directions to al dente. Stir in the olive oil and a few tablespoons of tomato sauce to avoid sticking.
+
+    Dice and fry the onion on medium heat without browning, until translucent. Smash and mince the garlic, and add to the pan for 1 more minute, then take off the heat.
+
+    In a bowl, mix the cheese, the garlic and onion mixture, and nearly all of the remaining pasta sauce, until the consistency of play-dough.
+
+    Stuff each shell witht eh cheese mixture, and place on a platter. Microwave for one minute, or until the cheese just starts to melt.
+
+    Sprinkle with the italian seasoning, and serve immediately.
+  ingredients:
+    - jumbo shell noodles:
+        amount: 1 box
+    - mozarella cheese, shredded:
+        amount: 1 lb
+    - pasta sauce:
+        amount: 1 jar
+    - onion:
+        amount: 1
+    - garlic:
+        amount: 4 cloves
+    - italian seasoning:
+        amount: .5 tsp
+    - olive oil:
+        amount: 1 tbsp
+
+cold borscht:
+  description: Eastern European cold sumertime soup
+  directions: |
+    Place the beets in a large pot of boiling salted water and cook uncovered until the beets are tender, 30 to 40 minutes. Remove the beets to a bowl with a slotted spoon and set aside to cool. Strain the cooking liquid through a fine sieve and also set aside to cool.
+
+    In a large bowl, whisk together 1 1/2 cups of the beet cooking liquid, the chicken stock, sour cream, yogurt, sugar, lemon juice, vinegar, 1 tablespoon salt, and the pepper. Peel the cooled beets with a small paring knife or rub the skins off with your hands. Cut the beets in small to medium dice. Add the beets, diced cucumber,  1/2 cup of chopped scallions, and 2 tbsp of chopped dill to the soup. Cover with plastic wrap and chill for at least 4 hours or overnight. Season, to taste, and serve cold with a dollop of sour cream and an extra sprig of fresh dill.
+    
+    Optionally top each bowl with half of a hard-boiled egg.
+  ingredients:
+    - beets:
+        amount: 2 lb
+    - salt:
+        amount: 2 tsp
+    - vegetable stock:
+        amount: 2 cups
+    - sour cream:
+        amount: 20 oz
+    - yogurt, plain:
+        amount: .5 cups
+    - sugar: 
+        amount: 4 tbsp
+    - lemon juice, freshly squeezed:
+        amount: 2 tbsp
+    - vinegar:
+        amount: 2 tsp
+    - black pepper:
+        amount: 1.5 tsp
+    - eggs:
+        amount: 3
+        optional: true
+    - cucumber, english:
+        amount: 1
+    - green onions
+    - dill

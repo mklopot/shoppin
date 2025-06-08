@@ -18,18 +18,19 @@ class Recipe:
         return self.ingredients
 
 
-@dataclass
 class Ingredient:
-    name: str
-    attribution: Recipe
-    purpose: str
-    amount: float = 1
-    amount_unit: str = ""
-    optional: bool = False
-    brand: str = ""
-    vendor: str = ""
-    item: shopping.ShoppingListItem | None = None
+    def __init__(self, name="", attribution=None, purpose="", amount=1, amount_unit="", optional=False, brand="", vendor="", item=None):
+        self.name = name
+        self.attribution = attribution
+        self.purpose = purpose
+        self.amount = amount
+        self.amount_unit = amount_unit
+        self.optional = optional
+        self.brand = brand
+        self.vendor = vendor
+        self.item = item
  
+
 class Recipes:
     def __init__(self, recipes: list[Recipe] = {}) -> None:
         self.recipes = recipes

@@ -104,7 +104,7 @@ a.x{
       </ul>
       <h3>Add Ingredient</h3>
         <form action="/add-ingredient" method="POST">
-          <input type="text" id="name" name="name" method="POST" placeholder='Name of ingredient, like "celery"' required>
+          <input type="text" id="name" name="name" method="POST" size="30" placeholder='Name of ingredient, like "celery"' required>
           <label for="name">Name</label><br>
 
           <input type="text" id="amount" name="amount" value="1" method="POST">

@@ -61,7 +61,7 @@ a.x{
 </style>
 </head>
   <body>
-    <h1><a href="/">&larr;</a> {{recipe.name}}</h1>
+    <h1><a href="/">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}</h1>
 
     <form action="/save-recipe" method="POST">
     <input type="hidden" name="recipe" value="{{recipe.name}}">
@@ -91,5 +91,25 @@ a.x{
          <a class="x" href="/delete-ingredient/{{recipe.name}}/{{ingredient_index}}"> &#9447;</a>
       % end
       </ul>
+      <h3>Add Ingredient</h3>
+        <form action="/add-ingredient" method="POST">
+          <input type="text" id="name" name="name" method="POST" placeholder='Name of ingredient, like "celery"' required>
+          <label for="name">Name</label><br>
+
+          <input type="text" id="amount" name="amount" value="1" method="POST">
+          <label for="amount">Amount</label><br>
+
+          <input type="checkbox" id="optional" name="optional" method="POST">
+          <label for="optional">Optional</label><br>
+          <br>
+          <input type="text" id="brand" name="brand" method="POST">
+          <label for="brand">Brand <i>optional</i></label><br>
+
+          <input type="text" id="vendor" name="vendor" method="POST">
+          <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
+
+          <input type="hidden" name="recipe" value="{{recipe.name}}">
+          <input type="submit" value="+ Add Ingredient"><br>
+        </form>
   </body>
 </html>

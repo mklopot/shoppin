@@ -249,6 +249,23 @@ def save_recipe():
     my_recipes.save()
     redirect(f'/recipe/{request.POST.recipe}')
 
+@app.route('/add-ingredient', method=['POST'])
+def add_ingredient():
+    recipe = my_recipes.recipes[request.POST.recipe]
+    ingredient_amount, ingredient_amount_unit = util.parse_amount(request.POST.amount)
+    new_ingredient = recipes.Ingredient(name=request.POST.name,
+                                        amount = ingredient_amount,
+                                        amount_unit = ingredient_amount_unit,
+                                        optional = request.POST.optional,
+                                        brand = request.POST.brand,
+                                        vendor = request.POST.vendor,
+                                        attribution = recipe)
+    recipe.ingredients.append(new_ingredient)
+    my_recipes.save()
+    redirect(f'/edit-recipe/{recipe.name}')
+
+
+
 @app.route('/delete-ingredient/<recipe>/<ingredient_index:int>')
 def delete_ingredient(recipe, ingredient_index):
     recipe = my_recipes.recipes[recipe]

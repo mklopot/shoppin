@@ -3,12 +3,12 @@
     <meta http-equiv="refresh" content="1200">
     <script>
         document.addEventListener("DOMContentLoaded", function(event) { 
-            var scrollpos = localStorage.getItem('scrollpos');
+            var scrollpos = localStorage.getItem('scrollpos' + '-' + window.location.href);
             if (scrollpos) window.scrollTo(0, scrollpos);
         });
 
         window.onbeforeunload = function(e) {
-            localStorage.setItem('scrollpos', window.scrollY);
+            localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
         };
     </script>
 

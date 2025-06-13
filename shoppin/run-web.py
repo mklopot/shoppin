@@ -34,12 +34,7 @@ else:
     mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
     my_mealplan = mealplan.MealPlan(mealplan_name)
     my_mealplan.recipe_database = my_recipes
-
-
     my_list_manager = list_manager.ListManager("lists/")
-print("Loaded sublists:")
-for sublist in my_list_manager.lists:
-    print(sublist.name, len(sublist.make_shopping_plan()))
 ##############
 from bottle import Bottle, template, request, redirect, static_file
 

@@ -84,10 +84,14 @@ a.edit {
     % for item in recipe.ingredients:
   <tr>
      <td>
-     % if item.item.status.value in [2, 3]:
-     &#x2705; 
+     % if item.item:
+       % if item.item.status.value in [2, 3]:
+       &#x2705; 
+       % else:
+       -
+       % end
      % else:
-     -
+     ?
      % end
      </td>
      <td>{{item.name}}

@@ -231,10 +231,47 @@ def clear():
     save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 
-@app.route('/recipe/<meal_index:int>/<recipe_index:int>')
-def recipe(meal_index, recipe_index):
-    recipe = my_mealplan.meals[meal_index].recipes[recipe_index]
+@app.route('/recipe/<recipe>')
+def recipe(recipe):
+    recipe = my_recipes.recipes[recipe]
     return template("recipe", recipe=recipe)
+
+@app.route('/edit-recipe/<recipe>')
+def edit_recipe(recipe):
+    recipe = my_recipes.recipes[recipe]
+    return template("edit-recipe", recipe=recipe)
+
+@app.route('/save-recipe', method=['POST'])
+def save_recipe():
+    recipe = my_recipes.recipes[request.POST.recipe]
+    recipe.description = request.POST.description
+    recipe.directions = request.POST.directions
+    my_recipes.save()
+    redirect(f'/recipe/{request.POST.recipe}')
+
+@app.route('/add-ingredient', method=['POST'])
+def add_ingredient():
+    recipe = my_recipes.recipes[request.POST.recipe]
+    ingredient_amount, ingredient_amount_unit = util.parse_amount(request.POST.amount)
+    new_ingredient = recipes.Ingredient(name=request.POST.name,
+                                        amount = ingredient_amount,
+                                        amount_unit = ingredient_amount_unit,
+                                        optional = request.POST.optional,
+                                        brand = request.POST.brand,
+                                        vendor = request.POST.vendor,
+                                        attribution = recipe)
+    recipe.ingredients.append(new_ingredient)
+    my_recipes.save()
+    redirect(f'/edit-recipe/{recipe.name}')
+
+
+
+@app.route('/delete-ingredient/<recipe>/<ingredient_index:int>')
+def delete_ingredient(recipe, ingredient_index):
+    recipe = my_recipes.recipes[recipe]
+    del recipe.ingredients[ingredient_index]
+    my_recipes.save()
+    redirect(f'/edit-recipe/{recipe.name}')
 
 @app.route('/images/<filename>')
 def static(filename):

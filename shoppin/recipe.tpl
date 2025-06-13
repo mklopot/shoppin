@@ -42,7 +42,14 @@ span.optional{
   color: gray;
 }
 
-a.x{
+a.x {
+  opacity: 0.5;
+  font-size: 0.8em;
+  bottom: 0.3em;
+  position: relative;
+}
+
+a.edit {
   opacity: 0.5;
   font-size: 0.8em;
   bottom: 0.3em;
@@ -61,9 +68,9 @@ a.x{
 </style>
 </head>
   <body>
-    <h1><a href="/">&larr;</a> {{recipe.name}}</h1>
+    <h1><a href="/">&larr;</a> {{recipe.name}} <a class="edit" href="/edit-recipe/{{recipe.name}}">edit</a></h1>
     % if recipe.description:
-    <p>{{recipe.description}}</p>
+    <p style="white-space:pre-wrap">{{recipe.description}}</p>
     % end
 
     % if recipe.directions:

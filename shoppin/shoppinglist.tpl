@@ -3,12 +3,12 @@
     <meta http-equiv="refresh" content="1200">
     <script>
         document.addEventListener("DOMContentLoaded", function(event) { 
-            var scrollpos = localStorage.getItem('scrollpos');
+            var scrollpos = localStorage.getItem('scrollpos' + '-' + window.location.href);
             if (scrollpos) window.scrollTo(0, scrollpos);
         });
 
         window.onbeforeunload = function(e) {
-            localStorage.setItem('scrollpos', window.scrollY);
+            localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
         };
     </script>
 
@@ -89,14 +89,14 @@ a.x{
           % elif recipe in recipes_only_missing_optional:
          &#128993;\\
           % end
-          </span> <a href="/recipe/{{meal_index}}/{{recipe_index}}">{{recipe.name}}</a><a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
+          </span> <a href="/recipe/{{recipe.name}}">{{recipe.name}}</a><a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
 
 
         % end
         <li><form action="/add-recipe" method="POST">
             <input list="recipelist" name="recipe" method="POST" required>
             <input type="hidden" name="meal_index" value={{meal_index}}>
-            <input type="submit" value="Add Recipe">
+            <input type="submit" value="+ Add Recipe">
             <datalist id="recipelist">
             % for recipename in recipelist:
             <option value="{{recipename}}">
@@ -113,7 +113,7 @@ a.x{
       % else:
       <input type="text" id="meal" name="meal" placeholder="Meal name, like 'Monday Dinner'" required style="min-width: 300px">
       % end
-      <input type="submit" value="Add Meal"></form>
+      <input type="submit" value="+ Add Meal"></form>
     % end 
 
     % if list_manager:
@@ -149,7 +149,7 @@ a.x{
     <input type="text" id="vendor" name="vendor" method="POST">
     <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
 
-    <input type="submit" value="Add Item"><br>
+    <input type="submit" value="+ Add Item"><br>
     </form>
     </div>
 % if need:

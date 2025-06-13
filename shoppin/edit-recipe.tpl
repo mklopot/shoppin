@@ -63,16 +63,33 @@ a.x{
   <body>
     <h1><a href="/">&larr;</a> {{recipe.name}}</h1>
 
-    <form action="/edit-recipe" method="POST">
+    <form action="/save-recipe" method="POST">
+    <input type="hidden" name="recipe" value="{{recipe.name}}">
+
     <label for="description"><h2>Description</h2></label>
-    <textarea name="description" id="description" rows="4" cols="60">{{recipe.description}}</textarea>
+    <textarea name="description" id="description" rows="5" cols="80">{{recipe.description}}</textarea>
 
     <label for="directions"><h2>Directions</h2></label>
-    <textarea name="directions" id="directions" rows="10" cols="60">{{recipe.directions}}</textarea>
+    <textarea name="directions" id="directions" rows="12" cols="80">{{recipe.directions}}</textarea>
 
     <br><br><input type="submit" value="Save">
     </form>
-
-
+    <h2>Ingredients</h2>
+      <ul>
+      % for ingredient_index, item in enumerate(recipe.ingredients):
+        <li>{{item.name}} 
+         &nbsp;&nbsp;{{f"{item.amount:.2g}"}} {{item.amount_unit}}
+        % if item.optional:
+         &nbsp;&nbsp;<span class="optional">optional</span>
+        % end
+        % if item.brand:
+         &nbsp;&nbsp;Brand: {{item.brand}}
+        % end
+        % if item.vendor:
+         &nbsp;&nbsp;Best Vendor: {{item.vendor}}
+        % end
+         <a class="x" href="/delete-ingredient/{{recipe.name}}/{{ingredient_index}}"> &#9447;</a>
+      % end
+      </ul>
   </body>
 </html>

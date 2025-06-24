@@ -1,557 +1,801 @@
 tacos and burritos:
   ingredients:
     - onion
+
     - bell pepper
+
     - tortillas, large:
         brand: Mission
+
     - taco sauce:
         brand: Ortega
+
     - seasoned beans:
         brand: Rosarita
         vendor: Safeway
+
     - avocados:
         amount: 2
+
     - ground beef:
         amount: 1 lb
+
     - shredded cheese:
         amount: 8 oz
+
     - cilantro
-    - lime: 
-        amount: 1
+
+    - lime
+
     - sour cream:
         amount: 4 oz
 
+
 take-out:
-  directions: order from Chipotle, Dominos, or Taste of Thailand
+  directions: |
+    order from Chipotle, Dominos, or Taste of Thailand
 
 sloppy joes:
   ingredients:
     - ground beef:
         amount: 1 lb
+
     - hamburger buns:
         amount: 5 buns
+
     - Sloppy Joe Seasoning Packet
+
     - tomato paste:
-        amount: 1 can 
+        amount: 1 can
+
 
 tofu joe:
   ingredients:
     - Sloppy Joe Seasoning Packet
+
     - tofu:
         amount: 1 lb
+
     - onion
+
     - celery:
         amount: 2 ribs
+
     - carrot
+
     - bell pepper:
-        amount: .5
+        amount: 0.5
+
     - hamburger buns:
         amount: 2 buns
+
     - tomato paste:
         amount: 1 can
 
+
 stir fry:
-  description:
-  directions:
   ingredients:
     - rice:
         amount: 1 cup
+
     - onion
+
     - ginger:
-        amount: small piece
+        amount: 1 small piece
+
     - garlic:
         amount: 2 cloves
+
     - bell pepper
+
     - carrot:
-        optional: true
+        optional: True
+
     - shiitake mushrooms:
         amount: 8 oz
-        optional: true
+        optional: True
+
     - eggs:
         amount: 4
-        optional: true
+        optional: True
+
     - canned pineapple:
-        optional: true
+        optional: True
+
     - broccoli:
         amount: 1 head
-        optional: true
+        optional: True
+
     - stir fry sauce:
         amount: 6 oz
-        optional: true
+        optional: True
+
     - ketchup:
         amount: 1 cup
-        optional: true
+        optional: True
+
     - tofu:
         amount: 1 lb
-        optional: true
+        optional: True
+
     - soy sauce:
         amount: 2 oz
-        optional: true
+        optional: True
+
 
 taco soup:
-  description:
-  directions:
   ingredients:
     - tomato paste:
         amount: 8 oz
+
     - frozen corn:
         amount: 8 oz
+
     - cannellini beans:
         amount: 1 can
+
     - shredded cheese:
         amount: 4 oz
+
     - avocado
+
     - lime
+
     - onion
+
     - carrots:
         amount: 3
+
     - canned green chili:
         amount: 7 oz
+
     - sour cream:
         amount: 2 oz
+
     - cilantro:
-        amount: .5 bunch
+        amount: 0.5 bunch
+
     - tortilla chips:
-        amount: .25 bag
+        amount: 0.25 bag
+
     - radishes:
-        optional: true
+        optional: True
+
 
 meatloaf:
   ingredients:
     - ground beef:
         amount: 1 lb
+
     - onion:
-        amount: .25
+        amount: 0.25
+
     - eggs:
         amount: 2
+
     - bread crumbs, italian:
-        amount: .75 cup
+        amount: 0.75 cup
+
     - milk:
         amount: 6 oz
+
     - garlic:
         amount: 3 cloves
-        optional: true
+        optional: True
+
 
 mashed potatoes:
   ingredients:
     - Russet potatoes:
         amount: 6
+
     - butter:
         amount: 1 stick
+
     - garlic powder:
         amount: 1 teaspoon
-        optional: true
+        optional: True
+
     - milk:
         amount: 2 oz
 
+
 spaghetti:
+  directions: |
+    Boil in plenty of generously salted water as specified on the package.
+    
+    Boil up to 10% longer as a high-altitude adjustment.
+    
+    Drain, add marinara sauce, top with parmesan cheese if desired.
   ingredients:
     - spaghetti:
         amount: 1 package
+
     - marinara sauce:
         brand: Bertolli
+
     - parmesan cheese:
-        optional: true
+        optional: True
+
 
 meatballs:
   ingredients:
     - ground beef:
         amount: 1 lb
+
     - bread crumbs:
-        amount: .3 cup
+        amount: 0.3 cup
+
     - onion:
-        amount: .3
+        amount: 0.3
+
     - egg
+
     - milk:
         amount: 2 oz
+
     - garlic:
         amount: 2 cloves
+
 
 pancakes:
   ingredients:
     - flour:
         amount: 1.5 cup
+
     - baking powder:
         amount: 1 tbsp
+
     - sugar:
         amount: 1 tbsp
+
     - butter:
         amount: 3 tbsp
+
     - milk:
         amount: 1 cup
+
     - egg
+
 
 smashburgers:
   ingredients:
     - hamburger buns:
         amount: 4 buns
+
     - ground beef:
         amount: 1 lb
+
     - onion
+
     - sliced cheese:
         amount: 5 slices
+
     - pickles:
         amount: 3 slices
 
+
 burger sauce:
-  description: Ian's Burger Sauce
+  description: |
+    Ian's Burger Sauce
   ingredients:
     - ketchup:
         amount: 2 oz
+
     - mustard:
         amount: 1 tsp
+
     - mayonnaise:
         amount: 4 oz
+
     - pickle juice:
         amount: 1 splash
+
     - black pepper:
         amount: 1 pinch
-    - salt: 
+
+    - salt:
         amount: 1 pinch
+
     - paprika:
         amount: 1 pinch
+
     - steak sauce:
         amount: 1 oz
-        optional: true
+        optional: True
+
     - sriracha:
-        amount: .5 tsp
-        optional: true
+        amount: 0.5 tsp
+        optional: True
+
 
 black bean burger:
   ingredients:
     - black bean patty
+
     - hamburger bun:
         amount: 1 bun
+
     - cheddar cheese:
         amount: 2 oz
+
     - pickle:
         amount: 1 slice
+
     - onion:
         amount: 2 oz
+
     - ketchup:
         amount: 1 oz
+
     - mustard:
         amount: 1 oz
+
 
 buckwheat:
   ingredients:
     - buckwheat:
         amount: 1 cup
+
     - butter:
         amount: 2 tbsp
-          
+
+
 salad with butter lettuce:
   ingredients:
     - sour cream:
         amount: 3 oz
+
     - garlic powder:
         amount: 1 tsp
+
     - italian seasoning:
         amount: 1 tsp
+
     - salt:
         amount: 1 pinch
+
     - butter lettuce:
-        amount: .5 head
+        amount: 0.5 head
+
     - cucumbers:
-        amount: .25
-        optioanl: true
+        amount: 0.25
+
     - carrots:
-        amount: .33
-        optional: true
+        amount: 0.33
+        optional: True
+
     - egg:
-        optional: true
+        optional: True
+
     - cheese crisps:
-        amount: .25 bag
-        optional: true
+        amount: 0.25 bag
+        optional: True
+
 
 fried egg:
   ingredients:
     - egg
 
+
 slow cooked chicken:
+  directions: |
+    Cover chicken thighs in water in the Instant Pot.
+    
+    Cook for 1.5 hours on the "Slow cook" setting. Remove promptly.
+    
+    Cooking water can be used as chicken broth in other recipes.
   ingredients:
     - chicken thighs:
         amount: 4
+
 
 steak:
   ingredients:
     - steak:
         amount: 1 lb
+
     - butter:
         amount: 2 tbsp
+
     - garlic:
         amount: 1 clove
+
     - herbs, fresh:
-        optional: true
-    
+        optional: True
+
+
 mashed potatoes with herbs:
-  ingredients: 
-    - potatoes, Russet:
-        amount: 6
-    - butter:
-        amount: 8 oz
-    - milk:
-        amount: 1 oz
-    - herbs, fresh:
-        optional: true
-    - garlic powder:
-        amount: 1 tsp
-     
-zucchini casserole:
-    ingredients:
-      - corn tortillas:
-          amount: .5 package
-      - enchilada sauce:
-          amount: 1 small can
-      - ground beef:
-          amount: 1 lb
-      - seasoned beans:
-          amount: 1 can
-          brand: Rosarita
-      - shredded cheese:
-          amount: 8 oz
-      - onion:
-          amount: .5
-      - zucchini:
-          amount: 1
-
-vegetarian zucchini casserole:
-    ingredients:
-      - corn tortillas:
-          amount: .5 package
-      - enchilada sauce:
-          amount: 1 small can
-      - seasoned beans:
-          amount: 1 can
-      - shredded cheese:
-          amount: 8 oz
-      - onion:
-          amount: .5
-      - zucchini:
-          amount: 1
-      - carrot:
-          amount: 2
-      - bell pepper:
-          amount: 1
-          optional: true
-
-twice baked potatoes:
-  directions: >
-    Preheat the oven to 400°F. Wash and dry the potatoes well, then use a fork to prick each potato several times.
-    Place the potatoes on a parchment lined baking sheet. Drizzle the olive oil over the potatoes, then use your hands or a silicone brush to brush the oil over each potato until it is fully coated. Season the potatoes with a pinch of salt.
-    Bake in the preheated oven for 50-60 minutes, or until the potatoes can be pierced easily with a fork. Total baking time will depend on the size of your potatoes.
-    Optionally, while the potatoes are baking, cook the bacon in a skillet over medium heat until brown and crispy. Remove the cooked bacon from the skillet and allow it to drain on a paper-towel lined plate.
-    Once cool enough to handle, rough chop the bacon into smaller pieces. nce the potatoes are done baking, remove them from the oven and allow them to cool slightly. When the potatoes are cool enough to handle, slice them in half lengthwise. Carefully scoop out the potato flesh, leaving a thin rim of potato (about ¼ inch rim) around the edges to help the skin hold its shape.
-    Place the scooped out potato flesh in a large bowl and add the butter, sour cream, milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes until light and fluffy.
-    Add the chopped bacon, half of the sliced green onions, and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold to combine.
-    Fill the potato skins with about 1/3 cup of the potato mixture, then sprinkle the remaining cheddar cheese over the top of each potato.
-    Bake the potatoes in the oven a second time, just until heated through and the cheddar cheese is melted on top, about 20 minutes. Top with the remaining green onions and enjoy!
   ingredients:
     - potatoes, Russet:
-        amount: 4
-    - olive oil:
-        amount: 1 tbsp
-    - bacon:
-        amount: 4 oz
-        optional: yes
+        amount: 6
+
     - butter:
-        amount: 4 tbsp
-    - sour cream:
-        amount: 4 oz
+        amount: 8 oz
+
     - milk:
-        amount: .25 cup
-    - salt:
-        amount: .5 tsp
-    - pepper:
-        amount: .25 tsp
-    - green onion:
-        amount: .5 bunch
+        amount: 1 oz
+
+    - herbs, fresh:
+        optional: True
+
+    - garlic powder:
+        amount: 1 tsp
+
+
+zucchini casserole:
+  ingredients:
+    - corn tortillas:
+        amount: 0.5 package
+
+    - enchilada sauce:
+        amount: 1 small can
+
+    - ground beef:
+        amount: 1 lb
+
+    - seasoned beans:
+        amount: 1 can
+        brand: Rosarita
+
     - shredded cheese:
         amount: 8 oz
 
+    - onion:
+        amount: 0.5
+
+    - zucchini
+
+
+vegetarian zucchini casserole:
+  ingredients:
+    - corn tortillas:
+        amount: 0.5 package
+
+    - enchilada sauce:
+        amount: 1 small can
+
+    - seasoned beans:
+        amount: 1 can
+
+    - shredded cheese:
+        amount: 8 oz
+
+    - onion:
+        amount: 0.5
+
+    - zucchini
+
+    - carrot:
+        amount: 2
+
+    - bell pepper:
+        optional: True
+
+
+twice baked potatoes:
+  description: |
+    Classic American side-dish, steakhouse style.
+  directions: |
+    Preheat the oven to 400°F.
+    
+    Wash and dry the potatoes well, pierce each potato once to prevent bursting. Place the potatoes on a parchment lined baking sheet.
+    Drizzle with olive oil then brush the oil over each potato until fully coated, and season with a pinch of salt.
+    
+    Bake in the preheated oven for 60-90 minutes, or until the potatoes can be pierced easily with a fork. Total baking time will depend on the size of your potatoes.
+    
+    Optionally, while the potatoes are baking, cook the bacon in a skillet over medium heat until brown and crispy. Remove the cooked bacon from the skillet and allow it to drain on a paper-towel lined plate. Once cool enough to handle, rough chop the bacon into smaller pieces.
+    
+    Allow the potatoes to cool slightly after baking. When cool enough to handle, cut at an angle to remove the top third of each potato. Carefully scoop out the potato flesh, leaving a thin rim of potato (about ¼ inch rim) around the edges to help the skin hold its shape.
+    
+    Place the scooped out potato flesh in a large bowl and add the butter, sour cream, milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes until light and fluffy. Add the chopped bacon, if using, and half of the sliced green onions and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold to combine.
+    
+    Fill the potato skins with about 1/3 cup of the potato mixture, then sprinkle the remaining cheddar cheese over the top of each potato.
+    
+    Bake the potatoes in the oven a second time, just until heated through and the cheddar cheese is melted on top, about 20 minutes.
+    
+    Top with the remaining green onions and enjoy!
+    
+  ingredients:
+    - potatoes, Russet:
+        amount: 4
+
+    - olive oil:
+        amount: 1 tbsp
+
+    - bacon:
+        amount: 4 oz
+        optional: True
+
+    - butter:
+        amount: 4 tbsp
+
+    - sour cream:
+        amount: 4 oz
+
+    - milk:
+        amount: 0.25 cup
+
+    - salt:
+        amount: 0.5 tsp
+
+    - pepper:
+        amount: 0.25 tsp
+
+    - green onion:
+        amount: 0.5 bunch
+
+    - shredded cheese:
+        amount: 8 oz
+
+
 cabbage and egg salad with cucumber:
+  directions: |
+    finely shred the cabbage on a mandoline and pound with the back of a wooden spatula until soft.
+    
+    Hard boil an egg (8.5 minutes in Denver), peel, cut in halves or quarters.
+    
+    Slice the cucumber on the mandoline. 
+    
+    Top the cabbage with the cucumber and egg. serve with your choice of dressing.
   ingredients:
     - egg
+
     - cucumber:
-        amount: .25
+        amount: 0.25
+
     - cabbage:
-        amount: .25 head
+        amount: 0.25 head
+
 
 tahini miso dressing:
   ingredients:
     - tahini:
-        amount: .33 cup
+        amount: 0.33 cup
+
     - ginger:
         amount: 1 tbsp
+
     - garlic:
         amount: 2 cloves
+
     - miso:
         amount: 1 tsp
+
     - soy sauce:
         amount: 1 tbsp
+
     - vinegar:
         amount: 1 tbsp
+
     - sesame oil:
         amount: 1 tsp
+
     - maple syrup:
         amount: 2 tsp
+
     - water:
         amount: 3 tbsp
+
     - salt:
         amount: 1 pinch
+
 
 lima bean side dish:
   ingredients:
     - lima beans:
         amount: 1 package
+
     - olive oil:
         amount: 1 tbsp
+
     - cumin:
         amount: 1 pinch
+
     - tomato paste:
         amount: 4 oz
 
+
 cheesy puff pastry rolls:
-    directions: Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano. Roll up and cut into 8 pieces. Combine egg yolk and cream to make an egg wash, brush generously. Bake at 350F for 35 to 40 min, rest for 10 min.
-    ingredients:
-      - puff pastry sheet, frozen:
-          amount: 1 pound
-      - cream cheese:
-          amount: 8 oz
-      - feta cheese:
-          amount: 8 oz
-      - mozzarella cheese:
-          amount: 8 oz
-      - mint:
-          amount: 2 tsp
-      - oregano:
-          amount: 2 tsp
-      - egg
-      - heavy cream:
-          amount: 2 tsp
+  directions: |
+    Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano. Roll up and cut into 8 pieces. Combine egg yolk and cream to make an egg wash, brush generously. Bake at 350F for 35 to 40 min, rest for 10 min.
+  ingredients:
+    - puff pastry sheet, frozen:
+        amount: 1 pound
+
+    - cream cheese:
+        amount: 8 oz
+
+    - feta cheese:
+        amount: 8 oz
+
+    - mozzarella cheese:
+        amount: 8 oz
+
+    - mint:
+        amount: 2 tsp
+
+    - oregano:
+        amount: 2 tsp
+
+    - egg
+
+    - heavy cream:
+        amount: 2 tsp
+
 
 veggie nuggets:
-    ingredients:
-      - veggie nuggets:
-          amount: 1 package
+  ingredients:
+    - veggie nuggets:
+        amount: 1 package
+
 
 butternut squash soup:
-    ingredients:
-      - onion:
-          amount: 1 
-      - olive oil:
-          amount: 1 tbsp
-      - better than boullion, or other veggie broth:
-          amount: to make 2 cups
-      - butternut squash
-      - croutons:
-          optional: true
-      - cream:
-          amount: 1 cup
-          optional: true
+  ingredients:
+    - onion
+
+    - olive oil:
+        amount: 1 tbsp
+
+    - better than boullion, or other veggie broth:
+        amount: 1 to make 2 cups
+
+    - butternut squash
+
+    - croutons:
+        optional: True
+
+    - cream:
+        amount: 1 cup
+        optional: True
+
 
 vanilla pudding:
-  directions: Mix everything and boil at low heat for ~5 minutes and whisk the entire time until thick.
+  directions: |
+    Mix everything and boil at low heat for ~5 minutes and whisk the entire time until thick.
   ingredients:
     - milk:
         amount: 3 cups
+
     - butter:
         amount: 1 stick
+
     - cinnamon:
         amount: 1 tbsp
+
     - vannila extract:
-        amount: 1/4 tbsp
+        amount: 1 /4 tbsp
+
     - brown sugar:
-        amount: 1/2 tbsp
+        amount: 1 /2 tbsp
+
     - cornstarch:
         amount: 2 tbsp
 
+
 black bean patty with cheese:
+  description: |
+    Quick vegetarian protein
+  directions: |
+    Microwave a Spicy Black Bean patty from frozen, until hot, about 1 minute, do not overcook.
+    
+    Place a slice of cheese on top, microwave for another 10-15 seconds, until the cheese just starts to melt.
   ingredients:
     - black bean patty:
         amount: 1 patty
+
     - cheese:
         amount: 1 slice
+
 
 stir fry beef:
   ingredients:
     - beef, thinly sliced:
         amount: 1 pound
+
     - baking soda:
         amount: 1 tsp
+
     - corn starch:
         amount: 1 tbsp
+
     - soy sauce:
         amount: 1 tbsp
+
 
 steamed broccoli:
   ingredients:
     - broccoli:
         amount: 1 head
-         
+
+
 solyanka:
-  description: Eastern European "everything but the kitchen sink" soup with a multitude of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
+  description: |
+    Eastern European "everything but the kitchen sink" soup with a multitude of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
   ingredients:
     - bay leaves:
         amount: 2 large leaves
+
     - peppercorns, whole:
         amount: 6 peppercorns
+
     - allspice berries, whole:
         amount: 4 berries
+
     - water:
         amount: 10 cups
+
     - concentrated beef base, or Better Than Boullion:
         amount: 4 tablespoons
+
     - cabbage:
-        amount: .25 head
+        amount: 0.25 head
+
     - celery:
         amount: 3 ribs
+
     - avocado oil:
         amount: 3 tbsp
+
     - onions:
         amount: 2
+
     - carrots:
         amount: 2
+
     - ham or polish sausage:
-        amount: .5 pounds
-        optional: true
+        amount: 0.5 pounds
+        optional: True
+
     - chicken breast:
-        amount: 1
-        optional: true
+        optional: True
+
     - ham:
-        amount: .25 pounds
-        optional: true
+        amount: 0.25 pounds
+        optional: True
+
     - dill pickles:
         amount: 3 pickles
+
     - tomato paste:
         amount: 6 oz
+
     - canned stewed or diced tomatoes:
         amount: 24 oz
+
     - sliced black olives:
         amount: 6 oz
+
     - capers:
         amount: 2 tbsp
-        optional: true
+        optional: True
+
     - dry white wine:
         amount: 1 cup
-        optional: true
+        optional: True
+
     - salt:
         amount: 1 pinch
+
     - pepper:
         amount: 1 pinch
+
     - sour cream:
-        amount: .5 cup
-        optional: true
+        amount: 0.5 cup
+        optional: True
+
     - dill:
-        amount: .33 cups
-        optional: true
+        amount: 0.33 cups
+        optional: True
+
 
 mac-and-cheese casserole:
-  description: adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
+  description: |
+    adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
   directions: |
     Preheat oven to 350F. Lightly grease a large 3 qt or 4 qt baking dish and set aside.Combine shredded cheeses in a large bowl and set aside.
     Cook the pasta one minute shy of al dente according to the package instructions. Remove from heat, drain, and place in a large bowl.
-
+    
     Drizzle pasta with olive oil and stir to coat pasta. Set aside to cool while preparing cheese sauce.
     Melt butter in a deep saucepan, dutch oven, or stock pot.
     Whisk in flour over medium heat and continue whisking for about 1 minute until bubbly and golden.
@@ -560,7 +804,7 @@ mac-and-cheese casserole:
     Stir in the cooled pasta until combined and pasta is fully coated with the cheese sauce.
     Pour half of the mac and cheese into the prepared baking dish. Top with remaining 2 cups of shredded cheese and then the remaining mac and cheese.
     In a small bowl, combine panko crumbs, Parmesan cheese, melted butter and paprika. Sprinkle over the top and bake until bubbly and golden brown, about 30 minutes. Serve immediately.
-
+    
     Tips for the Best Homemade Baked Mac and Cheese
     Use block cheese and shred, do not buy the pre-shredded cheese. The pre-shredded cheese is great for so many things but not macaroni and cheese. It’s coated and won’t melt properly. You need to shred it yourself for the best result.
     Cook your pasta to slightly less than al dente, about one minute shy is perfect. The reason is that this is baked mac and cheese so the pasta will continue to cook in the homemade cheese sauce in the oven. You don’t want soggy macaroni.
@@ -569,240 +813,330 @@ mac-and-cheese casserole:
     The roux (equal parts butter and flour) is whisked together until bubbly and golden.
     Whisk in cold milk – not warm – to prevent the flour from clumping.
     Cook the roux until  you see bubbles on the surface and then continue cooking for an additional 2 minutes before adding the cheese.
+    
   ingredients:
     - elbow macaroni, cooked (or other tubular pasta):
         amount: 16 oz
+
     - extra virgin olive oil:
         amount: 1 tbsp
+
     - unsalted butter:
         amount: 6 tbsp
+
     - all purpose flour:
-        amount: .33 cups
+        amount: 0.33 cups
+
     - whole milk:
         amount: 3 cups
+
     - heavy whipping cream:
         amount: 1 cup
+
     - sharp cheddar cheese shredded:
         amount: 4 cups
+
     - Gruyere cheese shredded:
         amount: 2 cups
-    - salt: 
+
+    - salt:
         amount: 1 pinch
+
     - pepper:
         amount: 1 pinch
+
     - panko crumbs:
         amount: 1.5 cups
+
     - butter melted:
         amount: 4 tbsp
+
     - Parmesan cheese shredded:
-        amount: .5 cup
+        amount: 0.5 cup
+
     - paprika:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
 
 egg salad sandwiches:
   ingredients:
     - bread:
         amount: 6 slices
+
     - eggs:
         amount: 8
+
     - onion:
-        amount: .25
-        optional: true
+        amount: 0.25
+        optional: True
+
     - celery:
         amount: 1 rib
-        optional: true
+        optional: True
+
     - mayonnaise:
         amount: 3 oz
+
     - salt:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - pepper:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - curry powder:
-        amount: .75 tsp
-        optiona: true
+        amount: 0.75 tsp
+
 
 roasted broccoli:
-  directions: Cut into florets, toss with olive oil and salt and pepper, bake at 15 to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with herbs.
+  directions: |
+    Cut into florets, toss with olive oil and salt and pepper, bake at 15 to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with herbs.
   ingredients:
     - broccoli:
         amount: 1 head
+
     - olive oil:
         amount: 2 tbsp
+
     - salt:
-        amount: .5 tsp
-    - pepper: 
-        amount: .5 tsp
+        amount: 0.5 tsp
+
+    - pepper:
+        amount: 0.5 tsp
+
     - parmesan cheese:
         amount: 3 tbsp
-    - garlic: 
+
+    - garlic:
         amount: 3 cloves
+
     - fresh herbs
+
 
 cobb salad:
   ingredients:
     - lettuce
+
     - cherry tomatoes
+
     - bacon:
         amount: 4 oz
+
     - chicken breast:
         amount: 8 oz
+
     - shredded cheese:
         amount: 4 oz
+
     - baked tofu
+
     - eggs:
         amount: 4
+
     - bell pepper
+
     - cucumber:
-        amount: .5
+        amount: 0.5
+
     - canned corn
+
     - ranch dressing:
         amount: 6 oz
 
+
 schnitzel:
-  description: Simple breaded schnitzel recipe with chicken.
-  directions: Cut the chicken thin, and pound flat. Tenderize if desired. Dredge in flour, thoroughly coat in beaten eggs, and coat completely in Panko. Fry in oil on medium heat until golden, on both sides, do not over-brown. If not cooked all the way through, bake at 350F until cooked through, but do not over-cook. Garnish with herbs, serve with Tonkatsu sauce.
+  description: |
+    Simple breaded schnitzel recipe with chicken.
+  directions: |
+    Cut the chicken thin, and pound flat. Tenderize if desired. Dredge in flour, thoroughly coat in beaten eggs, and coat completely in Panko. Fry in oil on medium heat until golden, on both sides, do not over-brown. If not cooked all the way through, bake at 350F until cooked through, but do not over-cook. Garnish with herbs, serve with Tonkatsu sauce.
   ingredients:
     - chicken breast:
         amount: 1 lb
+
     - eggs:
-        amount: 2 
+        amount: 2
+
     - flour:
         amount: 1 cup
+
     - Panko bread crumbs:
         amount: 1.5 cup
+
     - avocado oil:
         amount: 4 tbsp
+
     - Tonkatsu sauce:
-        amount: .5 cup
-        optional: true
+        amount: 0.5 cup
+        optional: True
+
 
 buttery lima beans:
-  directions: Saute the garlic and onions, add the pre-cooked lima beans, stir, add paprika.
+  directions: |
+    Saute the garlic and onions, add the pre-cooked lima beans, stir, add paprika.
   ingredients:
     - butter:
         amount: 1 tbsp
+
     - olive oil:
         amount: 1 tbsp
-        optional: true
+        optional: True
+
     - lima beans:
         amount: 1 package
+
     - onion:
-        amount: .5
+        amount: 0.5
+
     - garlic:
         amount: 3 cloves
+
     - smoked paprika:
-        amount: .25 tsp
-        optional: true
+        amount: 0.25 tsp
+        optional: True
+
 
 cole slaw:
-  directions: Shred the cabbage on a mandoline, pound with a spatula for softness. add remaining ingredients, let rest for 30 minutes.
+  directions: |
+    Shred the cabbage on a mandoline, pound with a spatula for softness. add remaining ingredients, let rest for 30 minutes.
   ingredients:
     - cabbage:
-        amount: .25 head
+        amount: 0.25 head
+
     - salt:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - olive oil:
         amount: 2 tbsp
+
     - vinegar:
         amount: 2 tbsp
+
     - mayonnaise:
-        optional: true
         amount: 3 tbsp
+        optional: True
+
 
 collard greens:
-  directions: Cut and de-stem collard greens, cook in Instant Pot for 5 min with quick release. Saute onions and garlic in oil until soft, add the collard greeens. Cook on high heat to crisp the edges. Add salt, pepper and spices.
+  directions: |
+    Cut and de-stem collard greens, cook in Instant Pot for 5 min with quick release. Saute onions and garlic in oil until soft, add the collard greeens. Cook on high heat to crisp the edges. Add salt, pepper and spices.
   ingredients:
     - collard greens
+
     - onion
+
     - garlic:
         amount: 4 cloves
+
     - salt:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - pepper:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - avocado oil:
         amount: 2 tbsp
+
     - paprika:
         amount: 1 pinch
-        optional: true
+        optional: True
+
 
 pinto beans:
-  directions: Cook according to package instructions
+  directions: |
+    Cook according to package instructions
   ingredients:
     - pinto beans
+
     - salt:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
 
 slow cooked turkey:
-    ingredients:
-          - turkey thighs:
-                    amount: 4
+  ingredients:
+    - turkey thighs:
+        amount: 4
+
 
 esquites:
-  description: Mexican street corn salad
+  description: |
+    Mexican street corn salad
   directions: |
     Heat a large skillet over medium-high heat. Add the butter, fresh corn kernels (cut off the cob), minced garlic, and minced jalapeño. Cook, stirring occasionally, for 5 minutes. Transfer to a medium mixing bowl.
     Add the mayonnaise, crumbled cotija cheese, chopped cilantro, salt, and lime juice. Add the chili powder and optional ingredients if using. Mix until fully combined. Taste and season with more salt and mayonnaise if desired.
     Garnish with chili powder to your liking, a lime wedge, and a sprinkle cotija cheese.
     Serve immediately in individual portions.
+    
   ingredients:
     - butter:
         amount: 4 tbsp
+
     - corn on the cob:
-        amount: 4 ears 
+        amount: 4 ears
+
     - garlic:
         amount: 2 cloves
+
     - jalapeño pepper
+
     - mayonnaise:
-        amount: ¼ cup
+        amount: 1 ¼ cup
+
     - cotija cheese:
-        amount: .5 cup
+        amount: 0.5 cup
+
     - cilantro:
         amount: 2 tablespoons
+
     - salt:
-        amount: ½ teaspoon
+        amount: 1 ½ teaspoon
+
     - lime:
-        amount: 2 
+        amount: 2
+
     - Chili powder:
         amount: 1 tsp
+
     - paprika:
         amount: 1 teaspoon
-        optional: true
+        optional: True
+
     - chili lime seasoning:
-        optional: true
         amount: 1 tsp
+        optional: True
+
 
 vegetarian kharcho:
-  description: A vegetarian version of a hearty soup with walnuts from Georgia in the Caucasus Mountains
+  description: |
+    A vegetarian version of a hearty soup with walnuts from Georgia in the Caucasus Mountains
   directions: |
     From food.com  
-
+    
     Mince and sautee the onion in butter until soft but not yet brown.
-
+    
     Add water, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
     Bring to boil.
-
+    
     Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
-
+    
     Add khmeli-suneli and salt. Cook for 1-2 minutes.
-
+    
     Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
+    
   ingredients:
     - onion
     - butter:
         amount: 20 grams
     - walnuts:
-        amount: 100 grams
+        amount: 1e+02 grams
     - can crushed tomatoes:
         amount: 16 oz
     - cup rice:
-        amount: .5 cup
+        amount: 0.5 cup
     - water:
         amount: 6 cups
     - garlic cloves:
         amount: 2 cloves
     - red pepper flakes:
-        amount: .5 tsp
+        amount: 0.5 tsp
     - khmeli-suneli spice blend:
         amount: 1.5 tbsp
     - salt:
@@ -814,8 +1148,10 @@ vegetarian kharcho:
     - parsley:
         amount: 3 tbsp
 
+
 edible chalk sugar candy:
-  description: Ian's Edible Chalk candy. Fun fact, when Ian brought some to his school, a literal fight broke out as the other students were trying to get some of it.
+  description: |
+    Ian's Edible Chalk candy. Fun fact, when Ian brought some to his school, a literal fight broke out as the other students were trying to get some of it.
   directions: |
     Mix the sugar, water, and corn syrup, heat until 240F, turn off the heat, add the butter.
     
@@ -824,107 +1160,262 @@ edible chalk sugar candy:
     Quickly mix in the vanilla, and pour on parchment paper, allow to set until hard.
     
     Break or cut into pieces. 
+    
   ingredients:
     - sugar:
         amount: 1.5 cups
+
     - corn syrup:
-        amount: .33 cups
+        amount: 0.33 cups
+
     - water:
-        amount: .33 cups
+        amount: 0.33 cups
+
     - butter:
         amount: 2 tbsp
+
     - vanilla extract:
-        amount: .25 tsp 
+        amount: 0.25 tsp
+
 
 refried beans:
-  directions: Cook beans with 3X water by volume in the Intant Pot, along with a chopped onion, salt, and a dried chili pepper. Pan-fry in oil while mashing, until the beans disintegrate.
+  directions: |
+    Cook beans with 3X water by volume in the Intant Pot, along with a chopped onion, salt, and a dried chili pepper. Pan-fry in oil while mashing, until the beans disintegrate.
   ingredients:
     - beans, dry:
         amount: 1 lb
+
     - onion
+
     - salt:
         amount: 1 tsp
+
     - dried chili, whole:
         amount: 1 piece
+
     - avocado oil:
         amount: 1 tbsp
+
     - cotija cheese:
         amount: 2 oz
-        optional: true
+        optional: True
+
 
 canellini bean side dish:
   ingredients:
     - canellini beans:
         amount: 1 can
+
     - onion:
-        amount: .5
+        amount: 0.5
+
     - garlic:
         amount: 2 cloves
+
     - olive oil:
         amount: 1 tbsp
+
     - cumin:
         amount: 1 pinch
+
     - tomato paste:
         amount: 4 oz
+
 
 stuffed shells:
   directions: |
     Cook jumbo shell pasta according to package directions to al dente. Stir in the olive oil and a few tablespoons of tomato sauce to avoid sticking.
-
+    
     Dice and fry the onion on medium heat without browning, until translucent. Smash and mince the garlic, and add to the pan for 1 more minute, then take off the heat.
-
+    
     In a bowl, mix the cheese, the garlic and onion mixture, and nearly all of the remaining pasta sauce, until the consistency of play-dough.
-
+    
     Stuff each shell witht eh cheese mixture, and place on a platter. Microwave for one minute, or until the cheese just starts to melt.
-
+    
     Sprinkle with the italian seasoning, and serve immediately.
+    
   ingredients:
     - jumbo shell noodles:
         amount: 1 box
+
     - mozarella cheese, shredded:
         amount: 1 lb
+
     - pasta sauce:
         amount: 1 jar
-    - onion:
-        amount: 1
+
+    - onion
+
     - garlic:
         amount: 4 cloves
+
     - italian seasoning:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - olive oil:
         amount: 1 tbsp
 
+
 cold borscht:
-  description: Eastern European cold sumertime soup
+  description: |
+    Eastern European cold sumertime soup
   directions: |
     Place the beets in a large pot of boiling salted water and cook uncovered until the beets are tender, 30 to 40 minutes. Remove the beets to a bowl with a slotted spoon and set aside to cool. Strain the cooking liquid through a fine sieve and also set aside to cool.
-
+    
     In a large bowl, whisk together 1 1/2 cups of the beet cooking liquid, the chicken stock, sour cream, yogurt, sugar, lemon juice, vinegar, 1 tablespoon salt, and the pepper. Peel the cooled beets with a small paring knife or rub the skins off with your hands. Cut the beets in small to medium dice. Add the beets, diced cucumber,  1/2 cup of chopped scallions, and 2 tbsp of chopped dill to the soup. Cover with plastic wrap and chill for at least 4 hours or overnight. Season, to taste, and serve cold with a dollop of sour cream and an extra sprig of fresh dill.
     
     Optionally top each bowl with half of a hard-boiled egg.
+    
   ingredients:
     - beets:
         amount: 2 lb
+
     - salt:
         amount: 2 tsp
+
     - vegetable stock:
         amount: 2 cups
+
     - sour cream:
         amount: 20 oz
+
     - yogurt, plain:
-        amount: .5 cups
-    - sugar: 
+        amount: 0.5 cups
+
+    - sugar:
         amount: 4 tbsp
+
     - lemon juice, freshly squeezed:
         amount: 2 tbsp
+
     - vinegar:
         amount: 2 tsp
+
     - black pepper:
         amount: 1.5 tsp
+
     - eggs:
         amount: 3
-        optional: true
-    - cucumber, english:
-        amount: 1
+        optional: True
+
+    - cucumber, english
+
     - green onions
+
     - dill
+
+pan-fried chicken:
+  description: Quick pan-fried chicken with a lot of flavor.
+  directions: |
+    De-bone chicken pieces. Cut to 1/2" thick or thinner.
+    
+    Optionally tenderize with a jaccard or pound flat with a mallet tenderizer.
+    
+    Cover with spices, salt very lightly. Fry in hot oil, 2-3 minutes per side. Let rest 3 min before serving. 
+  ingredients: 
+    - chicken thighs:
+        amount: 1 lb
+    - paprika:
+        amount: .25 tsp
+    - salt:
+        amount: .25 tsp
+    - black pepper:
+        amount: .25 tsp
+    - garlic powder:
+        amount: .5 tsp
+    - onion powder:
+        amount: .5 tsp
+    - italian seasoning:
+        amount: .5 tsp
+    - avocado oil:
+        amount: 1 tbsp
+
+kharcho:
+  description: A hearty flavorful soup with meat and walnuts from the Caucasus Mountains (Georgia).
+  directions: |
+    From food.com
+
+    In a pot, brown the short ribs well.
+
+    Mince and sautee the onion in butter until soft but not yet brown.
+
+    Add water, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
+    Bring to boil.
+
+    Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
+
+    Add khmeli-suneli and salt. Cook for 1-2 minutes.
+
+    Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
+
+  ingredients:
+    - short ribs:
+        amount: 2 lbs
+    - onion
+    - butter:
+        amount: 20 grams
+    - walnuts:
+        amount: .5 lbs
+    - canned crushed tomatoes:
+        amount: 16 oz
+    - cup rice:
+        amount: 0.5 cup
+    - water:
+        amount: 6 cups
+    - garlic cloves:
+        amount: 2 cloves
+    - red pepper flakes:
+        amount: 0.5 tsp
+    - khmeli-suneli spice blend:
+        amount: 1.5 tbsp
+    - salt:
+        amount: 1 tsp
+    - cilantro:
+        amount: 6 tbsp
+    - dill:
+        amount: 3 tbsp
+    - parsley:
+        amount: 3 tbsp
+
+vegetables a la Grecque:
+  description: Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
+  directions: |
+    Use a mix of vegetables that will keep their structure, cut into appealing and manageable shapes, such as artichoke hearts, julienned carrots, celery or fennel pieces, cauliflower florets, trimmed igreen beans, leeks cut lengthwise, pearl onions, whole mushrooms, strips of bell peppers, whole olives.
+
+    Immediately squeeze the juice of 2 lemons over the cut vegetables, to prevent discoloration.
+
+    Reserve 2 of the lemon peel halves.
+
+    Prepare the court boullion from the olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
+
+    Cook the vegetables in the boullion by bringing to a boil, then taking off the heat and allowing to infuse for 15 minutes.
+
+    Drain, reserving the marinade, and serve.
+
+    Cover with cooled marinade to store in the refrigerator. After refrigeration, bring up to room temperature before serving.
+  ingredients:
+    - mixed vegetables:
+        amount: 2 lbs
+    - lemons:
+        amount: 4
+    - olive oil:
+        amount: 1 cup
+    - cider vinegar:
+        amount: .75 cup
+    - garlic:
+       amount: 2 cloves
+    - parsley:
+       amount: 3 sprigs
+    - whole peppercorns:
+       amount: 6
+    - fresh thyme:
+       amount: 3 tsp
+    - dried oregano:
+       amount: .25 tsp 
+    - fennel or celery seeds:
+        amount: 1 pinch
+        optional: true
+    - salt:
+        amount: .25 tsp
+
+

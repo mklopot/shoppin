@@ -34,6 +34,7 @@ tacos and burritos:
 take-out:
   directions: |
     order from Chipotle, Dominos, or Taste of Thailand
+    
 
 sloppy joes:
   ingredients:
@@ -207,6 +208,7 @@ spaghetti:
     Boil up to 10% longer as a high-altitude adjustment.
     
     Drain, add marinara sauce, top with parmesan cheese if desired.
+    
   ingredients:
     - spaghetti:
         amount: 1 package
@@ -278,6 +280,7 @@ smashburgers:
 burger sauce:
   description: |
     Ian's Burger Sauce
+    
   ingredients:
     - ketchup:
         amount: 2 oz
@@ -385,6 +388,7 @@ slow cooked chicken:
     Cook for 1.5 hours on the "Slow cook" setting. Remove promptly.
     
     Cooking water can be used as chicken broth in other recipes.
+    
   ingredients:
     - chicken thighs:
         amount: 4
@@ -476,6 +480,7 @@ vegetarian zucchini casserole:
 twice baked potatoes:
   description: |
     Classic American side-dish, steakhouse style.
+    
   directions: |
     Preheat the oven to 400°F.
     
@@ -538,6 +543,7 @@ cabbage and egg salad with cucumber:
     Slice the cucumber on the mandoline. 
     
     Top the cabbage with the cucumber and egg. serve with your choice of dressing.
+    
   ingredients:
     - egg
 
@@ -597,8 +603,17 @@ lima bean side dish:
 
 
 cheesy puff pastry rolls:
+  description: |
+    Crispy warm cheesy rolls lightly seasoned with mint and oregano.
   directions: |
-    Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano. Roll up and cut into 8 pieces. Combine egg yolk and cream to make an egg wash, brush generously. Bake at 350F for 35 to 40 min, rest for 10 min.
+    Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano.
+    
+    Roll up and cut into 8 pieces.
+    
+    Combine egg yolk and cream to make an egg wash, brush generously.
+    
+    Bake at 350F for 35 to 40 min, rest for 10 min.
+    
   ingredients:
     - puff pastry sheet, frozen:
         amount: 1 pound
@@ -653,6 +668,7 @@ butternut squash soup:
 vanilla pudding:
   directions: |
     Mix everything and boil at low heat for ~5 minutes and whisk the entire time until thick.
+    
   ingredients:
     - milk:
         amount: 3 cups
@@ -676,10 +692,12 @@ vanilla pudding:
 black bean patty with cheese:
   description: |
     Quick vegetarian protein
+    
   directions: |
     Microwave a Spicy Black Bean patty from frozen, until hot, about 1 minute, do not overcook.
     
     Place a slice of cheese on top, microwave for another 10-15 seconds, until the cheese just starts to melt.
+    
   ingredients:
     - black bean patty:
         amount: 1 patty
@@ -712,6 +730,7 @@ steamed broccoli:
 solyanka:
   description: |
     Eastern European "everything but the kitchen sink" soup with a multitude of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
+    
   ingredients:
     - bay leaves:
         amount: 2 large leaves
@@ -792,6 +811,7 @@ solyanka:
 mac-and-cheese casserole:
   description: |
     adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
+    
   directions: |
     Preheat oven to 350F. Lightly grease a large 3 qt or 4 qt baking dish and set aside.Combine shredded cheeses in a large bowl and set aside.
     Cook the pasta one minute shy of al dente according to the package instructions. Remove from heat, drain, and place in a large bowl.
@@ -890,6 +910,7 @@ egg salad sandwiches:
 roasted broccoli:
   directions: |
     Cut into florets, toss with olive oil and salt and pepper, bake at 15 to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with herbs.
+    
   ingredients:
     - broccoli:
         amount: 1 head
@@ -946,8 +967,10 @@ cobb salad:
 schnitzel:
   description: |
     Simple breaded schnitzel recipe with chicken.
+    
   directions: |
     Cut the chicken thin, and pound flat. Tenderize if desired. Dredge in flour, thoroughly coat in beaten eggs, and coat completely in Panko. Fry in oil on medium heat until golden, on both sides, do not over-brown. If not cooked all the way through, bake at 350F until cooked through, but do not over-cook. Garnish with herbs, serve with Tonkatsu sauce.
+    
   ingredients:
     - chicken breast:
         amount: 1 lb
@@ -972,6 +995,7 @@ schnitzel:
 buttery lima beans:
   directions: |
     Saute the garlic and onions, add the pre-cooked lima beans, stir, add paprika.
+    
   ingredients:
     - butter:
         amount: 1 tbsp
@@ -997,6 +1021,7 @@ buttery lima beans:
 cole slaw:
   directions: |
     Shred the cabbage on a mandoline, pound with a spatula for softness. add remaining ingredients, let rest for 30 minutes.
+    
   ingredients:
     - cabbage:
         amount: 0.25 head
@@ -1018,6 +1043,7 @@ cole slaw:
 collard greens:
   directions: |
     Cut and de-stem collard greens, cook in Instant Pot for 5 min with quick release. Saute onions and garlic in oil until soft, add the collard greeens. Cook on high heat to crisp the edges. Add salt, pepper and spices.
+    
   ingredients:
     - collard greens
 
@@ -1043,6 +1069,7 @@ collard greens:
 pinto beans:
   directions: |
     Cook according to package instructions
+    
   ingredients:
     - pinto beans
 
@@ -1059,6 +1086,7 @@ slow cooked turkey:
 esquites:
   description: |
     Mexican street corn salad
+    
   directions: |
     Heat a large skillet over medium-high heat. Add the butter, fresh corn kernels (cut off the cob), minced garlic, and minced jalapeño. Cook, stirring occasionally, for 5 minutes. Transfer to a medium mixing bowl.
     Add the mayonnaise, crumbled cotija cheese, chopped cilantro, salt, and lime juice. Add the chili powder and optional ingredients if using. Mix until fully combined. Taste and season with more salt and mayonnaise if desired.
@@ -1107,6 +1135,7 @@ esquites:
 vegetarian kharcho:
   description: |
     A vegetarian version of a hearty soup with walnuts from Georgia in the Caucasus Mountains
+    
   directions: |
     From food.com  
     
@@ -1123,28 +1152,40 @@ vegetarian kharcho:
     
   ingredients:
     - onion
+
     - butter:
         amount: 20 grams
+
     - walnuts:
-        amount: 1e+02 grams
+        amount: 1 e+02 grams
+
     - can crushed tomatoes:
         amount: 16 oz
+
     - cup rice:
         amount: 0.5 cup
+
     - water:
         amount: 6 cups
+
     - garlic cloves:
         amount: 2 cloves
+
     - red pepper flakes:
         amount: 0.5 tsp
+
     - khmeli-suneli spice blend:
         amount: 1.5 tbsp
+
     - salt:
         amount: 1 tsp
+
     - cilantro:
         amount: 6 tbsp
+
     - dill:
         amount: 3 tbsp
+
     - parsley:
         amount: 3 tbsp
 
@@ -1152,6 +1193,7 @@ vegetarian kharcho:
 edible chalk sugar candy:
   description: |
     Ian's Edible Chalk candy. Fun fact, when Ian brought some to his school, a literal fight broke out as the other students were trying to get some of it.
+    
   directions: |
     Mix the sugar, water, and corn syrup, heat until 240F, turn off the heat, add the butter.
     
@@ -1181,6 +1223,7 @@ edible chalk sugar candy:
 refried beans:
   directions: |
     Cook beans with 3X water by volume in the Intant Pot, along with a chopped onion, salt, and a dried chili pepper. Pan-fry in oil while mashing, until the beans disintegrate.
+    
   ingredients:
     - beans, dry:
         amount: 1 lb
@@ -1259,6 +1302,7 @@ stuffed shells:
 cold borscht:
   description: |
     Eastern European cold sumertime soup
+    
   directions: |
     Place the beets in a large pot of boiling salted water and cook uncovered until the beets are tender, 30 to 40 minutes. Remove the beets to a bowl with a slotted spoon and set aside to cool. Strain the cooking liquid through a fine sieve and also set aside to cool.
     
@@ -1304,95 +1348,123 @@ cold borscht:
 
     - dill
 
+
 pan-fried chicken:
-  description: Quick pan-fried chicken with a lot of flavor.
+  description: |
+    Quick pan-fried chicken with a lot of flavor.
   directions: |
     De-bone chicken pieces. Cut to 1/2" thick or thinner.
     
     Optionally tenderize with a jaccard or pound flat with a mallet tenderizer.
     
     Cover with spices, salt very lightly. Fry in hot oil, 2-3 minutes per side. Let rest 3 min before serving. 
-  ingredients: 
+    
+  ingredients:
     - chicken thighs:
         amount: 1 lb
+
     - paprika:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - salt:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - black pepper:
-        amount: .25 tsp
+        amount: 0.25 tsp
+
     - garlic powder:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - onion powder:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - italian seasoning:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - avocado oil:
         amount: 1 tbsp
 
+
 kharcho:
-  description: A hearty flavorful soup with meat and walnuts from the Caucasus Mountains (Georgia).
+  description: |
+    A hearty flavorful soup with meat and walnuts, from the Caucasus Mountains (Georgia).
   directions: |
     From food.com
-
-    In a pot, brown the short ribs well.
-
-    Mince and sautee the onion in butter until soft but not yet brown.
-
-    Add water, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
+    
+    In a pot, brown the short ribs well. Add water and salt, and pressure cook in the Instant Pot for 30 minutes.
+    
+    Mince and sauté the onion in butter until soft but not yet brown.
+    
+    Add the sautéed onion with the butter, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
     Bring to boil.
-
+    
     Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
-
+    
     Add khmeli-suneli and salt. Cook for 1-2 minutes.
-
+    
     Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
-
+    
   ingredients:
     - short ribs:
         amount: 2 lbs
+
     - onion
+
     - butter:
         amount: 20 grams
+
     - walnuts:
-        amount: .5 lbs
+        amount: 0.5 lbs
+
     - canned crushed tomatoes:
         amount: 16 oz
+
     - cup rice:
         amount: 0.5 cup
+
     - water:
         amount: 6 cups
+
     - garlic cloves:
         amount: 2 cloves
+
     - red pepper flakes:
         amount: 0.5 tsp
+
     - khmeli-suneli spice blend:
         amount: 1.5 tbsp
+
     - salt:
         amount: 1 tsp
+
     - cilantro:
         amount: 6 tbsp
+
     - dill:
         amount: 3 tbsp
+
     - parsley:
         amount: 3 tbsp
 
+
 vegetables a la Grecque:
-  description: Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
+  description: |
+    Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
   directions: |
     Use a mix of vegetables that will keep their structure, cut into appealing and manageable shapes, such as artichoke hearts, julienned carrots, celery or fennel pieces, cauliflower florets, trimmed igreen beans, leeks cut lengthwise, pearl onions, whole mushrooms, strips of bell peppers, whole olives.
-
+    
     Immediately squeeze the juice of 2 lemons over the cut vegetables, to prevent discoloration.
-
+    
     Reserve 2 of the lemon peel halves.
-
+    
     Prepare the court boullion from the olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
-
+    
     Cook the vegetables in the boullion by bringing to a boil, then taking off the heat and allowing to infuse for 15 minutes.
-
+    
     Drain, reserving the marinade, and serve.
-
+    
     Cover with cooled marinade to store in the refrigerator. After refrigeration, bring up to room temperature before serving.
+    
   ingredients:
     - mixed vegetables:
         amount: 2 lbs
@@ -1401,21 +1473,65 @@ vegetables a la Grecque:
     - olive oil:
         amount: 1 cup
     - cider vinegar:
-        amount: .75 cup
+        amount: 0.75 cup
     - garlic:
-       amount: 2 cloves
+        amount: 2 cloves
     - parsley:
-       amount: 3 sprigs
+        amount: 3 sprigs
     - whole peppercorns:
-       amount: 6
+        amount: 6
     - fresh thyme:
-       amount: 3 tsp
+        amount: 3 tsp
     - dried oregano:
-       amount: .25 tsp 
+        amount: 0.25 tsp
     - fennel or celery seeds:
         amount: 1 pinch
-        optional: true
+        optional: True
     - salt:
-        amount: .25 tsp
+        amount: 0.25 tsp
 
+tortellini soup:
+  description: Italian classic
+  directions: |
+    Boil a package of tortellini according to package directions.
 
+    Drain, reserving the cooking liquid, mix in 1 tsp of olive oil to prevent sticking, set aside.
+
+    Saute one chopped white onion in one tablespoon of olive oil on medium heat, until translucent. Slice one carrot, add to the pot and cook for 5 min. 
+
+    Slice one celery rib, peeled, into the pan. Add 4 peeled garlic cloves, and half of a red bell pepper, diced. Cook for an additional 3 minutes.
+
+    Add cooking liquid from the tortellini. Optionally add 1-2 cups of broth.
+
+    Pressure cook on the "Soup" setting in the Instant Pot for 5 minutes, then manually release pressure.
+
+    Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
+
+    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+  ingredients:
+    - tortellini:
+        amount: 1 package
+    - olive oil:
+        amount: 4 tsp 
+    - onion, white
+    - carrot
+    - celery:
+        amount: 1 rib
+    - garlic:
+        amount: 4 cloves
+    - bell pepper:
+        amount: .5 
+    - zucchini
+    - spinach:
+        amount: 1 bunch
+    - pasta sauce:
+        amount: 5 tbsp
+    - broth:
+        amount: 2 cups
+        optional: true
+    - italian seasoning:
+        amount: .5 tsp
+    - salt:
+        amount: .5 tsp
+    - black pepper:
+        amount: 1 pinch

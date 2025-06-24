@@ -114,8 +114,9 @@ def need(item_id):
 
 @app.route('/add-meal', method=['POST'])
 def add_meal():
+    global timezone
     if not my_mealplan.meals:
-        my_mealplan.name = datetime.now().strftime("Created %A, %B %d")
+        my_mealplan.name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
     if request.POST.meal == "":
         redirect('/')
     my_mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
@@ -208,6 +209,7 @@ def clear():
     global my_list_manager
     global my_recipes
     global my_sequence
+    global timezone
 
     my_sequence.reset_pointer()
 

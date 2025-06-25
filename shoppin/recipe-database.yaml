@@ -1,4 +1,7 @@
 tacos and burritos:
+  description: |
+    A Taco Tuesday favorite!
+    
   ingredients:
     - onion
 
@@ -125,6 +128,19 @@ stir fry:
 
 
 taco soup:
+
+  description: |
+    Beth's invention. Hearty flavors of Mexican cuisine, in soup form.
+    
+    Maybe it's just tortilla soup. By any name, good eatin'!
+    
+  directions: |
+    Saute the vegetables, add beans, tomato paste and green chili, cover with boiling water.
+    
+    Cook for 10 min in the Instant Pot.
+    
+    Top each serving with tortilla chips, cheese, sour cream, and cilantro. Serve with diced avocado and radishes on the side.
+    
   ingredients:
     - tomato paste:
         amount: 8 oz
@@ -162,8 +178,17 @@ taco soup:
     - radishes:
         optional: True
 
-
 meatloaf:
+  description: |
+    Traditional simple meatloaf
+    
+  directions: |
+    Whip the egg (I use an immersion blender), mix all ingredients well.
+    
+    Bake at 350F in an oiled loaf pan for 30 min, or until internal temp reaches 140F. 
+    
+    Optionally, glaze with BBQ sauce 5 minutes before removing from the oven.
+    
   ingredients:
     - ground beef:
         amount: 1 lb
@@ -603,6 +628,7 @@ lima bean side dish:
 
 
 cheesy puff pastry rolls:
+
   description: |
     Crispy warm cheesy rolls lightly seasoned with mint and oregano.
   directions: |
@@ -687,7 +713,6 @@ vanilla pudding:
 
     - cornstarch:
         amount: 2 tbsp
-
 
 black bean patty with cheese:
   description: |
@@ -1348,6 +1373,27 @@ cold borscht:
 
     - dill
 
+
+
+Banana Treats:
+  description: |
+    Banana slices topped with peanut butter and chocolate
+    
+  directions: |
+    Peel and slice a banana, arrange the slices on a plate.
+    
+    Place a marble sized amount of peanut butter on top of each slice. I use two butter knives to manipulate the sticky peanut butter.
+    
+    Place a chocolate chip or similar sized little piece of chocolate on top of each slice.
+    
+  ingredients:
+    - banana
+
+    - peanut butter:
+        amount: 2 tbsp
+
+    - chocolate or chocolate chips:
+        amount: 1.5 oz
 
 pan-fried chicken:
   description: |

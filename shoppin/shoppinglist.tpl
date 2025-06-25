@@ -1,17 +1,8 @@
 <html>
 <head>
     <meta http-equiv="refresh" content="1200">
-    <script>
-        document.addEventListener("DOMContentLoaded", function(event) { 
-            var scrollpos = localStorage.getItem('scrollpos' + '-' + window.location.href);
-            if (scrollpos) window.scrollTo(0, scrollpos);
-        });
-
-        window.onbeforeunload = function(e) {
-            localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
-        };
-    </script>
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <meta name="htmx-config" content='{"scrollIntoViewOnBoost":"false"}'>
 
 <style>
 a:visited{
@@ -173,11 +164,11 @@ a.x{
     % end
      </td>
      % if item.locked:
-     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true"><img src="images/cart3.svg"></a></td>
+     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg"></a></td>
      % else:
-     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true"><img src="images/cart3.svg"></a></td>
-     <td style="width:10%"><a href="/have/{{item.id}}" hx-boost="true"><img src="images/house-check-fill.svg"></a></td>
-     <td style="width:10%"><a href="/lock/{{item.id}}" hx-boost="true"><img src="images/house-dash.svg"></a></td>
+     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg"></a></td>
+     <td style="width:10%"><a href="/have/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-check-fill.svg"></a></td>
+     <td style="width:10%"><a href="/lock/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg"></a></td>
      % end
   </tr>
   % end
@@ -203,7 +194,7 @@ a.x{
     % end
      </td>
      <td style="width:10%">&#x2705;</td>
-     <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true"><img src="images/house-dash.svg"></a></td>
+     <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg"></a></td>
   </tr>
   % end
 </table>
@@ -227,7 +218,7 @@ a.x{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
-     <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true"><img src="images/house-dash.svg"></a></td>
+     <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg"></a></td>
   </tr>
   % end
 </table>

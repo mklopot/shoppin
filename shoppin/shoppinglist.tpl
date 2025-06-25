@@ -11,6 +11,7 @@
             localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
         };
     </script>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
 
 <style>
 a:visited{
@@ -149,7 +150,7 @@ a.x{
     <input type="text" id="vendor" name="vendor" method="POST">
     <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
 
-    <input type="submit" value="+ Add Item"><br>
+    <input type="submit" value="+ Add Item" hx-boost="true"><br>
     </form>
     </div>
 % if need:
@@ -172,11 +173,11 @@ a.x{
     % end
      </td>
      % if item.locked:
-     <td style="width:10%"><a href="/got/{{item.id}}"><img src="images/cart3.svg"></a></td>
+     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true"><img src="images/cart3.svg"></a></td>
      % else:
-     <td style="width:10%"><a href="/got/{{item.id}}"><img src="images/cart3.svg"></a></td>
-     <td style="width:10%"><a href="/have/{{item.id}}"><img src="images/house-check-fill.svg"></a></td>
-     <td style="width:10%"><a href="/lock/{{item.id}}"><img src="images/house-dash.svg"></a></td>
+     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true"><img src="images/cart3.svg"></a></td>
+     <td style="width:10%"><a href="/have/{{item.id}}" hx-boost="true"><img src="images/house-check-fill.svg"></a></td>
+     <td style="width:10%"><a href="/lock/{{item.id}}" hx-boost="true"><img src="images/house-dash.svg"></a></td>
      % end
   </tr>
   % end
@@ -202,7 +203,7 @@ a.x{
     % end
      </td>
      <td style="width:10%">&#x2705;</td>
-     <td style="width:20%"><a href="/need/{{item.id}}"><img src="images/house-dash.svg"></a></td>
+     <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true"><img src="images/house-dash.svg"></a></td>
   </tr>
   % end
 </table>
@@ -226,7 +227,7 @@ a.x{
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
      </td>
-     <td style="width:20%"><a href="/need/{{item.id}}"><img src="images/house-dash.svg"></a></td>
+     <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true"><img src="images/house-dash.svg"></a></td>
   </tr>
   % end
 </table>

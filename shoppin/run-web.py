@@ -21,16 +21,18 @@ def save_state(shoppinglist, mealplan, list_manager, path=picklefile):
 
 my_recipes = recipes.Recipes()
 my_recipes.load()
-my_sequence = sequence.Sequence()
-my_sequence.load()
+# my_sequence = sequence.Sequence()
+# my_sequence.load()
 
 if os.path.exists(picklefile):
     with open(picklefile, "rb") as f:
         my_shopping_list, my_mealplan, my_list_manager = pickle.load(f)
         my_mealplan.recipe_database = my_recipes
-        my_shopping_list.sequence = my_sequence
+#        my_shopping_list.sequence = my_sequence
 else:
-    my_shopping_list = shopping.ShoppingList(my_sequence)
+#    my_shopping_list = shopping.ShoppingList(my_sequence)
+    my_shopping_list = shopping.ShoppingList()
+
     mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
     my_mealplan = mealplan.MealPlan(mealplan_name)
     my_mealplan.recipe_database = my_recipes
@@ -211,12 +213,13 @@ def clear():
     global my_sequence
     global timezone
 
-    my_sequence.reset_pointer()
+    #my_sequence.reset_pointer()
 
     my_recipes = recipes.Recipes()
     my_recipes.load()
 
-    my_shopping_list = shopping.ShoppingList(my_sequence)
+#     my_shopping_list = shopping.ShoppingList(my_sequence)
+    my_shopping_list = shopping.ShoppingList()
 
     mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
     my_mealplan = mealplan.MealPlan(mealplan_name)

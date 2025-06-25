@@ -3,6 +3,10 @@ tacos and burritos:
     A Taco Tuesday favorite!
     
   ingredients:
+    - onion
+
+    - bell pepper
+
     - tortillas, large:
         brand: Mission
 
@@ -124,6 +128,7 @@ stir fry:
 
 
 taco soup:
+
   description: |
     Beth's invention. Hearty flavors of Mexican cuisine, in soup form.
     
@@ -172,18 +177,6 @@ taco soup:
 
     - radishes:
         optional: True
-
-    - onion:
-        amount: 2
-        optional: True
-        brand: Onion Valley Farms
-        vendor: Onions-R-Us
-
-    - bell pepper:
-        amount: 3 peppers
-        brand: Pepper Ridge Farms
-        vendor: Peppers-R-Us
-
 
 meatloaf:
   description: |
@@ -234,6 +227,13 @@ mashed potatoes:
 
 
 spaghetti:
+  directions: |
+    Boil in plenty of generously salted water as specified on the package.
+    
+    Boil up to 10% longer as a high-altitude adjustment.
+    
+    Drain, add marinara sauce, top with parmesan cheese if desired.
+    
   ingredients:
     - spaghetti:
         amount: 1 package
@@ -407,6 +407,13 @@ fried egg:
 
 
 slow cooked chicken:
+  directions: |
+    Cover chicken thighs in water in the Instant Pot.
+    
+    Cook for 1.5 hours on the "Slow cook" setting. Remove promptly.
+    
+    Cooking water can be used as chicken broth in other recipes.
+    
   ingredients:
     - chicken thighs:
         amount: 4
@@ -496,8 +503,28 @@ vegetarian zucchini casserole:
 
 
 twice baked potatoes:
+  description: |
+    Classic American side-dish, steakhouse style.
+    
   directions: |
-    Preheat the oven to 400°F. Wash and dry the potatoes well, then use a fork to prick each potato several times. Place the potatoes on a parchment lined baking sheet. Drizzle the olive oil over the potatoes, then use your hands or a silicone brush to brush the oil over each potato until it is fully coated. Season the potatoes with a pinch of salt. Bake in the preheated oven for 50-60 minutes, or until the potatoes can be pierced easily with a fork. Total baking time will depend on the size of your potatoes. Optionally, while the potatoes are baking, cook the bacon in a skillet over medium heat until brown and crispy. Remove the cooked bacon from the skillet and allow it to drain on a paper-towel lined plate. Once cool enough to handle, rough chop the bacon into smaller pieces. nce the potatoes are done baking, remove them from the oven and allow them to cool slightly. When the potatoes are cool enough to handle, slice them in half lengthwise. Carefully scoop out the potato flesh, leaving a thin rim of potato (about ¼ inch rim) around the edges to help the skin hold its shape. Place the scooped out potato flesh in a large bowl and add the butter, sour cream, milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes until light and fluffy. Add the chopped bacon, half of the sliced green onions, and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold to combine. Fill the potato skins with about 1/3 cup of the potato mixture, then sprinkle the remaining cheddar cheese over the top of each potato. Bake the potatoes in the oven a second time, just until heated through and the cheddar cheese is melted on top, about 20 minutes. Top with the remaining green onions and enjoy!
+    Preheat the oven to 400°F.
+    
+    Wash and dry the potatoes well, pierce each potato once to prevent bursting. Place the potatoes on a parchment lined baking sheet.
+    Drizzle with olive oil then brush the oil over each potato until fully coated, and season with a pinch of salt.
+    
+    Bake in the preheated oven for 60-90 minutes, or until the potatoes can be pierced easily with a fork. Total baking time will depend on the size of your potatoes.
+    
+    Optionally, while the potatoes are baking, cook the bacon in a skillet over medium heat until brown and crispy. Remove the cooked bacon from the skillet and allow it to drain on a paper-towel lined plate. Once cool enough to handle, rough chop the bacon into smaller pieces.
+    
+    Allow the potatoes to cool slightly after baking. When cool enough to handle, cut at an angle to remove the top third of each potato. Carefully scoop out the potato flesh, leaving a thin rim of potato (about ¼ inch rim) around the edges to help the skin hold its shape.
+    
+    Place the scooped out potato flesh in a large bowl and add the butter, sour cream, milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes until light and fluffy. Add the chopped bacon, if using, and half of the sliced green onions and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold to combine.
+    
+    Fill the potato skins with about 1/3 cup of the potato mixture, then sprinkle the remaining cheddar cheese over the top of each potato.
+    
+    Bake the potatoes in the oven a second time, just until heated through and the cheddar cheese is melted on top, about 20 minutes.
+    
+    Top with the remaining green onions and enjoy!
     
   ingredients:
     - potatoes, Russet:
@@ -533,6 +560,15 @@ twice baked potatoes:
 
 
 cabbage and egg salad with cucumber:
+  directions: |
+    finely shred the cabbage on a mandoline and pound with the back of a wooden spatula until soft.
+    
+    Hard boil an egg (8.5 minutes in Denver), peel, cut in halves or quarters.
+    
+    Slice the cucumber on the mandoline. 
+    
+    Top the cabbage with the cucumber and egg. serve with your choice of dressing.
+    
   ingredients:
     - egg
 
@@ -592,8 +628,17 @@ lima bean side dish:
 
 
 cheesy puff pastry rolls:
+
+  description: |
+    Crispy warm cheesy rolls lightly seasoned with mint and oregano.
   directions: |
-    Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano. Roll up and cut into 8 pieces. Combine egg yolk and cream to make an egg wash, brush generously. Bake at 350F for 35 to 40 min, rest for 10 min.
+    Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano.
+    
+    Roll up and cut into 8 pieces.
+    
+    Combine egg yolk and cream to make an egg wash, brush generously.
+    
+    Bake at 350F for 35 to 40 min, rest for 10 min.
     
   ingredients:
     - puff pastry sheet, frozen:
@@ -669,8 +714,15 @@ vanilla pudding:
     - cornstarch:
         amount: 2 tbsp
 
-
 black bean patty with cheese:
+  description: |
+    Quick vegetarian protein
+    
+  directions: |
+    Microwave a Spicy Black Bean patty from frozen, until hot, about 1 minute, do not overcook.
+    
+    Place a slice of cheese on top, microwave for another 10-15 seconds, until the cheese just starts to melt.
+    
   ingredients:
     - black bean patty:
         amount: 1 patty
@@ -1322,6 +1374,7 @@ cold borscht:
     - dill
 
 
+
 Banana Treats:
   description: |
     Banana slices topped with peanut butter and chocolate
@@ -1342,30 +1395,189 @@ Banana Treats:
     - chocolate or chocolate chips:
         amount: 1.5 oz
 
-
-sliced bread:
+pan-fried chicken:
   description: |
-    Oldie but a goodie
-    
+    Quick pan-fried chicken with a lot of flavor.
   directions: |
-    Buy expensive bread at a good bakery. Maybe a sourdough?
+    De-bone chicken pieces. Cut to 1/2" thick or thinner.
     
-    Slice with a serrated blade knife
+    Optionally tenderize with a jaccard or pound flat with a mallet tenderizer.
+    
+    Cover with spices, salt very lightly. Fry in hot oil, 2-3 minutes per side. Let rest 3 min before serving. 
     
   ingredients:
-    - bread
+    - chicken thighs:
+        amount: 1 lb
+
+    - paprika:
+        amount: 0.25 tsp
+
+    - salt:
+        amount: 0.25 tsp
+
+    - black pepper:
+        amount: 0.25 tsp
+
+    - garlic powder:
+        amount: 0.5 tsp
+
+    - onion powder:
+        amount: 0.5 tsp
+
+    - italian seasoning:
+        amount: 0.5 tsp
+
+    - avocado oil:
+        amount: 1 tbsp
 
 
-tea:
+kharcho:
   description: |
-    The old reliable cup
+    A hearty flavorful soup with meat and walnuts, from the Caucasus Mountains (Georgia).
   directions: |
-    Boil water, steep a teaspoon of loose tea for 3 minutes, strain.
+    From food.com
+    
+    In a pot, brown the short ribs well. Add water and salt, and pressure cook in the Instant Pot for 30 minutes.
+    
+    Mince and sauté the onion in butter until soft but not yet brown.
+    
+    Add the sautéed onion with the butter, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
+    Bring to boil.
+    
+    Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
+    
+    Add khmeli-suneli and salt. Cook for 1-2 minutes.
+    
+    Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
+    
   ingredients:
-    - tea:
-        amount: 1 tsp
+    - short ribs:
+        amount: 2 lbs
+
+    - onion
+
+    - butter:
+        amount: 20 grams
+
+    - walnuts:
+        amount: 0.5 lbs
+
+    - canned crushed tomatoes:
+        amount: 16 oz
+
+    - cup rice:
+        amount: 0.5 cup
 
     - water:
+        amount: 6 cups
+
+    - garlic cloves:
+        amount: 2 cloves
+
+    - red pepper flakes:
+        amount: 0.5 tsp
+
+    - khmeli-suneli spice blend:
+        amount: 1.5 tbsp
+
+    - salt:
+        amount: 1 tsp
+
+    - cilantro:
+        amount: 6 tbsp
+
+    - dill:
+        amount: 3 tbsp
+
+    - parsley:
+        amount: 3 tbsp
+
+
+vegetables a la Grecque:
+  description: |
+    Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
+  directions: |
+    Use a mix of vegetables that will keep their structure, cut into appealing and manageable shapes, such as artichoke hearts, julienned carrots, celery or fennel pieces, cauliflower florets, trimmed igreen beans, leeks cut lengthwise, pearl onions, whole mushrooms, strips of bell peppers, whole olives.
+    
+    Immediately squeeze the juice of 2 lemons over the cut vegetables, to prevent discoloration.
+    
+    Reserve 2 of the lemon peel halves.
+    
+    Prepare the court boullion from the olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
+    
+    Cook the vegetables in the boullion by bringing to a boil, then taking off the heat and allowing to infuse for 15 minutes.
+    
+    Drain, reserving the marinade, and serve.
+    
+    Cover with cooled marinade to store in the refrigerator. After refrigeration, bring up to room temperature before serving.
+    
+  ingredients:
+    - mixed vegetables:
+        amount: 2 lbs
+    - lemons:
+        amount: 4
+    - olive oil:
         amount: 1 cup
+    - cider vinegar:
+        amount: 0.75 cup
+    - garlic:
+        amount: 2 cloves
+    - parsley:
+        amount: 3 sprigs
+    - whole peppercorns:
+        amount: 6
+    - fresh thyme:
+        amount: 3 tsp
+    - dried oregano:
+        amount: 0.25 tsp
+    - fennel or celery seeds:
+        amount: 1 pinch
+        optional: True
+    - salt:
+        amount: 0.25 tsp
 
+tortellini soup:
+  description: Italian classic
+  directions: |
+    Boil a package of tortellini according to package directions.
 
+    Drain, reserving the cooking liquid, mix in 1 tsp of olive oil to prevent sticking, set aside.
+
+    Saute one chopped white onion in one tablespoon of olive oil on medium heat, until translucent. Slice one carrot, add to the pot and cook for 5 min. 
+
+    Slice one celery rib, peeled, into the pan. Add 4 peeled garlic cloves, and half of a red bell pepper, diced. Cook for an additional 3 minutes.
+
+    Add cooking liquid from the tortellini. Optionally add 1-2 cups of broth.
+
+    Pressure cook on the "Soup" setting in the Instant Pot for 5 minutes, then manually release pressure.
+
+    Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
+
+    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+  ingredients:
+    - tortellini:
+        amount: 1 package
+    - olive oil:
+        amount: 4 tsp 
+    - onion, white
+    - carrot
+    - celery:
+        amount: 1 rib
+    - garlic:
+        amount: 4 cloves
+    - bell pepper:
+        amount: .5 
+    - zucchini
+    - spinach:
+        amount: 1 bunch
+    - pasta sauce:
+        amount: 5 tbsp
+    - broth:
+        amount: 2 cups
+        optional: true
+    - italian seasoning:
+        amount: .5 tsp
+    - salt:
+        amount: .5 tsp
+    - black pepper:
+        amount: 1 pinch

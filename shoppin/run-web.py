@@ -249,17 +249,16 @@ def add_ingredient():
     recipe = my_recipes.recipes[request.POST.recipe]
     ingredient_amount, ingredient_amount_unit = util.parse_amount(request.POST.amount)
     new_ingredient = recipes.Ingredient(name=request.POST.name,
-                                        amount = ingredient_amount,
-                                        amount_unit = ingredient_amount_unit,
-                                        optional = request.POST.optional,
-                                        brand = request.POST.brand,
-                                        vendor = request.POST.vendor,
-                                        attribution = recipe)
+                                        amount=ingredient_amount,
+                                        amount_unit=ingredient_amount_unit,
+                                        optional=request.POST.optional,
+                                        brand=request.POST.brand,
+                                        vendor=request.POST.vendor,
+                                        attribution=recipe,
+                                        purpose=recipe.name)
     recipe.ingredients.append(new_ingredient)
     my_recipes.save()
     redirect(f'/edit-recipe/{recipe.name}')
-
-
 
 @app.route('/delete-ingredient/<recipe>/<ingredient_index:int>')
 def delete_ingredient(recipe, ingredient_index):
@@ -267,6 +266,20 @@ def delete_ingredient(recipe, ingredient_index):
     del recipe.ingredients[ingredient_index]
     my_recipes.save()
     redirect(f'/edit-recipe/{recipe.name}')
+
+@app.route('/add-recipe-to-database-form')
+def add_recipe_to_database_form():
+    return template('new-recipe', name_taken=request.query.name_taken, recipe=request.query.recipe)
+
+@app.route('/add-recipe-to-database', method='POST')
+def add_recipe_to_database():
+    if not request.POST.recipe:
+        redirect('/add-recipe-to-database-form')
+    if request.POST.recipe in my_recipes.recipes.keys():
+        redirect('/add-recipe-to-database-form?name_taken=true&recipe='+request.POST.recipe)
+    else:
+        my_recipes.recipes[request.POST.recipe] = recipes.Recipe(name=request.POST.recipe, ingredients=[])
+        redirect('/edit-recipe/'+request.POST.recipe)
 
 @app.route('/images/<filename>')
 def static(filename):

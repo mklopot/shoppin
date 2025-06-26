@@ -247,7 +247,7 @@ def save_recipe():
     recipe.description = request.POST.description
     recipe.directions = request.POST.directions
     my_recipes.save()
-    redirect(f'/recipe/{request.POST.recipe}')
+    #redirect(f'/recipe/{request.POST.recipe}')
 
 @app.route('/add-ingredient', method=['POST'])
 def add_ingredient():
@@ -256,7 +256,7 @@ def add_ingredient():
     new_ingredient = recipes.Ingredient(name=request.POST.name,
                                         amount=ingredient_amount,
                                         amount_unit=ingredient_amount_unit,
-                                        optional=request.POST.optional,
+                                        optional=bool(request.POST.optional),
                                         brand=request.POST.brand,
                                         vendor=request.POST.vendor,
                                         attribution=recipe,

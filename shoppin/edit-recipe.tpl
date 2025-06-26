@@ -102,18 +102,17 @@ a.x{
          <a class="x" href="/delete-ingredient/{{recipe.name}}/{{ingredient_index}}"> &#9447;</a>
       % end
       </ul>
-      <div style="width:40%;border-style:solid;border-width:1px">
       <h3>Add Ingredient</h3>
         <form action="/add-ingredient" method="POST">
+          <input type="checkbox" id="optional" name="optional" size="30" method="POST">
+          <label for="optional">Optional</label><br>
+
           <input type="text" id="name" name="name" method="POST" size="30" placeholder='Name of ingredient, like "celery"' required>
           <label for="name">Name</label><br>
 
           <input type="text" id="amount" name="amount" value="1" size="30" method="POST">
           <label for="amount">Amount</label><br>
 
-          <input type="checkbox" id="optional" name="optional" size="30" method="POST">
-          <label for="optional">Optional</label><br>
-          <br>
           <input type="text" id="brand" name="brand" size="30" method="POST">
           <label for="brand">Brand <i>optional</i></label><br>
 
@@ -123,6 +122,5 @@ a.x{
           <input type="hidden" name="recipe" value="{{recipe.name}}">
           <input type="submit" value="+ Add Ingredient" hx-boost="true" hx-swap='innerHTML show:no-scroll'><br>
         </form>
-        </div>
   </body>
 </html>

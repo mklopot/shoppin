@@ -1,6 +1,16 @@
 <html>
 <head>
     <meta http-equiv="refresh" content="1200">
+     <script>
+         document.addEventListener("DOMContentLoaded", function(event) {
+             var scrollpos = localStorage.getItem('scrollpos' + '-' + window.location.href);
+             if (scrollpos) window.scrollTo(0, scrollpos);
+         });
+ 
+         window.onbeforeunload = function(e) {
+             localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
+         };
+     </script>
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.5/dist/htmx.min.js" integrity="sha384-t4DxZSyQK+0Uv4jzy5B0QyHyWQD2GFURUmxKMBVww9+e2EJ0ei/vCvv7+79z0fkr" crossorigin="anonymous"></script>
 
 <style>

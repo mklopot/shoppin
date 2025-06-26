@@ -1,17 +1,18 @@
 <html>
 <head>
     <meta http-equiv="refresh" content="1200">
-    <meta http-equiv="refresh" content="1200">
-    <script>
-        document.addEventListener("DOMContentLoaded", function(event) {
-            var scrollpos = localStorage.getItem('scrollpos' + '-' + window.location.href);
-            if (scrollpos) window.scrollTo(0, scrollpos);
-        });
+     <script>
+         document.addEventListener("DOMContentLoaded", function(event) {
+             var scrollpos = localStorage.getItem('scrollpos' + '-' + window.location.href);
+             if (scrollpos) window.scrollTo(0, scrollpos);
+         });
+ 
+         window.onbeforeunload = function(e) {
+             localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
+         };
+     </script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.5/dist/htmx.min.js" integrity="sha384-t4DxZSyQK+0Uv4jzy5B0QyHyWQD2GFURUmxKMBVww9+e2EJ0ei/vCvv7+79z0fkr" crossorigin="anonymous"></script>
 
-        window.onbeforeunload = function(e) {
-            localStorage.setItem('scrollpos'+ '-' + window.location.href, window.scrollY);
-        };
-    </script>
 <style>
 p{
   width: 50%;
@@ -72,9 +73,9 @@ a.x{
 </style>
 </head>
   <body>
-    <h1><a href="/">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}</h1>
+    <h1><a href="/recipe/{{recipe.name}}">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}</h1>
 
-    <form action="/save-recipe" method="POST">
+    <form hx-post="/save-recipe" hx-trigger="change" hx-swap="none">
     <input type="hidden" name="recipe" value="{{recipe.name}}">
 
     <label for="description"><h2>Description</h2></label>
@@ -82,9 +83,8 @@ a.x{
 
     <label for="directions"><h2>Directions</h2></label>
     <textarea name="directions" id="directions" rows="12" cols="80">{{recipe.directions}}</textarea>
-
-    <br><br><input type="submit" value="Save">
     </form>
+
     <h2>Ingredients</h2>
       <ul>
       % for ingredient_index, item in enumerate(recipe.ingredients):
@@ -102,25 +102,27 @@ a.x{
          <a class="x" href="/delete-ingredient/{{recipe.name}}/{{ingredient_index}}"> &#9447;</a>
       % end
       </ul>
+      <div style="width:40%;border-style:solid;border-width:1px">
       <h3>Add Ingredient</h3>
         <form action="/add-ingredient" method="POST">
           <input type="text" id="name" name="name" method="POST" size="30" placeholder='Name of ingredient, like "celery"' required>
           <label for="name">Name</label><br>
 
-          <input type="text" id="amount" name="amount" value="1" method="POST">
+          <input type="text" id="amount" name="amount" value="1" size="30" method="POST">
           <label for="amount">Amount</label><br>
 
-          <input type="checkbox" id="optional" name="optional" method="POST">
+          <input type="checkbox" id="optional" name="optional" size="30" method="POST">
           <label for="optional">Optional</label><br>
           <br>
-          <input type="text" id="brand" name="brand" method="POST">
+          <input type="text" id="brand" name="brand" size="30" method="POST">
           <label for="brand">Brand <i>optional</i></label><br>
 
-          <input type="text" id="vendor" name="vendor" method="POST">
+          <input type="text" id="vendor" name="vendor" size="30" method="POST">
           <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
 
           <input type="hidden" name="recipe" value="{{recipe.name}}">
-          <input type="submit" value="+ Add Ingredient"><br>
+          <input type="submit" value="+ Add Ingredient" hx-boost="true" hx-swap='innerHTML show:no-scroll'><br>
         </form>
+        </div>
   </body>
 </html>

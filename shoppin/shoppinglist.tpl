@@ -120,7 +120,8 @@ a.x{
   </div>
 
   <div class="column">
-  <h1>Shopping List <form action="/clear"><input type="submit" value="Clear All"></form></h1>
+  <h1>Shopping List </h1>
+  <button hx-get="/clear" hx-target="body" hx-confirm="Are you sure you want to clear the Shopping List and the Meal Plan?">Clear Shopping List and Meal Plan</button>
 
     <div>
     <h2>Add Item</h2>

@@ -2,7 +2,6 @@
 <head>
     <meta http-equiv="refresh" content="1200">
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
-    <meta name="htmx-config" content='{"scrollIntoViewOnBoost":"false"}'>
 
 <style>
 a:visited{
@@ -85,10 +84,9 @@ a.x{
 
 
         % end
-        <li><form action="/add-recipe" method="POST">
-            <input list="recipelist" name="recipe" method="POST" required>
+        <li><form hx-post="/add-recipe" hx-target="body" hx-trigger="change">
+            <input list="recipelist" name="recipe" placeholder="Add dish" required>
             <input type="hidden" name="meal_index" value={{meal_index}}>
-            <input type="submit" value="+ Add Recipe">
             <datalist id="recipelist">
             % for recipename in recipelist:
             <option value="{{recipename}}">
@@ -98,19 +96,18 @@ a.x{
         </li>
         </ul>
       % end
-      <form action="/add-meal" method="POST">
-      <!--label for="meal"><h3>Add meal:</h3></label-->
+      <form hx-post="/add-meal" hx-target="body" hx-trigger="change">
       % if mealplan.meals:
       <input type="text" id="meal" name="meal">
       % else:
       <input type="text" id="meal" name="meal" placeholder="Meal name, like 'Monday Dinner'" required style="min-width: 300px">
       % end
-      <input type="submit" value="+ Add Meal"></form>
+      <input type="submit" value="+ Add New Meal"></form>
     % end 
 
     % if list_manager:
     <h1>Include Lists</h1>
-    <form action="/include-lists" method="POST">
+    <form hx-post="/include-lists" hx-trigger="change" hx-target="body">
     % for index, sublist in enumerate(list_manager.lists):
       % if sublist.include:
     <h3><input type="checkbox" name={{index}} value="include" checked> {{sublist.name}}</h3>
@@ -118,7 +115,6 @@ a.x{
     <h3><input type="checkbox" name={{index}} value="include"> {{sublist.name}}</h3>
       % end
     % end
-    <input type="submit" value="Apply">
     </form>
     % end
   </div>

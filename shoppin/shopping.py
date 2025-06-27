@@ -78,16 +78,13 @@ class ShoppingList:
     def delete_by_attribution(self, attribution):
         mark_for_deletion = []
         for item in self.ingredients:
-            if len(item.ingredients) == 1:
-                if item.ingredients[0].attribution is attribution:
-                    mark_for_deletion.append(item)
-                else:
-                    continue
-            else:
-                affected_ingredient_list =[ingredient for ingredient in item.ingredients if ingredient.attribution is attribution] 
-                if affected_ingredient_list:
-                    item.ingredients.remove(affected_ingredient_list[0])
-                    item.amount -= affected_ingredient_list[0].amount
+            affected_ingredient_list = [ingredient for ingredient in item.ingredients if ingredient.attribution is attribution] 
+            if affected_ingredient_list:
+                for affected_ingredient in affected_ingredient_list:
+                    item.ingredients.remove(affected_ingredient)
+                    item.amount -= affected_ingredient.amount
+                    if item.amount == 0:
+                        mark_for_deletion.append(item)
         for item in mark_for_deletion:
             self.ingredients.remove(item)
 

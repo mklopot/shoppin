@@ -14,27 +14,34 @@ class ItemStatus(Enum):
 class ShoppingList:
     def __init__(self, sequence=None) -> None:
         self.sequence = sequence
-        self.ingredients = []
+        self.items = []
 
     def load_ingredients(self, ingredients: list) -> None:
         for ingredient in ingredients:
             newitem = ShoppingListItem()
             newitem.from_ingredient(ingredient)
             newitem.list = self
-            self.ingredients.append(newitem)
+            self.items.append(newitem)
+        self.deduplicate()
+        self._map()
+        self.order()
+
+    def add_item(self, item):
+        self.items.append(item)
+        item.list = self
         self.deduplicate()
         self._map()
         self.order()
 
     def deduplicate(self):
-        self.ingredients.sort(key=lambda item: (singularize(item.name.lower()),
+        self.items.sort(key=lambda item: (singularize(item.name.lower()),
             singularize(item.amount_unit),
             item.brand,
             item.vendor,
             item.optional))
         marked_for_deduplication = defaultdict(list)
         current_item = None
-        for item in self.ingredients:
+        for item in self.items:
             if current_item:
                 if ShoppingListItem.can_combine(item, current_item): 
                     marked_for_deduplication[current_item].append(item)
@@ -45,12 +52,12 @@ class ShoppingList:
         for item_to_keep in marked_for_deduplication:
             for duplicate in marked_for_deduplication[item_to_keep]:
                 item_to_keep.combine(duplicate)
-                self.ingredients.remove(duplicate)
+                self.items.remove(duplicate)
 
     def _map(self):
         if self.sequence:
             self.mapping = defaultdict(list)
-            for item in self.ingredients:
+            for item in self.items:
                 self.mapping[item.name].append(item)
 
     def update_sequence(self, item_name):
@@ -67,17 +74,17 @@ class ShoppingList:
             for name in self.mapping:
                 if name not in self.sequence.data:
                     ordered.extend(self.mapping[name])
-            self.ingredients = ordered
+            self.items = ordered
 
     def find_by_id(self, item_id):
-        result = [item for item in self.ingredients if item.id == item_id]
+        result = [item for item in self.items if item.id == item_id]
         if result:
             return result[0]
         return None
 
     def delete_by_attribution(self, attribution):
         mark_for_deletion = []
-        for item in self.ingredients:
+        for item in self.items:
             affected_ingredient_list = [ingredient for ingredient in item.ingredients if ingredient.attribution is attribution] 
             if affected_ingredient_list:
                 for affected_ingredient in affected_ingredient_list:
@@ -86,12 +93,12 @@ class ShoppingList:
                     if item.amount == 0:
                         mark_for_deletion.append(item)
         for item in mark_for_deletion:
-            self.ingredients.remove(item)
+            self.items.remove(item)
 
     def status_by_attribution(self, recipe):
         status = set()
         status_ignore_optional = set()
-        affected_ingredient_list =[item for item in self.ingredients if recipe in [ingredient.attribution for ingredient in item.ingredients]] 
+        affected_ingredient_list =[item for item in self.items if recipe in [ingredient.attribution for ingredient in item.ingredients]] 
         for item in affected_ingredient_list:
             status.add(item.status)
             if not item.optional:
@@ -99,14 +106,14 @@ class ShoppingList:
         return status, status_ignore_optional
 
     def clear(self):
-        self.ingredients = []
+        self.items = []
         self.mapping = {}
         if self.sequence:
             self.sequence.reset_pointer()
 
 
 class ShoppingListItem:
-    def __init__(self, name="", amount=1, amount_unit='', brand='', vendor='', optional=False, ingredients=[]):
+    def __init__(self, name="", amount=1, amount_unit='', brand='', vendor='', optional=False, ingredients=[], purpose=[]):
         self.id = uuid.uuid4().int
         self.name = name
         self.amount = amount
@@ -118,6 +125,14 @@ class ShoppingListItem:
         self.status = ItemStatus.NEED 
         self.list = None
         self.locked = False
+        self.purpose = purpose
+
+    def get_purpose(self):
+        if self.ingredients:
+            print([ingredient.purpose for ingredient in self.ingredients])
+            return ', '.join([ingredient.purpose for ingredient in self.ingredients] + self.purpose)
+        if self.purpose:
+            return ', '.join(self.purpose)
 
     def from_ingredient(self, ingredient):
         self.name = ingredient.name
@@ -145,6 +160,8 @@ class ShoppingListItem:
     def combine(self, other):
         self.amount += other.amount
         self.ingredients.extend(other.ingredients)
+        self.purpose = self.purpose + other.purpose
+        print("extending purpose", self.purpose)
         for ingredient in self.ingredients:
             ingredient.item = self
 
@@ -162,7 +179,7 @@ class ShoppingListItem:
         if self.vendor:
             result += "\n    best vendor: " + self.vendor  
         recipe_names = [ingredient.attribution.name for ingredient in self.ingredients]
-        result += "\n    For " + ", ".join(recipe_names)
+        result += "\n    For " + self.get_purpose()
         return result
 
     def get_amount_with_unit(self):

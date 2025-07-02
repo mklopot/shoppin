@@ -44,9 +44,9 @@ app = Bottle()
 
 @app.route('/')
 def shoppinnglist():
-    need = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.NEED]
-    got = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.GOT]
-    have = [ingredient for ingredient in my_shopping_list.ingredients if ingredient.status is shopping.ItemStatus.HAVE]
+    need = [ingredient for ingredient in my_shopping_list.items if ingredient.status is shopping.ItemStatus.NEED]
+    got = [ingredient for ingredient in my_shopping_list.items if ingredient.status is shopping.ItemStatus.GOT]
+    have = [ingredient for ingredient in my_shopping_list.items if ingredient.status is shopping.ItemStatus.HAVE]
 
     recipes_ready_to_cook = []
     recipes_only_missing_optional = []
@@ -171,16 +171,13 @@ def add_item():
         redirect("/")
     amount, amount_unit = util.parse_amount(request.POST.amount)
     item = shopping.ShoppingListItem(name=item_name,
-                                     amount=amount,
-                                     amount_unit=amount_unit,
-                                     brand=request.POST.brand,
-                                     vendor=request.POST.vendor)
+                                    amount=amount,
+                                    amount_unit=amount_unit,
+                                    brand=request.POST.brand,
+                                    vendor=request.POST.vendor,
+                                    purpose=["one-time purchase"])
     item.lock()
-    my_shopping_list.ingredients.append(item)
-    item.list = my_shopping_list
-    my_shopping_list.deduplicate()
-    my_shopping_list._map()
-    my_shopping_list.order()
+    my_shopping_list.add_item(item)
     save_state(my_shopping_list, my_mealplan, my_list_manager)
     redirect('/')
 

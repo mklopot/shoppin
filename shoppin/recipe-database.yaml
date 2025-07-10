@@ -128,7 +128,6 @@ stir fry:
 
 
 taco soup:
-
   description: |
     Beth's invention. Hearty flavors of Mexican cuisine, in soup form.
     
@@ -177,6 +176,7 @@ taco soup:
 
     - radishes:
         optional: True
+
 
 meatloaf:
   description: |
@@ -628,9 +628,9 @@ lima bean side dish:
 
 
 cheesy puff pastry rolls:
-
   description: |
     Crispy warm cheesy rolls lightly seasoned with mint and oregano.
+    
   directions: |
     Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano.
     
@@ -713,6 +713,7 @@ vanilla pudding:
 
     - cornstarch:
         amount: 2 tbsp
+
 
 black bean patty with cheese:
   description: |
@@ -1374,7 +1375,6 @@ cold borscht:
     - dill
 
 
-
 Banana Treats:
   description: |
     Banana slices topped with peanut butter and chocolate
@@ -1395,9 +1395,11 @@ Banana Treats:
     - chocolate or chocolate chips:
         amount: 1.5 oz
 
+
 pan-fried chicken:
   description: |
     Quick pan-fried chicken with a lot of flavor.
+    
   directions: |
     De-bone chicken pieces. Cut to 1/2" thick or thinner.
     
@@ -1434,6 +1436,7 @@ pan-fried chicken:
 kharcho:
   description: |
     A hearty flavorful soup with meat and walnuts, from the Caucasus Mountains (Georgia).
+    
   directions: |
     From food.com
     
@@ -1496,6 +1499,7 @@ kharcho:
 vegetables a la Grecque:
   description: |
     Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
+    
   directions: |
     Use a mix of vegetables that will keep their structure, cut into appealing and manageable shapes, such as artichoke hearts, julienned carrots, celery or fennel pieces, cauliflower florets, trimmed igreen beans, leeks cut lengthwise, pearl onions, whole mushrooms, strips of bell peppers, whole olives.
     
@@ -1503,7 +1507,7 @@ vegetables a la Grecque:
     
     Reserve 2 of the lemon peel halves.
     
-    Prepare the court boullion from the olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
+    Prepare the court boullion from the water, olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
     
     Cook the vegetables in the boullion by bringing to a boil, then taking off the heat and allowing to infuse for 15 minutes.
     
@@ -1514,70 +1518,195 @@ vegetables a la Grecque:
   ingredients:
     - mixed vegetables:
         amount: 2 lbs
+
     - lemons:
         amount: 4
+
     - olive oil:
         amount: 1 cup
+
     - cider vinegar:
         amount: 0.75 cup
+
     - garlic:
         amount: 2 cloves
+
     - parsley:
         amount: 3 sprigs
+
     - whole peppercorns:
         amount: 6
+
     - fresh thyme:
         amount: 3 tsp
+
     - dried oregano:
         amount: 0.25 tsp
+
     - fennel or celery seeds:
         amount: 1 pinch
         optional: True
+
     - salt:
         amount: 0.25 tsp
 
+    - water:
+        amount: 4 cups
+
+
 tortellini soup:
-  description: Italian classic
+  description: |
+    Italian classic
   directions: |
     Boil a package of tortellini according to package directions.
-
+    
     Drain, reserving the cooking liquid, mix in 1 tsp of olive oil to prevent sticking, set aside.
-
+    
     Saute one chopped white onion in one tablespoon of olive oil on medium heat, until translucent. Slice one carrot, add to the pot and cook for 5 min. 
-
+    
     Slice one celery rib, peeled, into the pan. Add 4 peeled garlic cloves, and half of a red bell pepper, diced. Cook for an additional 3 minutes.
-
+    
     Add cooking liquid from the tortellini. Optionally add 1-2 cups of broth.
-
+    
     Pressure cook on the "Soup" setting in the Instant Pot for 5 minutes, then manually release pressure.
-
+    
     Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
-
+    
     Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+    
   ingredients:
     - tortellini:
         amount: 1 package
+
     - olive oil:
-        amount: 4 tsp 
+        amount: 4 tsp
+
     - onion, white
+
     - carrot
+
     - celery:
         amount: 1 rib
+
     - garlic:
         amount: 4 cloves
+
     - bell pepper:
-        amount: .5 
+        amount: 0.5
+
     - zucchini
+
     - spinach:
         amount: 1 bunch
+
     - pasta sauce:
         amount: 5 tbsp
+
     - broth:
         amount: 2 cups
-        optional: true
+        optional: True
+
     - italian seasoning:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - salt:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - black pepper:
         amount: 1 pinch
+
+
+Eggplant Parmesan:
+  description: |
+    Classic Eggplant Parmesan
+  directions: |
+    Pick fresh, firm eggplant, slice 1/4" thick. Season each slice with salt and pepper.
+    
+    Dredge in flour, thoroughly coat in beaten eggs, and coat completely in a mix of shredded Parmesan cheese and Panko.
+    
+    Fry in avocado oil on medium heat until golden, on both sides, do not over-brown.
+    
+    Top with mozzarella.
+    
+    Bake at 350F until mozzarella starts to bubble and brown at the edges.
+    
+    Garnish with parsley and serve.
+    
+    Ingredients
+    -	chicken breast   1 lb
+    -	eggs   2
+    -	flour   1 cup
+    -	Panko bread crumbs   1.5 cup
+    -	avocado oil   4 tbsp
+  ingredients:
+    - eggplant
+
+    - eggs:
+        amount: 2
+
+    - Panko:
+        amount: 1.5 cups
+
+    - flour:
+        amount: 1 cup
+
+    - parmesan cheese:
+        amount: 1 cup
+
+    - mozzarella:
+        amount: 8 oz
+
+    - salt:
+        amount: 1 tsp
+
+    - black pepper:
+        amount: 0.5 tsp
+
+    - avocado oil:
+        amount: 4 tbsp
+
+
+crêpes:
+  description: |
+    A simple and versatile crêpes recipe
+  directions: |
+    In a blender, mix 2 eggs, one cup of flour, 1.25 cups of milk, and 2 tsp of oil.
+    
+    Blend on low speed until fully incorporated.
+    
+    Melt the butter, preheat a wide flat pan (carbon steel or or cast iron are said to be best, or use a special crêpe pan) on high heat, and brush the pan with a small amount of butter.
+    
+    Cook 4-5 tbsp of batter at a time on high heat, spreading the batter flat to cover the entire bottom of the pan. Allow to brown and crisp slightly, usually about 20-30 seconds per side. Flip over with a gentle but decisive motion to keep the crêpes from sticking to themselves while being flipped.
+    
+    Stack the cooked crêpes, brushing each one lightly with the melted butter.
+    
+    Serve with either savory toppings or fillings, or sweet ones.
+    
+    Savory topping examples
+    sautéed mushrooms and onions, spinach and bell pepper
+    tomato slices, fresh basil and fresh mozzarella
+    bacon, fried egg
+    
+    Sweet topping examples
+    freshly squeezed lemon juice and sugar
+    fruit jam
+    chocolate-hazelnut spread (like Nutella, but we prefer without palm oil)
+    sliced fresh fruit and berries
+    whipped cream 
+  ingredients:
+    - flour:
+        amount: 1 cup
+
+    - milk:
+        amount: 1.2 cups
+
+    - avocado oil:
+        amount: 2 tsp
+
+    - eggs:
+        amount: 2
+
+    - butter:
+        amount: 4 tbsp
+
+

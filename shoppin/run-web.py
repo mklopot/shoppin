@@ -283,6 +283,10 @@ def add_recipe_to_database():
         my_recipes.recipes[request.POST.recipe] = recipes.Recipe(name=request.POST.recipe, ingredients=[])
         redirect('/edit-recipe/'+request.POST.recipe)
 
+@app.route('/edit-list/<index:int>')
+def edit_list(index):
+    return template('edit-list', editlist=my_list_manager.lists[index])
+
 @app.route('/images/<filename>')
 def static(filename):
     return static_file(filename, "images/")

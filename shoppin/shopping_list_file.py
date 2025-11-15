@@ -17,8 +17,10 @@ class ShoppingListFile:
         self.sections = {}
         self.name = ""
         self.include = False
+        self.path=""
 
     def load(self, shopping_list_filepath="shopping-list.yaml"):
+        self.path = shopping_list_filepath
         with open(shopping_list_filepath) as f:
             try:
                 loaded_sections = yaml.safe_load(f)
@@ -62,6 +64,14 @@ class ShoppingListFile:
             for item in self.sections[section].items:
                     items_list.append(item)
         return items_list
+
+    def save(self):
+        if not self.path:
+            return
+        with open(self.path, 'w') as f:
+            for section in self.sections:
+                pass
+
 
 @dataclass
 class Item:

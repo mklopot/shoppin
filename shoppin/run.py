@@ -1,38 +1,52 @@
-import yaml
+import pickle
+import os
+from datetime import datetime
+import pytz
 
 import mealplan
 import recipes
 import shopping
-import shopping_list_file
-import sequence
+import list_manager
+from web import Web
+
+timezone = "America/Denver"
+picklefile = "appstate.pickle"
+
+
+def save_state(shoppinglist, mealplan, list_manager, path=picklefile):
+    with open(path, "wb") as f:
+        pickle.dump((shoppinglist, mealplan, list_manager), f)
+
+def clear_state(shopping_list, meal_plan, listmanager, recipes):
+    recipes = recipes.Recipes()
+    recipes.load()
+    shopping_list = shopping.ShoppingList()
+    mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
+    meal_plan = mealplan.MealPlan(mealplan_name)
+    meal_plan.recipe_database = my_recipes
+    listmanager = list_manager.ListManager("lists/")
+
 
 my_recipes = recipes.Recipes()
 my_recipes.load()
 
-with open("dinnerlist.yaml") as f:
-    dinnerlist = yaml.load(f)
+if os.path.exists(picklefile):
+    with open(picklefile, "rb") as f:
+        my_shopping_list, my_mealplan, my_list_manager = pickle.load(f)
+        my_mealplan.recipe_database = my_recipes
+else:
+    my_shopping_list = shopping.ShoppingList()
+    mealplan_name = datetime.now(pytz.timezone(timezone)).strftime("Created %A, %B %d")
+    my_mealplan = mealplan.MealPlan(mealplan_name)
+    my_mealplan.recipe_database = my_recipes
+    my_list_manager = list_manager.ListManager("lists/")
 
-meals = []
-for m in dinnerlist:
-    recipelist = []
-    for recipe in m:
-        recipelist.append(my_recipes.recipes[recipe])
-    my_meal = meal.Meal("Dinner", recipelist)
-    meals.append(my_meal)
-    
-my_mealplan =  meal.MealPlan("mealplan", meals)
-
-my_file = shopping_list_file.ShoppingListFile()
-my_file.load()
-
-my_sequence = sequence.Sequence()
-my_sequence.load()
-
-my_shopping_list = shopping.ShoppingList(my_sequence)
-my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
-my_shopping_list.load_ingredients(my_file.make_shopping_plan())
-
-
-for i in my_shopping_list.ingredients:
-    print(i)
-    print()
+if __name__ == '__main__':
+    webapp = Web(my_shopping_list,
+                 my_mealplan,
+                 my_list_manager,
+                 my_recipes,
+                 timezone,
+                 save_state,
+                 clear_state)
+    webapp.run(host='127.0.0.1', port=8000, debug=True, reloader=True)

@@ -96,7 +96,7 @@ a.x{
         </li>
         </ul>
       % end
-      <form hx-post="/add-meal" hx-target="body" hx-trigger="change">
+      <form action="/add-meal" method="post">
       % if mealplan.meals:
       <input type="text" id="meal" name="meal">
       % else:

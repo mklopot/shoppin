@@ -1,6 +1,5 @@
 from datetime import datetime
 import pytz
-from functools import partial
 from bottle import Bottle, template, request, redirect, static_file
 
 import shopping
@@ -10,28 +9,11 @@ import mealplan
 
 
 class Web(Bottle):
-    def __init__(self,
-                 shoppinglist,
-                 mealplan,
-                 listmanager,
-                 recipes,
-                 timezone,
-                 save_state,
-                 clear_state):
+    def __init__(self, appstate):
         super(Web, self).__init__()
-        self.shoppinglist = shoppinglist
-        self.mealplan = mealplan
-        self.listmanager = listmanager
-        self.recipes = recipes
-        self.timezone = timezone
-        self.save_state = partial(save_state,
-                                  self.shoppinglist,
-                                  self.mealplan,
-                                  self.listmanager)
-        self.clear_state = partial(clear_state,
-                                   self.shoppinglist,
-                                   self.mealplan,
-                                   self.listmanager)
+        self.appstate = appstate
+
+        ######################################################
         # Route decorators cannot be used here out of the box.
         # Instead, we have to use the following syntax.
         # You must add a line here for every new route
@@ -57,15 +39,15 @@ class Web(Bottle):
         self.route('/images/<filename>', callback=self.static)
 
     def toplevel(self):
-        need = [ingredient for ingredient in self.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
-        got = [ingredient for ingredient in self.shoppinglist.items if ingredient.status is shopping.ItemStatus.GOT]
-        have = [ingredient for ingredient in self.shoppinglist.items if ingredient.status is shopping.ItemStatus.HAVE]
+        need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
+        got = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.GOT]
+        have = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.HAVE]
 
         recipes_ready_to_cook = []
         recipes_only_missing_optional = []
-        for meal in self.mealplan.meals:
+        for meal in self.appstate.mealplan.meals:
             for recipe in meal.recipes:
-                status, status_ignore_optional = self.shoppinglist.status_by_attribution(recipe)
+                status, status_ignore_optional = self.appstate.shoppinglist.status_by_attribution(recipe)
                 if shopping.ItemStatus.NEED not in status:
                     recipes_ready_to_cook.append(recipe)
                 elif shopping.ItemStatus.NEED not in status_ignore_optional:
@@ -73,7 +55,7 @@ class Web(Bottle):
 
         meals_ready_to_cook = []
         meals_only_missing_optional = []
-        for meal in self.mealplan.meals:
+        for meal in self.appstate.mealplan.meals:
             num_ready = len([recipe for recipe in meal.recipes if recipe in recipes_ready_to_cook])
             if len(meal.recipes) == num_ready:
                 meals_ready_to_cook.append(meal)
@@ -84,21 +66,21 @@ class Web(Bottle):
                         need=need,
                         got=got,
                         have=have,
-                        mealplan=self.mealplan,
-                        list_manager = self.listmanager,
-                        recipelist=list(self.recipes.recipes.keys()),
+                        mealplan=self.appstate.mealplan,
+                        list_manager=self.appstate.listmanager,
+                        recipelist=list(self.appstate.recipes.recipes.keys()),
                         recipes_ready_to_cook=recipes_ready_to_cook,
                         recipes_only_missing_optional=recipes_only_missing_optional,
                         meals_ready_to_cook=meals_ready_to_cook,
                         meals_only_missing_optional=meals_only_missing_optional)
 
     def got(self, item_id):
-        item = self.shoppinglist.find_by_id(item_id)
+        item = self.appstate.shoppinglist.find_by_id(item_id)
 
         if item:
             item.set_got()
             item.unlock()
-        self.save_state()
+        self.appstate.save_state()
         redirect('/')
 
     def have(self, item_id):
@@ -106,62 +88,60 @@ class Web(Bottle):
         if item:
             item.set_have()
             item.unlock()
-        self.save_state()
+        self.appstate.save_state()
         redirect('/')
 
     def need(self, item_id):
-        item = self.shoppinglist.find_by_id(item_id)
+        item = self.appstate.shoppinglist.find_by_id(item_id)
         if item:
             item.set_need()
-        self.save_state()
+        self.appstate.save_state()
         redirect('/')
 
     def lock(self, item_id):
-        item = self.shopping_list.find_by_id(item_id)
+        item = self.appstate.shopping_list.find_by_id(item_id)
         if item:
             item.lock()
-        self.save_state()
+        self.appstate.save_state()
         redirect('/')
 
     def add_meal(self):
-        if not self.mealplan.meals:
-            self.mealplan.name = datetime.now(pytz.timezone(self.timezone)).strftime("Created %A, %B %d")
+        if not self.appstate.mealplan.meals:
+            self.appstate.mealplan.name = datetime.now(
+                    pytz.timezone(self.appstate.timezone)).strftime("Created %A, %B %d")
         if request.POST.meal == "":
             redirect('/')
-        self.mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
-        self.save_state()
+        self.appstate.mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
+        self.appstate.save_state()
         redirect('/')
 
     def add_recipe(self):
         try:
-            new_recipe = self.recipes.recipes[request.POST.recipe]
-            self.mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
-            self.shoppinglist.load_ingredients(new_recipe.make_shopping_plan())
+            new_recipe = self.appstate.recipes.recipes[request.POST.recipe]
+            self.appstate.mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
+            self.appstate.shoppinglist.load_ingredients(new_recipe.make_shopping_plan())
         except:
             pass
-        self.save_state()
+        self.appstate.save_state()
         redirect('/')
 
     def delete_meal(self, meal_index):
-        meal = self.mealplan.meals[meal_index]
+        meal = self.appstate.mealplan.meals[meal_index]
         for recipe in meal.recipes:
-            self.shoppinglist.delete_by_attribution(recipe)
-        del self.mealplan.meals[meal_index]
-        self.save_state()
+            self.appstate.shoppinglist.delete_by_attribution(recipe)
+        del self.appstate.mealplan.meals[meal_index]
+        self.appstate.save_state()
         redirect('/')
 
     def delete_recipe(self, meal_index, recipe_index):
-        try:
-            recipe_to_delete = self.mealplan.meals[meal_index].recipes[recipe_index]
-            del self.mealplan.meals[meal_index].recipes[recipe_index]
-            self.shopping_list.delete_by_attribution(recipe_to_delete)
-        except Exception as e:
-            print(e)
-        self.save_state()
+        recipe_to_delete = self.appstate.mealplan.meals[meal_index].recipes[recipe_index]
+        del self.appstate.mealplan.meals[meal_index].recipes[recipe_index]
+        self.appstate.shoppinglist.delete_by_attribution(recipe_to_delete)
+        self.appstate.save_state()
         redirect('/')
 
     def add_item(self):
-        item_name = request.POST.name.strip().strip("?").strip() # Hi Beth!
+        item_name = request.POST.name.strip().strip("?").strip()  # Hi Beth!
         if item_name == "":
             redirect("/")
         amount, amount_unit = util.parse_amount(request.POST.amount)
@@ -172,50 +152,45 @@ class Web(Bottle):
                                          vendor=request.POST.vendor,
                                          purpose=["one-time purchase"])
         item.lock()
-        self.shoppinglist.add_item(item)
-        self.save_state()
+        self.appstate.shoppinglist.add_item(item)
+        self.appstate.save_state()
         redirect('/')
 
     def include_lists(self):
         include_set = {int(i) for i in request.POST.keys()}
-        print("include_set:", include_set)
-        for index, sublist in enumerate(self.listmanager.lists):
-            print("before:", index, sublist, sublist.include)
+        for index, sublist in enumerate(self.appstate.listmanager.lists):
             if sublist.include:
                 if index not in include_set:
                     sublist.include = False
-                    print("removing", index, sublist)
-                    self.shoppinglist.delete_by_attribution(sublist)
+                    self.appstate.shoppinglist.delete_by_attribution(sublist)
             else:
                 if index in include_set:
                     sublist.include = True
-                    print("loading", index, sublist)
-                    self.shoppinglist.load_ingredients(sublist.make_shopping_plan())
-            print("after:", index, sublist, sublist.include)
-        self.save_state()
+                    self.appstate.shoppinglist.load_ingredients(sublist.make_shopping_plan())
+        self.appstate.save_state()
         redirect('/')
 
     def clear(self):
-        self.clear_state()
-        self.save_state()
+        self.appstate.clear_state()
+        self.appstate.save_state()
         redirect('/')
 
     def recipe(self, recipe):
-        recipe = self.recipes.recipes[recipe]
+        recipe = self.appstate.recipes.recipes[recipe]
         return template("recipe", recipe=recipe)
 
     def edit_recipe(self, recipe):
-        recipe = self.recipes.recipes[recipe]
+        recipe = self.appstate.recipes.recipes[recipe]
         return template("edit-recipe", recipe=recipe)
 
     def save_recipe(self):
-        recipe = self.recipes.recipes[request.POST.recipe]
+        recipe = self.appstate.recipes.recipes[request.POST.recipe]
         recipe.description = request.POST.description
         recipe.directions = request.POST.directions
-        self.recipes.save()
+        self.appstate.recipes.save()
 
     def add_ingredient(self):
-        recipe = self.recipes.recipes[request.POST.recipe]
+        recipe = self.appstate.recipes.recipes[request.POST.recipe]
         ingredient_amount, ingredient_amount_unit = util.parse_amount(request.POST.amount)
         new_ingredient = recipes.Ingredient(name=request.POST.name,
                                             amount=ingredient_amount,
@@ -226,13 +201,13 @@ class Web(Bottle):
                                             attribution=recipe,
                                             purpose=recipe.name)
         recipe.ingredients.append(new_ingredient)
-        self.recipes.save()
+        self.appstate.recipes.save()
         redirect(f'/edit-recipe/{recipe.name}')
 
     def delete_ingredient(self, recipe, ingredient_index):
-        recipe = self.recipes.recipes[recipe]
+        recipe = self.appstate.recipes.recipes[recipe]
         del recipe.ingredients[ingredient_index]
-        self.recipes.save()
+        self.appstate.recipes.save()
         redirect(f'/edit-recipe/{recipe.name}')
 
     def add_recipe_to_database_form(self):
@@ -244,7 +219,7 @@ class Web(Bottle):
         if request.POST.recipe in self.recipes.recipes.keys():
             redirect('/add-recipe-to-database-form?name_taken=true&recipe='+request.POST.recipe)
         else:
-            self.recipes.recipes[request.POST.recipe] = recipes.Recipe(name=request.POST.recipe, ingredients=[])
+            self.appstate.recipes.recipes[request.POST.recipe] = recipes.Recipe(name=request.POST.recipe, ingredients=[])
             redirect('/edit-recipe/'+request.POST.recipe)
 
     def static(self, filename):

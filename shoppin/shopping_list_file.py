@@ -32,7 +32,6 @@ class ShoppingListFile:
             self.sections[loaded_section] = (Section(name=loaded_section,
                                                   items=[]))
             for item in loaded_items:
-                print(self.sections[loaded_section].name)
                 if type(item) is str:
                     items.append(Item(name=item,
                         purpose=self.sections[loaded_section].name,

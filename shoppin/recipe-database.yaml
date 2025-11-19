@@ -2,6 +2,9 @@ tacos and burritos:
   description: |
     A Taco Tuesday favorite!
     
+  directions: |
+    make it at home
+    
   ingredients:
     - onion
 
@@ -188,6 +191,8 @@ meatloaf:
     Bake at 350F in an oiled loaf pan for 30 min, or until internal temp reaches 140F. 
     
     Optionally, glaze with BBQ sauce 5 minutes before removing from the oven.
+    
+    Allow to cool just a few minutes, and serve.
     
   ingredients:
     - ground beef:
@@ -1557,6 +1562,7 @@ vegetables a la Grecque:
 tortellini soup:
   description: |
     Italian classic
+    
   directions: |
     Boil a package of tortellini according to package directions.
     
@@ -1619,6 +1625,7 @@ tortellini soup:
 Eggplant Parmesan:
   description: |
     Classic Eggplant Parmesan
+    
   directions: |
     Pick fresh, firm eggplant, slice 1/4" thick. Season each slice with salt and pepper.
     
@@ -1638,6 +1645,7 @@ Eggplant Parmesan:
     -	flour   1 cup
     -	Panko bread crumbs   1.5 cup
     -	avocado oil   4 tbsp
+    
   ingredients:
     - eggplant
 
@@ -1669,6 +1677,7 @@ Eggplant Parmesan:
 crêpes:
   description: |
     A simple and versatile crêpes recipe
+    
   directions: |
     In a blender, mix 2 eggs, one cup of flour, 1.25 cups of milk, and 2 tsp of oil.
     
@@ -1693,6 +1702,7 @@ crêpes:
     chocolate-hazelnut spread (like Nutella, but we prefer without palm oil)
     sliced fresh fruit and berries
     whipped cream 
+    
   ingredients:
     - flour:
         amount: 1 cup

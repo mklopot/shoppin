@@ -4,6 +4,7 @@ tacos and burritos:
     
   directions: |
     make it at home
+    
   ingredients:
     - onion
 
@@ -190,6 +191,8 @@ meatloaf:
     Bake at 350F in an oiled loaf pan for 30 min, or until internal temp reaches 140F. 
     
     Optionally, glaze with BBQ sauce 5 minutes before removing from the oven.
+    
+    Allow to cool just a few minutes, and serve.
     
   ingredients:
     - ground beef:

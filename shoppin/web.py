@@ -84,7 +84,7 @@ class Web(Bottle):
         redirect('/')
 
     def have(self, item_id):
-        item = self.shoppinglist.find_by_id(item_id)
+        item = self.appstate.shoppinglist.find_by_id(item_id)
         if item:
             item.set_have()
             item.unlock()
@@ -99,7 +99,7 @@ class Web(Bottle):
         redirect('/')
 
     def lock(self, item_id):
-        item = self.appstate.shopping_list.find_by_id(item_id)
+        item = self.appstate.shoppinglist.find_by_id(item_id)
         if item:
             item.lock()
         self.appstate.save_state()

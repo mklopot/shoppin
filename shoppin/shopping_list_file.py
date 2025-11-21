@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 import yaml
 from yaml.scanner import ScannerError
-
+import logging
 
 from util import parse_amount
 
+logger = logging.getLogger('shoppin.shopping_list_file')
 
 @dataclass
 class Section:
@@ -14,6 +15,7 @@ class Section:
  
 class ShoppingListFile:
     def __init__(self) -> None:
+        logger.debug(f"Instantiating new {self}")
         self.sections = {}
         self.name = ""
         self.include = False
@@ -24,15 +26,17 @@ class ShoppingListFile:
                 loaded_sections = yaml.safe_load(f)
                 self.name = shopping_list_filepath.split("/")[-1]
                 self.name = self.name.split(".")[0]
-            except Exception as e:
-                print("Could not parse shopping list from file ", shopping_list_filepath, ":\n", e)
+            except ScannerError as e:
+                logger.warning(f"Could not parse shopping list from file {shopping_list_filepath}:\n{e}")
         for loaded_section in loaded_sections:
             items = []
             loaded_items = loaded_sections[loaded_section]
+            logger.debug(f"Loading preset list section {loaded_section}")
             self.sections[loaded_section] = (Section(name=loaded_section,
                                                   items=[]))
             for item in loaded_items:
                 if type(item) is str:
+                    logger.debug(f"Appending preset item {item}") 
                     items.append(Item(name=item,
                         purpose=self.sections[loaded_section].name,
                         attribution=self))
@@ -44,6 +48,7 @@ class ShoppingListFile:
                     optional = item[name].get("optional", False)
                     brand = item[name].get("brand", "").strip()
                     vendor = item[name].get("vendor", "").strip()
+                    logger.debug(f"Appending preset item {name}") 
                     items.append(Item(name=name,
                                       amount=amount,
                                       amount_unit=amount_unit,
@@ -72,4 +77,3 @@ class Item:
     optional: bool = False
     brand: str = ""
     vendor: str = ""
- 

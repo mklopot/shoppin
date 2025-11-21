@@ -2,11 +2,13 @@ from dataclasses import dataclass
 import yaml
 from yaml.scanner import ScannerError
 import fcntl
-
+import logging
 
 from util import parse_amount
 import shopping
 
+logger = logging.getLogger("shoppin.recipes")
+logger.addHandler(logging.NullHandler())
 
 @dataclass
 class Recipe:
@@ -34,9 +36,11 @@ class Ingredient:
 
 class Recipes:
     def __init__(self, recipes: list[Recipe] = {}) -> None:
+        logger.debug(f"Instantiated a recipe database {self}")
         self.recipes = recipes
 
     def save(self, recipe_db_filepath="recipe-database.yaml"):
+        logger.debug(f"Saving recipe database to {recipe_db_filepath}")
         with open(recipe_db_filepath, "w") as f:
             fcntl.flock(f, fcntl.LOCK_EX)
             for recipe in self.recipes:
@@ -52,7 +56,7 @@ class Recipes:
                 if self.recipes[recipe].ingredients:
                     f.write("  ingredients:\n")
                     for ingredient in self.recipes[recipe].ingredients:
-                        if ingredient.optional == False and \
+                        if ingredient.optional is False and \
                                 ingredient.amount == 1 and not \
                                 ingredient.amount_unit and not \
                                 ingredient.brand and not \
@@ -76,12 +80,13 @@ class Recipes:
             fcntl.flock(f, fcntl.LOCK_UN)
 
     def load(self, recipe_db_filepath="recipe-database.yaml"):
+        logger.debug(f"Loading recipe database from {recipe_db_filepath}")
         with open(recipe_db_filepath) as f:
             fcntl.flock(f, fcntl.LOCK_EX)
             try:
                 loaded_recipes = yaml.safe_load(f)
             except ScannerError as e:
-                print("Could not parse recipe database from file", recipe_db_filepath, ":\n", e)
+                logger.warning(f"Could not parse recipe database from file {recipe_db_filepath}:\n{e}")
             fcntl.flock(f, fcntl.LOCK_UN)
         for loaded_recipe in loaded_recipes:
             ingredients = []

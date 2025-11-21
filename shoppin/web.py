@@ -1,6 +1,7 @@
 from datetime import datetime
 import pytz
 from bottle import Bottle, template, request, redirect, static_file
+import logging
 
 import shopping
 import util
@@ -8,13 +9,18 @@ import recipes
 import mealplan
 
 
+logger = logging.getLogger("shoppin.web")
+logger.addHandler(logging.NullHandler())
+
 class Web(Bottle):
     def __init__(self, appstate):
+        logger.debug(f"Initialized new {self}")
         super(Web, self).__init__()
         self.appstate = appstate
 
+        logger.debug("Registering routes...")
         ######################################################
-        # Route decorators cannot be used here out of the box.
+        # Route decoratorsyntax cannot be used here out of the box.
         # Instead, we have to use the following syntax.
         # You must add a line here for every new route
         self.route('/', callback=self.toplevel)
@@ -106,6 +112,7 @@ class Web(Bottle):
         redirect('/')
 
     def add_meal(self):
+        logger.debug(f"Adding new meal to mealplan: {request.POST.meal}")
         if not self.appstate.mealplan.meals:
             self.appstate.mealplan.name = datetime.now(
                     pytz.timezone(self.appstate.timezone)).strftime("Created %A, %B %d")
@@ -119,6 +126,7 @@ class Web(Bottle):
         try:
             new_recipe = self.appstate.recipes.recipes[request.POST.recipe]
             self.appstate.mealplan.meals[int(request.POST.meal_index)].recipes.append(new_recipe)
+            logger.debug(f"Adding {new_recipe.name} to meal {self.appstate.mealplan.meals[int(request.POST.meal_index)].name}")
             self.appstate.shoppinglist.load_ingredients(new_recipe.make_shopping_plan())
         except:
             pass
@@ -127,6 +135,7 @@ class Web(Bottle):
 
     def delete_meal(self, meal_index):
         meal = self.appstate.mealplan.meals[meal_index]
+        logger.debug(f"Deleting meal {meal.name} from mealplan")
         for recipe in meal.recipes:
             self.appstate.shoppinglist.delete_by_attribution(recipe)
         del self.appstate.mealplan.meals[meal_index]
@@ -135,6 +144,7 @@ class Web(Bottle):
 
     def delete_recipe(self, meal_index, recipe_index):
         recipe_to_delete = self.appstate.mealplan.meals[meal_index].recipes[recipe_index]
+        logger.debug(f"Removing {recipe_to_delete.name} from meal {self.appstate.mealplan.meals[meal_index].name}")
         del self.appstate.mealplan.meals[meal_index].recipes[recipe_index]
         self.appstate.shoppinglist.delete_by_attribution(recipe_to_delete)
         self.appstate.save_state()
@@ -144,6 +154,7 @@ class Web(Bottle):
         item_name = request.POST.name.strip().strip("?").strip()  # Hi Beth!
         if item_name == "":
             redirect("/")
+        logger.debug(f"Manually adding item to shopping list: {item_name}")
         amount, amount_unit = util.parse_amount(request.POST.amount)
         item = shopping.ShoppingListItem(name=item_name,
                                          amount=amount,
@@ -162,10 +173,12 @@ class Web(Bottle):
             if sublist.include:
                 if index not in include_set:
                     sublist.include = False
+                    logger.debug(f"Including preset list {sublist.name}")
                     self.appstate.shoppinglist.delete_by_attribution(sublist)
             else:
                 if index in include_set:
                     sublist.include = True
+                    logger.debug(f"Excluding preset list {sublist.name}")
                     self.appstate.shoppinglist.load_ingredients(sublist.make_shopping_plan())
         self.appstate.save_state()
         redirect('/')
@@ -177,20 +190,24 @@ class Web(Bottle):
 
     def recipe(self, recipe):
         recipe = self.appstate.recipes.recipes[recipe]
+        logger.debug(f'Rendering page for {recipe.name}')
         return template("recipe", recipe=recipe)
 
     def edit_recipe(self, recipe):
         recipe = self.appstate.recipes.recipes[recipe]
+        logger.debug(f'Rendering editing form for {recipe.name}')
         return template("edit-recipe", recipe=recipe)
 
     def save_recipe(self):
         recipe = self.appstate.recipes.recipes[request.POST.recipe]
+        logger.debug(f'Saving recipe {recipe.name}')
         recipe.description = request.POST.description
         recipe.directions = request.POST.directions
         self.appstate.recipes.save()
 
     def add_ingredient(self):
         recipe = self.appstate.recipes.recipes[request.POST.recipe]
+        logger.debug(f"Adding {request.POST.name} as an ingredient for recipe {recipe.name}")
         ingredient_amount, ingredient_amount_unit = util.parse_amount(request.POST.amount)
         new_ingredient = recipes.Ingredient(name=request.POST.name,
                                             amount=ingredient_amount,
@@ -206,11 +223,14 @@ class Web(Bottle):
 
     def delete_ingredient(self, recipe, ingredient_index):
         recipe = self.appstate.recipes.recipes[recipe]
+        ingredient_to_delete = recipe.ingredients[ingredient_index]
+        logger.debug(f"Deleting {ingredient_to_delete.name} from ingredients of recipe {recipe.name}")
         del recipe.ingredients[ingredient_index]
         self.appstate.recipes.save()
         redirect(f'/edit-recipe/{recipe.name}')
 
     def add_recipe_to_database_form(self):
+        logger.debug("Rendering form to add new recipe to database")
         return template('new-recipe', name_taken=request.query.name_taken, recipe=request.query.recipe)
 
     def add_recipe_to_database(self):

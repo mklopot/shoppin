@@ -20,7 +20,7 @@ class ShoppingList:
         self.items = []
 
     def load_ingredients(self, ingredients: list) -> None:
-        logger.info("Loading shopping list items from recipe ingredients")
+        logger.info("Loading shopping list items from recipe ingredients or preset list")
         for ingredient in ingredients:
             newitem = ShoppingListItem()
             newitem.from_ingredient(ingredient)
@@ -92,7 +92,7 @@ class ShoppingList:
         return None
 
     def delete_by_attribution(self, attribution):
-        logger.info(f"Removing shopping list items coming from recipe {attribution.name}")
+        logger.info(f"Removing shopping list items coming from recipe or preset {attribution.name}")
         mark_for_deletion = []
         for item in self.items:
             affected_ingredient_list = [ingredient for ingredient in item.ingredients if ingredient.attribution is attribution] 
@@ -177,6 +177,8 @@ class ShoppingListItem:
     def combine(self, other):
         logger.debug(f"Stacking {self.name} with {other.name}")
         self.amount += other.amount
+        logger.debug(f"Ingredients of first instance: {self.ingredients}")
+        logger.debug(f"Ingredients of second instance: {other.ingredients}")
         self.ingredients.extend(other.ingredients)
         logger.debug(f"Extending ingredients to {self.ingredients}")
         self.purpose = self.purpose + other.purpose

@@ -2,6 +2,9 @@ tacos and burritos:
   description: |
     A Taco Tuesday favorite!
     
+  directions: |
+    make it at home
+    
   ingredients:
     - onion
 
@@ -32,6 +35,8 @@ tacos and burritos:
 
     - sour cream:
         amount: 4 oz
+
+    - Rice
 
 
 take-out:
@@ -128,7 +133,6 @@ stir fry:
 
 
 taco soup:
-
   description: |
     Beth's invention. Hearty flavors of Mexican cuisine, in soup form.
     
@@ -178,6 +182,7 @@ taco soup:
     - radishes:
         optional: True
 
+
 meatloaf:
   description: |
     Traditional simple meatloaf
@@ -188,6 +193,8 @@ meatloaf:
     Bake at 350F in an oiled loaf pan for 30 min, or until internal temp reaches 140F. 
     
     Optionally, glaze with BBQ sauce 5 minutes before removing from the oven.
+    
+    Allow to cool just a few minutes, and serve.
     
   ingredients:
     - ground beef:
@@ -402,6 +409,8 @@ salad with butter lettuce:
 
 
 fried egg:
+  description: |
+    Make sure the egg is not too cold. I microwave refrigerated eggs for 15-20 seconds first. Preheat pan, fry in a small amount of butter on medium-high heat. If desired, cover with lid for desired doneness on the top part of the egg.
   ingredients:
     - egg
 
@@ -474,6 +483,8 @@ zucchini casserole:
         amount: 0.5
 
     - zucchini
+
+    - Carrots
 
 
 vegetarian zucchini casserole:
@@ -628,9 +639,9 @@ lima bean side dish:
 
 
 cheesy puff pastry rolls:
-
   description: |
     Crispy warm cheesy rolls lightly seasoned with mint and oregano.
+    
   directions: |
     Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano.
     
@@ -713,6 +724,7 @@ vanilla pudding:
 
     - cornstarch:
         amount: 2 tbsp
+
 
 black bean patty with cheese:
   description: |
@@ -1374,7 +1386,6 @@ cold borscht:
     - dill
 
 
-
 Banana Treats:
   description: |
     Banana slices topped with peanut butter and chocolate
@@ -1395,9 +1406,11 @@ Banana Treats:
     - chocolate or chocolate chips:
         amount: 1.5 oz
 
+
 pan-fried chicken:
   description: |
     Quick pan-fried chicken with a lot of flavor.
+    
   directions: |
     De-bone chicken pieces. Cut to 1/2" thick or thinner.
     
@@ -1434,6 +1447,7 @@ pan-fried chicken:
 kharcho:
   description: |
     A hearty flavorful soup with meat and walnuts, from the Caucasus Mountains (Georgia).
+    
   directions: |
     From food.com
     
@@ -1496,6 +1510,7 @@ kharcho:
 vegetables a la Grecque:
   description: |
     Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
+    
   directions: |
     Use a mix of vegetables that will keep their structure, cut into appealing and manageable shapes, such as artichoke hearts, julienned carrots, celery or fennel pieces, cauliflower florets, trimmed igreen beans, leeks cut lengthwise, pearl onions, whole mushrooms, strips of bell peppers, whole olives.
     
@@ -1503,7 +1518,7 @@ vegetables a la Grecque:
     
     Reserve 2 of the lemon peel halves.
     
-    Prepare the court boullion from the olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
+    Prepare the court boullion from the water, olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
     
     Cook the vegetables in the boullion by bringing to a boil, then taking off the heat and allowing to infuse for 15 minutes.
     
@@ -1514,70 +1529,702 @@ vegetables a la Grecque:
   ingredients:
     - mixed vegetables:
         amount: 2 lbs
+
     - lemons:
         amount: 4
+
     - olive oil:
         amount: 1 cup
+
     - cider vinegar:
         amount: 0.75 cup
+
     - garlic:
         amount: 2 cloves
+
     - parsley:
         amount: 3 sprigs
+
     - whole peppercorns:
         amount: 6
+
     - fresh thyme:
         amount: 3 tsp
+
     - dried oregano:
         amount: 0.25 tsp
+
     - fennel or celery seeds:
         amount: 1 pinch
         optional: True
+
     - salt:
         amount: 0.25 tsp
 
+    - water:
+        amount: 4 cups
+
+
 tortellini soup:
-  description: Italian classic
+  description: |
+    Italian classic
+    
   directions: |
     Boil a package of tortellini according to package directions.
-
+    
     Drain, reserving the cooking liquid, mix in 1 tsp of olive oil to prevent sticking, set aside.
-
+    
     Saute one chopped white onion in one tablespoon of olive oil on medium heat, until translucent. Slice one carrot, add to the pot and cook for 5 min. 
-
+    
     Slice one celery rib, peeled, into the pan. Add 4 peeled garlic cloves, and half of a red bell pepper, diced. Cook for an additional 3 minutes.
-
+    
     Add cooking liquid from the tortellini. Optionally add 1-2 cups of broth.
-
+    
     Pressure cook on the "Soup" setting in the Instant Pot for 5 minutes, then manually release pressure.
-
+    
     Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
-
+    
     Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+    
   ingredients:
     - tortellini:
         amount: 1 package
+
     - olive oil:
-        amount: 4 tsp 
+        amount: 4 tsp
+
     - onion, white
+
     - carrot
+
     - celery:
         amount: 1 rib
+
     - garlic:
         amount: 4 cloves
+
     - bell pepper:
-        amount: .5 
+        amount: 0.5
+
     - zucchini
+
     - spinach:
         amount: 1 bunch
+
     - pasta sauce:
         amount: 5 tbsp
+
     - broth:
         amount: 2 cups
-        optional: true
+        optional: True
+
     - italian seasoning:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - salt:
-        amount: .5 tsp
+        amount: 0.5 tsp
+
     - black pepper:
         amount: 1 pinch
+
+
+Eggplant Parmesan:
+  description: |
+    Classic Eggplant Parmesan
+    
+  directions: |
+    Pick fresh, firm eggplant, slice 1/4" thick. Season each slice with salt and pepper.
+    
+    Dredge in flour, thoroughly coat in beaten eggs, and coat completely in a mix of shredded Parmesan cheese and Panko.
+    
+    Fry in avocado oil on medium heat until golden, on both sides, do not over-brown.
+    
+    Top with mozzarella.
+    
+    Bake at 350F until mozzarella starts to bubble and brown at the edges.
+    
+    Garnish with parsley and serve.
+    
+    Ingredients
+    -	chicken breast   1 lb
+    -	eggs   2
+    -	flour   1 cup
+    -	Panko bread crumbs   1.5 cup
+    -	avocado oil   4 tbsp
+    
+  ingredients:
+    - eggplant
+
+    - eggs:
+        amount: 2
+
+    - Panko:
+        amount: 1.5 cups
+
+    - flour:
+        amount: 1 cup
+
+    - parmesan cheese:
+        amount: 1 cup
+
+    - mozzarella:
+        amount: 8 oz
+
+    - salt:
+        amount: 1 tsp
+
+    - black pepper:
+        amount: 0.5 tsp
+
+    - avocado oil:
+        amount: 4 tbsp
+
+
+crêpes:
+  description: |
+    A simple and versatile crêpes recipe
+    
+  directions: |
+    In a blender, mix 2 eggs, one cup of flour, 1.25 cups of milk, and 2 tsp of oil.
+    
+    Blend on low speed until fully incorporated.
+    
+    Melt the butter, preheat a wide flat pan (carbon steel or or cast iron are said to be best, or use a special crêpe pan) on high heat, and brush the pan with a small amount of butter.
+    
+    Cook 4-5 tbsp of batter at a time on high heat, spreading the batter flat to cover the entire bottom of the pan. Allow to brown and crisp slightly, usually about 20-30 seconds per side. Flip over with a gentle but decisive motion to keep the crêpes from sticking to themselves while being flipped.
+    
+    Stack the cooked crêpes, brushing each one lightly with the melted butter.
+    
+    Serve with either savory toppings or fillings, or sweet ones.
+    
+    Savory topping examples
+    sautéed mushrooms and onions, spinach and bell pepper
+    tomato slices, fresh basil and fresh mozzarella
+    bacon, fried egg
+    
+    Sweet topping examples
+    freshly squeezed lemon juice and sugar
+    fruit jam
+    chocolate-hazelnut spread (like Nutella, but we prefer without palm oil)
+    sliced fresh fruit and berries
+    whipped cream 
+    
+  ingredients:
+    - flour:
+        amount: 1 cup
+
+    - milk:
+        amount: 1.2 cups
+
+    - avocado oil:
+        amount: 2 tsp
+
+    - eggs:
+        amount: 2
+
+    - butter:
+        amount: 4 tbsp
+
+
+quinoa and white bean soup:
+  description: |
+    Soup with quinoa and white beans, and we have added kale.
+    
+    From NY Times Cooking
+    
+  directions: |
+    Peel and finely chop the carrots, onions, and celery. Chop the parsley. Chop the oregano, thyme or rosemary, if using.
+    
+    Remove stem from the kale.
+    
+    Heat oil in a large, heavy-bottomed saucepan over medium heat. Add onions, carrots and celery, and sauté until barely tender, about 5 minutes. Add beans and garlic and stir for 2 minutes.
+    
+    Stir in tomatoes and their juices, add the kale and the vegetable stock. Simmer for 20 minutes.
+    
+    Add quinoa, parsley, oregano or other herb, and bay leaf. Cover and simmer until quinoa is cooked, 12 to 15 minutes. Season with salt and pepper to taste. Remove bay leaf and serve.
+    
+  ingredients:
+    - olive oil:
+        amount: 0.25 cups
+
+    - onions:
+        amount: 2
+
+    - carrots:
+        amount: 2
+
+    - celery:
+        amount: 2 ribs
+
+    - cannellini beans:
+        amount: 14 oz
+
+    - garlic:
+        amount: 2 cloves
+
+    - chopped tomatoes:
+        amount: 14 oz
+
+    - vegetable stock:
+        amount: 7 cups
+
+    - quinoa:
+        amount: 0.33 cups
+
+    - parsley:
+        amount: 0.25 cups
+
+    - oregano:
+        amount: 1 tbsp
+        optional: True
+
+    - rosemary:
+        amount: 1 tbsp
+        optional: True
+
+    - thyme:
+        amount: 1 tbsp
+        optional: True
+
+    - bay leaf
+
+    - kale:
+        amount: 1 bunch
+
+
+S'mores:
+  description: |
+    Camping classic: a sandwich of roasted marshmallow and chocolate, between two graham crackers. 
+    
+  directions: |
+    Roast marshmallows on a skewer over an open fire. Let marshmallow catch fire and blow out immediately. Sandwich between 2 pieces of graham cracker, with a small piece of chocolate inside. The chocolate piece should partially melt from contact with the hot marshmallow. Allow to cool slightly and eat immediately.
+    
+  ingredients:
+    - Marshmallow
+
+    - Chocolate
+
+    - Graham crackers
+
+
+Lasagna:
+  description: |
+    Classic Italian-American casserole
+    
+    From https://thecozycook.com/easy-lasagna-recipe/
+    
+  directions: |
+    Spoon meat sauce on the bottom of a lightly greased casserole dish. Add 4 boiled lasagna noodles (or use no-boil or fresh noodles). Spread 1/3 of the ricotta cheese mixture on top. Add 1.5 cups of meat sauce.
+    
+    Repeat the same layers two more times.
+    
+    Adding layers of noodles, ricotta cheese, and meat sauce to make Lasagna.
+    
+    Top with grated mozzarella cheese. Cover and bake at 375° for 30 minutes. Remove cover and bake for 15 more minutes. Broil at the end if desired. Let it rest for 15 minutes prior to serving 
+    
+    Cheese Filling
+    15 oz. ricotta cheese, 2 cups
+    1 large egg
+    2 cups mozzarella cheese
+    ¾ cup Parmesan cheese, freshly grated
+    2 teaspoons Italian seasoning
+    ½ teaspoon salt
+    ¼ tsp pepper
+    
+    Meat Sauce
+    1 tablespoon olive oil
+    1 yellow onion, finely diced
+    ¾ lb. ground beef
+    ¾ lb. ground Italian sausage
+    3 cloves garlic, minced
+    ½ cup chicken broth
+    40 oz. marinara sauce, see notes
+    1 tablespoon tomato paste
+    1 teaspoon hot sauce
+    1 teaspoon Worcestershire sauce
+    
+    Lasagna Noodles/ Cheese Topping
+    ▢12 lasagna noodles, plus extra in case of breakage
+    ▢2.5 cups mozzarella cheese
+    
+    
+    Equipment
+    1 9 x 13-inch casserole dish
+    
+    Instructions
+    Prep Work
+    Combine the cheese filling ingredients (ricotta, egg, 2 cups of the shredded mozzarella, parmesan, Italian seasoning, salt, pepper) in a medium bowl and set aside. Measure out remaining ingredients.
+    
+    Make the Meat Sauce
+    Heat olive oil over medium heat and add the diced onions. Let them soften for 10 minutes. (This allows them to release a little sugar which is a nice offset to the acidity of the tomatoes.)
+    Add the ground beef and sausage and increase heat to medium-high. Use a spatula to break up the meat so that it’s very fine and crumbled. Cook for 8-10 minutes, or until cooked through. Add garlic during the last minute. Drain excess grease.
+    Add the chicken broth and use a silicone spatula to “clean” the bottom and sides of the pot. Add the marinara sauce, tomato paste, hot sauce, and Worcestershire sauce. Bring to a boil, then reduce to a simmer. Cover partially and let the sauce simmer gently while you boil the pasta noodles.
+    
+    Preheat Oven and Cook the Lasagna Noodles
+    Preheat oven to 375°.
+    Begin boiling a large pot of salted pasta water for the lasagna noodles. Once a rapid boil is reached, cook the noodles to al dente according to package instructions. (Set a timer to ensure you don’t overcook them.) Gently stir with a wooden spoon throughout cooking to prevent the noodles from sticking. Drain and rinse with cold water until noodles are completely cool.
+    Lay the cooled noodles flat on wax or parchment paper while you begin assembling the lasagna.
+    
+    Assemble
+    Spread 1 heaping cup of meat sauce on the bottom of a 9 x 13-inch casserole dish. Next, add 4 lasagna noodles, overlapping them if needed.
+    Spread 1/3 of the ricotta cheese mixture over the noodles, followed by about 1 ½ cups of meat sauce.
+    Top with 4 more lasagna noodles, 1/3 of the ricotta cheese mixture, 1 ½ cups meat sauce.
+    Finish with 4 more lasagna noodles, the rest of the ricotta mixture, and the rest of the meat sauce.
+    Top with 2 ½ cups of Mozzarella cheese.
+    Spray foil with nonstick cooking spray and place it spray-side-down on top of the baking dish to prevent the cheese from sticking to it.
+    
+    Bake
+    Bake for 35 minutes. Remove cover and bake for 10 more minutes.
+    Remove and garnish with fresh parsley. Let it sit for 15 minutes prior to serving to allow the layers to set. 
+     
+    Pro Tips:
+    Flavor Enhancers: The hot sauce and Worcestershire sauce are flavor enhancers and can’t be tasted outright. The hot sauce won’t make it hot/spicy. I use Frank's Hot Sauce.
+    
+    Cheese: Shred and grate the cheese from a block, avoid using packaged shredded/grated cheese for this recipe. Low moisture, whole milk mozzarella cheese melts the best.
+    Lasagna Noodles: No-boil lasagna noodles or fresh lasagna noodles can also be used for this recipe, neither of which need to be cooked first. Fresh lasagna noodles can be found in the deli section of the grocery store.
+    Casserole Dish: If your lasagna is very close to the top of your casserole dish, place a baking sheet underneath the casserole dish to catch any splatters of sauce, as it gets hot and bubbly toward the end. A Deep Casserole Dish is helpful.
+    
+    Storage:
+    Store in an airtight container and refrigerate for up to 3 days or freeze for up to 3 months. Leftovers do freeze well. 
+    
+    Reheating Leftovers:
+    To reheat leftover lasagna, place it in a lightly greased, covered casserole dish. Bake at 350° for 25-30 minutes.
+    
+  ingredients:
+    - ricotta cheese:
+        amount: 15 oz
+
+    - egg
+
+    - mozzarella cheese:
+        amount: 10 oz
+
+    - Italian seasoning:
+        amount: 2 tsp
+
+    - salt:
+        amount: 0.5 tsp
+
+    - pepper:
+        amount: 0.25 tsp
+
+    - olive oil:
+        amount: 1 tbsp
+
+    - onion, yellow
+
+    - garlic:
+        amount: 3 cloves
+
+    - chicken broth:
+        amount: 0.5 cups
+
+    - Parmesan cheese, grated:
+        amount: 0.75 cups
+
+    - ground beef:
+        amount: 0.75 lb
+
+    - Italian sausage:
+        amount: 0.75 lb
+
+    - marinara sauce:
+        amount: 40 oz
+
+    - tomato paste:
+        amount: 1 tbsp
+
+    - hot sauce:
+        amount: 1 tsp
+        optional: True
+
+    - Worcestershire sauce:
+        amount: 1 tsp
+        optional: True
+
+    - lasagna noodles:
+        amount: 12 noodles
+
+    - mozzarella cheese:
+        amount: 2.5 cups
+
+
+Monte Christo Sandwich:
+  ingredients:
+    - Ham:
+        amount: 5 oz
+
+    - Bread:
+        amount: 3 slices
+
+    - Mustard:
+        amount: 1 tsp
+
+    - Swiss cheese:
+        amount: 2 slices
+
+    - Butter:
+        amount: 1 tbsp
+
+    - egg
+
+
+Veggie Pot Pie:
+  directions: |
+    Make a pie crust using 2 ½ cups (325g) all-purpose flour, 1/2 teaspoon salt, 1 cup (230g) very cold unsalted butter, cut into 1/2-inch cubes, 6 to 8 tablespoons ice water, or more as needed. https://www.inspiredtaste.net/22662/flaky-pie-crust-recipe/
+    
+    Roll out 2/3 of the dough onto a floured surface and transfer to a pie tin. Bake for about 15 to 20 minutes at 375 degrees Fahrenheit. 
+    
+    Sautee tofu and vegetables in a frying pan in 1 Tablespoon oil. 
+    
+    Make a gravy using 1/3 cup flour, 1/3 cup nutritional yeast, 1/4 cup oil or butter, 2 cups water or veggie broth and 1 Tablespoon soy sauce (optional). 
+    
+    Stir vegetables and gravy together then transfer into pie crust. Add top pie crust layer and then bake at 375 degrees Fahrenheit for 30 to 40 minutes or until top is lightly browned. 
+    
+  ingredients:
+    - salt:
+        amount: 1 teaspoon
+
+    - garlic powder:
+        amount: 1 teasoon
+
+    - tofu:
+        amount: 2 cups
+
+    - Avocado oil or similar:
+        amount: 1 Tablespoon
+
+    - onion
+
+    - celery:
+        amount: 1 /2 cup diced
+
+    - carrots:
+        amount: 2 -3
+
+    - frozen peas
+
+    - frozen corn:
+        optional: True
+
+    - butter:
+        amount: 1 cup
+
+    - nutritional yeast:
+        amount: 1 /3 cup
+
+    - Flour:
+        amount: 3 cups
+
+    - Potato, Russet
+
+
+Salsa Verde:
+  description: |
+    Spicy classic with a good Mexican flavor. Good on meat, chilaquiles, tacos
+    
+  directions: |
+    Cook serrano peppers, garlic, onion, tomatillos in oven until soft and slightly blackened. 
+    
+    Blend the cooked ingredients in a blender. Add the juice of the half lime and the remaining ingredients.
+    
+  ingredients:
+    - tomatillos:
+        amount: 8
+
+    - garlic:
+        amount: 0.25 bulb
+
+    - onion:
+        amount: 0.25
+
+    - serrano peppers:
+        amount: 3
+
+    - salt:
+        amount: 0.25 tsp
+
+    - black pepper:
+        amount: 0.25 tsp
+
+    - Knorr seasoning:
+        amount: 0.5 tbsp
+
+    - cilantro:
+        amount: 0.5 bunch
+
+    - lime:
+        amount: 0.5
+
+
+Kale:
+  description: |
+    Steamed then lightly fried kale
+    
+  directions: |
+    Wash and dry the kale. Cut off any tough stems. Cut into 1 inch pieces.
+    
+    Steam for 10 minutes, then remove to let dry.
+    
+    Dice the onion and fry on medium heat in the oil until soft. Add steamed kale, cook on high heat until the edges begin to char. 
+    
+    Remove from heat, stir in salt, pepper, and optionally the sesame oil.
+    
+  ingredients:
+    - kale:
+        amount: 1 bunch
+
+    - avocado oil:
+        amount: 1 tbsp
+
+    - onion, white:
+        amount: 1 small
+
+    - sesame oil:
+        amount: 2 tsp
+        optional: True
+
+    - salt:
+        amount: 0.25 tsp
+
+    - black pepper:
+        amount: 0.25 tsp
+
+
+quinoa:
+  directions: |
+    Cook according to package directions
+    
+  ingredients:
+    - quinoa, dry:
+        amount: 1 cup
+
+    - salt:
+        amount: 0.25 tsp
+        optional: True
+
+
+minestrone soup:
+  description: |
+    americanized recipe
+    
+  directions: |
+    Boil a bag of multi-colored spiral pasta according to package directions, until al dente. Drain and coat with a minimal amount of olive oil to avoid sticking.
+    
+    Cube and sauté onion, bell pepper, carrots and eggplant in olive oil.
+    
+    Add one jar of pasta sauce. Add up to two cans of cannellini beans. Add five cloves of garlic, sliced. Add 3 cups of water and cook in the Instant Pot for 10 minutes.
+    
+    Add salt, pepper, and Italian seasoning to taste. Serve with the spiral noodles   
+    
+  ingredients:
+    - Spiral noodles, multi-colored:
+        amount: 1 bag
+
+    - olive oil:
+        amount: 4 tbsp
+
+    - carrot:
+        amount: 2 carrots
+
+    - celery:
+        amount: 2 ribs
+
+    - eggplant
+
+    - bell pepper
+
+    - onion
+
+    - cannellini beans:
+        amount: 1 cans
+
+    - garlic:
+        amount: 5 cloves
+
+    - pasta sauce:
+        amount: 1 1 jar
+
+    - salt:
+        amount: 1 tsp
+
+    - black pepper:
+        amount: 0.25 tsp
+
+    - italian seasoning:
+        amount: 0.25 tsp
+        optional: True
+
+
+PB&J Sandwich:
+  directions: |
+    Spread peanut butter on one side, fruit jam on the other
+    
+  ingredients:
+    - bread:
+        amount: 2 slices
+
+    - peanut butter:
+        amount: 1 tbsp
+
+    - Jam:
+        amount: 1 tbsp
+
+
+Hashbrowns:
+  description: |
+    Breakfast classic
+    
+  directions: |
+    Grate a Russet potato into a strainer or colander and rinse well under running water.
+    
+    Squeeze as much of the water out as possible and allow to air dry for 10 minutes.
+    
+    While the rinsed potato is drying, chop one onion and peel and slice the garlic cloves.
+    
+    Add the oil, potatoes and onion to a medium hot pan, and stir to coat the potatoes in the oil. Add salt and pepper. Cook while stirring genty for 5 minutes. Shape by pushing away from the edges and for the potatoes to have a uniform thickness. Then cover, lower the heat slightly, and cook without stirring for 5 more minutes, to develop a crust.
+    
+    Then add the garlic by pressing it into the potatoes, so it won't be in direct contact with the pan after flipping. Flip, cover, and cook for 5 more minutes. 
+    
+    Serve with ketchup and hot sauce 
+    
+  ingredients:
+    - potato, Russet
+
+    - onion:
+        amount: 0.25
+
+    - garlic:
+        amount: 3 cloves
+
+    - avocado oil:
+        amount: 5 tbsp
+
+    - salt:
+        amount: 0.5 tsp
+
+    - black pepper:
+        amount: 0.25 tsp
+
+
+Corn on the cob:
+  directions: |
+    Shuck the corn and carefully remove all cornsilk.
+    
+    Cut in half, if desired. Place into a large pot of salted briskly boiling water. Allow to return to a boil, amd cook for five minutes.
+    
+    Remove from heat. The corn can remain in the water for 10 more minutes to keep warm without overcooking.
+    
+    When ready to serve, remove from the cooking water and rub with salted butter.
+    
+  ingredients:
+    - corn on the cob:
+        amount: 4
+
+    - salt:
+        amount: 2 tbsp
+
+    - butter:
+        amount: 3 tbsp
+
+

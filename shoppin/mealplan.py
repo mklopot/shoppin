@@ -2,9 +2,6 @@ from dataclasses import dataclass, field
 from recipes import Recipe
 
 
-import yaml
-
-
 @dataclass
 class Meal:
     name: str

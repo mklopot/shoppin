@@ -1,38 +1,40 @@
-import yaml
+#!/usr/bin/python3
 
-import mealplan
-import recipes
-import shopping
-import shopping_list_file
-import sequence
+import logging
 
-my_recipes = recipes.Recipes()
-my_recipes.load()
+import appstate
+from web import Web
 
-with open("dinnerlist.yaml") as f:
-    dinnerlist = yaml.load(f)
+# Config
+host = '127.0.0.1'
+port = 8000
+timezone = "America/Denver"
+debug = False
+reloader = False
 
-meals = []
-for m in dinnerlist:
-    recipelist = []
-    for recipe in m:
-        recipelist.append(my_recipes.recipes[recipe])
-    my_meal = meal.Meal("Dinner", recipelist)
-    meals.append(my_meal)
-    
-my_mealplan =  meal.MealPlan("mealplan", meals)
+# Logging
+logger = logging.getLogger("shoppin")
+logger.setLevel(logging.DEBUG)
 
-my_file = shopping_list_file.ShoppingListFile()
-my_file.load()
+streamhandler = logging.StreamHandler()
+streamformatter = logging.Formatter('%(levelname)-8s [%(name)s] %(message)s')
+streamhandler.setLevel(logging.DEBUG)  # Loglevel for stdout
+streamhandler.setFormatter(streamformatter)
+logger.addHandler(streamhandler)
 
-my_sequence = sequence.Sequence()
-my_sequence.load()
+filehandler = logging.FileHandler('run.log')
+fileformatter = logging.Formatter('%(asctime)s %(levelname)-8s [%(name)s] %(message)s')
+filehandler.setLevel(logging.DEBUG)  # Loglevel for stdout
+filehandler.setFormatter(fileformatter)
+logger.addHandler(filehandler)
 
-my_shopping_list = shopping.ShoppingList(my_sequence)
-my_shopping_list.load_ingredients(my_mealplan.make_shopping_plan())
-my_shopping_list.load_ingredients(my_file.make_shopping_plan())
+logger.debug("Starting application")
 
+logger.info("Managing application state")
+my_appstate = appstate.Appstate(timezone=timezone)
 
-for i in my_shopping_list.ingredients:
-    print(i)
-    print()
+if __name__ == '__main__':
+    logger.debug("Instantiating the Bottle app")
+    webapp = Web(my_appstate)
+    logger.info("Running the Bottle app instance")
+    webapp.run(host=host, port=port, debug=debug, reloader=reloader)

@@ -216,7 +216,7 @@ class Web(Bottle):
     def add_recipe_to_database(self):
         if not request.POST.recipe:
             redirect('/add-recipe-to-database-form')
-        if request.POST.recipe in self.recipes.recipes.keys():
+        if request.POST.recipe in self.appstate.recipes.recipes.keys():
             redirect('/add-recipe-to-database-form?name_taken=true&recipe='+request.POST.recipe)
         else:
             self.appstate.recipes.recipes[request.POST.recipe] = recipes.Recipe(name=request.POST.recipe, ingredients=[])

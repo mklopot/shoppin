@@ -16,6 +16,7 @@
 - lists editor 
 
 ### User Suggestions
+- fix bug with very long purpose fields
 - Recipe requests
 - recipe approvals
 - suggest consistent ingredient units
@@ -24,21 +25,21 @@
 - archive old lists
 - editable preset shopping lists
 - spinner feedback for UI actions
-- fix bug with new meals not showing up right away
+- ~~fix bug with new meals not showing up right away~~
 - shopping item priority
 - item categories: in-store approx. location
 - view all recipes
 - split up mealplan and shoppinglist into different pages
 - navbar
 - "add new recipe" button
-- reload page section if edited by another user
+- reload page section if edited by another user (requires websockets?)
 - different background colors for different list sections
 - case-insensitive recipe adding
 
 
 ### Developer and Operator suggestions
 - SQLite
-- Logging
+- ~~Logging~~
 - Database backups
 - deploy via Ansible, Cloudformation, Terraform, etc
 - Unit test coverage

@@ -74,8 +74,30 @@ class ShoppingListFile:
             return
         with open(self.path, 'w') as f:
             for section in self.sections:
-                pass
+                f.write(section.name+":")
+                for item in self.recipes[recipe].items:
+                    if item.optional is False and \
+                            item.amount == 1 and not \
+                            item.amount_unit and not \
+                            item.brand and not \
+                            item.vendor:
+                        f.write(f"  - {item.name}\n")
+                    else:
+                        f.write(f"  - {item.name}:\n")
 
+                        if item.amount != 1 or item.amount_unit:
+                            f.write(f"      amount: {item.amount:.2g}")
+                            if item.amount_unit:
+                                f.write(f" {item.amount_unit}")
+                            f.write("\n")
+                    if item.optional:
+                        f.write("      optional: True\n")
+                    if item.brand:
+                        f.write(f"      brand: {item.brand}\n")
+                    if item.vendor:
+                        f.write(f"      vendor: {item.vendor}\n")
+                    f.write("\n")
+                f.write("\n")
 
 @dataclass
 class Item:

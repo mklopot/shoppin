@@ -7,6 +7,8 @@ import shopping
 import util
 import recipes
 import mealplan
+import list_manager
+import shopping_list_file
 
 
 logger = logging.getLogger("shoppin.web")
@@ -42,6 +44,11 @@ class Web(Bottle):
         self.route('/delete-ingredient/<recipe>/<ingredient_index:int>', callback=self.delete_ingredient)
         self.route('/add-recipe-to-database-form', callback=self.add_recipe_to_database_form)
         self.route('/add-recipe-to-database', method='POST', callback=self.add_recipe_to_database)
+        self.route('/add-preset-list-form', callback=self.new_preset_list_form)
+        self.route('/add-preset-list', method='POST', callback=self.add_preset_list)
+        self.route('/edit-preset-list/<preset_list_name>', callback=self.edit_preset_list)
+        self.route('/add-preset-item', method=['POST'], callback=self.add_preset_item)
+        self.route('/delete-preset-item/<preset_list_name>/<item_index:int>', callback=self.delete_preset_item)
         self.route('/images/<filename>', callback=self.static)
 
     def toplevel(self):
@@ -189,6 +196,9 @@ class Web(Bottle):
         redirect('/')
 
     def recipe(self, recipe):
+        """
+        View one recipe
+        """
         recipe = self.appstate.recipes.recipes[recipe]
         logger.debug(f'Rendering page for {recipe.name}')
         return template("recipe", recipe=recipe)
@@ -242,5 +252,59 @@ class Web(Bottle):
             self.appstate.recipes.recipes[request.POST.recipe] = recipes.Recipe(name=request.POST.recipe, ingredients=[])
             redirect('/edit-recipe/'+request.POST.recipe)
 
+# Edit preset lists
+    def add_preset_item(self):
+        preset_list = [preset_list for preset_list in self.appstate.listmanager.lists if preset_list.name == request.POST.preset_list_name][0]
+        logger.debug(f"Adding {request.POST.name} as an item in preset list {preset_list.name}")
+        item_amount, item_amount_unit = util.parse_amount(request.POST.amount)
+        new_item = shopping_list_file.Item(name=request.POST.item_name,
+                                           amount=item_amount,
+                                           amount_unit=item_amount_unit,
+                                           optional=bool(request.POST.optional),
+                                           brand=request.POST.brand,
+                                           vendor=request.POST.vendor,
+                                           attribution=preset_list,
+                                           purpose="Preset: " + preset_list.name)
+        preset_list.items.append(new_item)
+        preset_list.save()
+        self.appstate.save_state()
+        redirect(f'/edit-preset-list/{preset_list.name}')
+
+    def delete_preset_item(self, preset_list_name, item_index):
+        preset_list = [preset_list for preset_list in self.appstate.listmanager.lists if preset_list.name == preset_list_name][0]
+        item_to_delete = preset_list.items[item_index]
+        logger.debug(f"Deleting {item_to_delete.name} from preset list {preset_list_name}")
+        del preset_list.items[item_index]
+        preset_list.save()
+        self.appstate.save_state()
+        redirect(f'/edit-preset-list/{preset_list.name}')
+
+    def new_preset_list_form(self):
+        logger.debug("Rendering form to add new preset list")
+        return template('new-preset-list', name_taken=request.query.name_taken, recipe=request.query.preset_list)
+
+    def add_preset_list(self):
+        if not request.POST.preset_list:
+            redirect('/add-preset-list-form')
+        if [preset_list for preset_list in self.appstate.listmanager.lists if preset_list.name == request.POST.preset_list]:
+            redirect('/add-preset-list-form?name_taken=true&preset_list='+request.POST.recipe)
+        else:
+            logger.debug(f'Appending new preset list {request.POST.preset_list} to listmanager')
+            self.appstate.listmanager.lists.append(shopping_list_file.ShoppingListFile(name=request.POST.preset_list))
+            logger.debug(f'Preset lists: {[l.name for l in self.appstate.listmanager.lists]}')
+            redirect('/edit-preset-list/'+request.POST.preset_list)
+
+    def edit_preset_list(self, preset_list_name):
+        logger.debug(f'Rendering editing form for {preset_list_name}')
+        preset_list = [preset_list for preset_list in self.appstate.listmanager.lists if preset_list.name == preset_list_name][0]
+        return template("edit-preset-list", preset_list=preset_list)
+
+    def save_preset_list(self):
+        preset_list = self.appstate.listmanager.lists[request.POST.list]
+        logger.debug(f'Saving preset list {list.name}')
+        preset_list.save()
+        self.appstate.save_state()
+
+# Serve static images
     def static(self, filename):
         return static_file(filename, "images/")

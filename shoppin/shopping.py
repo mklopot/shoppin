@@ -148,7 +148,7 @@ class ShoppingListItem:
             return purpose
 
     def from_ingredient(self, ingredient):
-        logger.debug(f"Populating shopping list item {ingredient.name} data from a recipe ingredient")
+        logger.debug(f"Populating shopping list item {ingredient.name} data from a recipe ingredient or preset list item")
         self.name = ingredient.name
         self.amount = ingredient.amount
         self.amount_unit = ingredient.amount_unit

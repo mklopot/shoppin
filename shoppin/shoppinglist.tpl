@@ -116,6 +116,7 @@ a.x{
       % end
     % end
     </form>
+    <a href="/add-preset-list-form"> <button>+ Add new preset list</button></a>
     % end
   </div>
 

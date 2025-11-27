@@ -61,6 +61,7 @@ a.x{
 <body>
 <div class="row">
   <div class="column">
+    <a href="/add-recipe-to-database-form"><button>+ Add New Recipe to Database</button></a>
     <h1>Meal Plan</h1>
     % if mealplan:
       <h2>{{mealplan.name}}</h2>

@@ -411,6 +411,7 @@ salad with butter lettuce:
 fried egg:
   description: |
     Make sure the egg is not too cold. I microwave refrigerated eggs for 15-20 seconds first. Preheat pan, fry in a small amount of butter on medium-high heat. If desired, cover with lid for desired doneness on the top part of the egg.
+    
   ingredients:
     - egg
 
@@ -2226,5 +2227,106 @@ Corn on the cob:
 
     - butter:
         amount: 3 tbsp
+
+
+Asian salad:
+  description: |
+    Interpretation of asian salad
+    
+  directions: |
+    1-2 cups shredded iceberg lettuce or Napa cabbage
+    1-2 cup shredded purple cabbage
+    shredded or schnitzel chicken
+    1 block fried or baked tofu
+    2-4 shredded carrots
+    1-2 slided green onions
+    4-8 oz sliced almonds
+    mandarin oranges, 1 can or 2-3 fresh
+    1 can baby corn (optional)
+    chow mein topping (optional)
+    
+    Dressing
+    1/3 - 1/2 cup soy sauce
+    1 teaspoon sesame oil
+    2-3 tablespoons ketchup
+    juice of 1/2 orange
+    grated ginger root to taste
+    1-2 cloves garlic minced
+    1 tablespoon sugar or honey
+    
+  ingredients:
+    - iceberg lettuce or napa cabbage
+
+    - purple cabbage
+
+    - chicken
+
+    - tofu
+
+    - carrots:
+        amount: 2 -4
+
+    - green onions
+
+    - sliced almonds:
+        amount: 4 -8 oz
+
+    - soy sauce
+
+    - ketchup:
+        amount: 2 -3 Tablespoons
+
+    - ginger root
+
+    - garlic:
+        amount: 1 -2 cloves
+
+    - sugar or honey:
+        amount: 1 -2 tablespoons
+
+    - orange
+
+    - canned baby corn (optional)
+
+    - chow mein (optional)
+
+    - mandarin oranges 1 can or 2-3 fresh
+
+
+Russian Vinigret:
+  description: |
+    Russian festive beet and potato salad
+  directions: |
+    Steam, bake, or boil the potatoes, beets (separately) and carrots. Peel and dice.
+    
+    Dice the onion and the pickles.
+    Mix all ingredients 
+  ingredients:
+    - Potatoes, Russet:
+        amount: 3
+
+    - Beets:
+        amount: 2
+
+    - Onion, red:
+        amount: 0.5
+
+    - Pickles:
+        amount: 2
+
+    - Carrots:
+        amount: 3
+
+    - Sweet peas:
+        amount: 0.75 can
+
+    - Olive oil:
+        amount: 4 tbsp
+
+    - Salt:
+        amount: 1 pinch
+
+    - Pepper:
+        amount: 1 pinch
 
 

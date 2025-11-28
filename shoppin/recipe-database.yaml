@@ -2296,11 +2296,13 @@ Asian salad:
 Russian Vinigret:
   description: |
     Russian festive beet and potato salad
+    
   directions: |
     Steam, bake, or boil the potatoes, beets (separately) and carrots. Peel and dice.
     
     Dice the onion and the pickles.
     Mix all ingredients 
+    
   ingredients:
     - Potatoes, Russet:
         amount: 3
@@ -2328,5 +2330,82 @@ Russian Vinigret:
 
     - Pepper:
         amount: 1 pinch
+
+
+Sweet Potato Casserole:
+  directions: |
+    Add peeled and cubed sweet potatoes to a large pot of salted water. Bring to boil over high heat, then lower the heat to a simmer and cook until the potatoes are fork tender, about 15 to 20 minutes. Drain well and cool.
+    boiled sweet potato
+    Drain the potatoes well and cool. Return to the same pot.
+    drained potatoes
+    
+    Mash the sweet potatoes with a potato masher or a mixer.
+    mash the potatoes
+    Preheat the oven to 350° F. Butter a 2-quart baking dish.
+    
+    In a large bowl, whisk together the butter, mashed sweet potatoes, milk, brown sugar, vanilla, nutmeg, salt and eggs. Transfer to the prepared baking dish.
+  ingredients:
+    - sweet potatoes:
+        amount: 4
+
+    - unsalted butter:
+        amount: 4 tbsp
+
+    - milk:
+        amount: 0.5 cup
+
+    - brown sugar:
+        amount: 0.25 cup
+
+    - eggs:
+        amount: 2
+
+    - vanilla extract:
+        amount: 1 tsp
+
+    - salt:
+        amount: 0.5 tsp
+
+    - nutmeg, ground:
+        amount: 0.25 tsp
+
+
+Creamy Corn Casserole:
+  description: |
+    Sue's Thanksgiving Recipe
+  directions: |
+    Gather all ingredients and preheat the oven to 350 degrees F (175 degrees C). Lightly grease a 9x9-inch baking dish.
+    
+    Drain can of corn.
+    Stir whole and creamed corn, cornbread mix, sour cream, melted butter, and beaten eggs together in a medium bowl until well combined. Add green chilies.
+    
+    
+    Spoon mixture into the prepared dish.
+    
+    
+    Bake in the preheated oven until the top is golden brown and a toothpick inserted in the center comes out clean, about 45 minutes.
+    
+    Serve and enjoy!
+  ingredients:
+    - corn, whole kernel:
+        amount: 1 can
+
+    - creamed corn:
+        amount: 1 can
+
+    - cornbread mix:
+        amount: 8 ,5 oz
+
+    - sour cream:
+        amount: 1 cup
+
+    - butter:
+        amount: 4 tbsp
+
+    - eggs:
+        amount: 2
+
+    - canned green chilies:
+        amount: 4 oz
 
 

@@ -107,16 +107,17 @@ a.x{
     % end 
 
     % if list_manager:
-    <h1>Include Lists</h1>
+    <h1>Include Preset Lists</h1>
     <form hx-post="/include-lists" hx-trigger="change" hx-target="body">
     % for index, sublist in enumerate(list_manager.lists):
       % if sublist.include:
-    <h3><input type="checkbox" name={{index}} value="include" checked> {{sublist.name}}</h3>
+    <h3><input type="checkbox" name={{index}} value="include" checked> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
       % else:
-    <h3><input type="checkbox" name={{index}} value="include"> {{sublist.name}}</h3>
+    <h3><input type="checkbox" name={{index}} value="include"> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
       % end
     % end
     </form>
+    <a href="/add-preset-list-form"> <button>+ Add new preset list</button></a>
     % end
   </div>
 

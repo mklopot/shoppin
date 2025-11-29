@@ -177,7 +177,7 @@ a.x{
 
 % if got:
   <h2>Got</h2>
-  <table style="width:100%">
+  <table style="width:100%; background-color:#f3f3f3">
   % for item in got:
   <tr>
      <td>{{item.name}}
@@ -202,7 +202,7 @@ a.x{
 
 % if have:
   <h2>Already Have</h2>
-  <table style="width:100%">
+  <table style="width:100%; background-color:lightgray;">
   % for item in have:
   <tr>
      <td>{{item.name}}

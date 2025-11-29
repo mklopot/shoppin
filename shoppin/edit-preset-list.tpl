@@ -104,7 +104,7 @@ a.x{
           <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
 
           <input type="hidden" name="preset_list_name" value="{{preset_list.name}}">
-          <input type="submit" value="+ Add Ingredient" hx-boost="true" hx-swap='innerHTML show:no-scroll'><br>
+          <input type="submit" value="+ Add Item" hx-boost="true" hx-swap='innerHTML show:no-scroll'><br>
         </form>
   </body>
 </html>

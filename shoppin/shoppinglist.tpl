@@ -2,6 +2,7 @@
 <head>
     <meta http-equiv="refresh" content="1200">
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://unpkg.com/hyperscript.org@0.9.14"></script>
 
 <style>
 a:visited{
@@ -56,12 +57,102 @@ a.x{
   text-align: center;
 }
 
+
+/***** MODAL DIALOG ****/
+#modal {
+	/* Underlay covers entire screen. */
+	position: fixed;
+	top:0px;
+	bottom: 0px;
+	left:0px;
+	right:0px;
+	background-color:rgba(0,0,0,0.5);
+	z-index:1000;
+
+	/* Flexbox centers the .modal-content vertically and horizontally */
+	display:flex;
+	flex-direction:column;
+	align-items:center;
+
+	/* Animate when opening */
+	animation-name: fadeIn;
+	animation-duration:150ms;
+	animation-timing-function: ease;
+}
+
+#modal > .modal-underlay {
+	/* underlay takes up the entire viewport. This is only
+	required if you want to click to dismiss the popup */
+	position: absolute;
+	z-index: -1;
+	top:0px;
+	bottom:0px;
+	left: 0px;
+	right: 0px;
+}
+
+#modal > .modal-content {
+	/* Position visible dialog near the top of the window */
+	margin-top:10vh;
+
+	/* Sizing for visible dialog */
+	width:80%;
+	max-width:600px;
+
+	/* Display properties for visible dialog*/
+	border:solid 1px #999;
+	border-radius:8px;
+	box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.3);
+	background-color:white;
+	padding:20px;
+
+	/* Animate when opening */
+	animation-name:zoomIn;
+	animation-duration:150ms;
+	animation-timing-function: ease;
+}
+
+#modal.closing {
+	/* Animate when closing */
+	animation-name: fadeOut;
+	animation-duration:150ms;
+	animation-timing-function: ease;
+}
+
+#modal.closing > .modal-content {
+	/* Animate when closing */
+	animation-name: zoomOut;
+	animation-duration:150ms;
+	animation-timing-function: ease;
+}
+
+@keyframes fadeIn {
+	0% {opacity: 0;}
+	100% {opacity: 1;}
+}
+
+@keyframes fadeOut {
+	0% {opacity: 1;}
+	100% {opacity: 0;}
+}
+
+@keyframes zoomIn {
+	0% {transform: scale(0.9);}
+	100% {transform: scale(1);}
+}
+
+@keyframes zoomOut {
+	0% {transform: scale(1);}
+	100% {transform: scale(0.9);}
+}
+
 </style>
 </head>
 <body>
 <div class="row">
   <div class="column">
     <a href="/add-recipe-to-database-form"><button>+ Add New Recipe to Database</button></a>
+    <button class="btn primary" hx-get="/modal" hx-target="body" hx-swap="beforeend">Open a Modal</button> 
     <h1>Meal Plan</h1>
     % if mealplan:
       <h2>{{mealplan.name}}</h2>
@@ -109,6 +200,7 @@ a.x{
     % if list_manager:
     <h1>Include Preset Lists</h1>
     <form hx-post="/include-lists" hx-trigger="change" hx-target="body">
+    <!-- hx-get="/modal" hx-target="body" hx-swap="beforeend" -->
     % for index, sublist in enumerate(list_manager.lists):
       % if sublist.include:
     <h3><input type="checkbox" name={{index}} value="include" checked> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>

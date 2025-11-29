@@ -17,8 +17,8 @@ class ShoppingListFile:
         self.path=""
 
     def load(self, shopping_list_filepath="shopping-list.yaml"):
-        logger.info(f'Loading preset file from {self.path}')
         self.path = shopping_list_filepath
+        logger.info(f'Loading preset file from {self.path}')
         with open(shopping_list_filepath) as f:
             try:
                 loaded_items = yaml.safe_load(f)

@@ -50,6 +50,7 @@ class Web(Bottle):
         self.route('/add-preset-item', method=['POST'], callback=self.add_preset_item)
         self.route('/delete-preset-item/<preset_list_name>/<item_index:int>', callback=self.delete_preset_item)
         self.route('/images/<filename>', callback=self.static)
+        self.route('/modal', callback=self.modal)
 
     def toplevel(self):
         need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
@@ -304,6 +305,9 @@ class Web(Bottle):
         logger.debug(f'Saving preset list {list.name}')
         preset_list.save()
         self.appstate.save_state()
+
+    def modal(self):
+        return template('shoppinglist-load-modal-fragment')
 
 # Serve static images
     def static(self, filename):

@@ -35,6 +35,7 @@
 - reload page section if edited by another user (requires websockets?)
 - ~~different background colors for different list sections~~
 - case-insensitive recipe adding
+- favicon
 
 
 ### Developer and Operator suggestions

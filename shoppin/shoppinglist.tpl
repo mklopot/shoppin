@@ -199,16 +199,49 @@ a.x{
 
     % if list_manager:
     <h1>Include Preset Lists</h1>
-    <form hx-post="/include-lists" hx-trigger="change" hx-target="body">
+    <!-- form id="listmanager" action="/include-lists" method="post" _="on change 
+                                                                      if event.target.checked
+                                                                        set bodyData to `{\"preset_list_name\": \"${event.target.id}\"}`
+                                                                        fetch /modal with {
+                                                                          method: 'POST',
+                                                                          headers: { 'Content-Type': 'application/json' }, 
+                                                                          body: bodyData 
+                                                                        }
+                                                                        then
+                                                                          put it at end of the document.body
+                                                                      else
+                                                                        call me.submit()
+                                                                      end" -->
     <!-- hx-get="/modal" hx-target="body" hx-swap="beforeend" -->
+<form id="listmanager" action="/include-lists" method="post" 
+      _="on change
+          if event.target.checked
+            fetch `/modal/${event.target.id}` 
+            then
+              put it at end of the document.body
+          else
+            call me.submit()
+          end">
+
     % for index, sublist in enumerate(list_manager.lists):
       % if sublist.include:
-    <h3><input type="checkbox" name={{index}} value="include" checked> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
+    <h3><input type="checkbox" name={{index}} id="{{sublist.name}}" value="include" checked> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
       % else:
-    <h3><input type="checkbox" name={{index}} value="include"> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
+    <h3><input type="checkbox" name={{index}} id="{{sublist.name}}" value="include" > {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
       % end
     % end
     </form>
+    <!-- script>
+    const lmform = document.getElementById("listmanager")
+    % for index, sublist in enumerate(list_manager.lists):
+        const checkbox{{index}} = document.getElementById('{{sublist.name}}')
+        checkbox{{index}}.addEventListener('change', (event) => {
+          if (!event.currentTarget.checked) {
+            lmform.submit()} 
+        })
+    % end
+    </script -->
+
     <a href="/add-preset-list-form"> <button>+ Add new preset list</button></a>
     % end
   </div>

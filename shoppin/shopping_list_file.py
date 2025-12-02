@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import yaml
 from yaml.scanner import ScannerError
 import logging
+import uuid
 
 from util import parse_amount
 
@@ -56,6 +57,15 @@ class ShoppingListFile:
     def make_shopping_plan(self):
         return self.items
 
+    def make_shopping_plan_by_ids(self, ids_input):
+        ids_list = []
+        for i in ids_input:
+            try:
+                ids_list.append(int(i))
+            except ValueError:
+                continue
+        return [item for item in self.items if item.id in ids_list]
+
     def save(self):
         logger.info(f'Saving preset file to {self.path}')
         if not self.path:
@@ -94,3 +104,6 @@ class Item:
     optional: bool = False
     brand: str = ""
     vendor: str = ""
+
+    def __post_init__(self):
+        self.id = uuid.uuid4().int

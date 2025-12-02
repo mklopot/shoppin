@@ -92,6 +92,9 @@ a.x{
 }
 
 #modal > .modal-content {
+        /* Added to try to make scrollable */
+        overflow-y: auto;
+
 	/* Position visible dialog near the top of the window */
 	margin-top:10vh;
 

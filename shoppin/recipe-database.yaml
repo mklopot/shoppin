@@ -2298,15 +2298,14 @@ Russian Vinigret:
     Russian festive beet and potato salad
     
   directions: |
-    Steam, bake, or boil the potatoes, beets (separately) and carrots. Peel and dice.
+    Steam, bake, or boil the potatoes, and beets (separately), do not overcook. Peel and dice.
+    
+    Peel carrots and boil until soft but not mushy. Dice.
     
     Dice the onion and the pickles.
-    Mix all ingredients 
+    Mix all ingredients, optionally add a small splash of pickle brine
     
   ingredients:
-    - Potatoes, Russet:
-        amount: 3
-
     - Beets:
         amount: 2
 
@@ -2331,6 +2330,9 @@ Russian Vinigret:
     - Pepper:
         amount: 1 pinch
 
+    - potatoes, yukon or red:
+        amount: 4
+
 
 Sweet Potato Casserole:
   directions: |
@@ -2344,6 +2346,7 @@ Sweet Potato Casserole:
     Preheat the oven to 350° F. Butter a 2-quart baking dish.
     
     In a large bowl, whisk together the butter, mashed sweet potatoes, milk, brown sugar, vanilla, nutmeg, salt and eggs. Transfer to the prepared baking dish.
+    
   ingredients:
     - sweet potatoes:
         amount: 4
@@ -2373,6 +2376,7 @@ Sweet Potato Casserole:
 Creamy Corn Casserole:
   description: |
     Sue's Thanksgiving Recipe
+    
   directions: |
     Gather all ingredients and preheat the oven to 350 degrees F (175 degrees C). Lightly grease a 9x9-inch baking dish.
     
@@ -2386,6 +2390,7 @@ Creamy Corn Casserole:
     Bake in the preheated oven until the top is golden brown and a toothpick inserted in the center comes out clean, about 45 minutes.
     
     Serve and enjoy!
+    
   ingredients:
     - corn, whole kernel:
         amount: 1 can
@@ -2407,5 +2412,97 @@ Creamy Corn Casserole:
 
     - canned green chilies:
         amount: 4 oz
+
+
+garlic bread:
+  description: |
+    Home -made version
+  directions: |
+    Melt butter, mix in spices and olive oil
+    
+    Spread on sliced bread
+    
+    Toast the slices on 'bagel' setting in the toaster oven
+  ingredients:
+    - butter:
+        amount: 3 tbsp
+
+    - olive oil:
+        amount: 3 tbsp
+
+    - garlic powder:
+        amount: 0.5 tsp
+
+    - onion powder:
+        amount: 1 pinch
+        optional: True
+
+    - challah:
+        amount: 5 slices
+
+    - italian seasoning:
+        amount: 0.5 tsp
+
+
+kale gnocchi:
+  description: |
+    From https://www.delish.com/cooking/recipe-ideas/a41037917/creamy-kale-and-gnocchi-bake-recipe/
+  directions: |
+    Step 1
+    Preheat oven to 375º. In a large pot over medium-high heat, heat oil. Add kale a large handful at a time, tossing with tongs and slightly wilting each batch before adding the next, until all kale is added and leaves are bright green and just wilted, about 5 minutes total. Season kale with 1/2 teaspoon salt and transfer into an 11"-by-8" (2-quart) baking dish.
+    Step 2
+    In same pot over medium heat, melt butter. Cook shallots and garlic, stirring often, until tender and light golden, 3 to 5 minutes. Add flour and cook, stirring, until lightly toasted, about 1 minute more.
+    Step 3
+    While whisking, slowly pour in milk until combined and smooth. Whisk in mustard, nutmeg, 3/4 teaspoon salt, and 1/4 teaspoon pepper. Stir in gnocchi. Bring mixture to a simmer over medium heat, stirring occasionally, and cook until thickened slightly, about 1 minute.
+    Step 4
+    Remove pot from heat and whisk in 1 cup Monterey Jack cheese until melted.
+    Return cooked kale to pot and toss to combine, then scrape kale mixture into baking dish. Top with Parmesan and remaining 1 cup Monterey Jack cheese.
+    For an extra layer of crunch, add 1 cup panko bread crumbs when you add the cheese.
+    Step 5
+    Bake until filling is bubbling and top is golden, 16 to 20 minutes. Let cool 10 minutes before serving.
+    
+  ingredients:
+    - olive oil:
+        amount: 2 tbsp
+
+    - kale:
+        amount: 20 oz
+
+    - salt:
+        amount: 1 pinch
+
+    - shallots:
+        amount: 2
+
+    - garlic:
+        amount: 3 cloves
+
+    - flour:
+        amount: 3 tbsp
+
+    - milk:
+        amount: 4 cups
+
+    - mustard, Dijon:
+        amount: 2 tsp
+
+    - nutmeg:
+        amount: 1 pinch
+
+    - black pepper:
+        amount: 1 pinch
+
+    - potato gnocchi:
+        amount: 16 oz
+
+    - Monterey Jack cheese, shredded:
+        amount: 8 oz
+
+    - parmesan cheese, finely grated:
+        amount: 1 oz
+
+    - panko bread crumbs:
+        amount: 1 cup
+        optional: True
 
 

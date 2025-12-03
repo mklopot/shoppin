@@ -31,7 +31,7 @@
 - view all recipes
 - split up mealplan and shoppinglist into different pages
 - navbar
-- "add new recipe" button
+- ~~"add new recipe" button~~
 - reload page section if edited by another user (requires websockets?)
 - ~~different background colors for different list sections~~
 - case-insensitive recipe adding

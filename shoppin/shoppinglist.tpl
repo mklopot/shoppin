@@ -200,6 +200,7 @@ a.x{
     % end 
 
     % if list_manager:
+    <div>
     <h1>Include Preset Lists</h1>
     <form id="listmanager" action="/include-lists" method="post" 
                                 _="on change
@@ -221,6 +222,7 @@ a.x{
     </form>
 
     <a href="/add-preset-list-form"> <button>+ Add new preset list</button></a>
+    </div>
     % end
   </div>
 
@@ -228,7 +230,7 @@ a.x{
   <h1>Shopping List </h1>
   <button hx-get="/clear" hx-target="body" hx-confirm="Are you sure you want to clear the Shopping List and the Meal Plan?">Clear Shopping List and Meal Plan</button>
 
-    <div>
+    <div style="background-color: lightblue">
     <h2>Add Item</h2>
     <form action="/add-item" method="POST">
     <input type="text" id="name" name="name" method="POST" placeholder='Name of item, like "celery"' required>

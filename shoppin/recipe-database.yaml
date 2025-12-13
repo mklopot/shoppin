@@ -83,6 +83,21 @@ tofu joe:
 
 
 stir fry:
+  description: |
+    My interpretation of 炒蔬菜
+    
+  directions: |
+    The night before, freeze the tofu to get a spongy texture.
+    Following day, defrost the tofu, I use a Sous Vide circulator at 95F for 1 hr.
+    
+    Cook rice in Instant Pot per usual directions (1 cup rice to 1.5 cups water, cook on rice setting, release pressure after 2 min after completion, open and cool slightly, gently transfer to serving bowl. 
+    
+    Chop vegetables. Preheat a wok on high heat. Add oil, ginger, peeled garlic, hot pepper (optional), let fry for ~30 seconds.
+    
+    Add vegetables to wok (in batches, if desired). Stir vigorously to prevent sticking and burning.
+    
+    When vegetables reach desired doneness, sprinkle with soy sauce, add ketchup and stir-fry sauce. Cook while stirring for one more minute. Transfer to service bowl, sprinkle with sesame oil, cilantro leaves and sesame seeds.
+    
   ingredients:
     - rice:
         amount: 1 cup
@@ -129,6 +144,10 @@ stir fry:
 
     - soy sauce:
         amount: 2 oz
+        optional: True
+
+    - sesame oil:
+        amount: 1 tsp
         optional: True
 
 
@@ -2417,12 +2436,14 @@ Creamy Corn Casserole:
 garlic bread:
   description: |
     Home -made version
+    
   directions: |
     Melt butter, mix in spices and olive oil
     
     Spread on sliced bread
     
     Toast the slices on 'bagel' setting in the toaster oven
+    
   ingredients:
     - butter:
         amount: 3 tbsp
@@ -2447,6 +2468,7 @@ garlic bread:
 kale gnocchi:
   description: |
     From https://www.delish.com/cooking/recipe-ideas/a41037917/creamy-kale-and-gnocchi-bake-recipe/
+    
   directions: |
     Step 1
     Preheat oven to 375º. In a large pot over medium-high heat, heat oil. Add kale a large handful at a time, tossing with tongs and slightly wilting each batch before adding the next, until all kale is added and leaves are bright green and just wilted, about 5 minutes total. Season kale with 1/2 teaspoon salt and transfer into an 11"-by-8" (2-quart) baking dish.

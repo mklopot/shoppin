@@ -5,6 +5,10 @@
     <script src="https://unpkg.com/hyperscript.org@0.9.14"></script>
 
 <style>
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 a:visited{
   color:blue;
 }
@@ -150,6 +154,7 @@ a.x{
 }
 
 </style>
+
 </head>
 <body>
 <div class="row">
@@ -157,7 +162,7 @@ a.x{
     <a href="/add-recipe-to-database-form"><button>+ Add New Recipe to Database</button></a>
     <h1>Meal Plan</h1>
     % if mealplan:
-      <h2>{{mealplan.name}}</h2>
+      <h4>{{mealplan.name}}</h4>
       % for meal_index, meal in enumerate(mealplan.meals):
         <h3><span class="greendot">\\
         % if meal in meals_ready_to_cook:
@@ -174,12 +179,12 @@ a.x{
           % elif recipe in recipes_only_missing_optional:
          &#128993;\\
           % end
-          </span> <a href="/recipe/{{recipe.name}}">{{recipe.name}}</a><a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
+          </span> <a href="/recipe/{{recipe.id}}">{{recipe.name}}</a><a class="x" href="/delete-recipe-from-meal/{{meal_index}}/{{recipe_index}}"> &#9447;</a></li>
 
 
         % end
-        <li><form hx-post="/add-recipe" hx-target="body" hx-trigger="change">
-            <input list="recipelist" name="recipe" placeholder="Add dish" required>
+        <li><form hx-post="/add-dish" hx-target="body" hx-trigger="change">
+            <input list="recipelist" name="recipe" placeholder="Add dish" required autocomplete="off">
             <input type="hidden" name="meal_index" value={{meal_index}}>
             <datalist id="recipelist">
             % for recipename in recipelist:
@@ -214,9 +219,9 @@ a.x{
 
     % for index, sublist in enumerate(list_manager.lists):
       % if sublist.include:
-    <h3><input type="checkbox" name={{index}} id="{{sublist.name}}" value="include" checked> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
+    <input type="checkbox" name={{index}} id="{{sublist.name}}" value="include" checked> {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a><br><br>
       % else:
-    <h3><input type="checkbox" name={{index}} id="{{sublist.name}}" value="include" > {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a></h3>
+    <input type="checkbox" name={{index}} id="{{sublist.name}}" value="include" > {{sublist.name}}<a class="x" href="/edit-preset-list/{{sublist.name}}"> edit</a><br><br>
       % end
     % end
     </form>
@@ -230,7 +235,7 @@ a.x{
   <h1>Shopping List </h1>
   <button hx-get="/clear" hx-target="body" hx-confirm="Are you sure you want to clear the Shopping List and the Meal Plan?">Clear Shopping List and Meal Plan</button>
 
-    <div style="background-color: lightblue">
+    <div style="background-color: #C7F2FF">
     <h2>Add Item</h2>
     <form action="/add-item" method="POST">
     <input type="text" id="name" name="name" method="POST" placeholder='Name of item, like "celery"' required>
@@ -243,7 +248,7 @@ a.x{
     <label for="brand">Brand <i>optional</i></label><br>
 
     <input type="text" id="vendor" name="vendor" method="POST">
-    <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
+    <label for="vendor">Best place to buy (King Soopers, etc) <i>optional</i></label><br>
 
     <input type="submit" value="+ Add Item" hx-boost="true"><br>
     </form>

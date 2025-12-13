@@ -292,10 +292,22 @@ meatballs:
 
 
 pancakes:
+  description: |
+    Breakfast classic
+  directions: |
+    Thoroughly combine the dry ingredients. 
+    Mix in the milk gently, do not over mix. Better can be quite clumpy. 
+    
+    Melt butter in the microwave. 
+    
+    Whip the egg with immersion blender. Add butter and milk, mix gently. 
+    
+    Onto a well-oiled and preheated pan, scoop three tablespoons of batter at a time. Fry on medium high heat for about 2 minutes on each side. 
+    
+    Serve with syrup.
+    
+     If not serving immediately, brush with butter on each side and keep in a warm oven until ready to serve.
   ingredients:
-    - flour:
-        amount: 1.5 cup
-
     - baking powder:
         amount: 1 tbsp
 
@@ -309,6 +321,9 @@ pancakes:
         amount: 1 cup
 
     - egg
+
+    - Flour:
+        amount: 1.2 cup
 
 
 smashburgers:
@@ -2162,9 +2177,6 @@ minestrone soup:
     - garlic:
         amount: 5 cloves
 
-    - pasta sauce:
-        amount: 1 1 jar
-
     - salt:
         amount: 1 tsp
 
@@ -2174,6 +2186,9 @@ minestrone soup:
     - italian seasoning:
         amount: 0.25 tsp
         optional: True
+
+    - Marinara sauce:
+        amount: 1 jar
 
 
 PB&J Sandwich:
@@ -2471,7 +2486,10 @@ kale gnocchi:
     
   directions: |
     Step 1
-    Preheat oven to 375º. In a large pot over medium-high heat, heat oil. Add kale a large handful at a time, tossing with tongs and slightly wilting each batch before adding the next, until all kale is added and leaves are bright green and just wilted, about 5 minutes total. Season kale with 1/2 teaspoon salt and transfer into an 11"-by-8" (2-quart) baking dish.
+    Preheat oven to 375º. 
+    
+    
+    In a large pot over medium-high heat, heat oil. Add kale a large handful at a time, tossing with tongs and slightly wilting each batch before adding the next, until all kale is added and leaves are bright green and just wilted, about 5 minutes total. Season kale with 1/2 teaspoon salt and transfer into an 11"-by-8" (2-quart) baking dish.
     Step 2
     In same pot over medium heat, melt butter. Cook shallots and garlic, stirring often, until tender and light golden, 3 to 5 minutes. Add flour and cook, stirring, until lightly toasted, about 1 minute more.
     Step 3

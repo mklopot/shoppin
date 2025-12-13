@@ -73,7 +73,7 @@ a.x{
 </style>
 </head>
   <body>
-    <h1><a href="/recipe/{{recipe.name}}">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}</h1>
+    <h1><a href="/recipe/{{backbutton}}">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}</h1>
 
     <form hx-post="/save-recipe" hx-trigger="change" hx-swap="none">
     <input type="hidden" name="recipe" value="{{recipe.name}}">
@@ -99,7 +99,7 @@ a.x{
         % if item.vendor:
          &nbsp;&nbsp;Best Vendor: {{item.vendor}}
         % end
-         <a class="x" href="/delete-ingredient/{{recipe.name}}/{{ingredient_index}}"> &#9447;</a>
+         <a class="x" href="/delete-ingredient/{{backbutton}}/{{recipe.name}}/{{ingredient_index}}"> &#9447;</a>
       % end
       </ul>
       <h3>Add Ingredient</h3>
@@ -120,6 +120,7 @@ a.x{
           <label for="vendor">Best Vendor (King Soopers, Safeway, etc) <i>optional</i></label><br>
 
           <input type="hidden" name="recipe" value="{{recipe.name}}">
+          <input type="hidden" name="recipe_id" value="{{backbutton}}">
           <input type="submit" value="+ Add Ingredient" hx-boost="true" hx-swap='innerHTML show:no-scroll'><br>
         </form>
   </body>

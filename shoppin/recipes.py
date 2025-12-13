@@ -3,6 +3,8 @@ import yaml
 from yaml.scanner import ScannerError
 import fcntl
 import logging
+import copy
+import uuid
 
 from util import parse_amount
 import shopping
@@ -120,3 +122,14 @@ class Recipes:
                                                   attribution=self.recipes[loaded_recipe]))
 
             self.recipes[loaded_recipe].ingredients = ingredients
+
+
+class Dish(Recipe):
+    def __init__(self, recipe):
+        self.name = recipe.name
+        self.directions = recipe.directions
+        self.description = recipe.description
+        self.id = uuid.uuid4().int
+        self.ingredients = copy.deepcopy(recipe.ingredients)
+        for i in self.ingredients:
+            i.attribution = self

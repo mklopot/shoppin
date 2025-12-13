@@ -68,7 +68,7 @@ a.edit {
 </style>
 </head>
   <body>
-    <h1><a href="/">&larr;</a> {{recipe.name}} <a class="edit" href="/edit-recipe/{{recipe.name}}">edit</a></h1>
+    <h1><a href="/">&larr;</a> {{recipe.name}} <a class="edit" href="/edit-recipe/{{recipe.id}}/{{recipe.name}}">edit</a></h1>
     % if recipe.description:
     <p style="white-space:pre-wrap">{{recipe.description}}</p>
     % end

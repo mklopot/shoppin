@@ -1152,9 +1152,15 @@ pinto beans:
 
 
 slow cooked turkey:
+  directions: |
+    Cover in water and cook in Instant Pot for 1 - 1.5 hrs on "slow cook" setting
   ingredients:
     - turkey thighs:
         amount: 4
+
+    - salt:
+        amount: 1 tsp
+        optional: True
 
 
 esquites:

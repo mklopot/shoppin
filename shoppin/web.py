@@ -40,7 +40,9 @@ class Web(Bottle):
         self.route('/include-lists', method=['POST'], callback=self.include_lists)
         self.route('/clear', callback=self.clear)
         self.route('/recipe/<recipe_id>', callback=self.recipe)
+        self.route('/view-recipe/<recipe>', callback=self.view_recipe)
         self.route('/edit-recipe/<backbutton>/<recipe>', callback=self.edit_recipe)
+        self.route('/edit-recipe/<recipe>', callback=self.edit_new_recipe)
         self.route('/save-recipe', method=['POST'], callback=self.save_recipe)
         self.route('/add-ingredient', method=['POST'], callback=self.add_ingredient)
         self.route('/delete-ingredient/<recipe_id>/<recipe>/<ingredient_index:int>', callback=self.delete_ingredient)
@@ -203,7 +205,6 @@ class Web(Bottle):
         """
         Select recipe from mealplan by ID
         """
-        # recipe = self.appstate.recipes.recipes[recipe]
         recipe = None
         for meal in self.appstate.mealplan.meals:
             for i in meal.recipes:
@@ -215,10 +216,23 @@ class Web(Bottle):
         logger.debug(f'Rendering page for {recipe.name}')
         return template("recipe", recipe=recipe)
 
+    def view_recipe(self, recipe):
+        """
+        Select recipe from database by name
+        """
+        recipe = self.appstate.recipes.recipes[recipe]
+        logger.debug(f'Rendering page for {recipe.name}')
+        return template("viewrecipe", recipe=recipe)
+
     def edit_recipe(self, backbutton, recipe):
         recipe = self.appstate.recipes.recipes[recipe]
         logger.debug(f'Rendering editing form for {recipe.name}')
         return template("edit-recipe", recipe=recipe, backbutton=backbutton)
+
+    def edit_new_recipe(self, recipe):
+        recipe = self.appstate.recipes.recipes[recipe]
+        logger.debug(f'Rendering editing form for new recipe {recipe.name}')
+        return template("edit-recipe", recipe=recipe, backbutton=0)
 
     def save_recipe(self):
         recipe = self.appstate.recipes.recipes[request.POST.recipe]

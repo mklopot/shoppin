@@ -73,7 +73,13 @@ a.x{
 </style>
 </head>
   <body>
-    <h1><a href="/recipe/{{backbutton}}">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}</h1>
+    <h1>
+    % if backbutton != 0 and backbutton != "0":
+      <a href="/recipe/{{backbutton}}">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}
+    % else:
+      <a href="/view-recipe/{{recipe.name}}">&larr;</a> <span style="color:red">Editing </span>{{recipe.name}}
+    % end
+    </h1>
 
     <form hx-post="/save-recipe" hx-trigger="change" hx-swap="none">
     <input type="hidden" name="recipe" value="{{recipe.name}}">

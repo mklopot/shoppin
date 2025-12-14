@@ -294,6 +294,7 @@ meatballs:
 pancakes:
   description: |
     Breakfast classic
+    
   directions: |
     Thoroughly combine the dry ingredients. 
     Mix in the milk gently, do not over mix. Better can be quite clumpy. 
@@ -307,6 +308,7 @@ pancakes:
     Serve with syrup.
     
      If not serving immediately, brush with butter on each side and keep in a warm oven until ready to serve.
+    
   ingredients:
     - baking powder:
         amount: 1 tbsp
@@ -2546,3 +2548,26 @@ kale gnocchi:
         optional: True
 
 
+mayo egg:
+  description: |
+    best breakfast egg recipe
+    
+  directions: |
+    mix egg and mayo, nuke for 30 seconds, add seasonings
+    
+  ingredients:
+    - egg
+
+    - mayonnaise:
+        amount: 1 tbsp
+
+    - italian seasoning:
+        amount: 1 pinch
+
+    - black pepper:
+        amount: 1 pinch
+        optional: True
+
+    - paprika:
+        amount: 1 pinch
+        optional: True

@@ -83,17 +83,6 @@ a.edit {
 <table>
     % for item in recipe.ingredients:
   <tr>
-     <td>
-     % if item.item:
-       % if item.item.status.value in [2, 3]:
-       &#x2705; 
-       % else:
-       -
-       % end
-     % else:
-     ?
-     % end
-     </td>
      <td>{{item.name}}
          &nbsp;&nbsp;{{f"{item.amount:.2g}"}} {{item.amount_unit}}
     % if item.optional:

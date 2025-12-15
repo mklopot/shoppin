@@ -2605,3 +2605,39 @@ Pumkin bean and kale soup:
         amount: 3 cups
 
 
+Spanish rice:
+  description: |
+    Mexican-style side dish
+  directions: |
+    Mince the garlic.
+    
+    Heat oil in a frying pan over medium heat. Fry the dry rice for ~5 min, until slightly browned.
+    
+    Add broth and remaining ingredients, cover, and let simmer. Cook until all of the liquid is absorbed, approx. 30 min.
+    
+    Fluff with fork and serve
+    
+    
+  ingredients:
+    - avocado oil:
+        amount: 2 tbsp
+
+    - long grain rice:
+        amount: 2 cups
+
+    - chicken broth:
+        amount: 4 cups
+
+    - tomato sauce:
+        amount: 8 oz
+
+    - garlic:
+        amount: 1 tsp
+
+    - salt:
+        amount: 0.5 tsp
+
+    - black pepper:
+        amount: 1 pinch
+
+

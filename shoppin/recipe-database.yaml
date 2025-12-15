@@ -1154,6 +1154,7 @@ pinto beans:
 slow cooked turkey:
   directions: |
     Cover in water and cook in Instant Pot for 1 - 1.5 hrs on "slow cook" setting
+    
   ingredients:
     - turkey thighs:
         amount: 4
@@ -2577,3 +2578,30 @@ mayo egg:
     - paprika:
         amount: 1 pinch
         optional: True
+
+
+Pumkin bean and kale soup:
+  description: |
+    Sue Culig's easy soup recipe
+  directions: |
+    Saute onions, add beans and corn, then add remaining ingredients and heat thru
+  ingredients:
+    - Can of Pumpkin:
+        amount: 1 can
+
+    - white beans:
+        amount: 1 can
+
+    - Kale:
+        amount: 1 bunch
+
+    - onion
+
+    - frozen corn:
+        amount: 1 cup
+        optional: True
+
+    - vegetable broth:
+        amount: 3 cups
+
+

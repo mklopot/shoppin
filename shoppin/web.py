@@ -56,6 +56,7 @@ class Web(Bottle):
         self.route('/images/<filename>', callback=self.static)
         self.route('/modal/<preset_list_name>', callback=self.modal)
         self.route('/load-preset-list-items', method=['POST'], callback=self.load_preset_list_items)
+        self.route('/categorize/<item_name>/<category>', callback=self.categorize)
 
     def toplevel(self):
         # need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
@@ -352,6 +353,15 @@ class Web(Bottle):
         self.appstate.save_state()
         redirect('/')
 
+    def categorize(self, item_name, category):
+        if self.appstate.shoppinglist.categorizer:
+            self.appstate.shoppinglist.categorizer.set(item_name, category)
+            for item in self.appstate.shoppinglist.items:
+                self.appstate.shoppinglist.categorizer(item)
+                self.appstate.shoppinglist.map(item)
+            self.appstate.save_state()
+
+        
 
 # Serve static images
     def static(self, filename):

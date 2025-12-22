@@ -1,8 +1,36 @@
 - baking powder: baking
+  black pepper: spices
+  carrot: produce
+  celery: produce
   enchilada sauce: canned goods
   flour: baking
+  garlic: produce
+  ginger: produce
+  onion: produce
+  paprika: spices
+  rice: rice beans and grains
+  salt: spices
+  spicy bean patty: frozen
+  spicy bean%patty: frozen
+  tangerine: produce
 - baking:
   - flour
   - baking powder
   canned goods:
   - enchilada sauce
+  frozen:
+  - spicy bean%patty
+  - spicy bean patty
+  produce:
+  - celery
+  - carrot
+  - ginger
+  - onion
+  - garlic
+  - tangerine
+  rice beans and grains:
+  - rice
+  spices:
+  - salt
+  - black pepper
+  - paprika

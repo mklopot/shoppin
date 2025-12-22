@@ -12,9 +12,9 @@ class Categorizer:
             self.categories_index = {}
             self.items_index = {}
 
-    def set(self, item, category):
+    def set(self, item_name, category):
         # normalize input
-        item_name = singularize(item.name.lower())
+        item_name = singularize(item_name.lower())
         category = category.lower()
         
         # check for exisitng entry
@@ -39,7 +39,6 @@ class Categorizer:
                 self.categories_index[category] = [item_name]
             else:
                 self.categories_index[category].append(item_name)
-        self.categorize(item)
         self.save()
 
     def categorize(self, item):

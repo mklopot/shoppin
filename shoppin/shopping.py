@@ -4,6 +4,7 @@ import uuid
 import logging
 
 from util import pluralize, singularize
+import categories
 
 logger = logging.getLogger('shoppin.shopping')
 
@@ -14,13 +15,13 @@ class ItemStatus(Enum):
 
 
 class ShoppingList:
-    def __init__(self, categorizer=None) -> None:
+    def __init__(self) -> None:
         logger.debug(f"Instantiating new {self}")
         self.items = []
         self.categorizer = None
         self.mapping = defaultdict(list)
-        if categorizer:
-            self.categorizer = categorizer
+        self.categorizer = categories.Categorizer()
+        logger.debug(f"Using categorizer at {self.categorizer.filepath}")
 
     def load_ingredients(self, ingredients: list) -> None:
         logger.info("Loading shopping list items from recipe ingredients or preset list")
@@ -29,21 +30,19 @@ class ShoppingList:
             newitem.from_ingredient(ingredient)
             newitem.list = self
             self.items.append(newitem)
-            if self.categorizer:
-                self.categorizer(newitem)
-                logger.debug(f"Categorized {item.name} as {item.category}")
-                self.map(newitem)
+            self.categorizer(newitem)
+            logger.debug(f"Categorized {newitem.name} as {newitem.category}")
+            self.map(newitem)
         self.deduplicate()
 
     def add_item(self, item):
         logger.info(f"Adding {item.name} to the shopping list")
         self.items.append(item)
         item.list = self
+        self.categorizer(item)
+        logger.debug(f"Categorized {item.name} as {item.category}")
+        self.map(item)
         self.deduplicate()
-        if self.categorizer:
-            self.categorizer(item)
-            logger.debug(f"Categorized {item.name} as {item.category}")
-            self.map(item)
 
     def deduplicate(self):
         logger.debug("De-duplicating shopping list")
@@ -67,11 +66,18 @@ class ShoppingList:
             for duplicate in marked_for_deduplication[item_to_keep]:
                 item_to_keep.combine(duplicate)
                 self.items.remove(duplicate)
+                self.unmap(duplicate)
 
     def map(self, item):
-        if self.categorizer:
-            self.mapping[item.category].append(item)
-            logger.debug(f"Categories:{self.mapping.keys()}")
+        self.mapping[item.category].append(item)
+        logger.debug(f"Mapped categories: {self.mapping.keys()}")
+        logger.debug(f"Mapping {item.name} to category {item.category}")
+
+    def unmap(self, item):
+        try:
+            self.mapping[item.category].remove(item)
+        except ValueError:
+            pass
 
     def find_by_id(self, item_id):
         logger.debug(f"Finding item by id {item_id}")
@@ -96,6 +102,7 @@ class ShoppingList:
         for item in mark_for_deletion:
             logger.debug(f"Removing {item.name}")
             self.items.remove(item)
+            self.mapping[item.category].remove(item)
 
     def status_by_attribution(self, recipe):
         status = set()
@@ -110,8 +117,6 @@ class ShoppingList:
     def clear(self):
         self.items = []
         self.mapping = {}
-        if self.sequence:
-            self.sequence.reset_pointer()
 
 
 class ShoppingListItem:

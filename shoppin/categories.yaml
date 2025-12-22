@@ -1,0 +1,8 @@
+- baking powder: baking
+  enchilada sauce: canned goods
+  flour: baking
+- baking:
+  - flour
+  - baking powder
+  canned goods:
+  - enchilada sauce

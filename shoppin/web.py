@@ -58,7 +58,17 @@ class Web(Bottle):
         self.route('/load-preset-list-items', method=['POST'], callback=self.load_preset_list_items)
 
     def toplevel(self):
-        need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
+        # need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
+        need = copy.copy(self.appstate.shoppinglist.mapping)
+        marked_for_removal = []
+        for category in need:
+            need[category] = [ingredient for ingredient in need[category] if ingredient.status is shopping.ItemStatus.NEED]
+            if need[category] == []:
+                marked_for_removal.append(category)
+        for category in marked_for_removal:
+            del need[category]
+
+
         got = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.GOT]
         have = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.HAVE]
 
@@ -82,7 +92,7 @@ class Web(Bottle):
                 meals_only_missing_optional.append(meal)
 
         return template("shoppinglist",
-                        need=need,
+                        need=need, # map from categories to items
                         got=got,
                         have=have,
                         mealplan=self.appstate.mealplan,

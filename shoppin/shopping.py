@@ -14,10 +14,13 @@ class ItemStatus(Enum):
 
 
 class ShoppingList:
-    def __init__(self, sequence=None) -> None:
+    def __init__(self, categorizer=None) -> None:
         logger.debug(f"Instantiating new {self}")
-        self.sequence = sequence
         self.items = []
+        self.categorizer = None
+        self.mapping = defaultdict(list)
+        if categorizer:
+            self.categorizer = categorizer
 
     def load_ingredients(self, ingredients: list) -> None:
         logger.info("Loading shopping list items from recipe ingredients or preset list")
@@ -26,17 +29,21 @@ class ShoppingList:
             newitem.from_ingredient(ingredient)
             newitem.list = self
             self.items.append(newitem)
+            if self.categorizer:
+                self.categorizer(newitem)
+                logger.debug(f"Categorized {item.name} as {item.category}")
+                self.map(newitem)
         self.deduplicate()
-        self._map()
-        self.order()
 
     def add_item(self, item):
         logger.info(f"Adding {item.name} to the shopping list")
         self.items.append(item)
         item.list = self
         self.deduplicate()
-        self._map()
-        self.order()
+        if self.categorizer:
+            self.categorizer(item)
+            logger.debug(f"Categorized {item.name} as {item.category}")
+            self.map(item)
 
     def deduplicate(self):
         logger.debug("De-duplicating shopping list")
@@ -61,27 +68,10 @@ class ShoppingList:
                 item_to_keep.combine(duplicate)
                 self.items.remove(duplicate)
 
-    def _map(self):
-        if self.sequence:
-            self.mapping = defaultdict(list)
-            for item in self.items:
-                self.mapping[item.name].append(item)
-
-    def update_sequence(self, item_name):
-        if self.sequence:
-            self.sequence.update(item_name)
-            self.sequence.save()
-
-    def order(self):
-        if self.sequence:
-            ordered = []
-            for name in self.sequence.data:
-                if name in self.mapping:
-                    ordered.extend(self.mapping[name])
-            for name in self.mapping:
-                if name not in self.sequence.data:
-                    ordered.extend(self.mapping[name])
-            self.items = ordered
+    def map(self, item):
+        if self.categorizer:
+            self.mapping[item.category].append(item)
+            logger.debug(f"Categories:{self.mapping.keys()}")
 
     def find_by_id(self, item_id):
         logger.debug(f"Finding item by id {item_id}")
@@ -138,6 +128,7 @@ class ShoppingListItem:
         self.list = None
         self.locked = False
         self.purpose = purpose
+        self.category = ""
 
     def get_purpose(self):
         if self.ingredients:
@@ -216,8 +207,6 @@ class ShoppingListItem:
     def set_got(self):
         logger.debug(f"Setting {self.name} item status to GOT")
         self.status = ItemStatus.GOT
-        self.list.update_sequence(self.name.lower())
-        self.list.order()
 
     def set_have(self):
         logger.debug(f"Setting {self.name} item status to HAVE")

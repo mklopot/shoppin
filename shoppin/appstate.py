@@ -8,6 +8,7 @@ import mealplan
 import recipes
 import shopping
 import list_manager
+import categories
 
 logger = logging.getLogger("shoppin.appstate")
 logger.addHandler(logging.NullHandler())
@@ -37,7 +38,7 @@ class Appstate:
                 self.mealplan.recipe_database = self.recipes
         else:
             logger.debug("No saved application state found, initializing new application state")
-            self.shoppinglist = shopping.ShoppingList()
+            self.shoppinglist = shopping.ShoppingList(categorizer=categories.Categorizer())
             mealplan_name = datetime.now(
                     pytz.timezone(self.timezone)).strftime("Created %A, %B %d")
             self.mealplan = mealplan.MealPlan(mealplan_name)

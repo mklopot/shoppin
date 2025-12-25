@@ -21,12 +21,12 @@ class Categorizer:
         # if not matched, delete old entry
         # and add new entry
         if item_name in self.items_index:
-            old_category = self.item_index[item_name]
+            old_category = self.items_index[item_name]
             if category == old_category:
                 return
             else:
                 del self.items_index[item_name]
-                self.categories_index[old_category].remove(item)
+                self.categories_index[old_category].remove(item_name)
                 self.items_index[item_name] = category
                 if category not in self.categories_index:
                     self.categories_index[category] = [item_name]
@@ -42,8 +42,9 @@ class Categorizer:
         self.save()
 
     def categorize(self, item):
-        if item.name in self.items_index:
-            item.category = self.items_index[item.name]
+        item_name =singularize(item.name.lower())
+        if item_name in self.items_index:
+            item.category = self.items_index[item_name]
         else:
             item.category = "other"
         self.save()

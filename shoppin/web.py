@@ -4,6 +4,7 @@ from bottle import Bottle, template, request, redirect, static_file
 import logging
 import copy
 import uuid
+import yaml
 
 import shopping
 import util
@@ -56,7 +57,8 @@ class Web(Bottle):
         self.route('/images/<filename>', callback=self.static)
         self.route('/modal/<preset_list_name>', callback=self.modal)
         self.route('/load-preset-list-items', method=['POST'], callback=self.load_preset_list_items)
-        self.route('/categorize/<item_name>/<category>', callback=self.categorize)
+        self.route('/categorize', method=['POST'], callback=self.categorize)
+        self.route('/categorize-form', callback=self.categorize_form)
 
     def toplevel(self):
         # need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
@@ -353,15 +355,23 @@ class Web(Bottle):
         self.appstate.save_state()
         redirect('/')
 
-    def categorize(self, item_name, category):
-        if self.appstate.shoppinglist.categorizer:
-            self.appstate.shoppinglist.categorizer.set(item_name, category)
-            for item in self.appstate.shoppinglist.items:
-                self.appstate.shoppinglist.categorizer(item)
-                self.appstate.shoppinglist.map(item)
-            self.appstate.save_state()
+######################### Categories
+    def categorize(self):
+        item_name = request.POST.item
+        category = request.POST.category
+        self.appstate.shoppinglist.categorizer.set(item_name, category)
+        for item in self.appstate.shoppinglist.items:
+            self.appstate.shoppinglist.unmap(item)
+            self.appstate.shoppinglist.categorizer(item)
+            self.appstate.shoppinglist.map(item)
+        self.appstate.save_state()
+        redirect('/categorize-form')
 
-        
+    def categorize_form(self, message=None):
+        return template('categorize',
+                categories=self.appstate.shoppinglist.categorizer.categories_index.keys(),
+                items=yaml.dump(self.appstate.shoppinglist.categorizer.categories_index))
+
 
 # Serve static images
     def static(self, filename):

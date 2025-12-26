@@ -200,7 +200,11 @@ class ShoppingListItem:
         return result
 
     def get_amount_with_unit(self):
-        amount_str = f"{self.amount:.2g}"
+        if self.amount < 100:
+            amount_str = f"{self.amount:.2g}"
+        else:
+            amount_str = str(self.amount).rstrip('0').rstrip('.')
+
         if self.amount == 1:
             return  amount_str + " " + self.amount_unit
         else:

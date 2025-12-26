@@ -33,8 +33,10 @@
   collard green: produce
   compost bag: trash bags
   cream of wheat: cereal and breakfast
+  crushed tomato: canned vegetables
   cucumber: produce
   cumin: spices
+  dill: produce
   dish detergent: cleaning supplies
   dish soap: cleaning supplies
   dishwasher detergent: cleaning supplies
@@ -75,16 +77,19 @@
   paper towel: toilet paper and paper towels
   paprika: spices
   parchment paper: storage and wrapping
+  parsley: produce
   peanut butter: nut butters and jams
   pepper: spices
   pickle: condiments
   pickle juice: condiments
+  pine nut: baking
   pork rind: chips and snacks
   potato: produce
   potato chip: chips and snacks
   powercrunch bar: energy bars
   radish: produce
   ramen, shrimp flavor: pantry
+  red pepper flake: spices
   rice: rice beans and grains
   ritz cracker: crackers
   salsa: mexican food
@@ -120,6 +125,7 @@
   turmeric: spices
   vitamin c gummy: vitamins
   vitamin d3 gummy: vitamins
+  walnut: baking
   wax paper: storage and wrapping
   whole-grain bread: bread
   yakult yogurt drink: eggs and dairy
@@ -133,6 +139,8 @@
   - sugar
   - chocolate chip
   - baking soda
+  - walnut
+  - pine nut
   bread:
   - bread
   - hamburger bun
@@ -151,6 +159,7 @@
   - cannellini bean
   - tomato paste
   - seasoned bean
+  - crushed tomato
   cereal and breakfast:
   - kix
   - cream of wheat
@@ -250,6 +259,8 @@
   - potato
   - butternut squash
   - collard green
+  - dill
+  - parsley
   rice beans and grains:
   - rice
   skin care and lotions:
@@ -269,6 +280,7 @@
   - chili powder
   - msg
   - turmeric
+  - red pepper flake
   storage and wrapping:
   - wax paper
   - sandwich bag

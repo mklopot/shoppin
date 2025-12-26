@@ -8,6 +8,7 @@ import mealplan
 import recipes
 import shopping
 import list_manager
+import categories
 
 logger = logging.getLogger("shoppin.appstate")
 logger.addHandler(logging.NullHandler())

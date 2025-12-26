@@ -4,6 +4,7 @@ from bottle import Bottle, template, request, redirect, static_file
 import logging
 import copy
 import uuid
+import yaml
 
 import shopping
 import util
@@ -56,9 +57,21 @@ class Web(Bottle):
         self.route('/images/<filename>', callback=self.static)
         self.route('/modal/<preset_list_name>', callback=self.modal)
         self.route('/load-preset-list-items', method=['POST'], callback=self.load_preset_list_items)
+        self.route('/categorize', method=['POST'], callback=self.categorize)
+        self.route('/categorize-form', callback=self.categorize_form)
 
     def toplevel(self):
-        need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
+        # need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
+        need = copy.copy(self.appstate.shoppinglist.mapping)
+        marked_for_removal = []
+        for category in need:
+            need[category] = [ingredient for ingredient in need[category] if ingredient.status is shopping.ItemStatus.NEED]
+            if need[category] == []:
+                marked_for_removal.append(category)
+        for category in marked_for_removal:
+            del need[category]
+
+
         got = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.GOT]
         have = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.HAVE]
 
@@ -82,7 +95,7 @@ class Web(Bottle):
                 meals_only_missing_optional.append(meal)
 
         return template("shoppinglist",
-                        need=need,
+                        need=need, # map from categories to items
                         got=got,
                         have=have,
                         mealplan=self.appstate.mealplan,
@@ -341,6 +354,23 @@ class Web(Bottle):
         preset_list.include = True
         self.appstate.save_state()
         redirect('/')
+
+######################### Categories
+    def categorize(self):
+        item_name = request.POST.item
+        category = request.POST.category
+        self.appstate.shoppinglist.categorizer.set(item_name, category)
+        for item in self.appstate.shoppinglist.items:
+            self.appstate.shoppinglist.unmap(item)
+            self.appstate.shoppinglist.categorizer(item)
+            self.appstate.shoppinglist.map(item)
+        self.appstate.save_state()
+        redirect('/categorize-form')
+
+    def categorize_form(self, message=None):
+        return template('categorize',
+                categories=self.appstate.shoppinglist.categorizer.categories_index.keys(),
+                items=yaml.dump(self.appstate.shoppinglist.categorizer.categories_index))
 
 
 # Serve static images

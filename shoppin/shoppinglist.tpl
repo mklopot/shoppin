@@ -255,32 +255,35 @@ a.x{
     </div>
 % if need:
   <h2>To Get</h2>
+  % for category in need:
+  <h4>{{category}}</h4>
   <table style="width:100%">
-  % for item in need:
+    % for item in need[category]:
   <tr>
      <td>{{item.name}}
          &nbsp;&nbsp;{{item.get_amount_with_unit()}}
          &nbsp;&nbsp;<span class="attribution">For {{item.get_purpose()}}</span>
-    % if item.optional:
+      % if item.optional:
          <br>&nbsp;&nbsp;<span class="optional">optional</span>
-    % end
-    % if item.brand:
+      % end
+      % if item.brand:
          <br>&nbsp;&nbsp;Brand: {{item.brand}}
-    % end
-    % if item.vendor:
+      % end
+      % if item.vendor:
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
-    % end
+      % end
      </td>
-     % if item.locked:
+       % if item.locked:
      <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg" width="32" height="32"></a></td>
-     % else:
+       % else:
      <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg" width="32" height="32"></a></td>
      <td style="width:10%"><a href="/have/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-check-fill.svg" width="32" height="32"></a></td>
      <td style="width:10%"><a href="/lock/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg" width="32" height="32"></a></td>
-     % end
-  </tr>
+       % end
+    </tr>
   % end
-</table>
+  </table>
+  % end
 % end
 
 % if got:

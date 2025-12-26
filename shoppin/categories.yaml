@@ -1,0 +1,302 @@
+- aluminum foil: storage and wrapping
+  amy's frozen meal: frozen
+  apple: produce
+  avocado: produce
+  baking powder: baking
+  baking soda: baking
+  banana: produce
+  bell pepper: produce
+  black pepper: spices
+  black tea: tea and coffee
+  bread: bread
+  brioche-style bread: bread
+  broccoli: produce
+  butter: eggs and dairy
+  butternut squash: produce
+  cabbage: produce
+  canned chily: mexican food
+  canned green chili: mexican food
+  canned pineapple: canned fruit
+  cannellini bean: canned vegetables
+  carrot: produce
+  celery: produce
+  cereal bars or z-bar: energy bars
+  challah: bread
+  chicken: meat
+  chicken breast: meat
+  chicken thigh: meat
+  chili powder: spices
+  chocolate bar, dark: candy
+  chocolate bar, milk: candy
+  chocolate chip: baking
+  cilantro: produce
+  collard green: produce
+  compost bag: trash bags
+  cream of wheat: cereal and breakfast
+  crushed tomato: canned vegetables
+  cucumber: produce
+  cumin: spices
+  dill: produce
+  dish detergent: cleaning supplies
+  dish soap: cleaning supplies
+  dishwasher detergent: cleaning supplies
+  egg: eggs and dairy
+  elderberry gummy: vitamins
+  enchilada sauce: mexican food
+  flour: baking
+  frozen corn: frozen
+  garlic: produce
+  garlic powder: spices
+  ginger: produce
+  goldfish cracker: crackers
+  grape: produce
+  grape juice: juices
+  grape juice, sparkling: juices
+  green onion: produce
+  green tea: tea and coffee
+  ground beef: meat
+  hamburger bun: bread
+  hot dog: meat
+  ice cream: frozen
+  italian seasoning: spices
+  jam: nut butters and jams
+  ketchup: condiments
+  kix: cereal and breakfast
+  laundry detergent: cleaning supplies
+  lemon: produce
+  lettuce: produce
+  lime: produce
+  mac & cheese: pantry
+  mac-n-cheese: pantry
+  mayonnaise: condiments
+  milk: eggs and dairy
+  msg: spices
+  mustard: condiments
+  onion: produce
+  onion powder: spices
+  paper towel: toilet paper and paper towels
+  paprika: spices
+  parchment paper: storage and wrapping
+  parsley: produce
+  peanut butter: nut butters and jams
+  pepper: spices
+  pickle: condiments
+  pickle juice: condiments
+  pine nut: baking
+  pork rind: chips and snacks
+  potato: produce
+  potato chip: chips and snacks
+  powercrunch bar: energy bars
+  radish: produce
+  ramen, shrimp flavor: pantry
+  red pepper flake: spices
+  rice: rice beans and grains
+  ritz cracker: crackers
+  salsa: mexican food
+  salt: spices
+  sandwich bag: storage and wrapping
+  sardine: canned fish
+  seasoned bean: canned vegetables
+  sesame oil: international foods
+  sesame seed: spices
+  shiitake mushroom: produce
+  shredded cheese: eggs and dairy
+  sleepytime vanilla: tea and coffee
+  sliced cheese: eggs and dairy
+  smoked paprika: spices
+  sour cream: eggs and dairy
+  soy sauce: international foods
+  spaghetti: dry pasta and pasta sauce
+  spicy bean patty: frozen
+  spicy bean%patty: frozen
+  sriracha: condiments
+  staggs country chili: pantry
+  steak sauce: condiments
+  stir fry sauce: international foods
+  sugar: baking
+  sunscreen: skin care and lotions
+  tangerine: produce
+  toilet paper: toilet paper and paper towels
+  tomato: produce
+  tomato paste: canned vegetables
+  tortilla chip: chips and snacks
+  trash bag: trash bags
+  tumeric: spices
+  turmeric: spices
+  vitamin c gummy: vitamins
+  vitamin d3 gummy: vitamins
+  walnut: baking
+  wax paper: storage and wrapping
+  whole-grain bread: bread
+  yakult yogurt drink: eggs and dairy
+  yoghurt: eggs and dairy
+  yogurt: eggs and dairy
+  z-bar: energy bars
+  zucchini: produce
+- baking:
+  - flour
+  - baking powder
+  - sugar
+  - chocolate chip
+  - baking soda
+  - walnut
+  - pine nut
+  bread:
+  - bread
+  - hamburger bun
+  - whole-grain bread
+  - brioche-style bread
+  - challah
+  candy:
+  - chocolate bar, milk
+  - chocolate bar, dark
+  canned fish:
+  - sardine
+  canned fruit:
+  - canned pineapple
+  canned goods: []
+  canned vegetables:
+  - cannellini bean
+  - tomato paste
+  - seasoned bean
+  - crushed tomato
+  cereal and breakfast:
+  - kix
+  - cream of wheat
+  chips and snacks:
+  - pork rind
+  - potato chip
+  - tortilla chip
+  cle: []
+  cleaning supplies:
+  - dish soap
+  - dish detergent
+  - laundry detergent
+  - dishwasher detergent
+  condiments:
+  - ketchup
+  - mustard
+  - mayonnaise
+  - steak sauce
+  - pickle juice
+  - pickle
+  - sriracha
+  crackers:
+  - goldfish cracker
+  - ritz cracker
+  dry pasta and pasta sauce:
+  - spaghetti
+  eggs and dairy:
+  - milk
+  - egg
+  - yoghurt
+  - yogurt
+  - sour cream
+  - yakult yogurt drink
+  - sliced cheese
+  - shredded cheese
+  - butter
+  energy bars:
+  - z-bar
+  - powercrunch bar
+  - cereal bars or z-bar
+  frozen:
+  - spicy bean%patty
+  - spicy bean patty
+  - frozen corn
+  - amy's frozen meal
+  - ice cream
+  international foods:
+  - stir fry sauce
+  - soy sauce
+  - sesame oil
+  juices:
+  - grape juice
+  - grape juice, sparkling
+  meat:
+  - ground beef
+  - chicken
+  - chicken thigh
+  - chicken breast
+  - hot dog
+  mexican food:
+  - enchilada sauce
+  - salsa
+  - canned chily
+  - canned green chili
+  nut butters and jams:
+  - jam
+  - peanut butter
+  pantry:
+  - mac & cheese
+  - ramen, shrimp flavor
+  - staggs country chili
+  - mac-n-cheese
+  produce:
+  - celery
+  - carrot
+  - ginger
+  - onion
+  - garlic
+  - tangerine
+  - lemon
+  - apple
+  - banana
+  - avocado
+  - bell pepper
+  - green onion
+  - cilantro
+  - broccoli
+  - shiitake mushroom
+  - grape
+  - cucumber
+  - lime
+  - radish
+  - tomato
+  - zucchini
+  - lettuce
+  - cabbage
+  - potato
+  - butternut squash
+  - collard green
+  - dill
+  - parsley
+  rice beans and grains:
+  - rice
+  skin care and lotions:
+  - sunscreen
+  spices:
+  - salt
+  - black pepper
+  - paprika
+  - onion powder
+  - sesame seed
+  - cumin
+  - smoked paprika
+  - italian seasoning
+  - pepper
+  - tumeric
+  - garlic powder
+  - chili powder
+  - msg
+  - turmeric
+  - red pepper flake
+  storage and wrapping:
+  - wax paper
+  - sandwich bag
+  - aluminum foil
+  - parchment paper
+  tea and coffee:
+  - black tea
+  - green tea
+  - sleepytime vanilla
+  toilet paper and paper towels:
+  - toilet paper
+  - paper towel
+  trash bags:
+  - trash bag
+  - compost bag
+  vitamins:
+  - vitamin c gummy
+  - vitamin d3 gummy
+  - elderberry gummy

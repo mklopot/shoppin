@@ -2583,8 +2583,13 @@ mayo egg:
 Pumkin bean and kale soup:
   description: |
     Sue Culig's easy soup recipe
+    
   directions: |
-    Saute onions, add beans and corn, then add remaining ingredients and heat thru
+    Saute onions, add beans and corn, then add remaining ingredients besides the cheese and heat thru
+    
+    Finish with parmesan cheese
+    
+    
   ingredients:
     - Can of Pumpkin:
         amount: 1 can
@@ -2604,10 +2609,26 @@ Pumkin bean and kale soup:
     - vegetable broth:
         amount: 3 cups
 
+    - Thyme :
+        amount: 1 bunch
+        optional: True
+
+    - Salt:
+        amount: 1 tsp
+
+    - Black pepper :
+        amount: 1 pinch
+        optional: True
+
+    - Parmesan cheese :
+        amount: 0.3 cups
+        optional: True
+
 
 Spanish rice:
   description: |
     Mexican-style side dish
+    
   directions: |
     Mince the garlic.
     
@@ -2616,7 +2637,6 @@ Spanish rice:
     Add broth and remaining ingredients, cover, and let simmer. Cook until all of the liquid is absorbed, approx. 30 min.
     
     Fluff with fork and serve
-    
     
   ingredients:
     - avocado oil:
@@ -2639,5 +2659,102 @@ Spanish rice:
 
     - black pepper:
         amount: 1 pinch
+
+
+Soft and Chewy Almond Sugar Cookies:
+  description: |
+    From codykitchenconfections.blogspot.com
+    
+    Best sugar cookies I've ever had!
+  directions: |
+    Preheat oven to 350F, prep the baking sheet.
+    
+    Cream the sugar with the butter and shortening
+    
+    Add eggs and almond extract and stir.
+    
+    Make sure the butter is cold, and the shortening is at room temp.
+    
+    Combine flour, cornstarch, baking powder, and salt, and add to the mixture.
+    Use electric mixer to mix all ingredients thoroughly.
+    
+    Refrigerate the cookie dough for 30 minutes
+    
+    Scoop 2 tsp of dough at a time, roll in raw sugar
+    
+    Refrigerate the dough between batches.
+    
+    Bake for 7 minutes, do not over-bake. Cookies will firm up as they cool.
+    Remove from oven immediately, and right away press flat to a uniform shape. Place on ooling rack to fully cool.  
+  ingredients:
+    - sugar:
+        amount: 1.5 cups
+
+    - unsalted butter:
+        amount: 0.66 cups
+
+    - shortening:
+        amount: 0.66 cups
+
+    - eggs:
+        amount: 2
+
+    - almond extract:
+        amount: 2 tsp
+
+    - cake flour:
+        amount: 2.8 cups
+
+    - all-purpose flour:
+        amount: 1 cup
+
+    - corn starch:
+        amount: 1 tbsp
+
+    - baking powder:
+        amount: 2 tsp
+
+    - salt:
+        amount: 0.5 tsp
+
+    - sugar in the raw, coarse sugar, or sprinkles:
+        amount: 3 tbsp
+
+
+quesadilla:
+  directions: |
+    preheat pan on medium low heat with a drop of oil or butter.
+    
+    Place tortilla on pan, layer cheese on top of tortilla. once cheese begins to melt, fold in half, cover and cook until just slightly browned. flip and cook on other side until also slightly browned and completely melted. cut into 4-5 wedges.
+  ingredients:
+    - large tortilla, flour
+
+    - shredded cheese:
+        amount: 3 oz
+
+
+Creamy Mocha Fudge:
+  description: |
+    Another one of Sue's holiday recipes!
+  directions: |
+    Over low heat melt morsels with dissolved coffee, additional water may be needed. Add vanilla. Stir constantly, add milks. Remove from heat. Consistency should be smooth with some sheen. In an 8x8 pan lined with parchment paper, quickly pour fudge into pan, smoothing with spoon or spatula. Refrigerate 3 hours. Cut into approximately 1 inch squares and place in Christmas tins.
+  ingredients:
+    - Dark chocolate morsels :
+        amount: 18 oz
+
+    - Sweetened condensed milk can:
+        amount: 10 oz
+
+    - Instant coffee crystals:
+        amount: 5 tsp
+
+    - Water :
+        amount: 2 tbsp
+
+    - Vanilla extract :
+        amount: 1 tsp
+
+    - Milk:
+        amount: 2 tbsp
 
 

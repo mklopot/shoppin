@@ -170,7 +170,7 @@ a.x{
         % elif meal in meals_only_missing_optional:
          &#128993;\\
         % end
-        </span> {{meal.name}} <a class="x" href="/delete-meal/{{meal_index}}"> &#9447;</a></h3>
+        </span> {{meal.name}}{{!meal.emoji}} <a class="x" href="/delete-meal/{{meal_index}}"> &#9447;</a></h3>
         <ul>
         % for recipe_index, recipe in enumerate(meal.recipes):
           <li><span class="greendot">\\

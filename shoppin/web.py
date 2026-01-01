@@ -144,7 +144,7 @@ class Web(Bottle):
                     pytz.timezone(self.appstate.timezone)).strftime("Created %A, %B %d")
         if request.POST.meal == "":
             redirect('/')
-        self.appstate.mealplan.meals.append(mealplan.Meal(name=request.POST.meal))
+        self.appstate.mealplan.add_meal(mealplan.Meal(name=request.POST.meal))
         self.appstate.save_state()
         redirect('/')
 

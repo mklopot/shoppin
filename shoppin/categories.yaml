@@ -1,27 +1,41 @@
 - aluminum foil: storage and wrapping
   amy's frozen meal: frozen
   apple: produce
+  apple cider vinegar: pantry
   avocado: produce
+  avocado oil: oil
+  bacon: meat
   baking powder: baking
   baking soda: baking
   banana: produce
+  beet: produce
   bell pepper: produce
   black pepper: spices
   black tea: tea and coffee
+  bologna: deli meat
   bread: bread
   brioche-style bread: bread
+  brisket: meat
   broccoli: produce
+  brown sugar: baking
   butter: eggs and dairy
+  butter lettuce: produce
   butternut squash: produce
   cabbage: produce
   canned chily: mexican food
   canned green chili: mexican food
+  canned pea: canned vegetables
   canned pineapple: canned fruit
+  canned tomato soup: canned goods
   cannellini bean: canned vegetables
+  caper: condiments
   carrot: produce
+  cayenne pepper: spices
   celery: produce
   cereal bars or z-bar: energy bars
   challah: bread
+  cheese: eggs and dairy
+  cheesecake bite: eggs and dairy
   chicken: meat
   chicken breast: meat
   chicken thigh: meat
@@ -29,9 +43,13 @@
   chocolate bar, dark: candy
   chocolate bar, milk: candy
   chocolate chip: baking
+  cholula hot sauce, chili garlic: mexican food
+  cholula hot sauce, original: mexican food
   cilantro: produce
   collard green: produce
   compost bag: trash bags
+  coriander powder: spices
+  corn tortilla: mexican food
   cream of wheat: cereal and breakfast
   crushed tomato: canned vegetables
   cucumber: produce
@@ -43,12 +61,15 @@
   egg: eggs and dairy
   elderberry gummy: vitamins
   enchilada sauce: mexican food
+  fig bar: energy bars
   flour: baking
+  freeze-dried strawberry: chips and snacks
   frozen corn: frozen
   garlic: produce
   garlic powder: spices
   ginger: produce
   goldfish cracker: crackers
+  graham cracker: crackers
   grape: produce
   grape juice: juices
   grape juice, sparkling: juices
@@ -56,6 +77,7 @@
   green tea: tea and coffee
   ground beef: meat
   hamburger bun: bread
+  herbs, fresh: produce
   hot dog: meat
   ice cream: frozen
   italian seasoning: spices
@@ -68,15 +90,24 @@
   lime: produce
   mac & cheese: pantry
   mac-n-cheese: pantry
+  mandarin oranges, seedless: produce
+  marinara sauce: dry pasta and pasta sauce
   mayonnaise: condiments
   milk: eggs and dairy
   msg: spices
   mustard: condiments
+  mustard powder: spices
+  olive: condiments
+  olive oil: oil
   onion: produce
   onion powder: spices
+  onion, red: produce
+  pad thai: frozen
+  palak paneer: frozen
   paper towel: toilet paper and paper towels
   paprika: spices
   parchment paper: storage and wrapping
+  parmesan cheese: eggs and dairy
   parsley: produce
   peanut butter: nut butters and jams
   pepper: spices
@@ -86,7 +117,13 @@
   pork rind: chips and snacks
   potato: produce
   potato chip: chips and snacks
+  potato, russet: produce
+  potatoes, russet: produce
+  potatoes, yukon gold: produce
+  potatoes, yukon or red: produce
   powercrunch bar: energy bars
+  q tip: toiletries, oral and personal care
+  q-tip: toiletries, oral and personal care
   radish: produce
   ramen, shrimp flavor: pantry
   red pepper flake: spices
@@ -101,7 +138,10 @@
   sesame seed: spices
   shiitake mushroom: produce
   shredded cheese: eggs and dairy
+  sleepytime extra: tea and coffee
+  sleepytime honey: tea and coffee
   sleepytime vanilla: tea and coffee
+  sliced cheddar: eggs and dairy
   sliced cheese: eggs and dairy
   smoked paprika: spices
   sour cream: eggs and dairy
@@ -111,26 +151,35 @@
   spicy bean%patty: frozen
   sriracha: condiments
   staggs country chili: pantry
+  steak: meat
   steak sauce: condiments
   stir fry sauce: international foods
   sugar: baking
   sunscreen: skin care and lotions
+  sweet dream: tea and coffee
+  sweet pea: canned vegetables
+  taco sauce: mexican food
   tangerine: produce
   toilet paper: toilet paper and paper towels
   tomato: produce
   tomato paste: canned vegetables
   tortilla chip: chips and snacks
+  tortillas, large: mexican food
   trash bag: trash bags
   tumeric: spices
   turmeric: spices
+  veggie nugget: frozen
+  vinegar: pantry
   vitamin c gummy: vitamins
   vitamin d3 gummy: vitamins
   walnut: baking
   wax paper: storage and wrapping
   whole-grain bread: bread
+  worcestershire sauce: condiments
   yakult yogurt drink: eggs and dairy
   yoghurt: eggs and dairy
   yogurt: eggs and dairy
+  z bar: energy bars
   z-bar: energy bars
   zucchini: produce
 - baking:
@@ -141,6 +190,7 @@
   - baking soda
   - walnut
   - pine nut
+  - brown sugar
   bread:
   - bread
   - hamburger bun
@@ -154,12 +204,15 @@
   - sardine
   canned fruit:
   - canned pineapple
-  canned goods: []
+  canned goods:
+  - canned tomato soup
   canned vegetables:
   - cannellini bean
   - tomato paste
   - seasoned bean
   - crushed tomato
+  - sweet pea
+  - canned pea
   cereal and breakfast:
   - kix
   - cream of wheat
@@ -167,6 +220,7 @@
   - pork rind
   - potato chip
   - tortilla chip
+  - freeze-dried strawberry
   cle: []
   cleaning supplies:
   - dish soap
@@ -181,11 +235,18 @@
   - pickle juice
   - pickle
   - sriracha
+  - worcestershire sauce
+  - olive
+  - caper
   crackers:
   - goldfish cracker
   - ritz cracker
+  - graham cracker
+  deli meat:
+  - bologna
   dry pasta and pasta sauce:
   - spaghetti
+  - marinara sauce
   eggs and dairy:
   - milk
   - egg
@@ -196,16 +257,25 @@
   - sliced cheese
   - shredded cheese
   - butter
+  - parmesan cheese
+  - cheese
+  - cheesecake bite
+  - sliced cheddar
   energy bars:
   - z-bar
   - powercrunch bar
   - cereal bars or z-bar
+  - z bar
+  - fig bar
   frozen:
   - spicy bean%patty
   - spicy bean patty
   - frozen corn
   - amy's frozen meal
   - ice cream
+  - pad thai
+  - palak paneer
+  - veggie nugget
   international foods:
   - stir fry sauce
   - soy sauce
@@ -219,19 +289,32 @@
   - chicken thigh
   - chicken breast
   - hot dog
+  - steak
+  - brisket
+  - bacon
   mexican food:
   - enchilada sauce
   - salsa
   - canned chily
   - canned green chili
+  - cholula hot sauce, original
+  - cholula hot sauce, chili garlic
+  - tortillas, large
+  - taco sauce
+  - corn tortilla
   nut butters and jams:
   - jam
   - peanut butter
+  oil:
+  - avocado oil
+  - olive oil
   pantry:
   - mac & cheese
   - ramen, shrimp flavor
   - staggs country chili
   - mac-n-cheese
+  - apple cider vinegar
+  - vinegar
   produce:
   - celery
   - carrot
@@ -261,6 +344,15 @@
   - collard green
   - dill
   - parsley
+  - mandarin oranges, seedless
+  - herbs, fresh
+  - potato, russet
+  - beet
+  - onion, red
+  - potatoes, yukon or red
+  - potatoes, yukon gold
+  - potatoes, russet
+  - butter lettuce
   rice beans and grains:
   - rice
   skin care and lotions:
@@ -281,6 +373,9 @@
   - msg
   - turmeric
   - red pepper flake
+  - mustard powder
+  - cayenne pepper
+  - coriander powder
   storage and wrapping:
   - wax paper
   - sandwich bag
@@ -290,9 +385,15 @@
   - black tea
   - green tea
   - sleepytime vanilla
+  - sweet dream
+  - sleepytime extra
+  - sleepytime honey
   toilet paper and paper towels:
   - toilet paper
   - paper towel
+  toiletries, oral and personal care:
+  - q tip
+  - q-tip
   trash bags:
   - trash bag
   - compost bag

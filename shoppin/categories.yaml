@@ -72,6 +72,7 @@
   graham cracker: crackers
   grape: produce
   grape juice: juices
+  grape juice for shabbat: juices
   grape juice, sparkling: juices
   green onion: produce
   green tea: tea and coffee
@@ -102,6 +103,7 @@
   onion: produce
   onion powder: spices
   onion, red: produce
+  ovaltine: tea and coffee
   pad thai: frozen
   palak paneer: frozen
   paper towel: toilet paper and paper towels
@@ -283,6 +285,7 @@
   juices:
   - grape juice
   - grape juice, sparkling
+  - grape juice for shabbat
   meat:
   - ground beef
   - chicken
@@ -388,6 +391,7 @@
   - sweet dream
   - sleepytime extra
   - sleepytime honey
+  - ovaltine
   toilet paper and paper towels:
   - toilet paper
   - paper towel

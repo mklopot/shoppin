@@ -287,7 +287,7 @@ a.x{
       % end
      </td>
      <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg" width="32" height="32"></a></td>
-       % if item.locked:
+       % if not item.locked:
      <td style="width:10%"><a href="/have/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-check-fill.svg" width="32" height="32"></a></td>
      <td style="width:10%"><a href="/lock/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg" width="32" height="32"></a></td>
        % end

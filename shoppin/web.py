@@ -62,6 +62,7 @@ class Web(Bottle):
 
     def toplevel(self):
         # need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
+        categories = self.appstate.shoppinglist.categorizer.categories_index
         need = copy.copy(self.appstate.shoppinglist.mapping)
         marked_for_removal = []
         for category in need:
@@ -98,6 +99,7 @@ class Web(Bottle):
                         need=need, # map from categories to items
                         got=got,
                         have=have,
+                        categories=categories,
                         mealplan=self.appstate.mealplan,
                         list_manager=self.appstate.listmanager,
                         recipelist=list(self.appstate.recipes.recipes.keys()),
@@ -365,7 +367,7 @@ class Web(Bottle):
             self.appstate.shoppinglist.categorizer(item)
             self.appstate.shoppinglist.map(item)
         self.appstate.save_state()
-        redirect('/categorize-form')
+        return "", 204
 
     def categorize_form(self, message=None):
         return template('categorize',

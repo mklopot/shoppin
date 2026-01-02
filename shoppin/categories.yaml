@@ -131,6 +131,7 @@
   red pepper flake: spices
   rice: rice beans and grains
   ritz cracker: crackers
+  rubber band: stationery
   salsa: mexican food
   salt: spices
   sandwich bag: storage and wrapping
@@ -165,6 +166,7 @@
   toilet paper: toilet paper and paper towels
   tomato: produce
   tomato paste: canned vegetables
+  toothpick: toiletries, oral and personal care
   tortilla chip: chips and snacks
   tortillas, large: mexican food
   trash bag: trash bags
@@ -223,7 +225,6 @@
   - potato chip
   - tortilla chip
   - freeze-dried strawberry
-  cle: []
   cleaning supplies:
   - dish soap
   - dish detergent
@@ -379,6 +380,8 @@
   - mustard powder
   - cayenne pepper
   - coriander powder
+  stationery:
+  - rubber band
   storage and wrapping:
   - wax paper
   - sandwich bag
@@ -398,6 +401,7 @@
   toiletries, oral and personal care:
   - q tip
   - q-tip
+  - toothpick
   trash bags:
   - trash bag
   - compost bag

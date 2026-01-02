@@ -1,4 +1,4 @@
-tacos and burritos:
+'tacos and burritos':
   description: |
     A Taco Tuesday favorite!
     
@@ -6,83 +6,83 @@ tacos and burritos:
     make it at home
     
   ingredients:
-    - onion
+    - 'onion'
 
-    - bell pepper
+    - 'bell pepper'
 
-    - tortillas, large:
+    - 'tortillas, large':
         brand: Mission
 
-    - taco sauce:
+    - 'taco sauce':
         brand: Ortega
 
-    - seasoned beans:
+    - 'seasoned beans':
         brand: Rosarita
         vendor: Safeway
 
-    - avocados:
+    - 'avocados':
         amount: 2
 
-    - ground beef:
+    - 'ground beef':
         amount: 1 lb
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 8 oz
 
-    - cilantro
+    - 'cilantro'
 
-    - lime
+    - 'lime'
 
-    - sour cream:
+    - 'sour cream':
         amount: 4 oz
 
-    - Rice
+    - 'Rice'
 
 
-take-out:
+'take-out':
   directions: |
     order from Chipotle, Dominos, or Taste of Thailand
     
 
-sloppy joes:
+'sloppy joes':
   ingredients:
-    - ground beef:
+    - 'ground beef':
         amount: 1 lb
 
-    - hamburger buns:
+    - 'hamburger buns':
         amount: 5 buns
 
-    - Sloppy Joe Seasoning Packet
+    - 'Sloppy Joe Seasoning Packet'
 
-    - tomato paste:
+    - 'tomato paste':
         amount: 1 can
 
 
-tofu joe:
+'tofu joe':
   ingredients:
-    - Sloppy Joe Seasoning Packet
+    - 'Sloppy Joe Seasoning Packet'
 
-    - tofu:
+    - 'tofu':
         amount: 1 lb
 
-    - onion
+    - 'onion'
 
-    - celery:
+    - 'celery':
         amount: 2 ribs
 
-    - carrot
+    - 'carrot'
 
-    - bell pepper:
+    - 'bell pepper':
         amount: 0.5
 
-    - hamburger buns:
+    - 'hamburger buns':
         amount: 2 buns
 
-    - tomato paste:
+    - 'tomato paste':
         amount: 1 can
 
 
-stir fry:
+'stir fry':
   description: |
     My interpretation of 炒蔬菜
     
@@ -99,59 +99,59 @@ stir fry:
     When vegetables reach desired doneness, sprinkle with soy sauce, add ketchup and stir-fry sauce. Cook while stirring for one more minute. Transfer to service bowl, sprinkle with sesame oil, cilantro leaves and sesame seeds.
     
   ingredients:
-    - rice:
+    - 'rice':
         amount: 1 cup
 
-    - onion
+    - 'onion'
 
-    - ginger:
+    - 'ginger':
         amount: 1 small piece
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - bell pepper
+    - 'bell pepper'
 
-    - carrot:
+    - 'carrot':
         optional: True
 
-    - shiitake mushrooms:
+    - 'shiitake mushrooms':
         amount: 8 oz
         optional: True
 
-    - eggs:
+    - 'eggs':
         amount: 4
         optional: True
 
-    - canned pineapple:
+    - 'canned pineapple':
         optional: True
 
-    - broccoli:
+    - 'broccoli':
         amount: 1 head
         optional: True
 
-    - stir fry sauce:
+    - 'stir fry sauce':
         amount: 6 oz
         optional: True
 
-    - ketchup:
+    - 'ketchup':
         amount: 1 cup
         optional: True
 
-    - tofu:
+    - 'tofu':
         amount: 1 lb
         optional: True
 
-    - soy sauce:
+    - 'soy sauce':
         amount: 2 oz
         optional: True
 
-    - sesame oil:
+    - 'sesame oil':
         amount: 1 tsp
         optional: True
 
 
-taco soup:
+'taco soup':
   description: |
     Beth's invention. Hearty flavors of Mexican cuisine, in soup form.
     
@@ -165,44 +165,44 @@ taco soup:
     Top each serving with tortilla chips, cheese, sour cream, and cilantro. Serve with diced avocado and radishes on the side.
     
   ingredients:
-    - tomato paste:
+    - 'tomato paste':
         amount: 8 oz
 
-    - frozen corn:
+    - 'frozen corn':
         amount: 8 oz
 
-    - cannellini beans:
+    - 'cannellini beans':
         amount: 1 can
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 4 oz
 
-    - avocado
+    - 'avocado'
 
-    - lime
+    - 'lime'
 
-    - onion
+    - 'onion'
 
-    - carrots:
+    - 'carrots':
         amount: 3
 
-    - canned green chili:
+    - 'canned green chili':
         amount: 7 oz
 
-    - sour cream:
+    - 'sour cream':
         amount: 2 oz
 
-    - cilantro:
+    - 'cilantro':
         amount: 0.5 bunch
 
-    - tortilla chips:
+    - 'tortilla chips':
         amount: 0.25 bag
 
-    - radishes:
+    - 'radishes':
         optional: True
 
 
-meatloaf:
+'meatloaf':
   description: |
     Traditional simple meatloaf
     
@@ -216,43 +216,43 @@ meatloaf:
     Allow to cool just a few minutes, and serve.
     
   ingredients:
-    - ground beef:
+    - 'ground beef':
         amount: 1 lb
 
-    - onion:
+    - 'onion':
         amount: 0.25
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - bread crumbs, italian:
+    - 'bread crumbs, italian':
         amount: 0.75 cup
 
-    - milk:
+    - 'milk':
         amount: 6 oz
 
-    - garlic:
+    - 'garlic':
         amount: 3 cloves
         optional: True
 
 
-mashed potatoes:
+'mashed potatoes':
   ingredients:
-    - Russet potatoes:
+    - 'Russet potatoes':
         amount: 6
 
-    - butter:
+    - 'butter':
         amount: 1 stick
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 1 teaspoon
         optional: True
 
-    - milk:
+    - 'milk':
         amount: 2 oz
 
 
-spaghetti:
+'spaghetti':
   directions: |
     Boil in plenty of generously salted water as specified on the package.
     
@@ -261,37 +261,37 @@ spaghetti:
     Drain, add marinara sauce, top with parmesan cheese if desired.
     
   ingredients:
-    - spaghetti:
+    - 'spaghetti':
         amount: 1 package
 
-    - marinara sauce:
+    - 'marinara sauce':
         brand: Bertolli
 
-    - parmesan cheese:
+    - 'parmesan cheese':
         optional: True
 
 
-meatballs:
+'meatballs':
   ingredients:
-    - ground beef:
+    - 'ground beef':
         amount: 1 lb
 
-    - bread crumbs:
+    - 'bread crumbs':
         amount: 0.3 cup
 
-    - onion:
+    - 'onion':
         amount: 0.3
 
-    - egg
+    - 'egg'
 
-    - milk:
+    - 'milk':
         amount: 2 oz
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
 
-pancakes:
+'pancakes':
   description: |
     Breakfast classic
     
@@ -310,149 +310,149 @@ pancakes:
      If not serving immediately, brush with butter on each side and keep in a warm oven until ready to serve.
     
   ingredients:
-    - baking powder:
+    - 'baking powder':
         amount: 1 tbsp
 
-    - sugar:
+    - 'sugar':
         amount: 1 tbsp
 
-    - butter:
+    - 'butter':
         amount: 3 tbsp
 
-    - milk:
+    - 'milk':
         amount: 1 cup
 
-    - egg
+    - 'egg'
 
-    - Flour:
+    - 'Flour':
         amount: 1.2 cup
 
 
-smashburgers:
+'smashburgers':
   ingredients:
-    - hamburger buns:
+    - 'hamburger buns':
         amount: 4 buns
 
-    - ground beef:
+    - 'ground beef':
         amount: 1 lb
 
-    - onion
+    - 'onion'
 
-    - sliced cheese:
+    - 'sliced cheese':
         amount: 5 slices
 
-    - pickles:
+    - 'pickles':
         amount: 3 slices
 
 
-burger sauce:
+'burger sauce':
   description: |
     Ian's Burger Sauce
     
   ingredients:
-    - ketchup:
+    - 'ketchup':
         amount: 2 oz
 
-    - mustard:
+    - 'mustard':
         amount: 1 tsp
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 4 oz
 
-    - pickle juice:
+    - 'pickle juice':
         amount: 1 splash
 
-    - black pepper:
+    - 'black pepper':
         amount: 1 pinch
 
-    - salt:
+    - 'salt':
         amount: 1 pinch
 
-    - paprika:
+    - 'paprika':
         amount: 1 pinch
 
-    - steak sauce:
+    - 'steak sauce':
         amount: 1 oz
         optional: True
 
-    - sriracha:
+    - 'sriracha':
         amount: 0.5 tsp
         optional: True
 
 
-black bean burger:
+'black bean burger':
   ingredients:
-    - black bean patty
+    - 'black bean patty'
 
-    - hamburger bun:
+    - 'hamburger bun':
         amount: 1 bun
 
-    - cheddar cheese:
+    - 'cheddar cheese':
         amount: 2 oz
 
-    - pickle:
+    - 'pickle':
         amount: 1 slice
 
-    - onion:
+    - 'onion':
         amount: 2 oz
 
-    - ketchup:
+    - 'ketchup':
         amount: 1 oz
 
-    - mustard:
+    - 'mustard':
         amount: 1 oz
 
 
-buckwheat:
+'buckwheat':
   ingredients:
-    - buckwheat:
+    - 'buckwheat':
         amount: 1 cup
 
-    - butter:
+    - 'butter':
         amount: 2 tbsp
 
 
-salad with butter lettuce:
+'salad with butter lettuce':
   ingredients:
-    - sour cream:
+    - 'sour cream':
         amount: 3 oz
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 1 tsp
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 1 tsp
 
-    - salt:
+    - 'salt':
         amount: 1 pinch
 
-    - butter lettuce:
+    - 'butter lettuce':
         amount: 0.5 head
 
-    - cucumbers:
+    - 'cucumbers':
         amount: 0.25
 
-    - carrots:
+    - 'carrots':
         amount: 0.33
         optional: True
 
-    - egg:
+    - 'egg':
         optional: True
 
-    - cheese crisps:
+    - 'cheese crisps':
         amount: 0.25 bag
         optional: True
 
 
-fried egg:
+'fried egg':
   description: |
     Make sure the egg is not too cold. I microwave refrigerated eggs for 15-20 seconds first. Preheat pan, fry in a small amount of butter on medium-high heat. If desired, cover with lid for desired doneness on the top part of the egg.
     
   ingredients:
-    - egg
+    - 'egg'
 
 
-slow cooked chicken:
+'slow cooked chicken':
   directions: |
     Cover chicken thighs in water in the Instant Pot.
     
@@ -461,96 +461,96 @@ slow cooked chicken:
     Cooking water can be used as chicken broth in other recipes.
     
   ingredients:
-    - chicken thighs:
+    - 'chicken thighs':
         amount: 4
 
 
-steak:
+'steak':
   ingredients:
-    - steak:
+    - 'steak':
         amount: 1 lb
 
-    - butter:
+    - 'butter':
         amount: 2 tbsp
 
-    - garlic:
+    - 'garlic':
         amount: 1 clove
 
-    - herbs, fresh:
+    - 'herbs, fresh':
         optional: True
 
 
-mashed potatoes with herbs:
+'mashed potatoes with herbs':
   ingredients:
-    - potatoes, Russet:
+    - 'potatoes, Russet':
         amount: 6
 
-    - butter:
+    - 'butter':
         amount: 8 oz
 
-    - milk:
+    - 'milk':
         amount: 1 oz
 
-    - herbs, fresh:
+    - 'herbs, fresh':
         optional: True
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 1 tsp
 
 
-zucchini casserole:
+'zucchini casserole':
   ingredients:
-    - corn tortillas:
+    - 'corn tortillas':
         amount: 0.5 package
 
-    - enchilada sauce:
+    - 'enchilada sauce':
         amount: 1 small can
 
-    - ground beef:
+    - 'ground beef':
         amount: 1 lb
 
-    - seasoned beans:
+    - 'seasoned beans':
         amount: 1 can
         brand: Rosarita
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 8 oz
 
-    - onion:
+    - 'onion':
         amount: 0.5
 
-    - zucchini
+    - 'zucchini'
 
-    - Carrots
+    - 'Carrots'
 
 
-vegetarian zucchini casserole:
+'vegetarian zucchini casserole':
   ingredients:
-    - corn tortillas:
+    - 'corn tortillas':
         amount: 0.5 package
 
-    - enchilada sauce:
+    - 'enchilada sauce':
         amount: 1 small can
 
-    - seasoned beans:
+    - 'seasoned beans':
         amount: 1 can
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 8 oz
 
-    - onion:
+    - 'onion':
         amount: 0.5
 
-    - zucchini
+    - 'zucchini'
 
-    - carrot:
+    - 'carrot':
         amount: 2
 
-    - bell pepper:
+    - 'bell pepper':
         optional: True
 
 
-twice baked potatoes:
+'twice baked potatoes':
   description: |
     Classic American side-dish, steakhouse style.
     
@@ -575,39 +575,39 @@ twice baked potatoes:
     Top with the remaining green onions and enjoy!
     
   ingredients:
-    - potatoes, Russet:
+    - 'potatoes, Russet':
         amount: 4
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
 
-    - bacon:
+    - 'bacon':
         amount: 4 oz
         optional: True
 
-    - butter:
+    - 'butter':
         amount: 4 tbsp
 
-    - sour cream:
+    - 'sour cream':
         amount: 4 oz
 
-    - milk:
+    - 'milk':
         amount: 0.25 cup
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - pepper:
+    - 'pepper':
         amount: 0.25 tsp
 
-    - green onion:
+    - 'green onion':
         amount: 0.5 bunch
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 8 oz
 
 
-cabbage and egg salad with cucumber:
+'cabbage and egg salad with cucumber':
   directions: |
     finely shred the cabbage on a mandoline and pound with the back of a wooden spatula until soft.
     
@@ -618,64 +618,64 @@ cabbage and egg salad with cucumber:
     Top the cabbage with the cucumber and egg. serve with your choice of dressing.
     
   ingredients:
-    - egg
+    - 'egg'
 
-    - cucumber:
+    - 'cucumber':
         amount: 0.25
 
-    - cabbage:
+    - 'cabbage':
         amount: 0.25 head
 
 
-tahini miso dressing:
+'tahini miso dressing':
   ingredients:
-    - tahini:
+    - 'tahini':
         amount: 0.33 cup
 
-    - ginger:
+    - 'ginger':
         amount: 1 tbsp
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - miso:
+    - 'miso':
         amount: 1 tsp
 
-    - soy sauce:
+    - 'soy sauce':
         amount: 1 tbsp
 
-    - vinegar:
+    - 'vinegar':
         amount: 1 tbsp
 
-    - sesame oil:
+    - 'sesame oil':
         amount: 1 tsp
 
-    - maple syrup:
+    - 'maple syrup':
         amount: 2 tsp
 
-    - water:
+    - 'water':
         amount: 3 tbsp
 
-    - salt:
+    - 'salt':
         amount: 1 pinch
 
 
-lima bean side dish:
+'lima bean side dish':
   ingredients:
-    - lima beans:
+    - 'lima beans':
         amount: 1 package
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
 
-    - cumin:
+    - 'cumin':
         amount: 1 pinch
 
-    - tomato paste:
+    - 'tomato paste':
         amount: 4 oz
 
 
-cheesy puff pastry rolls:
+'cheesy puff pastry rolls':
   description: |
     Crispy warm cheesy rolls lightly seasoned with mint and oregano.
     
@@ -689,81 +689,81 @@ cheesy puff pastry rolls:
     Bake at 350F for 35 to 40 min, rest for 10 min.
     
   ingredients:
-    - puff pastry sheet, frozen:
+    - 'puff pastry sheet, frozen':
         amount: 1 pound
 
-    - cream cheese:
+    - 'cream cheese':
         amount: 8 oz
 
-    - feta cheese:
+    - 'feta cheese':
         amount: 8 oz
 
-    - mozzarella cheese:
+    - 'mozzarella cheese':
         amount: 8 oz
 
-    - mint:
+    - 'mint':
         amount: 2 tsp
 
-    - oregano:
+    - 'oregano':
         amount: 2 tsp
 
-    - egg
+    - 'egg'
 
-    - heavy cream:
+    - 'heavy cream':
         amount: 2 tsp
 
 
-veggie nuggets:
+'veggie nuggets':
   ingredients:
-    - veggie nuggets:
+    - 'veggie nuggets':
         amount: 1 package
 
 
-butternut squash soup:
+'butternut squash soup':
   ingredients:
-    - onion
+    - 'onion'
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
 
-    - better than boullion, or other veggie broth:
+    - 'better than boullion, or other veggie broth':
         amount: 1 to make 2 cups
 
-    - butternut squash
+    - 'butternut squash'
 
-    - croutons:
+    - 'croutons':
         optional: True
 
-    - cream:
+    - 'cream':
         amount: 1 cup
         optional: True
 
 
-vanilla pudding:
+'vanilla pudding':
   directions: |
     Mix everything and boil at low heat for ~5 minutes and whisk the entire time until thick.
     
   ingredients:
-    - milk:
+    - 'milk':
         amount: 3 cups
 
-    - butter:
+    - 'butter':
         amount: 1 stick
 
-    - cinnamon:
+    - 'cinnamon':
         amount: 1 tbsp
 
-    - vannila extract:
+    - 'vannila extract':
         amount: 1 /4 tbsp
 
-    - brown sugar:
+    - 'brown sugar':
         amount: 1 /2 tbsp
 
-    - cornstarch:
+    - 'cornstarch':
         amount: 2 tbsp
 
 
-black bean patty with cheese:
+'black bean patty with cheese':
   description: |
     Quick vegetarian protein
     
@@ -773,116 +773,116 @@ black bean patty with cheese:
     Place a slice of cheese on top, microwave for another 10-15 seconds, until the cheese just starts to melt.
     
   ingredients:
-    - black bean patty:
+    - 'black bean patty':
         amount: 1 patty
 
-    - cheese:
+    - 'cheese':
         amount: 1 slice
 
 
-stir fry beef:
+'stir fry beef':
   ingredients:
-    - beef, thinly sliced:
+    - 'beef, thinly sliced':
         amount: 1 pound
 
-    - baking soda:
+    - 'baking soda':
         amount: 1 tsp
 
-    - corn starch:
+    - 'corn starch':
         amount: 1 tbsp
 
-    - soy sauce:
+    - 'soy sauce':
         amount: 1 tbsp
 
 
-steamed broccoli:
+'steamed broccoli':
   ingredients:
-    - broccoli:
+    - 'broccoli':
         amount: 1 head
 
 
-solyanka:
+'solyanka':
   description: |
     Eastern European "everything but the kitchen sink" soup with a multitude of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
     
   ingredients:
-    - bay leaves:
+    - 'bay leaves':
         amount: 2 large leaves
 
-    - peppercorns, whole:
+    - 'peppercorns, whole':
         amount: 6 peppercorns
 
-    - allspice berries, whole:
+    - 'allspice berries, whole':
         amount: 4 berries
 
-    - water:
+    - 'water':
         amount: 10 cups
 
-    - concentrated beef base, or Better Than Boullion:
+    - 'concentrated beef base, or Better Than Boullion':
         amount: 4 tablespoons
 
-    - cabbage:
+    - 'cabbage':
         amount: 0.25 head
 
-    - celery:
+    - 'celery':
         amount: 3 ribs
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 3 tbsp
 
-    - onions:
+    - 'onions':
         amount: 2
 
-    - carrots:
+    - 'carrots':
         amount: 2
 
-    - ham or polish sausage:
+    - 'ham or polish sausage':
         amount: 0.5 pounds
         optional: True
 
-    - chicken breast:
+    - 'chicken breast':
         optional: True
 
-    - ham:
+    - 'ham':
         amount: 0.25 pounds
         optional: True
 
-    - dill pickles:
+    - 'dill pickles':
         amount: 3 pickles
 
-    - tomato paste:
+    - 'tomato paste':
         amount: 6 oz
 
-    - canned stewed or diced tomatoes:
+    - 'canned stewed or diced tomatoes':
         amount: 24 oz
 
-    - sliced black olives:
+    - 'sliced black olives':
         amount: 6 oz
 
-    - capers:
+    - 'capers':
         amount: 2 tbsp
         optional: True
 
-    - dry white wine:
+    - 'dry white wine':
         amount: 1 cup
         optional: True
 
-    - salt:
+    - 'salt':
         amount: 1 pinch
 
-    - pepper:
+    - 'pepper':
         amount: 1 pinch
 
-    - sour cream:
+    - 'sour cream':
         amount: 0.5 cup
         optional: True
 
-    - dill:
+    - 'dill':
         amount: 0.33 cups
         optional: True
 
 
-mac-and-cheese casserole:
+'mac-and-cheese casserole':
   description: |
     adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
     
@@ -909,136 +909,136 @@ mac-and-cheese casserole:
     Cook the roux until  you see bubbles on the surface and then continue cooking for an additional 2 minutes before adding the cheese.
     
   ingredients:
-    - elbow macaroni, cooked (or other tubular pasta):
+    - 'elbow macaroni, cooked (or other tubular pasta)':
         amount: 16 oz
 
-    - extra virgin olive oil:
+    - 'extra virgin olive oil':
         amount: 1 tbsp
 
-    - unsalted butter:
+    - 'unsalted butter':
         amount: 6 tbsp
 
-    - all purpose flour:
+    - 'all purpose flour':
         amount: 0.33 cups
 
-    - whole milk:
+    - 'whole milk':
         amount: 3 cups
 
-    - heavy whipping cream:
+    - 'heavy whipping cream':
         amount: 1 cup
 
-    - sharp cheddar cheese shredded:
+    - 'sharp cheddar cheese shredded':
         amount: 4 cups
 
-    - Gruyere cheese shredded:
+    - 'Gruyere cheese shredded':
         amount: 2 cups
 
-    - salt:
+    - 'salt':
         amount: 1 pinch
 
-    - pepper:
+    - 'pepper':
         amount: 1 pinch
 
-    - panko crumbs:
+    - 'panko crumbs':
         amount: 1.5 cups
 
-    - butter melted:
+    - 'butter melted':
         amount: 4 tbsp
 
-    - Parmesan cheese shredded:
+    - 'Parmesan cheese shredded':
         amount: 0.5 cup
 
-    - paprika:
+    - 'paprika':
         amount: 0.25 tsp
 
 
-egg salad sandwiches:
+'egg salad sandwiches':
   ingredients:
-    - bread:
+    - 'bread':
         amount: 6 slices
 
-    - eggs:
+    - 'eggs':
         amount: 8
 
-    - onion:
+    - 'onion':
         amount: 0.25
         optional: True
 
-    - celery:
+    - 'celery':
         amount: 1 rib
         optional: True
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 3 oz
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
 
-    - pepper:
+    - 'pepper':
         amount: 0.25 tsp
 
-    - curry powder:
+    - 'curry powder':
         amount: 0.75 tsp
 
 
-roasted broccoli:
+'roasted broccoli':
   directions: |
     Cut into florets, toss with olive oil and salt and pepper, bake at 15 to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with herbs.
     
   ingredients:
-    - broccoli:
+    - 'broccoli':
         amount: 1 head
 
-    - olive oil:
+    - 'olive oil':
         amount: 2 tbsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - pepper:
+    - 'pepper':
         amount: 0.5 tsp
 
-    - parmesan cheese:
+    - 'parmesan cheese':
         amount: 3 tbsp
 
-    - garlic:
+    - 'garlic':
         amount: 3 cloves
 
-    - fresh herbs
+    - 'fresh herbs'
 
 
-cobb salad:
+'cobb salad':
   ingredients:
-    - lettuce
+    - 'lettuce'
 
-    - cherry tomatoes
+    - 'cherry tomatoes'
 
-    - bacon:
+    - 'bacon':
         amount: 4 oz
 
-    - chicken breast:
+    - 'chicken breast':
         amount: 8 oz
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 4 oz
 
-    - baked tofu
+    - 'baked tofu'
 
-    - eggs:
+    - 'eggs':
         amount: 4
 
-    - bell pepper
+    - 'bell pepper'
 
-    - cucumber:
+    - 'cucumber':
         amount: 0.5
 
-    - canned corn
+    - 'canned corn'
 
-    - ranch dressing:
+    - 'ranch dressing':
         amount: 6 oz
 
 
-schnitzel:
+'schnitzel':
   description: |
     Simple breaded schnitzel recipe with chicken.
     
@@ -1046,125 +1046,125 @@ schnitzel:
     Cut the chicken thin, and pound flat. Tenderize if desired. Dredge in flour, thoroughly coat in beaten eggs, and coat completely in Panko. Fry in oil on medium heat until golden, on both sides, do not over-brown. If not cooked all the way through, bake at 350F until cooked through, but do not over-cook. Garnish with herbs, serve with Tonkatsu sauce.
     
   ingredients:
-    - chicken breast:
+    - 'chicken breast':
         amount: 1 lb
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - flour:
+    - 'flour':
         amount: 1 cup
 
-    - Panko bread crumbs:
+    - 'Panko bread crumbs':
         amount: 1.5 cup
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 4 tbsp
 
-    - Tonkatsu sauce:
+    - 'Tonkatsu sauce':
         amount: 0.5 cup
         optional: True
 
 
-buttery lima beans:
+'buttery lima beans':
   directions: |
     Saute the garlic and onions, add the pre-cooked lima beans, stir, add paprika.
     
   ingredients:
-    - butter:
+    - 'butter':
         amount: 1 tbsp
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
         optional: True
 
-    - lima beans:
+    - 'lima beans':
         amount: 1 package
 
-    - onion:
+    - 'onion':
         amount: 0.5
 
-    - garlic:
+    - 'garlic':
         amount: 3 cloves
 
-    - smoked paprika:
+    - 'smoked paprika':
         amount: 0.25 tsp
         optional: True
 
 
-cole slaw:
+'cole slaw':
   directions: |
     Shred the cabbage on a mandoline, pound with a spatula for softness. add remaining ingredients, let rest for 30 minutes.
     
   ingredients:
-    - cabbage:
+    - 'cabbage':
         amount: 0.25 head
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - olive oil:
+    - 'olive oil':
         amount: 2 tbsp
 
-    - vinegar:
+    - 'vinegar':
         amount: 2 tbsp
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 3 tbsp
         optional: True
 
 
-collard greens:
+'collard greens':
   directions: |
     Cut and de-stem collard greens, cook in Instant Pot for 5 min with quick release. Saute onions and garlic in oil until soft, add the collard greeens. Cook on high heat to crisp the edges. Add salt, pepper and spices.
     
   ingredients:
-    - collard greens
+    - 'collard greens'
 
-    - onion
+    - 'onion'
 
-    - garlic:
+    - 'garlic':
         amount: 4 cloves
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
 
-    - pepper:
+    - 'pepper':
         amount: 0.25 tsp
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 2 tbsp
 
-    - paprika:
+    - 'paprika':
         amount: 1 pinch
         optional: True
 
 
-pinto beans:
+'pinto beans':
   directions: |
     Cook according to package instructions
     
   ingredients:
-    - pinto beans
+    - 'pinto beans'
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
 
-slow cooked turkey:
+'slow cooked turkey':
   directions: |
     Cover in water and cook in Instant Pot for 1 - 1.5 hrs on "slow cook" setting
     
   ingredients:
-    - turkey thighs:
+    - 'turkey thighs':
         amount: 4
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
         optional: True
 
 
-esquites:
+'esquites':
   description: |
     Mexican street corn salad
     
@@ -1175,45 +1175,45 @@ esquites:
     Serve immediately in individual portions.
     
   ingredients:
-    - butter:
+    - 'butter':
         amount: 4 tbsp
 
-    - corn on the cob:
+    - 'corn on the cob':
         amount: 4 ears
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - jalapeño pepper
+    - 'jalapeño pepper'
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 1 ¼ cup
 
-    - cotija cheese:
+    - 'cotija cheese':
         amount: 0.5 cup
 
-    - cilantro:
+    - 'cilantro':
         amount: 2 tablespoons
 
-    - salt:
+    - 'salt':
         amount: 1 ½ teaspoon
 
-    - lime:
+    - 'lime':
         amount: 2
 
-    - Chili powder:
+    - 'Chili powder':
         amount: 1 tsp
 
-    - paprika:
+    - 'paprika':
         amount: 1 teaspoon
         optional: True
 
-    - chili lime seasoning:
+    - 'chili lime seasoning':
         amount: 1 tsp
         optional: True
 
 
-vegetarian kharcho:
+'vegetarian kharcho':
   description: |
     A vegetarian version of a hearty soup with walnuts from Georgia in the Caucasus Mountains
     
@@ -1232,46 +1232,46 @@ vegetarian kharcho:
     Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
     
   ingredients:
-    - onion
+    - 'onion'
 
-    - butter:
+    - 'butter':
         amount: 20 grams
 
-    - walnuts:
-        amount: 1e+02 grams
+    - 'walnuts':
+        amount: 100 grams
 
-    - can crushed tomatoes:
+    - 'can crushed tomatoes':
         amount: 16 oz
 
-    - cup rice:
+    - 'cup rice':
         amount: 0.5 cup
 
-    - water:
+    - 'water':
         amount: 6 cups
 
-    - garlic cloves:
+    - 'garlic cloves':
         amount: 2 cloves
 
-    - red pepper flakes:
+    - 'red pepper flakes':
         amount: 0.5 tsp
 
-    - khmeli-suneli spice blend:
+    - 'khmeli-suneli spice blend':
         amount: 1.5 tbsp
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - cilantro:
+    - 'cilantro':
         amount: 6 tbsp
 
-    - dill:
+    - 'dill':
         amount: 3 tbsp
 
-    - parsley:
+    - 'parsley':
         amount: 3 tbsp
 
 
-edible chalk sugar candy:
+'edible chalk sugar candy':
   description: |
     Ian's Edible Chalk candy. Fun fact, when Ian brought some to his school, a literal fight broke out as the other students were trying to get some of it.
     
@@ -1285,68 +1285,68 @@ edible chalk sugar candy:
     Break or cut into pieces. 
     
   ingredients:
-    - sugar:
+    - 'sugar':
         amount: 1.5 cups
 
-    - corn syrup:
+    - 'corn syrup':
         amount: 0.33 cups
 
-    - water:
+    - 'water':
         amount: 0.33 cups
 
-    - butter:
+    - 'butter':
         amount: 2 tbsp
 
-    - vanilla extract:
+    - 'vanilla extract':
         amount: 0.25 tsp
 
 
-refried beans:
+'refried beans':
   directions: |
     Cook beans with 3X water by volume in the Intant Pot, along with a chopped onion, salt, and a dried chili pepper. Pan-fry in oil while mashing, until the beans disintegrate.
     
   ingredients:
-    - beans, dry:
+    - 'beans, dry':
         amount: 1 lb
 
-    - onion
+    - 'onion'
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - dried chili, whole:
+    - 'dried chili, whole':
         amount: 1 piece
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 1 tbsp
 
-    - cotija cheese:
+    - 'cotija cheese':
         amount: 2 oz
         optional: True
 
 
-canellini bean side dish:
+'canellini bean side dish':
   ingredients:
-    - canellini beans:
+    - 'canellini beans':
         amount: 1 can
 
-    - onion:
+    - 'onion':
         amount: 0.5
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
 
-    - cumin:
+    - 'cumin':
         amount: 1 pinch
 
-    - tomato paste:
+    - 'tomato paste':
         amount: 4 oz
 
 
-stuffed shells:
+'stuffed shells':
   directions: |
     Cook jumbo shell pasta according to package directions to al dente. Stir in the olive oil and a few tablespoons of tomato sauce to avoid sticking.
     
@@ -1359,28 +1359,28 @@ stuffed shells:
     Sprinkle with the italian seasoning, and serve immediately.
     
   ingredients:
-    - jumbo shell noodles:
+    - 'jumbo shell noodles':
         amount: 1 box
 
-    - mozarella cheese, shredded:
+    - 'mozarella cheese, shredded':
         amount: 1 lb
 
-    - pasta sauce:
+    - 'pasta sauce':
         amount: 1 jar
 
-    - onion
+    - 'onion'
 
-    - garlic:
+    - 'garlic':
         amount: 4 cloves
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 0.5 tsp
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
 
 
-cold borscht:
+'cold borscht':
   description: |
     Eastern European cold sumertime soup
     
@@ -1392,45 +1392,45 @@ cold borscht:
     Optionally top each bowl with half of a hard-boiled egg.
     
   ingredients:
-    - beets:
+    - 'beets':
         amount: 2 lb
 
-    - salt:
+    - 'salt':
         amount: 2 tsp
 
-    - vegetable stock:
+    - 'vegetable stock':
         amount: 2 cups
 
-    - sour cream:
+    - 'sour cream':
         amount: 20 oz
 
-    - yogurt, plain:
+    - 'yogurt, plain':
         amount: 0.5 cups
 
-    - sugar:
+    - 'sugar':
         amount: 4 tbsp
 
-    - lemon juice, freshly squeezed:
+    - 'lemon juice, freshly squeezed':
         amount: 2 tbsp
 
-    - vinegar:
+    - 'vinegar':
         amount: 2 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 1.5 tsp
 
-    - eggs:
+    - 'eggs':
         amount: 3
         optional: True
 
-    - cucumber, english
+    - 'cucumber, english'
 
-    - green onions
+    - 'green onions'
 
-    - dill
+    - 'dill'
 
 
-Banana Treats:
+'Banana Treats':
   description: |
     Banana slices topped with peanut butter and chocolate
     
@@ -1442,16 +1442,16 @@ Banana Treats:
     Place a chocolate chip or similar sized little piece of chocolate on top of each slice.
     
   ingredients:
-    - banana
+    - 'banana'
 
-    - peanut butter:
+    - 'peanut butter':
         amount: 2 tbsp
 
-    - chocolate or chocolate chips:
+    - 'chocolate or chocolate chips':
         amount: 1.5 oz
 
 
-pan-fried chicken:
+'pan-fried chicken':
   description: |
     Quick pan-fried chicken with a lot of flavor.
     
@@ -1463,32 +1463,32 @@ pan-fried chicken:
     Cover with spices, salt very lightly. Fry in hot oil, 2-3 minutes per side. Let rest 3 min before serving. 
     
   ingredients:
-    - chicken thighs:
+    - 'chicken thighs':
         amount: 1 lb
 
-    - paprika:
+    - 'paprika':
         amount: 0.25 tsp
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.25 tsp
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 0.5 tsp
 
-    - onion powder:
+    - 'onion powder':
         amount: 0.5 tsp
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 0.5 tsp
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 1 tbsp
 
 
-kharcho:
+'kharcho':
   description: |
     A hearty flavorful soup with meat and walnuts, from the Caucasus Mountains (Georgia).
     
@@ -1509,49 +1509,49 @@ kharcho:
     Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
     
   ingredients:
-    - short ribs:
+    - 'short ribs':
         amount: 2 lbs
 
-    - onion
+    - 'onion'
 
-    - butter:
+    - 'butter':
         amount: 20 grams
 
-    - walnuts:
+    - 'walnuts':
         amount: 0.5 lbs
 
-    - canned crushed tomatoes:
+    - 'canned crushed tomatoes':
         amount: 16 oz
 
-    - cup rice:
+    - 'cup rice':
         amount: 0.5 cup
 
-    - water:
+    - 'water':
         amount: 6 cups
 
-    - garlic cloves:
+    - 'garlic cloves':
         amount: 2 cloves
 
-    - red pepper flakes:
+    - 'red pepper flakes':
         amount: 0.5 tsp
 
-    - khmeli-suneli spice blend:
+    - 'khmeli-suneli spice blend':
         amount: 1.5 tbsp
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - cilantro:
+    - 'cilantro':
         amount: 6 tbsp
 
-    - dill:
+    - 'dill':
         amount: 3 tbsp
 
-    - parsley:
+    - 'parsley':
         amount: 3 tbsp
 
 
-vegetables a la Grecque:
+'vegetables a la Grecque':
   description: |
     Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
     
@@ -1571,45 +1571,45 @@ vegetables a la Grecque:
     Cover with cooled marinade to store in the refrigerator. After refrigeration, bring up to room temperature before serving.
     
   ingredients:
-    - mixed vegetables:
+    - 'mixed vegetables':
         amount: 2 lbs
 
-    - lemons:
+    - 'lemons':
         amount: 4
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 cup
 
-    - cider vinegar:
+    - 'cider vinegar':
         amount: 0.75 cup
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - parsley:
+    - 'parsley':
         amount: 3 sprigs
 
-    - whole peppercorns:
+    - 'whole peppercorns':
         amount: 6
 
-    - fresh thyme:
+    - 'fresh thyme':
         amount: 3 tsp
 
-    - dried oregano:
+    - 'dried oregano':
         amount: 0.25 tsp
 
-    - fennel or celery seeds:
+    - 'fennel or celery seeds':
         amount: 1 pinch
         optional: True
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
 
-    - water:
+    - 'water':
         amount: 4 cups
 
 
-tortellini soup:
+'tortellini soup':
   description: |
     Italian classic
     
@@ -1631,48 +1631,48 @@ tortellini soup:
     Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
     
   ingredients:
-    - tortellini:
+    - 'tortellini':
         amount: 1 package
 
-    - olive oil:
+    - 'olive oil':
         amount: 4 tsp
 
-    - onion, white
+    - 'onion, white'
 
-    - carrot
+    - 'carrot'
 
-    - celery:
+    - 'celery':
         amount: 1 rib
 
-    - garlic:
+    - 'garlic':
         amount: 4 cloves
 
-    - bell pepper:
+    - 'bell pepper':
         amount: 0.5
 
-    - zucchini
+    - 'zucchini'
 
-    - spinach:
+    - 'spinach':
         amount: 1 bunch
 
-    - pasta sauce:
+    - 'pasta sauce':
         amount: 5 tbsp
 
-    - broth:
+    - 'broth':
         amount: 2 cups
         optional: True
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 0.5 tsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 1 pinch
 
 
-Eggplant Parmesan:
+'Eggplant Parmesan':
   description: |
     Classic Eggplant Parmesan
     
@@ -1697,34 +1697,34 @@ Eggplant Parmesan:
     -	avocado oil   4 tbsp
     
   ingredients:
-    - eggplant
+    - 'eggplant'
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - Panko:
+    - 'Panko':
         amount: 1.5 cups
 
-    - flour:
+    - 'flour':
         amount: 1 cup
 
-    - parmesan cheese:
+    - 'parmesan cheese':
         amount: 1 cup
 
-    - mozzarella:
+    - 'mozzarella':
         amount: 8 oz
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.5 tsp
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 4 tbsp
 
 
-crêpes:
+'crêpes':
   description: |
     A simple and versatile crêpes recipe
     
@@ -1754,23 +1754,23 @@ crêpes:
     whipped cream 
     
   ingredients:
-    - flour:
+    - 'flour':
         amount: 1 cup
 
-    - milk:
+    - 'milk':
         amount: 1.2 cups
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 2 tsp
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - butter:
+    - 'butter':
         amount: 4 tbsp
 
 
-quinoa and white bean soup:
+'quinoa and white bean soup':
   description: |
     Soup with quinoa and white beans, and we have added kale.
     
@@ -1788,55 +1788,55 @@ quinoa and white bean soup:
     Add quinoa, parsley, oregano or other herb, and bay leaf. Cover and simmer until quinoa is cooked, 12 to 15 minutes. Season with salt and pepper to taste. Remove bay leaf and serve.
     
   ingredients:
-    - olive oil:
+    - 'olive oil':
         amount: 0.25 cups
 
-    - onions:
+    - 'onions':
         amount: 2
 
-    - carrots:
+    - 'carrots':
         amount: 2
 
-    - celery:
+    - 'celery':
         amount: 2 ribs
 
-    - cannellini beans:
+    - 'cannellini beans':
         amount: 14 oz
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - chopped tomatoes:
+    - 'chopped tomatoes':
         amount: 14 oz
 
-    - vegetable stock:
+    - 'vegetable stock':
         amount: 7 cups
 
-    - quinoa:
+    - 'quinoa':
         amount: 0.33 cups
 
-    - parsley:
+    - 'parsley':
         amount: 0.25 cups
 
-    - oregano:
+    - 'oregano':
         amount: 1 tbsp
         optional: True
 
-    - rosemary:
+    - 'rosemary':
         amount: 1 tbsp
         optional: True
 
-    - thyme:
+    - 'thyme':
         amount: 1 tbsp
         optional: True
 
-    - bay leaf
+    - 'bay leaf'
 
-    - kale:
+    - 'kale':
         amount: 1 bunch
 
 
-S'mores:
+'S''mores':
   description: |
     Camping classic: a sandwich of roasted marshmallow and chocolate, between two graham crackers. 
     
@@ -1844,14 +1844,14 @@ S'mores:
     Roast marshmallows on a skewer over an open fire. Let marshmallow catch fire and blow out immediately. Sandwich between 2 pieces of graham cracker, with a small piece of chocolate inside. The chocolate piece should partially melt from contact with the hot marshmallow. Allow to cool slightly and eat immediately.
     
   ingredients:
-    - Marshmallow
+    - 'Marshmallow'
 
-    - Chocolate
+    - 'Chocolate'
 
-    - Graham crackers
+    - 'Graham crackers'
 
 
-Lasagna:
+'Lasagna':
   description: |
     Classic Italian-American casserole
     
@@ -1935,85 +1935,85 @@ Lasagna:
     To reheat leftover lasagna, place it in a lightly greased, covered casserole dish. Bake at 350° for 25-30 minutes.
     
   ingredients:
-    - ricotta cheese:
+    - 'ricotta cheese':
         amount: 15 oz
 
-    - egg
+    - 'egg'
 
-    - mozzarella cheese:
+    - 'mozzarella cheese':
         amount: 10 oz
 
-    - Italian seasoning:
+    - 'Italian seasoning':
         amount: 2 tsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - pepper:
+    - 'pepper':
         amount: 0.25 tsp
 
-    - olive oil:
+    - 'olive oil':
         amount: 1 tbsp
 
-    - onion, yellow
+    - 'onion, yellow'
 
-    - garlic:
+    - 'garlic':
         amount: 3 cloves
 
-    - chicken broth:
+    - 'chicken broth':
         amount: 0.5 cups
 
-    - Parmesan cheese, grated:
+    - 'Parmesan cheese, grated':
         amount: 0.75 cups
 
-    - ground beef:
+    - 'ground beef':
         amount: 0.75 lb
 
-    - Italian sausage:
+    - 'Italian sausage':
         amount: 0.75 lb
 
-    - marinara sauce:
+    - 'marinara sauce':
         amount: 40 oz
 
-    - tomato paste:
+    - 'tomato paste':
         amount: 1 tbsp
 
-    - hot sauce:
+    - 'hot sauce':
         amount: 1 tsp
         optional: True
 
-    - Worcestershire sauce:
+    - 'Worcestershire sauce':
         amount: 1 tsp
         optional: True
 
-    - lasagna noodles:
+    - 'lasagna noodles':
         amount: 12 noodles
 
-    - mozzarella cheese:
+    - 'mozzarella cheese':
         amount: 2.5 cups
 
 
-Monte Christo Sandwich:
+'Monte Christo Sandwich':
   ingredients:
-    - Ham:
+    - 'Ham':
         amount: 5 oz
 
-    - Bread:
+    - 'Bread':
         amount: 3 slices
 
-    - Mustard:
+    - 'Mustard':
         amount: 1 tsp
 
-    - Swiss cheese:
+    - 'Swiss cheese':
         amount: 2 slices
 
-    - Butter:
+    - 'Butter':
         amount: 1 tbsp
 
-    - egg
+    - 'egg'
 
 
-Veggie Pot Pie:
+'Veggie Pot Pie':
   directions: |
     Make a pie crust using 2 ½ cups (325g) all-purpose flour, 1/2 teaspoon salt, 1 cup (230g) very cold unsalted butter, cut into 1/2-inch cubes, 6 to 8 tablespoons ice water, or more as needed. https://www.inspiredtaste.net/22662/flaky-pie-crust-recipe/
     
@@ -2026,44 +2026,44 @@ Veggie Pot Pie:
     Stir vegetables and gravy together then transfer into pie crust. Add top pie crust layer and then bake at 375 degrees Fahrenheit for 30 to 40 minutes or until top is lightly browned. 
     
   ingredients:
-    - salt:
+    - 'salt':
         amount: 1 teaspoon
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 1 teasoon
 
-    - tofu:
+    - 'tofu':
         amount: 2 cups
 
-    - Avocado oil or similar:
+    - 'Avocado oil or similar':
         amount: 1 Tablespoon
 
-    - onion
+    - 'onion'
 
-    - celery:
+    - 'celery':
         amount: 1 /2 cup diced
 
-    - carrots:
+    - 'carrots':
         amount: 2 -3
 
-    - frozen peas
+    - 'frozen peas'
 
-    - frozen corn:
+    - 'frozen corn':
         optional: True
 
-    - butter:
+    - 'butter':
         amount: 1 cup
 
-    - nutritional yeast:
+    - 'nutritional yeast':
         amount: 1 /3 cup
 
-    - Flour:
+    - 'Flour':
         amount: 3 cups
 
-    - Potato, Russet
+    - 'Potato, Russet'
 
 
-Salsa Verde:
+'Salsa Verde':
   description: |
     Spicy classic with a good Mexican flavor. Good on meat, chilaquiles, tacos
     
@@ -2073,35 +2073,35 @@ Salsa Verde:
     Blend the cooked ingredients in a blender. Add the juice of the half lime and the remaining ingredients.
     
   ingredients:
-    - tomatillos:
+    - 'tomatillos':
         amount: 8
 
-    - garlic:
+    - 'garlic':
         amount: 0.25 bulb
 
-    - onion:
+    - 'onion':
         amount: 0.25
 
-    - serrano peppers:
+    - 'serrano peppers':
         amount: 3
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.25 tsp
 
-    - Knorr seasoning:
+    - 'Knorr seasoning':
         amount: 0.5 tbsp
 
-    - cilantro:
+    - 'cilantro':
         amount: 0.5 bunch
 
-    - lime:
+    - 'lime':
         amount: 0.5
 
 
-Kale:
+'Kale':
   description: |
     Steamed then lightly fried kale
     
@@ -2115,40 +2115,40 @@ Kale:
     Remove from heat, stir in salt, pepper, and optionally the sesame oil.
     
   ingredients:
-    - kale:
+    - 'kale':
         amount: 1 bunch
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 1 tbsp
 
-    - onion, white:
+    - 'onion, white':
         amount: 1 small
 
-    - sesame oil:
+    - 'sesame oil':
         amount: 2 tsp
         optional: True
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.25 tsp
 
 
-quinoa:
+'quinoa':
   directions: |
     Cook according to package directions
     
   ingredients:
-    - quinoa, dry:
+    - 'quinoa, dry':
         amount: 1 cup
 
-    - salt:
+    - 'salt':
         amount: 0.25 tsp
         optional: True
 
 
-minestrone soup:
+'minestrone soup':
   description: |
     americanized recipe
     
@@ -2162,60 +2162,60 @@ minestrone soup:
     Add salt, pepper, and Italian seasoning to taste. Serve with the spiral noodles   
     
   ingredients:
-    - Spiral noodles, multi-colored:
+    - 'Spiral noodles, multi-colored':
         amount: 1 bag
 
-    - olive oil:
+    - 'olive oil':
         amount: 4 tbsp
 
-    - carrot:
+    - 'carrot':
         amount: 2 carrots
 
-    - celery:
+    - 'celery':
         amount: 2 ribs
 
-    - eggplant
+    - 'eggplant'
 
-    - bell pepper
+    - 'bell pepper'
 
-    - onion
+    - 'onion'
 
-    - cannellini beans:
+    - 'cannellini beans':
         amount: 1 cans
 
-    - garlic:
+    - 'garlic':
         amount: 5 cloves
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.25 tsp
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 0.25 tsp
         optional: True
 
-    - Marinara sauce:
+    - 'Marinara sauce':
         amount: 1 jar
 
 
-PB&J Sandwich:
+'PB&J Sandwich':
   directions: |
     Spread peanut butter on one side, fruit jam on the other
     
   ingredients:
-    - bread:
+    - 'bread':
         amount: 2 slices
 
-    - peanut butter:
+    - 'peanut butter':
         amount: 1 tbsp
 
-    - Jam:
+    - 'Jam':
         amount: 1 tbsp
 
 
-Hashbrowns:
+'Hashbrowns':
   description: |
     Breakfast classic
     
@@ -2233,25 +2233,25 @@ Hashbrowns:
     Serve with ketchup and hot sauce 
     
   ingredients:
-    - potato, Russet
+    - 'potato, Russet'
 
-    - onion:
+    - 'onion':
         amount: 0.25
 
-    - garlic:
+    - 'garlic':
         amount: 3 cloves
 
-    - avocado oil:
+    - 'avocado oil':
         amount: 5 tbsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.25 tsp
 
 
-Corn on the cob:
+'Corn on the cob':
   directions: |
     Shuck the corn and carefully remove all cornsilk.
     
@@ -2262,17 +2262,17 @@ Corn on the cob:
     When ready to serve, remove from the cooking water and rub with salted butter.
     
   ingredients:
-    - corn on the cob:
+    - 'corn on the cob':
         amount: 4
 
-    - salt:
+    - 'salt':
         amount: 2 tbsp
 
-    - butter:
+    - 'butter':
         amount: 3 tbsp
 
 
-Asian salad:
+'Asian salad':
   description: |
     Interpretation of asian salad
     
@@ -2298,45 +2298,45 @@ Asian salad:
     1 tablespoon sugar or honey
     
   ingredients:
-    - iceberg lettuce or napa cabbage
+    - 'iceberg lettuce or napa cabbage'
 
-    - purple cabbage
+    - 'purple cabbage'
 
-    - chicken
+    - 'chicken'
 
-    - tofu
+    - 'tofu'
 
-    - carrots:
+    - 'carrots':
         amount: 2 -4
 
-    - green onions
+    - 'green onions'
 
-    - sliced almonds:
+    - 'sliced almonds':
         amount: 4 -8 oz
 
-    - soy sauce
+    - 'soy sauce'
 
-    - ketchup:
+    - 'ketchup':
         amount: 2 -3 Tablespoons
 
-    - ginger root
+    - 'ginger root'
 
-    - garlic:
+    - 'garlic':
         amount: 1 -2 cloves
 
-    - sugar or honey:
+    - 'sugar or honey':
         amount: 1 -2 tablespoons
 
-    - orange
+    - 'orange'
 
-    - canned baby corn (optional)
+    - 'canned baby corn (optional)'
 
-    - chow mein (optional)
+    - 'chow mein (optional)'
 
-    - mandarin oranges 1 can or 2-3 fresh
+    - 'mandarin oranges 1 can or 2-3 fresh'
 
 
-Russian Vinigret:
+'Russian Vinigret':
   description: |
     Russian festive beet and potato salad
     
@@ -2349,35 +2349,35 @@ Russian Vinigret:
     Mix all ingredients, optionally add a small splash of pickle brine
     
   ingredients:
-    - Beets:
+    - 'Beets':
         amount: 2
 
-    - Onion, red:
+    - 'Onion, red':
         amount: 0.5
 
-    - Pickles:
+    - 'Pickles':
         amount: 2
 
-    - Carrots:
+    - 'Carrots':
         amount: 3
 
-    - Sweet peas:
+    - 'Sweet peas':
         amount: 0.75 can
 
-    - Olive oil:
+    - 'Olive oil':
         amount: 4 tbsp
 
-    - Salt:
+    - 'Salt':
         amount: 1 pinch
 
-    - Pepper:
+    - 'Pepper':
         amount: 1 pinch
 
-    - potatoes, yukon or red:
+    - 'potatoes, yukon or red':
         amount: 4
 
 
-Sweet Potato Casserole:
+'Sweet Potato Casserole':
   directions: |
     Add peeled and cubed sweet potatoes to a large pot of salted water. Bring to boil over high heat, then lower the heat to a simmer and cook until the potatoes are fork tender, about 15 to 20 minutes. Drain well and cool.
     boiled sweet potato
@@ -2391,32 +2391,32 @@ Sweet Potato Casserole:
     In a large bowl, whisk together the butter, mashed sweet potatoes, milk, brown sugar, vanilla, nutmeg, salt and eggs. Transfer to the prepared baking dish.
     
   ingredients:
-    - sweet potatoes:
+    - 'sweet potatoes':
         amount: 4
 
-    - unsalted butter:
+    - 'unsalted butter':
         amount: 4 tbsp
 
-    - milk:
+    - 'milk':
         amount: 0.5 cup
 
-    - brown sugar:
+    - 'brown sugar':
         amount: 0.25 cup
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - vanilla extract:
+    - 'vanilla extract':
         amount: 1 tsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - nutmeg, ground:
+    - 'nutmeg, ground':
         amount: 0.25 tsp
 
 
-Creamy Corn Casserole:
+'Creamy Corn Casserole':
   description: |
     Sue's Thanksgiving Recipe
     
@@ -2435,29 +2435,29 @@ Creamy Corn Casserole:
     Serve and enjoy!
     
   ingredients:
-    - corn, whole kernel:
+    - 'corn, whole kernel':
         amount: 1 can
 
-    - creamed corn:
+    - 'creamed corn':
         amount: 1 can
 
-    - cornbread mix:
+    - 'cornbread mix':
         amount: 8 ,5 oz
 
-    - sour cream:
+    - 'sour cream':
         amount: 1 cup
 
-    - butter:
+    - 'butter':
         amount: 4 tbsp
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - canned green chilies:
+    - 'canned green chilies':
         amount: 4 oz
 
 
-garlic bread:
+'garlic bread':
   description: |
     Home -made version
     
@@ -2469,27 +2469,27 @@ garlic bread:
     Toast the slices on 'bagel' setting in the toaster oven
     
   ingredients:
-    - butter:
+    - 'butter':
         amount: 3 tbsp
 
-    - olive oil:
+    - 'olive oil':
         amount: 3 tbsp
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 0.5 tsp
 
-    - onion powder:
+    - 'onion powder':
         amount: 1 pinch
         optional: True
 
-    - challah:
+    - 'challah':
         amount: 5 slices
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 0.5 tsp
 
 
-kale gnocchi:
+'kale gnocchi':
   description: |
     From https://www.delish.com/cooking/recipe-ideas/a41037917/creamy-kale-and-gnocchi-bake-recipe/
     
@@ -2511,51 +2511,51 @@ kale gnocchi:
     Bake until filling is bubbling and top is golden, 16 to 20 minutes. Let cool 10 minutes before serving.
     
   ingredients:
-    - olive oil:
+    - 'olive oil':
         amount: 2 tbsp
 
-    - kale:
+    - 'kale':
         amount: 20 oz
 
-    - salt:
+    - 'salt':
         amount: 1 pinch
 
-    - shallots:
+    - 'shallots':
         amount: 2
 
-    - garlic:
+    - 'garlic':
         amount: 3 cloves
 
-    - flour:
+    - 'flour':
         amount: 3 tbsp
 
-    - milk:
+    - 'milk':
         amount: 4 cups
 
-    - mustard, Dijon:
+    - 'mustard, Dijon':
         amount: 2 tsp
 
-    - nutmeg:
+    - 'nutmeg':
         amount: 1 pinch
 
-    - black pepper:
+    - 'black pepper':
         amount: 1 pinch
 
-    - potato gnocchi:
+    - 'potato gnocchi':
         amount: 16 oz
 
-    - Monterey Jack cheese, shredded:
+    - 'Monterey Jack cheese, shredded':
         amount: 8 oz
 
-    - parmesan cheese, finely grated:
+    - 'parmesan cheese, finely grated':
         amount: 1 oz
 
-    - panko bread crumbs:
+    - 'panko bread crumbs':
         amount: 1 cup
         optional: True
 
 
-mayo egg:
+'mayo egg':
   description: |
     best breakfast egg recipe
     
@@ -2563,24 +2563,24 @@ mayo egg:
     mix egg and mayo, nuke for 30 seconds, add seasonings
     
   ingredients:
-    - egg
+    - 'egg'
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 1 tbsp
 
-    - italian seasoning:
+    - 'italian seasoning':
         amount: 1 pinch
 
-    - black pepper:
-        amount: 1 pinch
-        optional: True
-
-    - paprika:
+    - 'black pepper':
         amount: 1 pinch
         optional: True
 
+    - 'paprika':
+        amount: 1 pinch
+        optional: True
 
-Pumkin bean and kale soup:
+
+'Pumkin bean and kale soup':
   description: |
     Sue Culig's easy soup recipe
     
@@ -2590,41 +2590,41 @@ Pumkin bean and kale soup:
     Finish with parmesan cheese
     
   ingredients:
-    - Can of Pumpkin:
+    - 'Can of Pumpkin':
         amount: 1 can
 
-    - white beans:
+    - 'white beans':
         amount: 1 can
 
-    - Kale:
+    - 'Kale':
         amount: 1 bunch
 
-    - onion
+    - 'onion'
 
-    - frozen corn:
+    - 'frozen corn':
         amount: 1 cup
         optional: True
 
-    - vegetable broth:
+    - 'vegetable broth':
         amount: 3 cups
 
-    - Thyme:
+    - 'Thyme':
         amount: 1 bunch
         optional: True
 
-    - Salt:
+    - 'Salt':
         amount: 1 tsp
 
-    - Black pepper:
+    - 'Black pepper':
         amount: 1 pinch
         optional: True
 
-    - Parmesan cheese:
+    - 'Parmesan cheese':
         amount: 0.3 cups
         optional: True
 
 
-Spanish rice:
+'Spanish rice':
   description: |
     Mexican-style side dish
     
@@ -2638,29 +2638,29 @@ Spanish rice:
     Fluff with fork and serve
     
   ingredients:
-    - avocado oil:
+    - 'avocado oil':
         amount: 2 tbsp
 
-    - long grain rice:
+    - 'long grain rice':
         amount: 2 cups
 
-    - chicken broth:
+    - 'chicken broth':
         amount: 4 cups
 
-    - tomato sauce:
+    - 'tomato sauce':
         amount: 8 oz
 
-    - garlic:
+    - 'garlic':
         amount: 1 tsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 1 pinch
 
 
-Soft and Chewy Almond Sugar Cookies:
+'Soft and Chewy Almond Sugar Cookies':
   description: |
     From codykitchenconfections.blogspot.com
     
@@ -2688,54 +2688,54 @@ Soft and Chewy Almond Sugar Cookies:
     Remove from oven immediately, and right away press flat to a uniform shape. Place on ooling rack to fully cool.  
     
   ingredients:
-    - sugar:
+    - 'sugar':
         amount: 1.5 cups
 
-    - unsalted butter:
+    - 'unsalted butter':
         amount: 0.66 cups
 
-    - shortening:
+    - 'shortening':
         amount: 0.66 cups
 
-    - eggs:
+    - 'eggs':
         amount: 2
 
-    - almond extract:
+    - 'almond extract':
         amount: 2 tsp
 
-    - cake flour:
+    - 'cake flour':
         amount: 2.8 cups
 
-    - all-purpose flour:
+    - 'all-purpose flour':
         amount: 1 cup
 
-    - corn starch:
+    - 'corn starch':
         amount: 1 tbsp
 
-    - baking powder:
+    - 'baking powder':
         amount: 2 tsp
 
-    - salt:
+    - 'salt':
         amount: 0.5 tsp
 
-    - sugar in the raw, coarse sugar, or sprinkles:
+    - 'sugar in the raw, coarse sugar, or sprinkles':
         amount: 3 tbsp
 
 
-quesadilla:
+'quesadilla':
   directions: |
     preheat pan on medium low heat with a drop of oil or butter.
     
     Place tortilla on pan, layer cheese on top of tortilla. once cheese begins to melt, fold in half, cover and cook until just slightly browned. flip and cook on other side until also slightly browned and completely melted. cut into 4-5 wedges.
     
   ingredients:
-    - large tortilla, flour
+    - 'large tortilla, flour'
 
-    - shredded cheese:
+    - 'shredded cheese':
         amount: 3 oz
 
 
-Creamy Mocha Fudge:
+'Creamy Mocha Fudge':
   description: |
     Another one of Sue's holiday recipes!
     
@@ -2743,30 +2743,31 @@ Creamy Mocha Fudge:
     Over low heat melt morsels with dissolved coffee, additional water may be needed. Add vanilla. Stir constantly, add milks. Remove from heat. Consistency should be smooth with some sheen. In an 8x8 pan lined with parchment paper, quickly pour fudge into pan, smoothing with spoon or spatula. Refrigerate 3 hours. Cut into approximately 1 inch squares and place in Christmas tins.
     
   ingredients:
-    - Dark chocolate morsels:
+    - 'Dark chocolate morsels':
         amount: 18 oz
 
-    - Sweetened condensed milk can:
+    - 'Sweetened condensed milk can':
         amount: 10 oz
 
-    - Instant coffee crystals:
+    - 'Instant coffee crystals':
         amount: 5 tsp
 
-    - Water:
+    - 'Water':
         amount: 2 tbsp
 
-    - Vanilla extract:
+    - 'Vanilla extract':
         amount: 1 tsp
 
-    - Milk:
+    - 'Milk':
         amount: 2 tbsp
 
 
-Brisket in the Instant Pot:
+'Brisket in the Instant Pot':
   description: |
     From https://www.recipetineats.com/slow-cooker-beef-brisket-with-bbq-sauce/
     
     'Meat candy' when caramelized with sauce in the oven
+    
   directions: |
     Mix the spice rub, rub on the meat:
      1 tsp onion powder
@@ -2799,69 +2800,67 @@ Brisket in the Instant Pot:
     
     Slice against the grain, and serve with the remained of the sauce
     
-    
-    
-    
   ingredients:
-    - brisket:
+    - 'brisket':
         amount: 3 lb
 
-    - onion powder:
+    - 'onion powder':
         amount: 3 tsp
 
-    - brown sugar:
+    - 'brown sugar':
         amount: 1 tbsp
 
-    - paprika:
+    - 'paprika':
         amount: 2 tsp
 
-    - garlic powder:
+    - 'garlic powder':
         amount: 1 tsp
 
-    - cumin:
+    - 'cumin':
         amount: 0.5 tsp
 
-    - mustard powder:
+    - 'mustard powder':
         amount: 0.75 tsp
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.5 tsp
 
-    - apple cider vinegar:
+    - 'apple cider vinegar':
         amount: 0.5 cups
 
-    - garlic:
+    - 'garlic':
         amount: 2 cloves
 
-    - ketchup:
+    - 'ketchup':
         amount: 1.5 cups
 
-    - brown sugar:
+    - 'brown sugar':
         amount: 0.5 cups
 
-    - black pepper:
+    - 'black pepper':
         amount: 2 tsp
 
-    - onion powder:
+    - 'onion powder':
         amount: 2 tsp
 
-    - mustard powder:
+    - 'mustard powder':
         amount: 2 tsp
 
-    - cayenne pepper:
+    - 'cayenne pepper':
         amount: 1 tsp
         optional: True
 
-    - Worcestershire sauce:
+    - 'Worcestershire sauce':
         amount: 1 tbsp
 
 
-Soviet Olivier 'Olivye' Salad:
+'Soviet Olivier ''Olivye'' Salad':
   description: |
     A creamy potato salad from the Soviet times
+    
   directions: |
     Boil potatoes until just tender, do not overcook.
     
@@ -2870,37 +2869,39 @@ Soviet Olivier 'Olivye' Salad:
     Let cool and peel the potatoes and the eggs.
     
     Cut the potatoes, eggs, carrots, hot dogs and pickles into 1/2" cubes. Chop the dill finely. Use just enough mayo to lightly coat all of the chopped ingredients, do not use excess mayo. Mix all ingredients well.
+    
   ingredients:
-    - potatoes, Yukon Gold:
+    - 'potatoes, Yukon Gold':
         amount: 6
 
-    - carrot
+    - 'carrot'
 
-    - eggs:
+    - 'eggs':
         amount: 4
 
-    - pickles:
+    - 'pickles':
         amount: 6
 
-    - canned peas:
+    - 'canned peas':
         amount: 7 oz
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 0.5 cups
 
-    - dill:
+    - 'dill':
         amount: 1 tbsp
 
-    - Dijon mustard :
+    - 'Dijon mustard':
         amount: 2 tbsp
 
-    - Hot dogs:
+    - 'Hot dogs':
         amount: 4
 
 
-Soviet 'New Years Clock' Salad:
+'Soviet ''New Years Clock'' Salad':
   description: |
     A salad in the shape of a clock, served for New Year's Eve.
+    
   directions: |
     Boil the raw ingredients. Cool completely. 
     
@@ -2909,35 +2910,37 @@ Soviet 'New Years Clock' Salad:
     Use the largest carrot you can find. Cut the thick part of the carrot into rounds, to be used as the hours of the clock. Cut the remainder of the carrot into the clock hands. Write the number on the carrot circles using mayonnaise.
     
     Position the carrot "clock hands" at five minutes to midnight. Optionally, garnish with parsley, and a single olive in the center.
+    
   ingredients:
-    - chicken:
+    - 'chicken':
         amount: 1 lb
 
-    - eggs:
+    - 'eggs':
         amount: 3
 
-    - koryo-saram pickled carrots:
+    - 'koryo-saram pickled carrots':
         amount: 7 oz
 
-    - cheese:
+    - 'cheese':
         amount: 4 oz
 
-    - mayonnaise:
+    - 'mayonnaise':
         amount: 0.33 cups
 
-    - carrot
+    - 'carrot'
 
-    - parsley:
+    - 'parsley':
         amount: 1 tbsp
         optional: True
 
-    - olive:
+    - 'olive':
         optional: True
 
 
-Morkov-cha Koryo-saram carrot salad:
+'Morkov-cha Koryo-saram carrot salad':
   description: |
     Created by Koryo-saram people of Central Asia (ethnic Koreans from the Russian Far East, resettled by Stalin in the 1930s) to substitute for traditional Korean banchan. Popular throughout the ex-Soviet Union and diaspora, and has now been re-introduced back into Korea as 'carrot kimchi'
+    
   directions: |
     Peel and julienne the carrots (consider mandoline attachments or specialized tools) into long strands.
     
@@ -2946,38 +2949,33 @@ Morkov-cha Koryo-saram carrot salad:
     
     Heat oil, chop the onion and fry in the oil until aromatic, do not burn. Strain the onion and pour the hot oil over the spices and the carrots. Mix and store in the fridge for 2 hrs to allow the flavors to permeate.
     
-    
-    
-    
   ingredients:
-    - avocado oil:
+    - 'avocado oil':
         amount: 5 tbsp
 
-    - carrots:
+    - 'carrots':
         amount: 30 oz
 
-    - vinegar:
+    - 'vinegar':
         amount: 3 tbsp
 
-    - salt:
+    - 'salt':
         amount: 1 tsp
 
-    - sugar:
+    - 'sugar':
         amount: 1 tsp
 
-    - garlic:
+    - 'garlic':
         amount: 1 head
 
-    - coriander powder:
+    - 'coriander powder':
         amount: 0.5 tsp
 
-    - cayenne pepper:
+    - 'cayenne pepper':
         amount: 0.25 tsp
 
-    - paprika:
+    - 'paprika':
         amount: 0.25 tsp
 
-    - black pepper:
+    - 'black pepper':
         amount: 0.5 tsp
-
-

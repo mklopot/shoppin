@@ -46,7 +46,9 @@ class Recipes:
         with open(recipe_db_filepath, "w") as f:
             fcntl.flock(f, fcntl.LOCK_EX)
             for recipe in self.recipes:
-                f.write(f"{recipe}:\n")
+                # hash keys in YAML need the single and double quotes escaped by doubling them
+                recipe_name = recipe.replace('"', '""').replace("'", "''")
+                f.write(f"'{recipe_name}':\n")
                 if self.recipes[recipe].description:
                     f.write("  description: |\n")
                     description = "    " + "\n    ".join(self.recipes[recipe].description.split("\n"))
@@ -58,14 +60,16 @@ class Recipes:
                 if self.recipes[recipe].ingredients:
                     f.write("  ingredients:\n")
                     for ingredient in self.recipes[recipe].ingredients:
+                        # hash keys in YAML need the single and double quotes escaped by doubling them
+                        ingredient_name = ingredient.name.replace('"', '""').replace("'", "''")
                         if ingredient.optional is False and \
                                 ingredient.amount == 1 and not \
                                 ingredient.amount_unit and not \
                                 ingredient.brand and not \
                                 ingredient.vendor:
-                            f.write(f"    - {ingredient.name}\n")
+                            f.write(f"    - '{ingredient_name}'\n")
                         else:
-                            f.write(f"    - {ingredient.name}:\n")
+                            f.write(f"    - '{ingredient_name}':\n")
                             if ingredient.amount != 1 or ingredient.amount_unit:
                                 f.write(f"        amount: {ingredient.amount:.2g}")
                                 if ingredient.amount_unit:

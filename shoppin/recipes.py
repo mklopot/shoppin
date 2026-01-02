@@ -71,16 +71,21 @@ class Recipes:
                         else:
                             f.write(f"    - '{ingredient_name}':\n")
                             if ingredient.amount != 1 or ingredient.amount_unit:
-                                f.write(f"        amount: {ingredient.amount:.2g}")
+                                f.write(f"        amount: '{ingredient.amount:.2g}")
                                 if ingredient.amount_unit:
-                                    f.write(f" {ingredient.amount_unit}")
+                                    amount_unit = ingredient.amount_unit.replace("'", "''")
+                                    f.write(f" {amount_unit}'")
+                                else:
+                                    f.write("'")
                                 f.write("\n")
                         if ingredient.optional:
                             f.write("        optional: True\n")
                         if ingredient.brand:
-                            f.write(f"        brand: {ingredient.brand}\n")
+                            brand = ingredient.brand.replace("'", "''")
+                            f.write(f"        brand: '{brand}'\n")
                         if ingredient.vendor:
-                            f.write(f"        vendor: {ingredient.vendor}\n")
+                            vendor = ingredient.vendor.replace("'", "''")
+                            f.write(f"        vendor: '{vendor}'\n")
                         f.write("\n")
                 f.write("\n")
             fcntl.flock(f, fcntl.LOCK_UN)

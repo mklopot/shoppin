@@ -47,7 +47,7 @@ class Recipes:
             fcntl.flock(f, fcntl.LOCK_EX)
             for recipe in self.recipes:
                 # hash keys in YAML need the single and double quotes escaped by doubling them
-                recipe_name = recipe.replace('"', '""').replace("'", "''")
+                recipe_name = recipe.replace("'", "''")
                 f.write(f"'{recipe_name}':\n")
                 if self.recipes[recipe].description:
                     f.write("  description: |\n")
@@ -61,7 +61,7 @@ class Recipes:
                     f.write("  ingredients:\n")
                     for ingredient in self.recipes[recipe].ingredients:
                         # hash keys in YAML need the single and double quotes escaped by doubling them
-                        ingredient_name = ingredient.name.replace('"', '""').replace("'", "''")
+                        ingredient_name = ingredient.name.replace("'", "''")
                         if ingredient.optional is False and \
                                 ingredient.amount == 1 and not \
                                 ingredient.amount_unit and not \

@@ -58,10 +58,11 @@ a.x{
 }
 
 </style>
+ <script src="https://unpkg.com/htmx.org@1.9.6"></script>
 </head>
   <body>
     <h1><span style="color:green">Sort Shopping List Items Into Categories</span></h1>
-    <form action="/categorize" method="POST">
+    <form hx-post="/categorize" hx-trigger="change from:#category" hx-on="htmx:afterRequest:location.reload()">
     <label for="item">Item</label>
     <input type="text" id="item" name="item" placeholder="item name"><br>
     <label for="category">Category</label>
@@ -71,7 +72,6 @@ a.x{
             <option value="{{category}}">
             % end
             </datalist>
-    <br><br><input type="submit" value="Enter">
     </form>
     <br>
     <pre>

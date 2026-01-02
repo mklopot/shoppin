@@ -272,11 +272,22 @@ a.x{
       % if item.vendor:
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
       % end
+      % if item.category == "other":
+          <br><br>
+          <form hx-post="/categorize" hx-trigger="change" hx-on="htmx:afterRequest:location.reload()"> 
+            <input type="hidden" id="item" name="item" value="{{item.name}}"> 
+            <label for="category" style="color: lightblue">set category: </label>
+            <input list="categorylist" id="category" name="category" autocomplete="off" placeholder="category">
+            <datalist id="categorylist">
+            % for c in categories:
+            <option value="{{c}}">
+            % end
+            </datalist>
+          </form>
+      % end
      </td>
-       % if item.locked:
      <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg" width="32" height="32"></a></td>
-       % else:
-     <td style="width:10%"><a href="/got/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/cart3.svg" width="32" height="32"></a></td>
+       % if not item.locked:
      <td style="width:10%"><a href="/have/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-check-fill.svg" width="32" height="32"></a></td>
      <td style="width:10%"><a href="/lock/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg" width="32" height="32"></a></td>
        % end

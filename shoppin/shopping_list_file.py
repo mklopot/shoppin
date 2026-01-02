@@ -77,20 +77,26 @@ class ShoppingListFile:
                         item.amount_unit and not \
                         item.brand and not \
                         item.vendor:
-                    f.write(f"  - {item.name}")
+                    name = item.name.replace("'", "''")
+                    f.write(f"  - '{name}'")
                 else:
-                    f.write(f"  - {item.name}:")
+                    f.write(f"  - '{name}':")
 
                     if item.amount != 1 or item.amount_unit:
-                        f.write(f"\n      amount: {item.amount:.2g}")
+                        f.write(f"\n      amount: '{item.amount:.2g}")
                         if item.amount_unit:
-                            f.write(f" {item.amount_unit}")
+                            unit = item.amount_unit.replace("'", "''")
+                            f.write(f" {unit}'")
+                        else:
+                            f.write(f"'")
                 if item.optional:
                     f.write("\n      optional: True")
                 if item.brand:
-                    f.write(f"\n      brand: {item.brand}")
+                    brand = item.brand.replace("'", "''")
+                    f.write(f"\n      brand: '{brand}'")
                 if item.vendor:
-                    f.write(f"\n      vendor: {item.vendor}")
+                    vendor = item.vendor.replace("'", "''")
+                    f.write(f"\n      vendor: '{vendor}'")
                 f.write("\n\n")
 
 @dataclass

@@ -2,6 +2,8 @@ from enum import Enum
 from collections import defaultdict
 import uuid
 import logging
+import datetime
+from zoneinfo import ZoneInfo
 
 from util import pluralize, singularize
 import categories
@@ -15,12 +17,13 @@ class ItemStatus(Enum):
 
 
 class ShoppingList:
-    def __init__(self) -> None:
+    def __init__(self, timezone: str ="utc") -> None:
         logger.debug(f"Instantiating new {self}")
         self.items = []
         self.categorizer = None
         self.mapping = defaultdict(list)
         self.categorizer = categories.Categorizer()
+        self.timezone = timezone
         logger.debug(f"Using categorizer at {self.categorizer.filepath}")
 
     def load_ingredients(self, ingredients: list) -> None:
@@ -29,6 +32,7 @@ class ShoppingList:
             newitem = ShoppingListItem()
             newitem.from_ingredient(ingredient)
             newitem.list = self
+            newitem.timezone = self.timezone
             self.items.append(newitem)
             self.categorizer(newitem)
             logger.debug(f"Categorized {newitem.name} as {newitem.category}")
@@ -39,6 +43,7 @@ class ShoppingList:
         logger.info(f"Adding {item.name} to the shopping list")
         self.items.append(item)
         item.list = self
+        item.timezone = self.timezone
         self.categorizer(item)
         logger.debug(f"Categorized {item.name} as {item.category}")
         self.map(item)
@@ -134,6 +139,8 @@ class ShoppingListItem:
         self.locked = False
         self.purpose = purpose
         self.category = ""
+        self.timestamp = datetime.datetime.now()
+        self.timezone = "UTC"
 
     def get_purpose(self):
         if self.ingredients:
@@ -210,20 +217,26 @@ class ShoppingListItem:
         else:
             return  amount_str + " " + pluralize(self.amount_unit)
 
+    def get_timestamp(self):
+        return self.timestamp.strftime("%m/%d/%Y")
+
     def __repr__(self):
         return self.__str__()
 
     def set_got(self):
         logger.debug(f"Setting {self.name} item status to GOT")
         self.status = ItemStatus.GOT
+        self.timestamp = datetime.datetime.now(ZoneInfo(self.timezone))
 
     def set_have(self):
         logger.debug(f"Setting {self.name} item status to HAVE")
         self.status = ItemStatus.HAVE
+        self.timestamp = datetime.datetime.now(ZoneInfo(self.timezone))
 
     def set_need(self):
         logger.debug(f"Setting {self.name} item status to NEED")
         self.status = ItemStatus.NEED
+        self.timestamp = datetime.datetime.now(ZoneInfo(self.timezone))
 
     def lock(self):
         logger.debug(f"Setting {self.name} item lock status to LOCKED")

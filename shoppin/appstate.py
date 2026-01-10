@@ -38,7 +38,7 @@ class Appstate:
                 self.mealplan.recipe_database = self.recipes
         else:
             logger.debug("No saved application state found, initializing new application state")
-            self.shoppinglist = shopping.ShoppingList()
+            self.shoppinglist = shopping.ShoppingList(timezone=self.timezone)
             mealplan_name = datetime.now(
                     pytz.timezone(self.timezone)).strftime("Created %A, %B %d")
             self.mealplan = mealplan.MealPlan(mealplan_name)
@@ -55,7 +55,7 @@ class Appstate:
         logger.debug("Re-initializing application state")
         self.recipes = recipes.Recipes()
         self.recipes.load()
-        self.shoppinglist = shopping.ShoppingList()
+        self.shoppinglist = shopping.ShoppingList(timezone=self.timezone)
         mealplan_name = datetime.now(
                 pytz.timezone(self.timezone)).strftime("Created %A, %B %d")
         self.mealplan = mealplan.MealPlan(mealplan_name)

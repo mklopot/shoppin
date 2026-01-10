@@ -314,6 +314,7 @@ a.x{
     % if item.vendor:
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
+         <br><span class="attribution">{{item.get_timestamp()}}</span>
      </td>
      <td style="width:10%">&#x2705;</td>
      <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg" width="32" height="32"></a></td>
@@ -339,6 +340,7 @@ a.x{
     % if item.vendor:
          <br>&nbsp;&nbsp;Best Vendor: {{item.vendor}}
     % end
+         <br><span class="attribution">{{item.get_timestamp()}}</span>
      </td>
      <td style="width:20%"><a href="/need/{{item.id}}" hx-boost="true" hx-swap='innerHTML show:no-scroll'><img src="images/house-dash.svg" width="32" height="32"></a></td>
   </tr>

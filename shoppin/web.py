@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from bottle import Bottle, template, request, redirect, static_file
 import logging
 import copy
 import uuid
 import yaml
+from time import sleep
+import threading
 
 import shopping
 import util
@@ -18,10 +20,13 @@ logger = logging.getLogger("shoppin.web")
 logger.addHandler(logging.NullHandler())
 
 class Web(Bottle):
-    def __init__(self, appstate):
+    def __init__(self, appstate, remove_after={'days': 7}):
         logger.debug(f"Initialized new {self}")
         super(Web, self).__init__()
         self.appstate = appstate
+        self.remove_after = remove_after
+
+        self.start_scheduled_tasks()
 
         logger.debug("Registering routes...")
         ######################################################
@@ -60,8 +65,22 @@ class Web(Bottle):
         self.route('/categorize', method=['POST'], callback=self.categorize)
         self.route('/categorize-form', callback=self.categorize_form)
 
+    def remove_old_items(self):
+        while True:
+            logger.info("Running scheduled task remove_old_items()")
+            for item in self.appstate.shoppinglist.items:
+                if item.status in (shopping.ItemStatus.GOT, shopping.ItemStatus.HAVE) and \
+                        not item.ingredients and \
+                        datetime.now(pytz.timezone(self.appstate.timezone)) - item.timestamp > timedelta(**self.remove_after):
+                            self.appstate.shoppinglist.items.remove(item)
+                            logger.debug(f"Removing old item '{item.name}' from the shopping list")
+                            self.appstate.save_state()
+            sleep(60)
+
+    def start_scheduled_tasks(self):
+        threading.Thread(target=self.remove_old_items).start()
+
     def toplevel(self):
-        # need = [ingredient for ingredient in self.appstate.shoppinglist.items if ingredient.status is shopping.ItemStatus.NEED]
         categories = self.appstate.shoppinglist.categorizer.categories_index
         need = copy.copy(self.appstate.shoppinglist.mapping)
         marked_for_removal = []

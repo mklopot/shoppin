@@ -140,7 +140,7 @@ class ShoppingListItem:
         self.purpose = purpose
         self.category = ""
         self.timestamp = datetime.datetime.now()
-        self.timezone = "UTC"
+        self.timezone = "utc"
 
     def get_purpose(self):
         if self.ingredients:
@@ -218,7 +218,7 @@ class ShoppingListItem:
             return  amount_str + " " + pluralize(self.amount_unit)
 
     def get_timestamp(self):
-        return self.timestamp.strftime("%m/%d/%Y")
+        return self.timestamp.strftime("%m/%d/%y")
 
     def __repr__(self):
         return self.__str__()

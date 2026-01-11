@@ -139,8 +139,7 @@ class ShoppingListItem:
         self.locked = False
         self.purpose = purpose
         self.category = ""
-        self.timestamp = datetime.datetime.now()
-        self.timezone = "utc"
+        self.timestamp = datetime.datetime.now(ZoneInfo("UTC"))
 
     def get_purpose(self):
         if self.ingredients:
@@ -226,17 +225,20 @@ class ShoppingListItem:
     def set_got(self):
         logger.debug(f"Setting {self.name} item status to GOT")
         self.status = ItemStatus.GOT
-        self.timestamp = datetime.datetime.now(ZoneInfo(self.timezone))
+        if self.list:
+            self.timestamp = datetime.datetime.now(ZoneInfo(self.list.timezone))
 
     def set_have(self):
         logger.debug(f"Setting {self.name} item status to HAVE")
         self.status = ItemStatus.HAVE
-        self.timestamp = datetime.datetime.now(ZoneInfo(self.timezone))
+        if self.list:
+            self.timestamp = datetime.datetime.now(ZoneInfo(self.list.timezone))
 
     def set_need(self):
         logger.debug(f"Setting {self.name} item status to NEED")
         self.status = ItemStatus.NEED
-        self.timestamp = datetime.datetime.now(ZoneInfo(self.timezone))
+        if self.list:
+            self.timestamp = datetime.datetime.now(ZoneInfo(self.list.timezone))
 
     def lock(self):
         logger.debug(f"Setting {self.name} item lock status to LOCKED")

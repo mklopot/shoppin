@@ -72,12 +72,12 @@ class ShoppingListFile:
             self.path = self.name + ".yaml"
         with open(self.path, 'w') as f:
             for item in self.items:
+                name = item.name.replace("'", "''")
                 if item.optional is False and \
                         item.amount == 1 and not \
                         item.amount_unit and not \
                         item.brand and not \
                         item.vendor:
-                    name = item.name.replace("'", "''")
                     f.write(f"  - '{name}'")
                 else:
                     f.write(f"  - '{name}':")

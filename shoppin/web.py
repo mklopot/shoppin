@@ -315,7 +315,7 @@ class Web(Bottle):
 # Edit preset lists
     def add_preset_item(self):
         preset_list = [preset_list for preset_list in self.appstate.listmanager.lists if preset_list.name == request.POST.preset_list_name][0]
-        logger.debug(f"Adding {request.POST.name} as an item in preset list {preset_list.name}")
+        logger.debug(f"Adding {request.POST.item_name} as an item in preset list {preset_list.name}")
         item_amount, item_amount_unit = util.parse_amount(request.POST.amount)
         new_item = shopping_list_file.Item(name=request.POST.item_name,
                                            amount=item_amount,

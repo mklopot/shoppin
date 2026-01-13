@@ -1238,7 +1238,7 @@
         amount: '20 grams'
 
     - 'walnuts':
-        amount: '1e+02 grams'
+        amount: '1 e+02 grams'
 
     - 'can crushed tomatoes':
         amount: '16 oz'
@@ -1628,7 +1628,10 @@
     
     Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
     
-    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. 
+    
+    Optionally finish with half a cup of cream.
+    Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
     
   ingredients:
     - 'tortellini':
@@ -1670,6 +1673,10 @@
 
     - 'black pepper':
         amount: '1 pinch'
+
+    - 'cream':
+        amount: '0.5 cup'
+        optional: True
 
 
 'Eggplant Parmesan':

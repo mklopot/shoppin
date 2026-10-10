@@ -37,9 +37,9 @@ class Ingredient:
  
 
 class Recipes:
-    def __init__(self, recipes: list[Recipe] = {}) -> None:
+    def __init__(self, recipes: dict[str, Recipe] = None) -> None:
         logger.debug(f"Instantiated a recipe database {self}")
-        self.recipes = recipes
+        self.recipes = recipes if recipes is not None else {}
 
     def save(self, recipe_db_filepath="recipe-database.yaml"):
         logger.debug(f"Saving recipe database to {recipe_db_filepath}")

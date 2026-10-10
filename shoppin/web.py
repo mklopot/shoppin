@@ -20,11 +20,11 @@ logger = logging.getLogger("shoppin.web")
 logger.addHandler(logging.NullHandler())
 
 class Web(Bottle):
-    def __init__(self, appstate, remove_after={'days': 7}):
+    def __init__(self, appstate, remove_after=None):
         logger.debug(f"Initialized new {self}")
         super(Web, self).__init__()
         self.appstate = appstate
-        self.remove_after = remove_after
+        self.remove_after = remove_after if remove_after is not None else {'days': 7}
 
         self.start_scheduled_tasks()
 

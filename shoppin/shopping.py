@@ -125,7 +125,7 @@ class ShoppingList:
 
 
 class ShoppingListItem:
-    def __init__(self, name="", amount=1, amount_unit='', brand='', vendor='', optional=False, ingredients=[], purpose=[]):
+    def __init__(self, name="", amount=1, amount_unit='', brand='', vendor='', optional=False, ingredients=None, purpose=None):
         self.id = uuid.uuid4().int
         self.name = name
         self.amount = amount
@@ -133,11 +133,11 @@ class ShoppingListItem:
         self.vendor = vendor
         self.brand = brand
         self.optional = optional
-        self.ingredients = ingredients
+        self.ingredients = list(ingredients) if ingredients is not None else []
         self.status = ItemStatus.NEED 
         self.list = None
         self.locked = False
-        self.purpose = purpose
+        self.purpose = list(purpose) if purpose is not None else []
         self.category = ""
         self.timestamp = datetime.datetime.now(ZoneInfo("UTC"))
 

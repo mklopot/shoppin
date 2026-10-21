@@ -145,7 +145,7 @@ class ShoppingListItem(models.Model):
         max_length=255,
         blank=True,
         default="one-time purchase",
-        help_text="Recipe attribution or purpose (defaults to 'one-time purchase' for one-offs)",
+        help_text="Human-readable purpose (defaults to 'one-time purchase' for one-offs)",
     )
     optional = models.BooleanField(default=False)
     status = models.CharField(

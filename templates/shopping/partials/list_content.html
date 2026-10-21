@@ -70,38 +70,39 @@
     </div>
 
     <!-- SECTION 1: TO BUY (NEED) -->
-    <div class="space-y-3">
+    <div class="space-y-5">
         {% if grouped_need %}
-            <div class="border-b-2 border-gray-400 pb-0.5 mt-1 flex justify-between items-baseline">
-                <h2 class="font-bold text-sm text-gray-900 uppercase tracking-wide">To Buy ({{ need_count }})</h2>
+            <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 pt-1">
+                To Buy ({{ need_count }})
             </div>
             {% for group_title, items in grouped_need.items %}
-            <div class="space-y-0.5">
-                <!-- Category/Aisle Header: Plain page background, clean text and subtle border -->
-                <div class="border-b border-gray-300 pb-1 pt-2 flex justify-between items-baseline">
-                    <h3 class="font-bold text-xs uppercase tracking-wide text-gray-800">
-                        {{ group_title }} <span class="text-gray-500 font-normal">({{ items|length }})</span>
+            <div class="pt-2">
+                <!-- Category/Aisle Header: Larger, heavier weight, solid bottom rule, same page background -->
+                <div class="border-b-2 border-gray-900 pb-1 flex justify-between items-baseline">
+                    <h3 class="font-black text-base tracking-wider uppercase text-gray-950 flex items-center space-x-2">
+                        <span>{{ group_title }}</span>
+                        <span class="text-xs font-normal text-gray-500 tracking-normal lowercase">({{ items|length }})</span>
                     </h3>
                 </div>
 
-                <!-- High Density Item Table/Rows -->
-                <div class="sortable-group divide-y divide-gray-200 border-t border-b border-gray-200" data-group="{{ group_title }}">
+                <!-- Indented Item List for clear parent-child visual hierarchy -->
+                <div class="sortable-group divide-y divide-gray-200 ml-1 sm:ml-2 pl-1 border-l-2 border-gray-200" data-group="{{ group_title }}">
                     {% for item in items %}
-                    <div class="py-1 px-1.5 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}">
+                    <div class="py-1.5 px-1.5 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}">
                         <!-- Left: Drag handle + Name + Specs -->
                         <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
-                            <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 select-none text-sm font-mono">⋮⋮</span>
+                            <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 select-none text-sm font-mono">⋮⋮</span>
                             <div class="min-w-0 flex-1 leading-snug">
-                                <span class="font-bold text-gray-900 text-sm">{{ item.name }}</span>
-                                <span class="font-medium text-gray-700 ml-1.5">{{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}</span>
+                                <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                                <span class="font-normal text-gray-700 ml-1.5">({{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %})</span>
 
                                 <!-- Secondary details -->
                                 <span class="text-gray-500 ml-2">
                                     {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
                                     {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
-                                    {% if item.brand %}<span class="ml-1 font-normal">Brand: {{ item.brand }}</span>{% endif %}
-                                    {% if item.vendor %}<span class="ml-1 font-normal">Vendor: {{ item.vendor }}</span>{% endif %}
-                                    {% if item.aisle %}<span class="ml-1 text-gray-600 font-semibold">📍 {{ item.aisle }}</span>{% endif %}
+                                    {% if item.brand %}<span class="ml-1 font-normal text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
+                                    {% if item.vendor %}<span class="ml-1 font-normal text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
+                                    {% if item.aisle %}<span class="ml-1 text-gray-700 font-medium">📍 {{ item.aisle }}</span>{% endif %}
                                 </span>
                             </div>
                         </div>

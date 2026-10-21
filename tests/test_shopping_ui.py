@@ -152,3 +152,28 @@ def test_item_purpose_handling(client, active_list):
     )
     towel.refresh_from_db()
     assert towel.purpose == "Cleaning Supplies"
+
+
+@pytest.mark.django_db
+def test_item_transitions_and_toast_notifications(client, active_list):
+    item = active_list.items.get(name="Bananas")
+
+    # 1. Transition to GOT: checks toast notification and view-transition-name styling
+    res = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+    assert "Moved &#x27;Bananas&#x27; to Cart" in content or "Moved 'Bananas' to Cart" in content
+    assert 'hx-swap-oob="beforeend"' in content
+    assert f"view-transition-name: item-row-{item.id}" in content
+
+    # 2. Add item toast notification
+    res = client.post(reverse("shopping:add_item"), {"name": "Sourdough", "amount": "1"})
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+    assert "+ Added &#x27;Sourdough&#x27; to shopping list" in content or "+ Added 'Sourdough' to shopping list" in content
+
+    # 3. Delete item toast notification
+    res = client.post(reverse("shopping:delete_item", args=[item.id]))
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+    assert "Deleted &#x27;Bananas&#x27;" in content or "Deleted 'Bananas'" in content

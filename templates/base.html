@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- HTMX + Extensions -->
+    <meta name="htmx-config" content='{"globalViewTransitions": true}'>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
 
@@ -17,6 +18,38 @@
 
     <style>
         body { font-family: Arial, Helvetica, sans-serif; }
+
+        /* Smooth View Transitions for transitioning elements */
+        ::view-transition-old(*),
+        ::view-transition-new(*) {
+            animation-duration: 0.22s;
+            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        /* Fallback/complementary transitions for item rows */
+        .item-row {
+            transition: background-color 0.15s ease, opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        /* Loading state during HTMX requests */
+        .htmx-request {
+            opacity: 0.6;
+        }
+
+        /* Toast animation */
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .toast-item {
+            animation: toastSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -53,6 +86,34 @@
     <main class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-3">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Floating Toast Notifications Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        function dismissToast(el) {
+            if (!el || el.dataset.dismissing) return;
+            el.dataset.dismissing = "true";
+            el.style.transition = "opacity 0.22s ease-out, transform 0.22s ease-out";
+            el.style.opacity = "0";
+            el.style.transform = "translateY(10px) scale(0.97)";
+            setTimeout(() => {
+                el.remove();
+            }, 220);
+        }
+
+        function initToasts() {
+            document.querySelectorAll('.toast-item:not([data-toast-initialized])').forEach(toast => {
+                toast.dataset.toastInitialized = "true";
+                setTimeout(() => {
+                    dismissToast(toast);
+                }, 3200);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initToasts);
+        document.addEventListener('htmx:afterSwap', initToasts);
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

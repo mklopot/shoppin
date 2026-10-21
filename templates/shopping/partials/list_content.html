@@ -1,8 +1,10 @@
 <div id="shopping-list-content" class="space-y-4">
     {% if toast_message %}
-    <div class="bg-gray-100 border border-gray-400 p-2 text-xs text-gray-800 flex justify-between items-center">
-        <span>{{ toast_message }}</span>
-        <button type="button" onclick="this.parentElement.remove()" class="text-gray-500 hover:text-gray-800 font-bold ml-2">&times;</button>
+    <div id="toast-container" hx-swap-oob="beforeend">
+        <div class="toast-item pointer-events-auto flex items-center justify-between bg-gray-950 text-white text-xs px-3.5 py-2.5 shadow-lg border border-gray-700 min-w-[260px] max-w-sm rounded-none">
+            <span class="font-medium pr-2">{{ toast_message }}</span>
+            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-white font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+        </div>
     </div>
     {% endif %}
 
@@ -10,7 +12,7 @@
     <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-300 pb-2 text-xs">
         <!-- Store Selector -->
         <div class="flex items-center space-x-2">
-            <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="flex items-center space-x-1.5">
+            <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1.5">
                 {% csrf_token %}
                 <span class="font-bold text-gray-700">Store:</span>
                 <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
@@ -30,18 +32,18 @@
         <!-- Sort Toggle & Clear Button -->
         <div class="flex items-center space-x-2">
             <div class="inline-flex border border-gray-400">
-                <button hx-get="{% url 'shopping:list' %}?group_by=category" hx-target="#shopping-list-content" hx-swap="outerHTML"
+                <button hx-get="{% url 'shopping:list' %}?group_by=category" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
                         class="px-2.5 py-1 text-xs font-medium {% if group_by == 'category' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
                     By Category
                 </button>
-                <button hx-get="{% url 'shopping:list' %}?group_by=aisle" hx-target="#shopping-list-content" hx-swap="outerHTML"
+                <button hx-get="{% url 'shopping:list' %}?group_by=aisle" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
                         class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if group_by == 'aisle' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
                     By Aisle
                 </button>
             </div>
 
             {% if got_items %}
-            <form hx-post="{% url 'shopping:clear_completed' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="inline">
+            <form hx-post="{% url 'shopping:clear_completed' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
                 {% csrf_token %}
                 <button type="submit" onclick="return confirm('Clear cart items?')" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 px-2 py-1 text-xs">
                     Clear Cart
@@ -53,7 +55,7 @@
 
     <!-- Add Item Bar (High Density, Simple Border) -->
     <div class="bg-gray-50 border border-gray-300 p-2">
-        <form hx-post="{% url 'shopping:add_item' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-1.5 text-xs">
+        <form hx-post="{% url 'shopping:add_item' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
             <input type="text" name="name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
                    class="flex-1 min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none">
@@ -89,7 +91,7 @@
                 <!-- Indented Item List for clear parent-child visual hierarchy -->
                 <div class="sortable-group divide-y divide-gray-200 ml-1 sm:ml-2 pl-1 border-l-2 border-gray-200" data-group="{{ group_title }}">
                     {% for item in items %}
-                    <div class="py-1.5 px-1.5 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}">
+                    <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-1.5 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                         <!-- Left: Drag handle + Name + Specs -->
                         <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                             <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 select-none text-sm font-mono">⋮⋮</span>
@@ -111,7 +113,7 @@
                         <!-- Right: Action Buttons (Compact, minimal colors) -->
                         <div class="flex items-center space-x-1 flex-shrink-0">
                             <!-- GOT (Cart) -->
-                            <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
+                            <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                 {% csrf_token %}
                                 <button type="submit" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
                                     🛒 Got
@@ -119,7 +121,7 @@
                             </form>
 
                             <!-- HAVE (Pantry) -->
-                            <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
+                            <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                 {% csrf_token %}
                                 <button type="submit" title="Already have at home" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
                                     🏠 Have
@@ -127,7 +129,7 @@
                             </form>
 
                             <!-- DONT_NEED (Skip) -->
-                            <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
+                            <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                 {% csrf_token %}
                                 <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
                                     Skip
@@ -140,7 +142,7 @@
                             </button>
 
                             <!-- Delete item -->
-                            <form hx-post="{% url 'shopping:delete_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
+                            <form hx-post="{% url 'shopping:delete_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                 {% csrf_token %}
                                 <button type="submit" onclick="return confirm('Delete {{ item.name }}?')" class="text-gray-300 hover:text-red-700 px-1 py-0.5" title="Delete">
                                     ✕
@@ -168,13 +170,13 @@
         </div>
         <div class="divide-y divide-gray-200">
             {% for item in got_items %}
-            <div class="px-3 py-1 flex justify-between items-center text-xs hover:bg-gray-200/50">
+            <div id="item-row-{{ item.id }}" class="item-row px-3 py-1 flex justify-between items-center text-xs hover:bg-gray-200/50" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                 <div class="flex items-center space-x-2">
                     <span class="text-gray-600 font-bold">✓</span>
                     <span class="text-gray-800 font-medium">{{ item.name }}</span>
                     <span class="text-gray-500 ml-1">{{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}</span>
                 </div>
-                <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
+                <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                     {% csrf_token %}
                     <button type="submit" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 px-1.5 py-0.5 text-xs">
                         Put Back
@@ -195,7 +197,7 @@
         </summary>
         <div class="divide-y divide-gray-200 bg-white">
             {% for item in pantry_items %}
-            <div class="px-3 py-1 flex justify-between items-center hover:bg-gray-50 text-xs">
+            <div id="item-row-{{ item.id }}" class="item-row px-3 py-1 flex justify-between items-center hover:bg-gray-50 text-xs" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                 <div class="flex items-center space-x-1.5">
                     {% if item.status == 'HAVE' %}
                     <span class="text-gray-600 font-medium">🏠 Have:</span>
@@ -205,7 +207,7 @@
                     <span class="text-gray-800">{{ item.name }}</span>
                     <span class="text-gray-500 ml-1">{{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}</span>
                 </div>
-                <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
+                <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                     {% csrf_token %}
                     <button type="submit" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-1.5 py-0.5 text-xs font-medium">
                         + Need

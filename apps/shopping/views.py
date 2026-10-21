@@ -9,7 +9,12 @@ from django.views.decorators.http import require_POST
 from apps.core.categorizer import categorizer
 from apps.core.utils import parse_amount_and_unit, singularize
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, StoreLocation
-from apps.shopping.services.store_service import get_nearest_stores, resolve_store_aisle
+from apps.shopping.services.store_service import (
+    DEPARTMENT_ORDER,
+    get_aisle_sort_key,
+    get_nearest_stores,
+    resolve_store_aisle,
+)
 
 
 def get_active_list(request) -> ShoppingList:
@@ -38,16 +43,22 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
         for item in need_items:
             aisle = item.get_effective_aisle()
             grouped_need[aisle].append(item)
+
+        sorted_keys = sorted(grouped_need.keys(), key=get_aisle_sort_key)
+        sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
     else:
         for item in need_items:
             cat = (item.category or "other").title()
             grouped_need[cat].append(item)
 
+        sorted_keys = sorted(grouped_need.keys(), key=lambda c: DEPARTMENT_ORDER.get(c.lower(), 200))
+        sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
+
     stores = StoreLocation.objects.all().order_by("name")
 
     return {
         "shopping_list": shopping_list,
-        "grouped_need": dict(grouped_need),
+        "grouped_need": sorted_grouped_need,
         "need_count": len(need_items),
         "got_items": got_items,
         "got_count": len(got_items),

@@ -3,6 +3,7 @@ import json
 import logging
 import math
 import os
+import re
 import urllib.parse
 import urllib.request
 from typing import Any
@@ -43,6 +44,40 @@ DEPARTMENT_ORDER = {
     "cleaning": 120,
     "other": 200,
 }
+
+
+def get_aisle_sort_key(aisle_name: str) -> tuple[int, int, str]:
+    """
+    Computes a natural sorting key for an aisle name to ensure logical walking order:
+    1. Early perimeter fresh departments (Produce, Floral, Bakery, Deli, Meat) -> sequence 10-40
+    2. Numbered grocery aisles in numeric order (Aisle 1, Aisle 2, ..., Aisle 14, ..., Aisle 35) -> sequence 100 + num
+    3. Cold perimeter departments (Dairy, Frozen, Ice Cream) -> sequence 200+
+    4. General / Other -> sequence 300+
+    """
+    clean = (aisle_name or "").strip().lower()
+
+    # Fresh perimeter (entrance departments)
+    if any(k in clean for k in ["produce", "fruit", "floral", "entrance"]):
+        return (10, 0, clean)
+    if any(k in clean for k in ["bakery", "bread"]):
+        return (20, 0, clean)
+    if any(k in clean for k in ["deli", "prepared", "sandwich"]):
+        return (30, 0, clean)
+    if any(k in clean for k in ["meat", "seafood", "butcher", "fish"]):
+        return (40, 0, clean)
+
+    # Numbered grocery aisles: e.g. "Aisle 1", "Aisle 14", "Aisle 35"
+    num_match = re.search(r"\d+", clean)
+    if num_match:
+        return (100, int(num_match.group(0)), clean)
+
+    # Cold perimeter departments
+    if any(k in clean for k in ["frozen", "freezer", "ice cream"]):
+        return (200, 0, clean)
+    if any(k in clean for k in ["dairy", "milk", "cheese", "eggs"]):
+        return (210, 0, clean)
+
+    return (300, 0, clean)
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

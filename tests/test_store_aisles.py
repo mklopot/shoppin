@@ -98,3 +98,29 @@ def test_shopping_list_effective_aisle():
     )
 
     assert item.get_effective_aisle() == "Aisle 2 Produce"
+
+
+def test_aisle_natural_sorting():
+    from apps.shopping.services.store_service import get_aisle_sort_key
+
+    unordered_aisles = [
+        "Aisle 35",
+        "Aisle 36",
+        "Aisle 14",
+        "Produce Stand",
+        "Bakery",
+        "Aisle 1",
+        "Meat Counter",
+        "Dairy",
+    ]
+    sorted_aisles = sorted(unordered_aisles, key=get_aisle_sort_key)
+    assert sorted_aisles == [
+        "Produce Stand",
+        "Bakery",
+        "Meat Counter",
+        "Aisle 1",
+        "Aisle 14",
+        "Aisle 35",
+        "Aisle 36",
+        "Dairy",
+    ]

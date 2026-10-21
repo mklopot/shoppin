@@ -142,12 +142,6 @@
                                 <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                                     ✏️
                                 </button>
-                                <form hx-post="{% url 'shopping:delete_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                                    {% csrf_token %}
-                                    <button type="submit" onclick="return confirm('Delete {{ item.name }}?')" class="text-gray-300 hover:text-red-700 px-1 py-0.5" title="Delete">
-                                        ✕
-                                    </button>
-                                </form>
                             </div>
                         </div>
                         {% endfor %}
@@ -214,15 +208,15 @@
                             🏠 Have
                         </button>
                     </form>
+                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        {% csrf_token %}
+                        <button type="submit" title="Don't need this trip" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
+                            Skip
+                        </button>
+                    </form>
                     <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                         ✏️
                     </button>
-                    <form hx-post="{% url 'shopping:delete_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                        {% csrf_token %}
-                        <button type="submit" onclick="return confirm('Delete {{ item.name }}?')" class="text-gray-300 hover:text-red-700 px-1 py-0.5" title="Delete">
-                            ✕
-                        </button>
-                    </form>
                 </div>
             </div>
             {% endfor %}
@@ -281,15 +275,24 @@
                             🛒 Got
                         </button>
                     </form>
+                    {% if item.status == 'HAVE' %}
+                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        {% csrf_token %}
+                        <button type="submit" title="Don't need this trip" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
+                            Skip
+                        </button>
+                    </form>
+                    {% else %}
+                    <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        {% csrf_token %}
+                        <button type="submit" title="Already have at home" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-700">
+                            🏠 Have
+                        </button>
+                    </form>
+                    {% endif %}
                     <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                         ✏️
                     </button>
-                    <form hx-post="{% url 'shopping:delete_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                        {% csrf_token %}
-                        <button type="submit" onclick="return confirm('Delete {{ item.name }}?')" class="text-gray-300 hover:text-red-700 px-1 py-0.5" title="Delete">
-                            ✕
-                        </button>
-                    </form>
                 </div>
             </div>
             {% endfor %}

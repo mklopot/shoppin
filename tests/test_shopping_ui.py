@@ -226,3 +226,6 @@ def test_to_buy_section_styling_and_drag_handles(client, active_list):
     # Combined header with title and store select
     assert "Shopping List" in content
     assert "name=\"store_id\"" in content
+
+    # Item remove/delete buttons removed from UI in favor of Skip
+    assert "delete_item" not in content

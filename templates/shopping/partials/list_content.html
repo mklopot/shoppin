@@ -73,15 +73,14 @@
     <div class="space-y-5">
         {% if grouped_need %}
             <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 pt-1">
-                To Buy ({{ need_count }})
+                To Buy
             </div>
             {% for group_title, items in grouped_need.items %}
             <div class="pt-2">
                 <!-- Category/Aisle Header: Larger, heavier weight, solid bottom rule, same page background -->
                 <div class="border-b-2 border-gray-900 pb-1 flex justify-between items-baseline">
-                    <h3 class="font-black text-base tracking-wider uppercase text-gray-950 flex items-center space-x-2">
-                        <span>{{ group_title }}</span>
-                        <span class="text-xs font-normal text-gray-500 tracking-normal lowercase">({{ items|length }})</span>
+                    <h3 class="font-black text-base tracking-wider uppercase text-gray-950">
+                        {{ group_title }}
                     </h3>
                 </div>
 
@@ -162,7 +161,7 @@
     {% if got_items %}
     <div class="border border-gray-300 mt-6" style="background-color: #f3f3f3;">
         <div class="px-3 py-1.5 border-b border-gray-300 flex justify-between items-center text-xs font-bold text-gray-800">
-            <span>Got ({{ got_count }})</span>
+            <span>Got</span>
             <span class="text-gray-500 font-normal">Purchased in cart</span>
         </div>
         <div class="divide-y divide-gray-200">
@@ -170,7 +169,7 @@
             <div class="px-3 py-1 flex justify-between items-center text-xs hover:bg-gray-200/50">
                 <div class="flex items-center space-x-2">
                     <span class="text-gray-600 font-bold">✓</span>
-                    <span class="text-gray-600 line-through">{{ item.name }}</span>
+                    <span class="text-gray-800 font-medium">{{ item.name }}</span>
                     <span class="text-gray-500 ml-1">{{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}</span>
                 </div>
                 <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
@@ -189,7 +188,7 @@
     {% if pantry_items %}
     <details class="border border-gray-300 mt-4 text-xs" style="background-color: #e5e7eb;">
         <summary class="px-3 py-1.5 font-bold text-gray-800 cursor-pointer select-none flex justify-between items-center">
-            <span>Already Have / Skipped ({{ pantry_count }})</span>
+            <span>Already Have / Skipped</span>
             <span class="text-gray-500 font-normal">Click to show/hide</span>
         </summary>
         <div class="divide-y divide-gray-200 bg-white">

@@ -1,0 +1,32 @@
+  - milk:
+      amount: 2 half-gallons
+
+  - eggs
+
+  - yoghurt:
+      amount: 4
+
+  - apples:
+      amount: 5
+
+  - bananas
+
+  - tangerines
+
+  - lemons
+
+  - sardines:
+      vendor: Safeway
+
+  - Spicy Bean Patties:
+      brand: Morningstar Farms
+
+  - chocolate bar, dark
+
+  - chocolate bar, milk
+
+  - celery
+
+  - cheesecake bites:
+      amount: 1 box
+

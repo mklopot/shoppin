@@ -1,0 +1,33 @@
+[project]
+name = "shoppin"
+version = "2.0.0"
+description = "Shopping list generator, recipe database, and meal planner"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.0",
+    "channels>=4.3",
+    "daphne>=4.2",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1",
+    "pytest-django>=4.14",
+    "ruff>=0.17",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".venv",
+    "legacy",
+    "migrations",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]

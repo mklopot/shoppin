@@ -3,11 +3,10 @@ URL configuration for Shoppin project.
 """
 
 from django.contrib import admin
-from django.urls import path
-
-from apps.core import views as core_views
+from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', core_views.index, name='index'),
+    path('', include('apps.shopping.urls')),
+    path('shopping/', include('apps.shopping.urls')),
 ]

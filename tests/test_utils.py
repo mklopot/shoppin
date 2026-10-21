@@ -38,3 +38,12 @@ def test_singularize_and_pluralize():
     assert singularize("apples") == "apple"
     assert pluralize("apple") == "apples"
     assert pluralize("lb") == "lb"
+
+
+def test_categorizer_tally_occurrences():
+    from apps.core.categorizer import categorizer
+    # "beans" should be categorized based on biggest count ("canned vegetables") rather than first match ("frozen")
+    assert categorizer.get_category("beans") == "canned vegetables"
+    assert categorizer.get_category("black bean patty") == "frozen"
+    assert categorizer.get_category("bell pepper") == "produce"
+    assert categorizer.get_category("unknown_exotic_food_123") == "other"

@@ -113,6 +113,11 @@ class ShoppingList(models.Model):
         blank=True,
         help_text="Cron expression or schedule description (e.g. 'weekly-saturday')",
     )
+    custom_section_order = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Custom order of categories and aisles: {'category': [...], 'aisle': [...]}",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

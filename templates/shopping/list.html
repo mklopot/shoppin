@@ -48,10 +48,38 @@
 
     // 2. SortableJS Drag-and-Drop Reordering Initialization
     function initSortables() {
+        // A. Section/Aisle level drag-and-drop
+        const sectionsContainer = document.getElementById('section-groups-container');
+        if (sectionsContainer && !sectionsContainer._sortable) {
+            sectionsContainer._sortable = new Sortable(sectionsContainer, {
+                handle: '.section-drag-handle',
+                draggable: '.section-group-block',
+                animation: 150,
+                ghostClass: 'bg-gray-100',
+                chosenClass: 'opacity-70',
+                onEnd: function(evt) {
+                    const groupNames = Array.from(sectionsContainer.querySelectorAll('.section-group-block'))
+                        .map(el => el.getAttribute('data-group-name'));
+                    const groupBy = sectionsContainer.getAttribute('data-group-by') || 'category';
+
+                    htmx.ajax('POST', '{% url "shopping:reorder_sections" %}', {
+                        swap: 'none',
+                        values: {
+                            'group_names[]': groupNames,
+                            'group_by': groupBy,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        }
+                    });
+                }
+            });
+        }
+
+        // B. Item level drag-and-drop within sections
         document.querySelectorAll('.sortable-group').forEach(group => {
             if (group._sortable) return;
             group._sortable = new Sortable(group, {
                 handle: '.drag-handle',
+                draggable: '.item-row',
                 animation: 120,
                 ghostClass: 'bg-gray-100',
                 onEnd: function(evt) {

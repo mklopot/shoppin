@@ -37,6 +37,10 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
     got_items = [i for i in items if i.status == ItemStatus.GOT]
     pantry_items = [i for i in items if i.status in (ItemStatus.HAVE, ItemStatus.DONT_NEED)]
 
+    custom_orders = shopping_list.custom_section_order or {}
+    custom_order_list = custom_orders.get(group_by, [])
+    custom_order_map = {name.lower(): idx for idx, name in enumerate(custom_order_list)}
+
     # Group need_items
     grouped_need = defaultdict(list)
     if group_by == "aisle" and shopping_list.active_store:
@@ -44,14 +48,24 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
             aisle = item.get_effective_aisle()
             grouped_need[aisle].append(item)
 
-        sorted_keys = sorted(grouped_need.keys(), key=get_aisle_sort_key)
+        def aisle_sort_key_fn(k):
+            if k.lower() in custom_order_map:
+                return (0, custom_order_map[k.lower()])
+            return (1, get_aisle_sort_key(k))
+
+        sorted_keys = sorted(grouped_need.keys(), key=aisle_sort_key_fn)
         sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
     else:
         for item in need_items:
             cat = (item.category or "other").title()
             grouped_need[cat].append(item)
 
-        sorted_keys = sorted(grouped_need.keys(), key=lambda c: DEPARTMENT_ORDER.get(c.lower(), 200))
+        def cat_sort_key_fn(k):
+            if k.lower() in custom_order_map:
+                return (0, custom_order_map[k.lower()])
+            return (1, DEPARTMENT_ORDER.get(k.lower(), 200))
+
+        sorted_keys = sorted(grouped_need.keys(), key=cat_sort_key_fn)
         sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
 
     stores = StoreLocation.objects.all().order_by("name")
@@ -282,6 +296,40 @@ def reorder_items(request):
 
         for idx, i_id in enumerate(item_ids):
             ShoppingListItem.objects.filter(id=int(i_id)).update(order=idx)
+
+        return HttpResponse(status=204)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+@require_POST
+def reorder_sections(request):
+    try:
+        shopping_list = get_active_list(request)
+        group_by = request.POST.get("group_by", "category")
+        group_names = request.POST.getlist("group_names[]")
+        if not group_names:
+            body = json.loads(request.body.decode()) if request.body else {}
+            group_names = body.get("group_names", [])
+            group_by = body.get("group_by", group_by)
+
+        if group_names:
+            orders = dict(shopping_list.custom_section_order or {})
+            orders[group_by] = group_names
+            shopping_list.custom_section_order = orders
+            shopping_list.save(update_fields=["custom_section_order", "updated_at"])
+
+            # Sync item orders to follow the new section sequence
+            current_order = 0
+            for g_name in group_names:
+                if group_by == "aisle":
+                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, aisle=g_name).order_by("order", "id")
+                else:
+                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, category__iexact=g_name).order_by("order", "id")
+                for itm in group_items:
+                    itm.order = current_order
+                    itm.save(update_fields=["order"])
+                    current_order += 1
 
         return HttpResponse(status=204)
     except Exception as e:

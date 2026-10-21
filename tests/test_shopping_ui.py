@@ -177,3 +177,45 @@ def test_item_transitions_and_toast_notifications(client, active_list):
     assert res.status_code == 200
     content = res.content.decode("utf-8")
     assert "Deleted &#x27;Bananas&#x27;" in content or "Deleted 'Bananas'" in content
+
+
+@pytest.mark.django_db
+def test_reorder_sections_custom_order(client, active_list):
+    # active_list has Bananas in produce and Almond Milk in dairy.
+    # By default, Produce comes before Dairy in DEPARTMENT_ORDER.
+    res_initial = client.get(reverse("shopping:list"))
+    content_initial = res_initial.content.decode("utf-8")
+    produce_pos = content_initial.find("Produce")
+    dairy_pos = content_initial.find("Dairy")
+    assert produce_pos < dairy_pos
+
+    # Now drag Dairy above Produce:
+    res = client.post(
+        reverse("shopping:reorder_sections"),
+        {"group_by": "category", "group_names[]": ["Dairy", "Produce"]},
+    )
+    assert res.status_code == 204
+
+    active_list.refresh_from_db()
+    assert active_list.custom_section_order.get("category") == ["Dairy", "Produce"]
+
+    # Verify that the shopping list page now renders Dairy before Produce:
+    res_after = client.get(reverse("shopping:list"))
+    content_after = res_after.content.decode("utf-8")
+    new_produce_pos = content_after.find("Produce")
+    new_dairy_pos = content_after.find("Dairy")
+    assert new_dairy_pos < new_produce_pos
+
+
+@pytest.mark.django_db
+def test_to_buy_section_styling_and_drag_handles(client, active_list):
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+
+    # Section drag handles present
+    assert "section-drag-handle" in content
+    assert "section-group-block" in content
+
+    # Horizontal line under section names removed (border-b-2 border-gray-900 removed)
+    assert "border-b-2 border-gray-900" not in content

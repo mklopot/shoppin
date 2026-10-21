@@ -184,10 +184,62 @@ class Command(BaseCommand):
                     )
                 )
 
-            # 3. Ensure a default active Main Shopping List exists
+            # 3. Ensure a default active Main Shopping List exists with sample stores
+            from apps.shopping.models import StoreLocation
+
+            sample_stores = [
+                {
+                    "name": "King Soopers #01400035 (Speer Blvd)",
+                    "chain": "kroger",
+                    "external_store_id": "01400035",
+                    "address": "1331 Speer Blvd",
+                    "city": "Denver",
+                    "state": "CO",
+                    "zip_code": "80204",
+                    "latitude": 39.7289,
+                    "longitude": -104.9814,
+                },
+                {
+                    "name": "Safeway #1466 (Corona St)",
+                    "chain": "safeway",
+                    "external_store_id": "1466",
+                    "address": "560 Corona St",
+                    "city": "Denver",
+                    "state": "CO",
+                    "zip_code": "80218",
+                    "latitude": 39.7259,
+                    "longitude": -104.9733,
+                },
+                {
+                    "name": "Whole Foods Market (Cherry Creek)",
+                    "chain": "whole_foods",
+                    "external_store_id": "WFM-CC",
+                    "address": "2375 E 1st Ave",
+                    "city": "Denver",
+                    "state": "CO",
+                    "zip_code": "80206",
+                    "latitude": 39.7196,
+                    "longitude": -104.9535,
+                },
+            ]
+
+            default_store = None
+            for store_data in sample_stores:
+                store_obj, _ = StoreLocation.objects.update_or_create(
+                    name=store_data["name"],
+                    defaults=store_data,
+                )
+                if not default_store:
+                    default_store = store_obj
+
             main_list, created = ShoppingList.objects.get_or_create(
                 name="Main Shopping List",
                 is_preset=False,
+                defaults={"active_store": default_store},
             )
+            if not main_list.active_store and default_store:
+                main_list.active_store = default_store
+                main_list.save(update_fields=["active_store"])
+
             if created:
-                self.stdout.write("Created default 'Main Shopping List'.")
+                self.stdout.write("Created default 'Main Shopping List' with default store.")

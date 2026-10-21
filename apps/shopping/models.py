@@ -11,6 +11,77 @@ class ItemStatus(models.TextChoices):
     DONT_NEED = "DONT_NEED", "Don't Actually Need"
 
 
+class StoreLocation(models.Model):
+    CHAIN_CHOICES = [
+        ("kroger", "Kroger / King Soopers"),
+        ("safeway", "Safeway"),
+        ("whole_foods", "Whole Foods"),
+        ("other", "Other / Local Market"),
+    ]
+
+    name = models.CharField(max_length=255, help_text="e.g. 'King Soopers #01400943 - Glendale'")
+    chain = models.CharField(max_length=50, choices=CHAIN_CHOICES, default="kroger")
+    external_store_id = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Store ID in chain API (e.g. Kroger locationId '01400943')",
+    )
+    address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=50, blank=True, default="CO")
+    zip_code = models.CharField(max_length=20, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["chain", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_chain_display()})"
+
+
+class StoreItemAisle(models.Model):
+    """
+    Cached mapping of an item to an aisle at a specific store location.
+    Populated by the Kroger API or learned via user edits.
+    """
+    SOURCE_CHOICES = [
+        ("api", "Kroger API"),
+        ("manual", "User Entered"),
+        ("default", "Category Default"),
+    ]
+
+    store = models.ForeignKey(
+        StoreLocation,
+        on_delete=models.CASCADE,
+        related_name="item_aisles",
+    )
+    item_name_normalized = models.CharField(
+        max_length=255,
+        db_index=True,
+        help_text="Normalized lowercase singular item name (e.g. 'black bean', 'milk')",
+    )
+    aisle_name = models.CharField(
+        max_length=100,
+        help_text="e.g. 'Aisle 14', 'Produce', 'Deli'",
+    )
+    bay_number = models.CharField(max_length=50, blank=True)
+    sequence_order = models.PositiveIntegerField(
+        default=100,
+        help_text="Walking sequence order (lower = closer to store entrance)",
+    )
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="api")
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("store", "item_name_normalized")
+        ordering = ["sequence_order", "aisle_name"]
+
+    def __str__(self):
+        return f"{self.item_name_normalized} -> {self.aisle_name} @ {self.store.name}"
+
+
 class ShoppingList(models.Model):
     name = models.CharField(max_length=255, default="Main Shopping List")
     owner = models.ForeignKey(
@@ -24,6 +95,14 @@ class ShoppingList(models.Model):
         settings.AUTH_USER_MODEL,
         blank=True,
         related_name="shared_shopping_lists",
+    )
+    active_store = models.ForeignKey(
+        StoreLocation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="active_shopping_lists",
+        help_text="Current store selected for aisle lookups and walking order",
     )
     is_preset = models.BooleanField(
         default=False,
@@ -101,10 +180,6 @@ class ShoppingListItem(models.Model):
         return f"{self.amount:g}{unit_str} {self.name} [{self.status}]"
 
     def reduce_or_delete(self, amount_to_subtract: Decimal):
-        """
-        Safely reduces item amount or removes the item if amount drops to <= 0.
-        Prevents negative quantity bugs.
-        """
         new_amount = self.amount - amount_to_subtract
         if new_amount <= Decimal("0.00"):
             self.delete()
@@ -112,3 +187,16 @@ class ShoppingListItem(models.Model):
         self.amount = new_amount
         self.save(update_fields=["amount", "updated_at"])
         return self
+
+    def get_effective_aisle(self, store: StoreLocation | None = None) -> str:
+        """
+        Returns store-specific aisle if mapped, else item's saved aisle, else category.
+        """
+        target_store = store or self.shopping_list.active_store
+        if target_store:
+            import inflection
+            norm_name = inflection.singularize(self.name.strip().lower())
+            aisle_map = target_store.item_aisles.filter(item_name_normalized=norm_name).first()
+            if aisle_map:
+                return aisle_map.aisle_name
+        return self.aisle or self.category.title()

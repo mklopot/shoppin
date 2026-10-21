@@ -141,7 +141,12 @@ class ShoppingListItem(models.Model):
     vendor = models.CharField(max_length=100, blank=True)
     category = models.CharField(max_length=100, blank=True, default="other")
     aisle = models.CharField(max_length=100, blank=True, help_text="Store aisle location")
-    purpose = models.CharField(max_length=255, blank=True)
+    purpose = models.CharField(
+        max_length=255,
+        blank=True,
+        default="one-time purchase",
+        help_text="Recipe attribution or purpose (defaults to 'one-time purchase' for one-offs)",
+    )
     optional = models.BooleanField(default=False)
     status = models.CharField(
         max_length=20,

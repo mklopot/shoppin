@@ -120,3 +120,35 @@ def test_clear_completed_cart_items(client, active_list):
     client.post(reverse("shopping:clear_completed"))
     assert not active_list.items.filter(name="Bananas").exists()
     assert active_list.items.filter(name="Almond Milk").exists()
+
+
+@pytest.mark.django_db
+def test_item_purpose_handling(client, active_list):
+    # 1. Blank purpose defaults to "one-time purchase"
+    client.post(
+        reverse("shopping:add_item"),
+        {"name": "Paper Towels", "amount": "1"},
+    )
+    towel = active_list.items.get(name="Paper Towels")
+    assert towel.purpose == "one-time purchase"
+
+    # 2. Custom purpose provided
+    client.post(
+        reverse("shopping:add_item"),
+        {"name": "Birthday Candles", "amount": "1", "purpose": "Ezra Birthday"},
+    )
+    candles = active_list.items.get(name="Birthday Candles")
+    assert candles.purpose == "Ezra Birthday"
+
+    # 3. Editing purpose
+    client.post(
+        reverse("shopping:edit_item", args=[towel.id]),
+        {
+            "name": towel.name,
+            "amount": towel.amount,
+            "amount_unit": towel.amount_unit,
+            "purpose": "Cleaning Supplies",
+        },
+    )
+    towel.refresh_from_db()
+    assert towel.purpose == "Cleaning Supplies"

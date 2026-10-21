@@ -105,6 +105,7 @@ def add_item(request):
     amount, amount_unit = parse_amount_and_unit(raw_amount)
     brand = request.POST.get("brand", "").strip()
     vendor = request.POST.get("vendor", "").strip()
+    purpose = request.POST.get("purpose", "").strip() or "one-time purchase"
 
     # Category prediction
     category = categorizer.get_category(raw_name)
@@ -132,7 +133,9 @@ def add_item(request):
 
     if existing:
         existing.amount += amount
-        existing.save(update_fields=["amount", "updated_at"])
+        if purpose and purpose not in existing.purpose:
+            existing.purpose = f"{existing.purpose}, {purpose}".strip(", ")
+        existing.save(update_fields=["amount", "purpose", "updated_at"])
     else:
         # Append to end of order
         max_order = shopping_list.items.count()
@@ -143,6 +146,7 @@ def add_item(request):
             amount_unit=amount_unit,
             brand=brand,
             vendor=vendor,
+            purpose=purpose,
             category=category,
             aisle=aisle,
             status=ItemStatus.NEED,
@@ -168,6 +172,7 @@ def edit_item(request, item_id: int):
         item.vendor = request.POST.get("vendor", item.vendor).strip()
         item.category = request.POST.get("category", item.category).strip()
         item.aisle = request.POST.get("aisle", item.aisle).strip()
+        item.purpose = request.POST.get("purpose", item.purpose).strip() or "one-time purchase"
         item.save()
 
         # If user explicitly edited aisle and store is active, update store learning cache!

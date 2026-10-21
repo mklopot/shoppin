@@ -8,29 +8,31 @@
     </div>
     {% endif %}
 
-    <!-- Top Controls: Store Selector & View Toggles -->
-    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-300 pb-2 text-xs">
-        <!-- Store Selector -->
-        <div class="flex items-center space-x-2">
-            <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1.5">
-                {% csrf_token %}
-                <span class="font-bold text-gray-700">Store:</span>
-                <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
-                    <option value="">No Store (Default Category Flow)</option>
-                    {% for s in stores %}
-                    <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
-                        {{ s.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </form>
-            <button type="button" onclick="locateNearestStore()" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
-                📍 Near Me
-            </button>
-        </div>
+    <!-- Header & Controls: Title, Store Selector & View Toggles Combined -->
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2">
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">Shopping List</h1>
 
-        <!-- Sort Toggle & Clear Button -->
-        <div class="flex items-center space-x-2">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+            <!-- Store Selector -->
+            <div class="flex items-center space-x-1.5">
+                <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
+                    {% csrf_token %}
+                    <span class="font-bold text-gray-700">Store:</span>
+                    <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+                        <option value="">No Store (Default Category Flow)</option>
+                        {% for s in stores %}
+                        <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
+                            {{ s.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <button type="button" onclick="locateNearestStore()" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
+                    📍 Near Me
+                </button>
+            </div>
+
+            <!-- Sort Toggle (By Category / By Aisle) -->
             <div class="inline-flex border border-gray-400">
                 <button hx-get="{% url 'shopping:list' %}?group_by=category" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
                         class="px-2.5 py-1 text-xs font-medium {% if group_by == 'category' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
@@ -78,7 +80,6 @@
         <!-- Section Header -->
         <div class="px-3 py-2 bg-gray-100 border-b border-gray-300 flex justify-between items-center text-xs">
             <span class="font-bold text-gray-900 uppercase tracking-wider text-xs">To Buy</span>
-            <span class="text-gray-500 font-normal">Sorted by {{ group_by|title }}</span>
         </div>
 
         {% if grouped_need %}

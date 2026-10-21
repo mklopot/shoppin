@@ -4,14 +4,6 @@
 
 {% block content %}
 <div class="space-y-3">
-    <!-- Header -->
-    <div class="flex justify-between items-baseline border-b border-gray-400 pb-1.5">
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Shopping List</h1>
-        <div class="text-xs text-gray-500">
-            {% if active_store %}Store: <strong class="text-gray-800">{{ active_store.name }}</strong> &middot; {% endif %}Sorted by {{ group_by|title }}
-        </div>
-    </div>
-
     <!-- Main List Container (HTMX swapped) -->
     {% include "shopping/partials/list_content.html" %}
 </div>

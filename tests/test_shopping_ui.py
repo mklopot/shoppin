@@ -220,6 +220,9 @@ def test_to_buy_section_styling_and_drag_handles(client, active_list):
     # Horizontal line under section names removed (border-b-2 border-gray-900 removed)
     assert "border-b-2 border-gray-900" not in content
 
+    # Vertical line to the left of category removed
+    assert "border-l-2" not in content
+
     # Redundant sort order text removed
     assert "Sorted by" not in content
 

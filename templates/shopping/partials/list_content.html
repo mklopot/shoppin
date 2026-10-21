@@ -98,7 +98,7 @@
                     </div>
 
                     <!-- Items List (Drag & Drop for individual items within section) -->
-                    <div class="sortable-group divide-y divide-gray-200 border-l-2 border-gray-200 pl-1 ml-1 sm:ml-2" data-group="{{ group_title }}">
+                    <div class="sortable-group divide-y divide-gray-200" data-group="{{ group_title }}">
                         {% for item in items %}
                         <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                             <!-- Left: Drag handle + Name + Specs -->

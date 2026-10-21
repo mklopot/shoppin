@@ -12,6 +12,8 @@ from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, Sto
 from apps.shopping.services.store_service import (
     DEPARTMENT_ORDER,
     get_aisle_sort_key,
+    get_known_aisles,
+    get_known_categories,
     get_nearest_stores,
     resolve_store_aisle,
 )
@@ -69,6 +71,8 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
         sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
 
     stores = StoreLocation.objects.all().order_by("name")
+    known_categories = get_known_categories()
+    known_aisles = get_known_aisles(shopping_list.active_store)
 
     return {
         "shopping_list": shopping_list,
@@ -81,6 +85,8 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
         "group_by": group_by,
         "stores": stores,
         "active_store": shopping_list.active_store,
+        "known_categories": known_categories,
+        "known_aisles": known_aisles,
     }
 
 
@@ -129,14 +135,19 @@ def add_item(request):
     vendor = request.POST.get("vendor", "").strip()
     purpose = request.POST.get("purpose", "").strip() or "one-time purchase"
 
-    # Category prediction
-    category = categorizer.get_category(raw_name)
+    # Category: use provided or fallback to prediction
+    raw_cat = request.POST.get("category", "").strip()
+    category = raw_cat or categorizer.get_category(raw_name)
 
-    # Aisle prediction if store selected
-    aisle = ""
-    if shopping_list.active_store:
+    # Aisle: use provided or fallback to prediction if store selected
+    raw_aisle = request.POST.get("aisle", "").strip()
+    if raw_aisle:
+        aisle = raw_aisle
+    elif shopping_list.active_store:
         aisle_info = resolve_store_aisle(shopping_list.active_store, raw_name)
         aisle = aisle_info.get("aisle_name", "")
+    else:
+        aisle = ""
 
     # Check for deduplication / stacking with existing NEED item
     norm_name = singularize(raw_name.lower())
@@ -218,7 +229,17 @@ def edit_item(request, item_id: int):
         context["toast_message"] = f"✏️ Updated '{item.name}'"
         return render(request, "shopping/partials/list_content.html", context)
 
-    return render(request, "shopping/partials/item_edit_modal.html", {"item": item})
+    known_categories = get_known_categories()
+    known_aisles = get_known_aisles(item.shopping_list.active_store)
+    return render(
+        request,
+        "shopping/partials/item_edit_modal.html",
+        {
+            "item": item,
+            "known_categories": known_categories,
+            "known_aisles": known_aisles,
+        },
+    )
 
 
 @require_POST

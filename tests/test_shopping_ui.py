@@ -232,3 +232,44 @@ def test_to_buy_section_styling_and_drag_handles(client, active_list):
 
     # Item remove/delete buttons removed from UI in favor of Skip
     assert "delete_item" not in content
+
+
+@pytest.mark.django_db
+def test_category_and_aisle_pulldown_and_custom_typing(client, active_list):
+    item = active_list.items.get(name="Bananas")
+
+    # 1. Edit modal should render datalists with known categories and known aisles
+    res_modal = client.get(reverse("shopping:edit_item", args=[item.id]))
+    assert res_modal.status_code == 200
+    modal_content = res_modal.content.decode("utf-8")
+
+    assert 'list="category-datalist"' in modal_content
+    assert 'id="category-datalist"' in modal_content
+    assert '<option value="Produce">' in modal_content
+    assert '<option value="Dairy">' in modal_content
+
+    assert 'list="aisle-datalist"' in modal_content
+    assert 'id="aisle-datalist"' in modal_content
+    assert '<option value="Aisle 1">' in modal_content or '<option value="Produce">' in modal_content
+
+    # 2. Saving a new typed category and aisle (not in datalist initially) works
+    res_save = client.post(
+        reverse("shopping:edit_item", args=[item.id]),
+        {
+            "name": item.name,
+            "amount": str(item.amount),
+            "amount_unit": item.amount_unit,
+            "category": "Gourmet Specialty",
+            "aisle": "Aisle 99",
+        },
+    )
+    assert res_save.status_code == 200
+    item.refresh_from_db()
+    assert item.category == "Gourmet Specialty"
+    assert item.aisle == "Aisle 99"
+
+    # 3. Next modal visit now includes the newly typed category and aisle in the pull-down list!
+    res_modal_2 = client.get(reverse("shopping:edit_item", args=[item.id]))
+    modal_content_2 = res_modal_2.content.decode("utf-8")
+    assert '<option value="Gourmet Specialty">' in modal_content_2
+    assert '<option value="Aisle 99">' in modal_content_2

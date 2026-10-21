@@ -261,3 +261,47 @@ def resolve_store_aisle(store: StoreLocation, item_name: str) -> dict[str, Any]:
         "sequence_order": seq,
         "source": "default",
     }
+
+
+def get_known_categories() -> list[str]:
+    """Return sorted, unique list of all known categories."""
+    from apps.shopping.models import ShoppingListItem
+
+    cats = set()
+    for c in categorizer.categories_index.keys():
+        if c:
+            cats.add(c.title())
+    for c in DEPARTMENT_ORDER.keys():
+        if c:
+            cats.add(c.title())
+    for c in ShoppingListItem.objects.exclude(category="").values_list("category", flat=True).distinct():
+        if c:
+            cats.add(c.title())
+    return sorted(list(cats))
+
+
+def get_known_aisles(store: StoreLocation | None = None) -> list[str]:
+    """Return sorted, unique list of all known aisles for the active store or system."""
+    from apps.shopping.models import ShoppingListItem
+
+    aisles = set()
+    if store:
+        for a in StoreItemAisle.objects.filter(store=store).exclude(aisle_name="").values_list("aisle_name", flat=True).distinct():
+            if a:
+                aisles.add(a.strip())
+
+    for a in StoreItemAisle.objects.exclude(aisle_name="").values_list("aisle_name", flat=True).distinct():
+        if a:
+            aisles.add(a.strip())
+
+    for a in ShoppingListItem.objects.exclude(aisle="").values_list("aisle", flat=True).distinct():
+        if a:
+            aisles.add(a.strip())
+
+    common_departments = [
+        "Produce", "Bakery", "Deli", "Meat", "Seafood", "Dairy", "Frozen", "Pantry"
+    ]
+    for d in common_departments:
+        aisles.add(d)
+
+    return sorted(list(aisles), key=get_aisle_sort_key)

@@ -1,18 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}{{ shopping_list.name }} - Shoppin{% endblock %}
+{% block title %}Shopping List - Shoppin{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="space-y-3">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-gray-200 pb-4">
-        <div>
-            <h1 class="text-2xl font-black text-gray-900 tracking-tight flex items-center space-x-2">
-                <span>{{ shopping_list.name }}</span>
-            </h1>
-            <p class="text-xs text-gray-500 mt-0.5">
-                Organized by {{ group_by|title }} {% if active_store %}&middot; Active: <span class="text-emerald-700 font-semibold">{{ active_store.name }}</span>{% endif %}
-            </p>
+    <div class="flex justify-between items-baseline border-b border-gray-400 pb-1.5">
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Shopping List</h1>
+        <div class="text-xs text-gray-500">
+            {% if active_store %}Store: <strong class="text-gray-800">{{ active_store.name }}</strong> &middot; {% endif %}Sorted by {{ group_by|title }}
         </div>
     </div>
 
@@ -34,11 +30,6 @@
         }
         navigator.geolocation.getCurrentPosition(
             function(position) {
-                const formData = new FormData();
-                formData.append('latitude', position.coords.latitude);
-                formData.append('longitude', position.coords.longitude);
-                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
                 htmx.ajax('POST', '{% url "shopping:nearest_store" %}', {
                     target: '#shopping-list-content',
                     swap: 'outerHTML',
@@ -58,11 +49,11 @@
     // 2. SortableJS Drag-and-Drop Reordering Initialization
     function initSortables() {
         document.querySelectorAll('.sortable-group').forEach(group => {
-            if (group._sortable) return; // avoid duplicate binding
+            if (group._sortable) return;
             group._sortable = new Sortable(group, {
                 handle: '.drag-handle',
-                animation: 150,
-                ghostClass: 'bg-emerald-100/60',
+                animation: 120,
+                ghostClass: 'bg-gray-100',
                 onEnd: function(evt) {
                     const itemIds = Array.from(document.querySelectorAll('.sortable-group [data-item-id]'))
                         .map(el => el.getAttribute('data-item-id'));

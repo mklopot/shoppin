@@ -1,155 +1,147 @@
-<div id="shopping-list-content" class="space-y-6">
+<div id="shopping-list-content" class="space-y-4">
     {% if toast_message %}
-    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-3 rounded-md text-sm text-emerald-800 flex justify-between items-center animate-fade-in">
+    <div class="bg-gray-100 border border-gray-400 p-2 text-xs text-gray-800 flex justify-between items-center">
         <span>{{ toast_message }}</span>
-        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 font-bold">&times;</button>
+        <button type="button" onclick="this.parentElement.remove()" class="text-gray-500 hover:text-gray-800 font-bold ml-2">&times;</button>
     </div>
     {% endif %}
 
-    <!-- Controls Bar: Store Selector, GPS, Sort Toggle -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <!-- Store Selector + GPS -->
-            <div class="flex items-center space-x-2 w-full sm:w-auto">
-                <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="flex items-center space-x-2">
-                    {% csrf_token %}
-                    <span class="text-sm font-semibold text-gray-700">🏪 Store:</span>
-                    <select name="store_id" onchange="this.form.requestSubmit()" class="text-xs sm:text-sm font-medium border border-gray-300 rounded-lg px-2.5 py-1.5 bg-gray-50 text-gray-800 focus:ring-emerald-500 focus:border-emerald-500">
-                        <option value="">No Store (Default Flow)</option>
-                        {% for s in stores %}
-                        <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
-                            {{ s.name }} ({{ s.get_chain_display }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                </form>
+    <!-- Top Controls: Store Selector & View Toggles -->
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-300 pb-2 text-xs">
+        <!-- Store Selector -->
+        <div class="flex items-center space-x-2">
+            <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="flex items-center space-x-1.5">
+                {% csrf_token %}
+                <span class="font-bold text-gray-700">Store:</span>
+                <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+                    <option value="">No Store (Default Category Flow)</option>
+                    {% for s in stores %}
+                    <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
+                        {{ s.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <button type="button" onclick="locateNearestStore()" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
+                📍 Near Me
+            </button>
+        </div>
 
-                <button type="button" onclick="locateNearestStore()" title="Locate nearest store using GPS" class="p-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex items-center space-x-1 font-medium">
-                    <span>📍</span>
-                    <span class="hidden md:inline">Near Me</span>
-                </button>
-            </div>
-
-            <!-- Sort By Toggle (Category vs Aisle) -->
-            <div class="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg text-xs font-semibold self-end sm:self-auto">
+        <!-- Sort Toggle & Clear Button -->
+        <div class="flex items-center space-x-2">
+            <div class="inline-flex border border-gray-400">
                 <button hx-get="{% url 'shopping:list' %}?group_by=category" hx-target="#shopping-list-content" hx-swap="outerHTML"
-                        class="px-3 py-1.5 rounded-md transition-all {% if group_by == 'category' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
-                    📁 By Category
+                        class="px-2.5 py-1 text-xs font-medium {% if group_by == 'category' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
+                    By Category
                 </button>
                 <button hx-get="{% url 'shopping:list' %}?group_by=aisle" hx-target="#shopping-list-content" hx-swap="outerHTML"
-                        class="px-3 py-1.5 rounded-md transition-all {% if group_by == 'aisle' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
-                    🛒 By Aisle
+                        class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if group_by == 'aisle' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
+                    By Aisle
                 </button>
             </div>
+
+            {% if got_items %}
+            <form hx-post="{% url 'shopping:clear_completed' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="inline">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('Clear cart items?')" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 px-2 py-1 text-xs">
+                    Clear Cart
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Quick Add Form -->
-    <div class="bg-emerald-50/60 rounded-xl border border-emerald-200/80 p-4 shadow-sm">
-        <form hx-post="{% url 'shopping:add_item' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="space-y-3 sm:space-y-0 sm:flex sm:gap-2">
+    <!-- Add Item Bar (High Density, Simple Border) -->
+    <div class="bg-gray-50 border border-gray-300 p-2">
+        <form hx-post="{% url 'shopping:add_item' %}" hx-target="#shopping-list-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
-            <div class="flex-1">
-                <input type="text" name="name" placeholder="Add item (e.g. celery, sourdough bread, oat milk)..." required autocomplete="off"
-                       class="w-full px-3.5 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-inner bg-white">
-            </div>
-            <div class="flex gap-2">
-                <input type="text" name="amount" value="1" placeholder="Qty" style="max-width: 90px;"
-                       class="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-center">
-                <input type="text" name="brand" placeholder="Brand (opt)" class="hidden sm:block px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white" style="max-width: 140px;">
-                <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-lg shadow-sm flex items-center justify-center space-x-1 whitespace-nowrap transition-colors">
-                    <span>+ Add</span>
-                </button>
-            </div>
+            <input type="text" name="name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
+                   class="flex-1 min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none">
+            <input type="text" name="amount" value="1" placeholder="Amount" style="width: 65px;"
+                   class="border border-gray-400 px-2 py-1 bg-white text-center rounded-none focus:outline-none">
+            <input type="text" name="brand" placeholder="Brand (opt)" style="width: 110px;"
+                   class="hidden sm:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
+            <input type="text" name="vendor" placeholder="Vendor (opt)" style="width: 110px;"
+                   class="hidden md:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
+            <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none">
+                + Add Item
+            </button>
         </form>
     </div>
 
     <!-- SECTION 1: TO BUY (NEED) -->
-    <div class="space-y-4">
-        <div class="flex justify-between items-center px-1">
-            <h2 class="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                <span>To Buy</span>
-                <span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">{{ need_count }}</span>
-            </h2>
-        </div>
-
+    <div class="space-y-3">
         {% if grouped_need %}
+            <div class="border-b-2 border-gray-400 pb-0.5 mt-1 flex justify-between items-baseline">
+                <h2 class="font-bold text-sm text-gray-900 uppercase tracking-wide">To Buy ({{ need_count }})</h2>
+            </div>
             {% for group_title, items in grouped_need.items %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gray-50/80 px-4 py-2.5 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="font-bold text-xs uppercase tracking-wider text-gray-700 flex items-center space-x-2">
-                        <span>{{ group_title }}</span>
-                        <span class="text-gray-400 font-normal">({{ items|length }})</span>
+            <div class="space-y-0.5">
+                <!-- Category/Aisle Header: Plain page background, clean text and subtle border -->
+                <div class="border-b border-gray-300 pb-1 pt-2 flex justify-between items-baseline">
+                    <h3 class="font-bold text-xs uppercase tracking-wide text-gray-800">
+                        {{ group_title }} <span class="text-gray-500 font-normal">({{ items|length }})</span>
                     </h3>
                 </div>
-                <div class="sortable-group divide-y divide-gray-100" data-group="{{ group_title }}">
+
+                <!-- High Density Item Table/Rows -->
+                <div class="sortable-group divide-y divide-gray-200 border-t border-b border-gray-200" data-group="{{ group_title }}">
                     {% for item in items %}
-                    <div class="p-3 sm:px-4 flex items-center justify-between hover:bg-gray-50/70 transition-colors group" data-item-id="{{ item.id }}">
-                        <!-- Left: Drag handle + Details -->
-                        <div class="flex items-center space-x-3 flex-1 min-w-0 mr-2">
-                            <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 select-none text-base">⋮⋮</span>
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-baseline space-x-2 flex-wrap">
-                                    <span class="font-semibold text-gray-900 text-sm sm:text-base">{{ item.name }}</span>
-                                    <span class="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
-                                        {{ item.amount|floatformat:"-2" }} {{ item.amount_unit }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-0.5 text-xs text-gray-500 flex-wrap">
-                                    {% if item.brand %}
-                                    <span class="text-gray-600 font-medium">Brand: {{ item.brand }}</span>
-                                    {% endif %}
-                                    {% if item.vendor %}
-                                    <span>Vendor: {{ item.vendor }}</span>
-                                    {% endif %}
-                                    {% if item.aisle %}
-                                    <span class="bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded font-medium">📍 {{ item.aisle }}</span>
-                                    {% endif %}
-                                    {% if item.optional %}
-                                    <span class="text-amber-600 italic">optional</span>
-                                    {% endif %}
-                                    {% if item.purpose %}
-                                    <span class="italic text-gray-400">for {{ item.purpose }}</span>
-                                    {% endif %}
-                                </div>
+                    <div class="py-1 px-1.5 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}">
+                        <!-- Left: Drag handle + Name + Specs -->
+                        <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                            <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 select-none text-sm font-mono">⋮⋮</span>
+                            <div class="min-w-0 flex-1 leading-snug">
+                                <span class="font-bold text-gray-900 text-sm">{{ item.name }}</span>
+                                <span class="font-medium text-gray-700 ml-1.5">{{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}</span>
+
+                                <!-- Secondary details -->
+                                <span class="text-gray-500 ml-2">
+                                    {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
+                                    {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
+                                    {% if item.brand %}<span class="ml-1 font-normal">Brand: {{ item.brand }}</span>{% endif %}
+                                    {% if item.vendor %}<span class="ml-1 font-normal">Vendor: {{ item.vendor }}</span>{% endif %}
+                                    {% if item.aisle %}<span class="ml-1 text-gray-600 font-semibold">📍 {{ item.aisle }}</span>{% endif %}
+                                </span>
                             </div>
                         </div>
 
-                        <!-- Right: Action Buttons -->
-                        <div class="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
-                            <!-- GOT (In Cart) -->
+                        <!-- Right: Action Buttons (Compact, minimal colors) -->
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <!-- GOT (Cart) -->
                             <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
                                 {% csrf_token %}
-                                <button type="submit" title="Got it (Put in Cart)" class="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-colors">
-                                    🛒
+                                <button type="submit" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                                    🛒 Got
                                 </button>
                             </form>
 
                             <!-- HAVE (Pantry) -->
                             <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
                                 {% csrf_token %}
-                                <button type="submit" title="Already have in pantry" class="p-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white border border-indigo-200 transition-colors">
-                                    🏠
+                                <button type="submit" title="Already have at home" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                                    🏠 Have
                                 </button>
                             </form>
 
-                            <!-- DONT_NEED (Skipped) -->
+                            <!-- DONT_NEED (Skip) -->
                             <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
                                 {% csrf_token %}
-                                <button type="submit" title="Don't actually need" class="p-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white border border-amber-200 transition-colors text-xs font-semibold">
+                                <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
                                     Skip
                                 </button>
                             </form>
 
-                            <!-- Edit item modal trigger -->
-                            <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors" title="Edit Item">
+                            <!-- Edit item modal -->
+                            <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                                 ✏️
                             </button>
 
-                            <!-- Delete -->
+                            <!-- Delete item -->
                             <form hx-post="{% url 'shopping:delete_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
                                 {% csrf_token %}
-                                <button type="submit" onclick="return confirm('Remove {{ item.name }}?')" title="Delete item" class="p-2 text-gray-300 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors">
-                                    🗑️
+                                <button type="submit" onclick="return confirm('Delete {{ item.name }}?')" class="text-gray-300 hover:text-red-700 px-1 py-0.5" title="Delete">
+                                    ✕
                                 </button>
                             </form>
                         </div>
@@ -159,40 +151,30 @@
             </div>
             {% endfor %}
         {% else %}
-            <div class="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
-                <span class="text-4xl">🎉</span>
-                <p class="mt-2 font-medium">All caught up! Nothing to buy right now.</p>
-                <p class="text-xs text-gray-400 mt-1">Use the quick add bar above or import dishes from a meal plan.</p>
+            <div class="border border-gray-300 p-6 text-center text-gray-500 text-xs">
+                No items on shopping list. Add an item above or load meals from a meal plan.
             </div>
         {% endif %}
     </div>
 
-    <!-- SECTION 2: IN CART (GOT) -->
+    <!-- SECTION 2: IN CART (GOT) - Modeled directly on Code Donor with #f3f3f3 background -->
     {% if got_items %}
-    <div class="bg-emerald-50/50 rounded-xl border border-emerald-200 overflow-hidden shadow-sm">
-        <div class="px-4 py-3 bg-emerald-100/60 border-b border-emerald-200 flex justify-between items-center">
-            <h3 class="font-bold text-sm text-emerald-900 flex items-center space-x-2">
-                <span>In Cart</span>
-                <span class="bg-emerald-200 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-semibold">{{ got_count }}</span>
-            </h3>
-            <form hx-post="{% url 'shopping:clear_completed' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
-                {% csrf_token %}
-                <button type="submit" onclick="return confirm('Clear all purchased cart items?')" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-200/70 hover:bg-emerald-300 px-3 py-1 rounded-md transition-colors">
-                    Clear Cart
-                </button>
-            </form>
+    <div class="border border-gray-300 mt-6" style="background-color: #f3f3f3;">
+        <div class="px-3 py-1.5 border-b border-gray-300 flex justify-between items-center text-xs font-bold text-gray-800">
+            <span>Got ({{ got_count }})</span>
+            <span class="text-gray-500 font-normal">Purchased in cart</span>
         </div>
-        <div class="divide-y divide-emerald-100">
+        <div class="divide-y divide-gray-200">
             {% for item in got_items %}
-            <div class="px-4 py-2.5 flex justify-between items-center hover:bg-emerald-50 transition-colors">
+            <div class="px-3 py-1 flex justify-between items-center text-xs hover:bg-gray-200/50">
                 <div class="flex items-center space-x-2">
-                    <span class="text-emerald-600 font-bold">✓</span>
-                    <span class="text-gray-500 line-through text-sm">{{ item.name }}</span>
-                    <span class="text-xs text-gray-400">({{ item.amount|floatformat:"-2" }} {{ item.amount_unit }})</span>
+                    <span class="text-gray-600 font-bold">✓</span>
+                    <span class="text-gray-600 line-through">{{ item.name }}</span>
+                    <span class="text-gray-400">({{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %})</span>
                 </div>
                 <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
                     {% csrf_token %}
-                    <button type="submit" title="Move back to To Buy" class="text-xs font-medium text-gray-500 hover:text-gray-800 border border-gray-200 px-2 py-1 rounded bg-white hover:bg-gray-50">
+                    <button type="submit" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 px-1.5 py-0.5 text-xs">
                         Put Back
                     </button>
                 </form>
@@ -202,29 +184,29 @@
     </div>
     {% endif %}
 
-    <!-- SECTION 3: PANTRY / SKIPPED (HAVE & DONT_NEED) -->
+    <!-- SECTION 3: ALREADY HAVE / SKIPPED - Modeled on Code Donor with lightgray background -->
     {% if pantry_items %}
-    <details class="bg-gray-100/70 rounded-xl border border-gray-200 overflow-hidden text-xs">
-        <summary class="px-4 py-2.5 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 flex justify-between items-center select-none">
-            <span>Already in Pantry / Skipped ({{ pantry_count }})</span>
-            <span class="text-gray-400 text-xs">Click to view</span>
+    <details class="border border-gray-300 mt-4 text-xs" style="background-color: #e5e7eb;">
+        <summary class="px-3 py-1.5 font-bold text-gray-800 cursor-pointer select-none flex justify-between items-center">
+            <span>Already Have / Skipped ({{ pantry_count }})</span>
+            <span class="text-gray-500 font-normal">Click to show/hide</span>
         </summary>
         <div class="divide-y divide-gray-200 bg-white">
             {% for item in pantry_items %}
-            <div class="px-4 py-2 flex justify-between items-center hover:bg-gray-50">
-                <div class="flex items-center space-x-2">
+            <div class="px-3 py-1 flex justify-between items-center hover:bg-gray-50 text-xs">
+                <div class="flex items-center space-x-1.5">
                     {% if item.status == 'HAVE' %}
-                    <span class="text-indigo-600 font-medium">🏠 Pantry:</span>
+                    <span class="text-gray-600 font-medium">🏠 Have:</span>
                     {% else %}
-                    <span class="text-amber-600 font-medium">⏭ Skipped:</span>
+                    <span class="text-gray-500 font-medium">⏭ Skipped:</span>
                     {% endif %}
-                    <span class="text-gray-700 font-medium">{{ item.name }}</span>
-                    <span class="text-gray-400">({{ item.amount|floatformat:"-2" }} {{ item.amount_unit }})</span>
+                    <span class="text-gray-800">{{ item.name }}</span>
+                    <span class="text-gray-400">({{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %})</span>
                 </div>
                 <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML">
                     {% csrf_token %}
-                    <button type="submit" class="text-xs text-emerald-700 hover:text-emerald-900 border border-emerald-200 bg-emerald-50 px-2 py-0.5 rounded font-medium">
-                        + Need Again
+                    <button type="submit" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-1.5 py-0.5 text-xs font-medium">
+                        + Need
                     </button>
                 </form>
             </div>

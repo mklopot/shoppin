@@ -162,7 +162,7 @@
                                 <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
-                                        Skip
+                                        ⏭ Skip
                                     </button>
                                 </form>
                                 <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
@@ -181,7 +181,7 @@
                                 <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
-                                        Skip
+                                        ⏭ Skip
                                     </button>
                                 </form>
                                 {% endif %}
@@ -254,12 +254,6 @@
                             🏠 Have
                         </button>
                     </form>
-                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                        {% csrf_token %}
-                        <button type="submit" title="Don't need this trip" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
-                            Skip
-                        </button>
-                    </form>
                     <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                         ✏️
                     </button>
@@ -325,7 +319,7 @@
                     <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Don't need this trip" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
-                            Skip
+                            ⏭ Skip
                         </button>
                     </form>
                     {% else %}

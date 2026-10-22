@@ -302,10 +302,10 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check" in content
     assert "Pantry Check Mode:" not in content
 
-    # Under To Buy, we should see "Got" (with white background, not black) and "Skip", but NOT "Have"
+    # Under To Buy, we should see "Got" (with white background, not black) and "⏭ Skip", but NOT "Have"
     to_buy_section = content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🛒 Got" in to_buy_section
-    assert "Skip" in to_buy_section
+    assert "⏭ Skip" in to_buy_section
     assert "🏠 Have" not in to_buy_section
     # Got button should NOT have a black background
     assert "bg-gray-800 text-white px-3 py-1 text-xs font-semibold" not in to_buy_section
@@ -323,10 +323,10 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check Mode:" in pantry_content
     assert "Ready to shop &rarr;" in pantry_content
 
-    # Under To Buy, we see Have, Skip, and Got buttons
+    # Under To Buy, we see Have, ⏭ Skip, and Got buttons
     pantry_to_buy = pantry_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in pantry_to_buy
-    assert "Skip" in pantry_to_buy
+    assert "⏭ Skip" in pantry_to_buy
     assert "🛒 Got" in pantry_to_buy
 
     # The pantry details section is automatically opened
@@ -338,7 +338,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check Mode:" in session_content
     session_to_buy = session_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in session_to_buy
-    assert "Skip" in session_to_buy
+    assert "⏭ Skip" in session_to_buy
 
     # 4. Marking an item as HAVE in Pantry mode moves it to Already Have
     banana_item = active_list.items.get(name="Bananas")
@@ -347,12 +347,24 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     banana_item.refresh_from_db()
     assert banana_item.status == ItemStatus.HAVE
 
-    # 5. Switch back to In Store mode via ?mode=shopping
+    # 5. Move an item to GOT and verify that the Got section has Need and Have, but NO Skip
+    milk_item = active_list.items.get(name="Almond Milk")
+    res_got = client.post(reverse("shopping:set_status", args=[milk_item.id, "GOT"]))
+    assert res_got.status_code == 200
+    got_content = res_got.content.decode("utf-8")
+    got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
+    assert "📋 Need" in got_section
+    assert "🏠 Have" in got_section
+    assert "Skip" not in got_section
+    assert "⏭" not in got_section
+
+    # 6. Move an item back to NEED and switch back to In Store mode via ?mode=shopping
+    client.post(reverse("shopping:set_status", args=[banana_item.id, "NEED"]))
     res_shopping = client.get(reverse("shopping:list") + "?mode=shopping")
     assert res_shopping.status_code == 200
     shopping_content = res_shopping.content.decode("utf-8")
     assert "Pantry Check Mode:" not in shopping_content
     shopping_to_buy = shopping_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" not in shopping_to_buy
-    assert "Skip" in shopping_to_buy
+    assert "⏭ Skip" in shopping_to_buy
     assert "🛒 Got" in shopping_to_buy

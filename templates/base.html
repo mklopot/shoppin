@@ -148,7 +148,7 @@
                     <div class="relative" id="persona-dropdown-container">
                         <button type="button" onclick="togglePersonaDropdown()" class="flex items-center space-x-1 border border-gray-300 bg-white hover:bg-gray-50 px-2 py-1 rounded-none text-gray-700 font-medium text-xs">
                             <span>👤</span>
-                            <span>{{ request.user.username|default:"admin" }}</span>
+                            <span>{% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}</span>
                             <span class="text-[9px] text-gray-500">▼</span>
                         </button>
                         <div id="persona-dropdown-menu" class="hidden absolute right-0 mt-1 w-44 bg-white border border-gray-300 shadow-lg z-40 py-1">

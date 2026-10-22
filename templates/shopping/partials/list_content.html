@@ -119,7 +119,18 @@
     <div class="border border-gray-300 bg-white">
         <!-- Section Header -->
         <div class="px-3 py-2 bg-gray-100 border-b border-gray-300 flex justify-between items-center text-xs">
-            <span class="font-bold text-gray-900 uppercase tracking-wider text-xs">To Buy</span>
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-900 uppercase tracking-wider text-xs">To Buy</span>
+                <span class="text-gray-500 font-normal">({{ need_count }})</span>
+            </div>
+            {% if mode == 'shopping' and need_count > 0 %}
+            <div class="flex items-center space-x-2 text-[11px]">
+                <span class="text-emerald-700 font-medium select-none" title="Items confirmed as needed during Pantry Check">✓ {{ need_confirmed_count }} confirmed</span>
+                {% if need_unconfirmed_count > 0 %}
+                <span class="text-amber-700 font-medium select-none" title="Items not yet confirmed in Pantry Check">⚠️ {{ need_unconfirmed_count }} unconfirmed</span>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
 
         {% if mode == 'pantry' %}
@@ -164,8 +175,36 @@
                                 {% endif %}
                                 <div class="min-w-0 flex-1 leading-snug">
                                     <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
-                                    {% if item.locked and mode == 'pantry' %}
-                                    <span class="ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none">📋 Need</span>
+                                    {% if mode == 'pantry' %}
+                                        {% if item.locked %}
+                                        <span class="ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none">📋 Need</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <!-- In Store Mode: Show whether confirmed as needed in pantry check -->
+                                        {% if can_write %}
+                                        <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                            {% csrf_token %}
+                                            {% if item.locked %}
+                                            <button type="submit" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 select-none inline-flex items-center cursor-pointer rounded-none" title="Confirmed as needed in Pantry Check (click to toggle)">
+                                                <span class="mr-0.5 font-black">✓</span> Confirmed
+                                            </button>
+                                            {% else %}
+                                            <button type="submit" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-semibold uppercase tracking-wider bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 select-none inline-flex items-center cursor-pointer rounded-none" title="Not confirmed in Pantry Check (click to confirm)">
+                                                <span class="mr-0.5">⚠️</span> Not Confirmed
+                                            </button>
+                                            {% endif %}
+                                        </form>
+                                        {% else %}
+                                            {% if item.locked %}
+                                            <span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-300 select-none inline-flex items-center rounded-none" title="Confirmed as needed in Pantry Check">
+                                                <span class="mr-0.5 font-black">✓</span> Confirmed
+                                            </span>
+                                            {% else %}
+                                            <span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-semibold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-300 select-none inline-flex items-center rounded-none" title="Not confirmed in Pantry Check">
+                                                <span class="mr-0.5">⚠️</span> Not Confirmed
+                                            </span>
+                                            {% endif %}
+                                        {% endif %}
                                     {% endif %}
                                     <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
@@ -271,6 +310,7 @@
 
                         <!-- Secondary details -->
                         <span class="text-gray-500 ml-2">
+                            {% if item.locked %}<span class="text-emerald-700 text-[10px] font-semibold mr-1 select-none" title="Was confirmed in Pantry Check">[pantry confirmed]</span>{% endif %}
                             {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
                             {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
@@ -332,6 +372,7 @@
 
                         <!-- Secondary details -->
                         <span class="text-gray-500 ml-2">
+                            {% if item.locked %}<span class="text-emerald-700 text-[10px] font-semibold mr-1 select-none" title="Was confirmed in Pantry Check">[pantry confirmed]</span>{% endif %}
                             {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
                             {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}

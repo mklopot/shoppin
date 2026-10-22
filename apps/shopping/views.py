@@ -114,6 +114,8 @@ def _build_list_context(
     items = shopping_list.items.all().order_by("order", "id")
 
     need_items, got_items, pantry_items = ShoppingListOrganizer.partition_items(items)
+    need_confirmed_count = sum(1 for item in need_items if item.locked)
+    need_unconfirmed_count = len(need_items) - need_confirmed_count
     grouped_need = ShoppingListOrganizer.group_and_sort_need_items(
         need_items=need_items,
         group_by=group_by,
@@ -144,6 +146,8 @@ def _build_list_context(
         "user_role": user_role,
         "grouped_need": grouped_need,
         "need_count": len(need_items),
+        "need_confirmed_count": need_confirmed_count,
+        "need_unconfirmed_count": need_unconfirmed_count,
         "got_items": got_items,
         "got_count": len(got_items),
         "pantry_items": pantry_items,

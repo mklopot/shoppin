@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
 
-from apps.core.models import WorkspaceRole
+from apps.core.models import Workspace, WorkspaceRole
 from apps.core.services.workspace_service import (
     create_workspace,
     share_workspace,
@@ -74,6 +74,30 @@ def test_workspace_creation_provisions_list_and_mealplan(workspace_users):
     assert meal_plan is not None
     assert meal_plan.workspace == ws
     assert meal_plan.owner == workspace_users["owner"]
+
+
+def test_create_workspace_view_authenticated(client, workspace_users):
+    """Test that an authenticated user can create a workspace via POST."""
+    client.force_login(workspace_users["owner"])
+    response = client.post(reverse("core:create_workspace"), {"name": "Lakeside Cabin"})
+    assert response.status_code == 302
+    assert Workspace.objects.filter(name="Lakeside Cabin", owner=workspace_users["owner"]).exists()
+
+
+@override_settings(DEBUG=False)
+def test_create_workspace_view_unauthenticated_in_production(client):
+    """Test that unauthenticated requests receive 403 Forbidden in production."""
+    response = client.post(reverse("core:create_workspace"), {"name": "Unauthorized WS"})
+    assert response.status_code == 403
+    assert b"Must be logged in to create a workspace." in response.content
+
+
+@override_settings(DEBUG=True)
+def test_create_workspace_view_unauthenticated_in_debug(client, workspace_users):
+    """Test that unauthenticated requests in DEBUG mode auto-resolve a dev user."""
+    response = client.post(reverse("core:create_workspace"), {"name": "Dev Auto WS"})
+    assert response.status_code == 302
+    assert Workspace.objects.filter(name="Dev Auto WS").exists()
 
 
 def test_workspace_roles_and_permissions(workspace_setup, workspace_users):

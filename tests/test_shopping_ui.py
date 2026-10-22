@@ -547,3 +547,37 @@ def test_in_store_location_not_shown_in_got_and_already_have(client, active_list
     assert "Bananas" in have_section
     assert "📍 Aisle 1" not in have_section
     assert "(Produce)" not in have_section
+
+
+@pytest.mark.django_db
+def test_in_store_view_shows_pantry_check_confirmation_status(client, active_list):
+    """Verify that in the In Store view, items clearly show whether they have or haven't been confirmed in Pantry Check."""
+    bananas = active_list.items.get(name="Bananas")
+    milk = active_list.items.get(name="Almond Milk")
+
+    # Mark Bananas as confirmed needed (locked=True), Milk as unconfirmed (locked=False)
+    bananas.locked = True
+    bananas.save(update_fields=["locked"])
+    milk.locked = False
+    milk.save(update_fields=["locked"])
+
+    # 1. Fetch In Store view (mode=shopping)
+    res = client.get(reverse("shopping:list") + "?mode=shopping")
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+
+    # Summary in To Buy header
+    assert "1 confirmed" in content
+    assert "1 unconfirmed" in content
+
+    # Confirmed badge for Bananas and Not Confirmed badge for Almond Milk
+    assert "Confirmed" in content
+    assert "Not Confirmed" in content
+
+    # 2. Toggle lock on Milk to confirm it
+    res_toggle = client.post(reverse("shopping:toggle_lock", args=[milk.id]) + "?mode=shopping")
+    assert res_toggle.status_code == 200
+    milk.refresh_from_db()
+    assert milk.locked is True
+    toggle_content = res_toggle.content.decode("utf-8")
+    assert "2 confirmed" in toggle_content

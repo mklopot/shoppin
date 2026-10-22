@@ -112,14 +112,15 @@ def test_edit_item_updates_attributes(client, active_list):
 
 
 @pytest.mark.django_db
-def test_clear_completed_cart_items(client, active_list):
+def test_no_clear_cart_button_or_endpoint(client, active_list):
     item1 = active_list.items.get(name="Bananas")
     item1.status = ItemStatus.GOT
     item1.save()
 
-    client.post(reverse("shopping:clear_completed"))
-    assert not active_list.items.filter(name="Bananas").exists()
-    assert active_list.items.filter(name="Almond Milk").exists()
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    assert b"Clear Cart" not in res.content
+    assert b"clear_completed" not in res.content
 
 
 @pytest.mark.django_db

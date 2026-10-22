@@ -15,5 +15,4 @@ urlpatterns = [
     path("nearest-store/", views.find_nearest_store, name="nearest_store"),
     path("reorder/", views.reorder_items, name="reorder"),
     path("reorder-sections/", views.reorder_sections, name="reorder_sections"),
-    path("clear-completed/", views.clear_completed, name="clear_completed"),
 ]

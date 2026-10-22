@@ -387,14 +387,3 @@ def reorder_sections(request):
         return HttpResponse(status=204)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
-
-
-@require_POST
-def clear_completed(request):
-    shopping_list = get_active_list(request)
-    shopping_list.items.filter(status=ItemStatus.GOT).delete()
-
-    group_by = request.GET.get("group_by", "category")
-    context = _build_list_context(request, shopping_list, group_by)
-    context["toast_message"] = "You cleared cart items"
-    return render(request, "shopping/partials/list_content.html", context)

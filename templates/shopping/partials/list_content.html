@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <!-- Secondary Controls Bar: Store Selector, Sort Order, Clear Cart -->
+    <!-- Secondary Controls Bar: Store Selector, Sort Order -->
     <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">
         <!-- Store Selector -->
         <div class="flex items-center space-x-1.5">
@@ -60,15 +60,6 @@
                     By Aisle
                 </button>
             </div>
-
-            {% if got_items %}
-            <form hx-post="{% url 'shopping:clear_completed' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
-                {% csrf_token %}
-                <button type="submit" onclick="return confirm('Clear cart items?')" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 px-2 py-1 text-xs">
-                    Clear Cart
-                </button>
-            </form>
-            {% endif %}
         </div>
     </div>
 
@@ -223,12 +214,6 @@
                 <span class="font-bold text-emerald-950 uppercase tracking-wider text-xs">Got</span>
                 <span class="text-emerald-800 font-normal">Purchased in cart</span>
             </div>
-            <form hx-post="{% url 'shopping:clear_completed' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
-                {% csrf_token %}
-                <button type="submit" onclick="return confirm('Clear cart items?')" class="border border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 px-2 py-0.5 text-xs font-medium">
-                    Clear Cart
-                </button>
-            </form>
         </div>
 
         <div class="divide-y divide-emerald-200">

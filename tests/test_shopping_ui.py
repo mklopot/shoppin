@@ -347,14 +347,14 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     banana_item.refresh_from_db()
     assert banana_item.status == ItemStatus.HAVE
 
-    # 5. Move an item to GOT and verify that the Got section has Need and Have, but NO Skip
+    # 5. Move an item to GOT and verify that the Got section has Need, but NO Have and NO Skip
     milk_item = active_list.items.get(name="Almond Milk")
     res_got = client.post(reverse("shopping:set_status", args=[milk_item.id, "GOT"]))
     assert res_got.status_code == 200
     got_content = res_got.content.decode("utf-8")
     got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
     assert "📋 Need" in got_section
-    assert "🏠 Have" in got_section
+    assert "🏠 Have" not in got_section
     assert "Skip" not in got_section
     assert "⏭" not in got_section
 

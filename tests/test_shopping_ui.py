@@ -428,25 +428,29 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
         order=20,
     )
 
-    # 1. Page load displays user attribution ("You" default for unauthenticated) and mm/dd format
+    # 1. Page load displays user attribution ("unknown" default for unauthenticated) and mm/dd format
     res = client.get(reverse("shopping:list"))
     assert res.status_code == 200
     expected_past_date_str = timezone.localtime(past_date).strftime("%m/%d")
     content = res.content.decode("utf-8")
     assert expected_past_date_str in content
-    assert f"You {expected_past_date_str}" in content
+    assert f"unknown {expected_past_date_str}" in content
+    assert f"You {expected_past_date_str}" not in content
     # Verify non-fixed-width and italics styling
     assert 'class="ml-1.5 text-gray-400 italic text-xs select-none"' in content
 
-    # 2. Changing status to GOT (unauthenticated) updates to "You <today>" in Got section
+    # 2. Changing status to GOT (unauthenticated) updates to "unknown <today>" in Got section
     res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res_got.status_code == 200
     item.refresh_from_db()
+    assert item.status_changed_by is None
+    assert item.status_changed_by_name == "unknown"
     today_str = timezone.localtime(timezone.now()).strftime("%m/%d")
     got_content = res_got.content.decode("utf-8")
     got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
     assert today_str in got_section
-    assert f"You {today_str}" in got_section
+    assert f"unknown {today_str}" in got_section
+    assert f"You {today_str}" not in got_section
     assert "Granola" in got_section
 
     # 3. Changing status as authenticated user (Alice) records Alice and displays "Alice <today>"

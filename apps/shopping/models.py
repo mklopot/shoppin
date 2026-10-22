@@ -212,9 +212,9 @@ class ShoppingListItem(models.Model):
     def changed_by_display(self) -> str:
         if self.status_changed_by:
             return self.status_changed_by.username
-        if self.status_changed_by_name:
+        if self.status_changed_by_name and self.status_changed_by_name.lower() != "you":
             return self.status_changed_by_name
-        return "You"
+        return "unknown"
 
     def reduce_or_delete(self, amount_to_subtract: Decimal):
         new_amount = self.amount - amount_to_subtract

@@ -117,7 +117,7 @@ def _set_item_audit(item: ShoppingListItem, request) -> None:
         item.status_changed_by_name = request.user.username
     else:
         item.status_changed_by = None
-        item.status_changed_by_name = "You"
+        item.status_changed_by_name = "unknown"
 
 
 @require_POST
@@ -194,7 +194,7 @@ def add_item(request):
         # Append to end of order
         max_order = shopping_list.items.count()
         user = request.user if request.user.is_authenticated else None
-        user_name = request.user.username if request.user.is_authenticated else "You"
+        user_name = request.user.username if request.user.is_authenticated else "unknown"
         ShoppingListItem.objects.create(
             shopping_list=shopping_list,
             name=raw_name,

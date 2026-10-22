@@ -380,10 +380,11 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert res_mark.status_code == 200
     banana_item.refresh_from_db()
     assert banana_item.status == ItemStatus.HAVE
-    # Verify Already Have section has Need, but NO Got button
+    # Verify Already Have section has Need, but NO Got button and NO Skip button
     pantry_section = res_mark.content.decode("utf-8").split("Already Have / Skipped")[1]
     assert "📋 Need" in pantry_section
     assert "🛒 Got" not in pantry_section
+    assert "Skip" not in pantry_section
 
     # 6. Move an item to GOT and verify that the Got section has Need, but NO Have and NO Skip
     milk_item = active_list.items.get(name="Almond Milk")

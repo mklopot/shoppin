@@ -257,22 +257,22 @@
 
     <!-- SECTION 3: ALREADY HAVE / SKIPPED -->
     {% if pantry_items %}
-    <div class="border border-amber-300 mt-5 text-xs" style="background-color: #faf6f0;">
+    <div class="border border-blue-300 mt-5 text-xs" style="background-color: #f0f5fa;">
         <!-- Section Header -->
-        <div class="px-3 py-2 border-b border-amber-300 flex justify-between items-center text-xs" style="background-color: #f1e7d8;">
+        <div class="px-3 py-2 border-b border-blue-300 flex justify-between items-center text-xs" style="background-color: #e2ecf7;">
             <div class="flex items-center space-x-2">
-                <span class="font-bold text-amber-950 uppercase tracking-wider text-xs">Already Have / Skipped</span>
-                <span class="text-amber-800 font-normal">At home or skipped</span>
+                <span class="font-bold text-blue-950 uppercase tracking-wider text-xs">Already Have / Skipped</span>
+                <span class="text-blue-800 font-normal">At home or skipped</span>
             </div>
         </div>
 
-        <div class="divide-y divide-amber-200">
+        <div class="divide-y divide-blue-200">
             {% for item in pantry_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-amber-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status Icon + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     {% if item.status == 'HAVE' %}
-                    <span class="text-amber-800 font-bold select-none text-sm" title="Already have at home">🏠</span>
+                    <span class="text-blue-800 font-bold select-none text-sm" title="Already have at home">🏠</span>
                     {% else %}
                     <span class="text-gray-500 font-bold select-none text-sm" title="Skipped">⏭</span>
                     {% endif %}
@@ -295,25 +295,10 @@
                 <div class="flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
-                        <button type="submit" title="Move back to To Buy" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                        <button type="submit" title="Move back to To Buy" class="border border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
                             📋 Need
                         </button>
                     </form>
-                    {% if item.status == 'HAVE' %}
-                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                        {% csrf_token %}
-                        <button type="submit" title="Don't need this trip" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
-                            ⏭ Skip
-                        </button>
-                    </form>
-                    {% else %}
-                    <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                        {% csrf_token %}
-                        <button type="submit" title="Already have at home" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-700">
-                            🏠 Have
-                        </button>
-                    </form>
-                    {% endif %}
                     <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                         ✏️
                     </button>

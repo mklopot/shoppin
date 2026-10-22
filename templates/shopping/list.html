@@ -3,7 +3,7 @@
 {% block title %}Shopping List - Shoppin{% endblock %}
 
 {% block content %}
-<div class="space-y-3" hx-ext="ws" ws-connect="/ws/shopping/">
+<div class="space-y-3">
     <!-- Main List Container (HTMX swapped & WebSocket synchronized) -->
     {% include "shopping/partials/list_content.html" %}
 </div>
@@ -96,5 +96,73 @@
             initSortables();
         }
     });
+
+    // 3. Multi-User WebSocket Synchronization
+    (function initShoppingWebSocketSync() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/shopping/`;
+        let socket = null;
+        let reconnectTimeout = null;
+
+        function connect() {
+            if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            try {
+                socket = new WebSocket(wsUrl);
+            } catch (err) {
+                console.error("[Shoppin Sync] Connection failed:", err);
+                scheduleReconnect();
+                return;
+            }
+
+            socket.onopen = function() {
+                console.log("[Shoppin Sync] Connected to live updates channel.");
+            };
+
+            socket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    const isSender = data.sender_client_id && data.sender_client_id === window.CLIENT_ID;
+
+                    // If another client made the change:
+                    if (!isSender) {
+                        // 1. Show equivalent notification on this client
+                        if (data.toast_message) {
+                            showToast(data.toast_message);
+                        }
+
+                        // 2. Instantly refresh the shopping list in place using HTMX
+                        const listContainer = document.getElementById('shopping-list-content');
+                        if (listContainer) {
+                            const refreshUrl = listContainer.getAttribute('data-refresh-url') || window.location.href;
+                            htmx.ajax('GET', refreshUrl, {
+                                target: '#shopping-list-content',
+                                swap: 'outerHTML transition:true'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("[Shoppin Sync] Error parsing message:", err);
+                }
+            };
+
+            socket.onclose = function() {
+                scheduleReconnect();
+            };
+
+            socket.onerror = function() {
+                try { socket.close(); } catch (_) {}
+            };
+        }
+
+        function scheduleReconnect() {
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(connect, 1500);
+        }
+
+        connect();
+    })();
 </script>
 {% endblock %}

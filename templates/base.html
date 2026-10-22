@@ -114,10 +114,32 @@
 
     <script>
         // Unique client ID per browser tab to coordinate WebSocket synchronization
-        window.CLIENT_ID = Math.random().toString(36).substring(2, 15);
+        window.CLIENT_ID = sessionStorage.getItem('shoppin_client_id') || Math.random().toString(36).substring(2, 15);
+        sessionStorage.setItem('shoppin_client_id', window.CLIENT_ID);
+
         document.addEventListener('htmx:configRequest', function(evt) {
             evt.detail.headers['X-Client-Id'] = window.CLIENT_ID;
         });
+
+        function showToast(message) {
+            if (!message) return;
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none';
+            const span = document.createElement('span');
+            span.className = 'font-medium pr-2';
+            span.textContent = message;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none';
+            btn.innerHTML = '&times;';
+            btn.onclick = function() { dismissToast(toast); };
+            toast.appendChild(span);
+            toast.appendChild(btn);
+            container.appendChild(toast);
+            initToasts();
+        }
 
         function dismissToast(el) {
             if (!el || el.dataset.dismissing) return;

@@ -45,16 +45,12 @@ def test_websocket_connection_and_broadcast(websocket_shopping_list):
         )
 
         # Receive the message over the WebSocket
-        response = await communicator.receive_output()
-        assert response["type"] == "websocket.send"
-        text_data = response["text"]
-
-        # Verify out-of-band toast and refresh trigger
-        assert "toast-container" in text_data
-        assert "Alice moved" in text_data
-        assert "Oranges" in text_data
-        assert "refresh-shopping-list" in text_data
-        assert "client_sender_123" in text_data
+        response = await communicator.receive_json_from()
+        assert response["type"] == "shopping_update"
+        assert "Alice moved" in response["toast_message"]
+        assert "Oranges" in response["toast_message"]
+        assert response["actor_name"] == "Alice"
+        assert response["sender_client_id"] == "client_sender_123"
 
         # Disconnect cleanly
         await communicator.disconnect()
@@ -75,9 +71,10 @@ def test_websocket_via_asgi_application(websocket_shopping_list):
             actor_name="Bob",
         )
 
-        response = await communicator.receive_output()
-        assert response["type"] == "websocket.send"
-        assert "Bob added" in response["text"]
+        response = await communicator.receive_json_from()
+        assert response["type"] == "shopping_update"
+        assert "Bob added" in response["toast_message"]
+        assert response["actor_name"] == "Bob"
 
         await communicator.disconnect()
 
@@ -105,10 +102,10 @@ def test_item_mutation_triggers_websocket_broadcast(client, websocket_shopping_l
         assert response.status_code == 200
 
         # Verify that the WebSocket consumer received the broadcast
-        ws_msg = await communicator.receive_output()
-        assert ws_msg["type"] == "websocket.send"
-        assert "Oranges" in ws_msg["text"]
-        assert "sender_browser_tab" in ws_msg["text"]
+        ws_msg = await communicator.receive_json_from()
+        assert ws_msg["type"] == "shopping_update"
+        assert "Oranges" in ws_msg["toast_message"]
+        assert ws_msg["sender_client_id"] == "sender_browser_tab"
 
         await communicator.disconnect()
 

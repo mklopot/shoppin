@@ -181,6 +181,11 @@ def _set_item_audit(item: ShoppingListItem, request: HttpRequest) -> None:
         item.status_changed_by_name = "unknown"
 
 
+def _get_client_id(request: HttpRequest) -> str:
+    """Extract unique client tab identifier from headers or META."""
+    return request.headers.get("X-Client-Id") or request.META.get("HTTP_X_CLIENT_ID") or ""
+
+
 @require_POST
 def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> HttpResponse:
     """
@@ -232,7 +237,7 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
         shopping_list=shopping_list,
         toast_message=other_status_messages.get(new_status, f"{item.changed_by_display} updated '{item.name}'"),
         actor_name=item.changed_by_display,
-        sender_client_id=request.headers.get("X-Client-Id"),
+        sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=toast)
 
@@ -347,7 +352,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
         shopping_list=shopping_list,
         toast_message=broadcast_toast,
         actor_name=existing.changed_by_display if existing else audit_user_name,
-        sender_client_id=request.headers.get("X-Client-Id"),
+        sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=toast)
 
@@ -401,7 +406,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             shopping_list=item.shopping_list,
             toast_message=f"✏️ {item.changed_by_display} edited '{item.name}'",
             actor_name=item.changed_by_display,
-            sender_client_id=request.headers.get("X-Client-Id"),
+            sender_client_id=_get_client_id(request),
         )
         return render_list_response(request, context, toast_message=f"✏️ You updated '{item.name}'")
 
@@ -442,7 +447,7 @@ def delete_item(request: HttpRequest, item_id: int) -> HttpResponse:
         shopping_list=shopping_list,
         toast_message=f"🗑 '{item_name}' was removed from the list",
         actor_name=actor_name,
-        sender_client_id=request.headers.get("X-Client-Id"),
+        sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=f"🗑 You deleted '{item_name}'")
 
@@ -485,7 +490,7 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
         shopping_list=item.shopping_list,
         toast_message=broadcast_toast,
         actor_name=item.changed_by_display,
-        sender_client_id=request.headers.get("X-Client-Id"),
+        sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=toast)
 
@@ -522,7 +527,7 @@ def set_store(request: HttpRequest) -> HttpResponse:
         shopping_list=shopping_list,
         toast_message=f"Store set to {store_name}",
         actor_name=actor_name,
-        sender_client_id=request.headers.get("X-Client-Id"),
+        sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context)
 
@@ -584,7 +589,7 @@ def reorder_items(request: HttpRequest) -> HttpResponse:
         shopping_list = get_active_list(request)
         broadcast_shopping_list_update(
             shopping_list=shopping_list,
-            sender_client_id=request.headers.get("X-Client-Id"),
+            sender_client_id=_get_client_id(request),
         )
         return HttpResponse(status=204)
     except Exception as error:
@@ -635,7 +640,7 @@ def reorder_sections(request: HttpRequest) -> HttpResponse:
 
             broadcast_shopping_list_update(
                 shopping_list=shopping_list,
-                sender_client_id=request.headers.get("X-Client-Id"),
+                sender_client_id=_get_client_id(request),
             )
 
         return HttpResponse(status=204)

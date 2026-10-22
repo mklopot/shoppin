@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.core.categorizer import categorizer
@@ -114,7 +115,8 @@ def set_item_status(request, item_id: int, new_status: str):
     item = get_object_or_404(ShoppingListItem, id=item_id)
     if new_status in ItemStatus.values:
         item.status = new_status
-        item.save(update_fields=["status", "updated_at"])
+        item.status_changed_at = timezone.now()
+        item.save(update_fields=["status", "status_changed_at", "updated_at"])
 
     shopping_list = item.shopping_list
     group_by = request.GET.get("group_by", "category")
@@ -267,7 +269,8 @@ def delete_item(request, item_id: int):
 def toggle_lock_item(request, item_id: int):
     item = get_object_or_404(ShoppingListItem, id=item_id)
     item.locked = not item.locked
-    item.save(update_fields=["locked", "updated_at"])
+    item.status_changed_at = timezone.now()
+    item.save(update_fields=["locked", "status_changed_at", "updated_at"])
 
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, item.shopping_list, group_by)

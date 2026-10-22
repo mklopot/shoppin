@@ -149,6 +149,7 @@
                                         {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                                         {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
                                         {% if item.aisle %}<span class="ml-1 text-gray-700 font-medium">📍 {{ item.aisle }}</span>{% endif %}
+                                        <span class="ml-1.5 text-gray-400 font-mono text-xs select-none" title="Date placed or updated">{{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                                     </span>
                                 </div>
                             </div>
@@ -247,6 +248,7 @@
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                             {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
                             {% if item.aisle %}<span class="ml-1 text-gray-700 font-medium">📍 {{ item.aisle }}</span>{% elif item.category %}<span class="ml-1 text-gray-500">({{ item.category|title }})</span>{% endif %}
+                            <span class="ml-1.5 text-gray-400 font-mono text-xs select-none" title="Date placed or updated">{{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>
                 </div>
@@ -302,6 +304,7 @@
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                             {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
                             {% if item.aisle %}<span class="ml-1 text-gray-700 font-medium">📍 {{ item.aisle }}</span>{% elif item.category %}<span class="ml-1 text-gray-500">({{ item.category|title }})</span>{% endif %}
+                            <span class="ml-1.5 text-gray-400 font-mono text-xs select-none" title="Date placed or updated">{{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>
                 </div>

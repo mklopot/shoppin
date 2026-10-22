@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class ItemStatus(models.TextChoices):
@@ -181,6 +182,10 @@ class ShoppingListItem(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    status_changed_at = models.DateTimeField(
+        default=timezone.now,
+        help_text="Timestamp when item was placed in current section or changed state",
+    )
 
     class Meta:
         ordering = ["order", "id"]

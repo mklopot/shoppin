@@ -403,3 +403,47 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "🏠 Have" not in shopping_to_buy
     assert "⏭ Skip" in shopping_to_buy
     assert "🛒 Got" in shopping_to_buy
+
+
+@pytest.mark.django_db
+def test_item_status_changed_at_timestamp_display(client, active_list):
+    import datetime
+
+    from django.utils import timezone
+
+    # Create an item with a status_changed_at in the past
+    past_date = timezone.now() - datetime.timedelta(days=5)
+    item = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Granola",
+        amount=Decimal("1.00"),
+        status=ItemStatus.NEED,
+        status_changed_at=past_date,
+        order=20,
+    )
+
+    # 1. Page load displays mm/dd format for the item
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    expected_past_date_str = timezone.localtime(past_date).strftime("%m/%d")
+    content = res.content.decode("utf-8")
+    assert expected_past_date_str in content
+
+    # 2. Changing status to GOT updates status_changed_at to now and displays in Got section
+    res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
+    assert res_got.status_code == 200
+    item.refresh_from_db()
+    today_str = timezone.localtime(timezone.now()).strftime("%m/%d")
+    got_content = res_got.content.decode("utf-8")
+    got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
+    assert today_str in got_section
+    assert "Granola" in got_section
+
+    # 3. Changing status to HAVE updates status_changed_at and displays in Already Have
+    res_have = client.post(reverse("shopping:set_status", args=[item.id, "HAVE"]))
+    assert res_have.status_code == 200
+    item.refresh_from_db()
+    have_content = res_have.content.decode("utf-8")
+    have_section = have_content.split("Already Have / Skipped")[1]
+    assert today_str in have_section
+    assert "Granola" in have_section

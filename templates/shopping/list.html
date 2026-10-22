@@ -131,8 +131,10 @@
 
                     // If another client made the change:
                     if (!isSender) {
-                        // 1. Show equivalent notification on this client
-                        if (data.toast_message) {
+                        // 1. Show notification(s) on this client
+                        if (data.toast_messages && Array.isArray(data.toast_messages) && data.toast_messages.length > 0) {
+                            data.toast_messages.forEach(msg => showToast(msg));
+                        } else if (data.toast_message) {
                             showToast(data.toast_message);
                         }
 

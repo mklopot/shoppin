@@ -37,7 +37,9 @@
                     const isSender = data.sender_client_id && data.sender_client_id === window.CLIENT_ID;
 
                     if (!isSender) {
-                        if (data.toast_message) {
+                        if (data.toast_messages && Array.isArray(data.toast_messages) && data.toast_messages.length > 0) {
+                            data.toast_messages.forEach(msg => showToast(msg));
+                        } else if (data.toast_message) {
                             showToast(data.toast_message);
                         }
 

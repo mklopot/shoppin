@@ -19,6 +19,7 @@ def broadcast_shopping_list_update(
     toast_message: str | None = None,
     actor_name: str | None = None,
     sender_client_id: str | None = None,
+    toast_messages: list[str] | None = None,
 ) -> None:
     """
     Broadcast a real-time update notification to all clients viewing the shopping list.
@@ -30,15 +31,20 @@ def broadcast_shopping_list_update(
         toast_message: Optional user-facing notification string.
         actor_name: Name of the user who performed the action.
         sender_client_id: Optional client ID header to prevent redundant re-fetching by the sender.
+        toast_messages: Optional list of toast messages to deliver to connected clients.
     """
     try:
         channel_layer = get_channel_layer()
         if not channel_layer:
             return
 
+        resolved_messages = toast_messages or ([toast_message] if toast_message else [])
+        primary_message = toast_message or (resolved_messages[0] if resolved_messages else "")
+
         payload: dict[str, Any] = {
             "type": "shopping_update",
-            "toast_message": toast_message or "",
+            "toast_message": primary_message,
+            "toast_messages": resolved_messages,
             "actor_name": actor_name or "unknown",
             "sender_client_id": sender_client_id or "",
         }

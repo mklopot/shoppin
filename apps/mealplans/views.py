@@ -104,7 +104,7 @@ def delete_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
     meal = get_object_or_404(Meal, id=meal_id)
     meal_name = meal.name
     shopping_list = get_active_list(request)
-    delete_meal_from_plan(meal, shopping_list)
+    delete_meal_from_plan(meal, shopping_list, request)
 
     toast_messages = [f"🗑 Deleted '{meal_name}' from meal plan"]
     return meal_plan_view(request, toast_messages=toast_messages)
@@ -180,7 +180,7 @@ def clear_meal_plan(request: HttpRequest) -> HttpResponse:
     shopping_list = get_active_list(request)
 
     for meal in meal_plan.meals.all():
-        delete_meal_from_plan(meal, shopping_list)
+        delete_meal_from_plan(meal, shopping_list, request)
 
     return redirect("mealplans:detail")
 

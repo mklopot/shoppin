@@ -260,9 +260,12 @@
                 if (personaMenu) personaMenu.classList.add('hidden');
             }
         });
-        // Unique client ID per browser tab to coordinate WebSocket synchronization
-        window.CLIENT_ID = sessionStorage.getItem('shoppin_client_id') || Math.random().toString(36).substring(2, 15);
-        sessionStorage.setItem('shoppin_client_id', window.CLIENT_ID);
+        // Unique client ID per browser tab to coordinate WebSocket synchronization.
+        // We do NOT use sessionStorage because browsers copy sessionStorage when duplicating
+        // or opening tabs from an existing window, which caused multiple open tabs to share
+        // the same client ID and mistakenly drop real-time WebSocket updates.
+        window.CLIENT_ID = 'tab_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+        try { sessionStorage.removeItem('shoppin_client_id'); } catch (_) {}
 
         document.addEventListener('htmx:configRequest', function(evt) {
             evt.detail.headers['X-Client-Id'] = window.CLIENT_ID;

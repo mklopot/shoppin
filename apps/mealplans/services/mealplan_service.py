@@ -68,16 +68,21 @@ def add_meal_to_plan(meal_plan: MealPlan, meal_name: str) -> Meal:
     return meal
 
 
-def delete_meal_from_plan(meal: Meal, shopping_list: ShoppingList) -> None:
+def delete_meal_from_plan(
+    meal: Meal,
+    shopping_list: ShoppingList,
+    request: HttpRequest | None = None,
+) -> None:
     """
     Delete a meal and remove all its recipe ingredients from the shopping list.
 
     Args:
         meal: Target Meal.
         shopping_list: Workspace active ShoppingList.
+        request: Optional HttpRequest for attribution / WebSocket sender client ID.
     """
     for recipe in meal.recipes.all():
-        remove_recipe_from_meal(meal, recipe, shopping_list)
+        remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
     meal.delete()
 
@@ -189,9 +194,20 @@ def add_recipe_to_meal(
     if len(added_descriptions) > 3:
         summary_preview += f", +{len(added_descriptions) - 3} more"
 
+    broadcast_messages = [f"🥘 Added '{recipe.name}' to {meal.name}"]
+    if len(added_descriptions) <= 6:
+        for desc in added_descriptions:
+            broadcast_messages.append(f"🛒 Added {desc} to shopping list")
+    else:
+        for desc in added_descriptions[:5]:
+            broadcast_messages.append(f"🛒 Added {desc} to shopping list")
+        remaining = len(added_descriptions) - 5
+        broadcast_messages.append(f"🛒 ...and {remaining} more ingredients added to shopping list")
+
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
         toast_message=f"Added '{recipe.name}' ingredients to shopping list ({summary_preview})",
+        toast_messages=broadcast_messages,
         actor_name=actor_name,
         sender_client_id=sender_id,
     )

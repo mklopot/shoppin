@@ -188,9 +188,11 @@ def render_list_response(
     if toast_message:
         context["toast_message"] = toast_message
 
+    target = request.headers.get("HX-Target", "").lstrip("#")
     if force_partial or (
         request.headers.get("HX-Request")
-        and request.headers.get("HX-Target") == "shopping-list-content"
+        and not request.headers.get("HX-Boosted")
+        and (not target or target == "shopping-list-content")
     ):
         return render(request, "shopping/partials/list_content.html", context)
 

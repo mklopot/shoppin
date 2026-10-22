@@ -122,3 +122,53 @@ def test_item_mutation_triggers_websocket_broadcast(client, websocket_shopping_l
         await communicator.disconnect()
 
     async_to_sync(run_test)()
+
+
+
+@pytest.mark.django_db(transaction=True)
+def test_add_dish_in_mealplan_triggers_websocket_broadcast(client, websocket_shopping_list):
+    """Test that adding a dish in meal plan triggers real-time WebSocket broadcast to shopping list."""
+    from asgiref.sync import sync_to_async
+
+    from apps.mealplans.models import Meal, MealPlan
+    from apps.recipes.models import Ingredient, Recipe
+
+    user = websocket_shopping_list.owner
+    client.force_login(user)
+
+    ws = websocket_shopping_list.workspace
+    meal_plan = MealPlan.objects.create(name="Weekly Plan", workspace=ws)
+    meal = Meal.objects.create(meal_plan=meal_plan, name="Taco Night")
+    recipe = Recipe.objects.create(name="Carnitas Tacos", directions="Cook pork")
+    Ingredient.objects.create(recipe=recipe, name="Pork Shoulder", amount=Decimal("2.00"), amount_unit="lb")
+
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    async def run_test():
+        communicator = WebsocketCommunicator(
+            ShoppingListConsumer.as_asgi(),
+            f"/ws/shopping/{websocket_shopping_list.id}/",
+        )
+        connected, _ = await communicator.connect()
+        assert connected
+
+        post_fn = sync_to_async(client.post)
+        response = await post_fn(
+            reverse("mealplans:add_dish", args=[meal.id]),
+            {"recipe_id": recipe.id},
+            HTTP_X_CLIENT_ID="mealplan_browser_tab",
+        )
+        assert response.status_code == 200
+
+        ws_msg = await communicator.receive_json_from()
+        assert ws_msg["type"] == "shopping_update"
+        assert "Carnitas Tacos" in ws_msg["toast_message"]
+        assert ws_msg["sender_client_id"] == "mealplan_browser_tab"
+        assert "toast_messages" in ws_msg
+        assert any("Pork Shoulder" in m for m in ws_msg["toast_messages"])
+
+        await communicator.disconnect()
+
+    async_to_sync(run_test)()

@@ -45,6 +45,7 @@ class ShoppingListConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             "type": "shopping_update",
             "toast_message": event.get("toast_message", ""),
+            "toast_messages": event.get("toast_messages", []),
             "actor_name": event.get("actor_name", "unknown"),
             "sender_client_id": event.get("sender_client_id", ""),
         })

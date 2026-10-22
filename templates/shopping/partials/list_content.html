@@ -164,12 +164,6 @@
                                     </button>
                                 </form>
                                 {% endif %}
-                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                                    {% csrf_token %}
-                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
-                                        ⏭ Skip
-                                    </button>
-                                </form>
                                 <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     {% if item.locked %}
@@ -181,6 +175,12 @@
                                         📋 Need
                                     </button>
                                     {% endif %}
+                                </form>
+                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
+                                        ⏭ Skip
+                                    </button>
                                 </form>
                                 {% else %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">

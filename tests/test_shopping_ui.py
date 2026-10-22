@@ -327,11 +327,12 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Ready to shop &rarr;" in pantry_content
 
     # Under To Buy in Pantry mode:
-    # We see Have, ⏭ Skip, and 📋 Need buttons, but NOT 🛒 Got!
+    # We see Have, 📋 Need, and ⏭ Skip buttons, but NOT 🛒 Got!
     pantry_to_buy = pantry_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in pantry_to_buy
-    assert "⏭ Skip" in pantry_to_buy
     assert "📋 Need" in pantry_to_buy
+    assert "⏭ Skip" in pantry_to_buy
+    assert pantry_to_buy.find("📋 Need") < pantry_to_buy.find("⏭ Skip")
     assert "🛒 Got" not in pantry_to_buy
 
     # The pantry details section is automatically opened

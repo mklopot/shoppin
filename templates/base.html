@@ -86,19 +86,24 @@
                         <span>Shoppin</span>
                     </a>
                     <nav class="flex space-x-1 text-xs">
-                        <a href="{% url 'shopping:list' %}?mode=shopping" class="px-2.5 py-1 font-semibold {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode != 'pantry' and request.resolver_match.url_name != 'pantry_check' %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <a href="{% url 'shopping:list' %}?mode=shopping"
+                           class="px-2.5 py-1 {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Shopping List
                         </a>
-                        <a href="{% url 'shopping:pantry_check' %}" class="px-2.5 py-1 font-semibold {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' or request.resolver_match.url_name == 'pantry_check' %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <a href="{% url 'shopping:pantry_check' %}"
+                           class="px-2.5 py-1 {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Pantry Check
                         </a>
-                        <a href="/mealplans/" class="px-2.5 py-1 font-medium {% if 'mealplans' in request.path %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <a href="/mealplans/"
+                           class="px-2.5 py-1 {% if 'mealplans' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Meal Plans
                         </a>
-                        <a href="/recipes/" class="px-2.5 py-1 font-medium {% if 'recipes' in request.path %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <a href="/recipes/"
+                           class="px-2.5 py-1 {% if 'recipes' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Recipes
                         </a>
-                        <a href="/preset-lists/" class="px-2.5 py-1 font-medium {% if 'preset' in request.path %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <a href="/preset-lists/"
+                           class="px-2.5 py-1 {% if 'preset' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Preset Lists
                         </a>
                     </nav>

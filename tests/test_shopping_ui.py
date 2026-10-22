@@ -696,18 +696,22 @@ def test_pantry_check_navigation_tab(client, active_list):
     assert "Pantry Check" in shop_html
     # Dedicated toggle is removed
     assert "🛒 In Store" not in shop_html
-    # Shopping List tab is active
-    assert 'href="/?mode=shopping" class="px-2.5 py-1 font-semibold text-gray-900 border-b-2 border-gray-800"' in shop_html
-    assert 'href="/pantry-check/" class="px-2.5 py-1 font-semibold text-gray-600 hover:text-gray-900"' in shop_html
+    # Shopping List tab is active (font-semibold, border-b-2), Pantry Check is inactive (font-medium)
+    assert 'href="/?mode=shopping"' in shop_html
+    assert 'href="/pantry-check/"' in shop_html
+    assert 'font-semibold text-gray-900 border-b-2 border-gray-800' in shop_html
+    assert 'font-medium text-gray-600 hover:text-gray-900' in shop_html
 
     # 2. Pantry Check route
     res_pantry = client.get(reverse("shopping:pantry_check"))
     assert res_pantry.status_code == 200
     pantry_html = res_pantry.content.decode("utf-8")
 
-    # Pantry Check tab is active
-    assert 'href="/pantry-check/" class="px-2.5 py-1 font-semibold text-gray-900 border-b-2 border-gray-800"' in pantry_html
-    assert 'href="/?mode=shopping" class="px-2.5 py-1 font-semibold text-gray-600 hover:text-gray-900"' in pantry_html
+    # Pantry Check tab is active (font-semibold, border-b-2), Shopping List is inactive (font-medium)
+    assert 'href="/pantry-check/"' in pantry_html
+    assert 'href="/?mode=shopping"' in pantry_html
+    assert 'font-semibold text-gray-900 border-b-2 border-gray-800' in pantry_html
+    assert 'font-medium text-gray-600 hover:text-gray-900' in pantry_html
     # Helper banner is shown
     assert "Pantry Check Mode:" in pantry_html
     assert "Ready to shop &rarr;" in pantry_html

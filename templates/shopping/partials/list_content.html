@@ -314,12 +314,6 @@
                             📋 Need
                         </button>
                     </form>
-                    <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                        {% csrf_token %}
-                        <button type="submit" title="Got it (Put in Cart)" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
-                            🛒 Got
-                        </button>
-                    </form>
                     {% if item.status == 'HAVE' %}
                     <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}

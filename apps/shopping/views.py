@@ -18,6 +18,7 @@ from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
     combine_amounts_and_units,
+    is_quantity_increased,
     parse_amount_and_unit,
     singularize,
 )
@@ -363,12 +364,15 @@ def add_item(request: HttpRequest) -> HttpResponse:
         existing.amount_unit = new_unit
         if purpose and purpose not in existing.purpose:
             existing.purpose = f"{existing.purpose}, {purpose}".strip(", ")
+        # Item was combined, so amount changed -> reset to not confirmed status
+        existing.locked = False
         _set_item_audit(existing, request)
         existing.save(
             update_fields=[
                 "amount",
                 "amount_unit",
                 "purpose",
+                "locked",
                 "status_changed_at",
                 "status_changed_by",
                 "status_changed_by_name",
@@ -434,6 +438,9 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         return forbidden
 
     if request.method == "POST":
+        old_amount = item.amount
+        old_unit = item.amount_unit
+
         item.name = request.POST.get("name", item.name).strip()
         amount_string = request.POST.get("amount", str(item.amount))
         parsed_amount, parsed_unit = parse_amount_and_unit(amount_string)
@@ -448,6 +455,72 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         item.category = request.POST.get("category", item.category).strip()
         item.aisle = request.POST.get("aisle", item.aisle).strip()
         item.purpose = request.POST.get("purpose", item.purpose).strip() or "one-time purchase"
+
+        # Check if editing this item allows it to combine with another item on the list
+        normalized_name = singularize(item.name.lower())
+        existing: ShoppingListItem | None = None
+        for candidate in item.shopping_list.items.filter(status=item.status).exclude(id=item.id):
+            if (
+                singularize(candidate.name.lower()) == normalized_name
+                and can_combine_units(candidate.amount_unit, item.amount_unit)
+                and candidate.brand.lower() == item.brand.lower()
+                and candidate.vendor.lower() == item.vendor.lower()
+            ):
+                existing = candidate
+                break
+
+        if existing:
+            # Combine into existing item
+            combined_amount, combined_unit = combine_amounts_and_units(
+                existing.amount,
+                existing.amount_unit,
+                item.amount,
+                item.amount_unit,
+            )
+            existing.amount = combined_amount
+            existing.amount_unit = combined_unit
+            if item.purpose and item.purpose not in existing.purpose:
+                existing.purpose = f"{existing.purpose}, {item.purpose}".strip(", ")
+            if item.source_meal and not existing.source_meal:
+                existing.source_meal = item.source_meal
+            if item.source_recipe and not existing.source_recipe:
+                existing.source_recipe = item.source_recipe
+
+            # Requirement: If an item is combined, it gets the "not confirmed" status
+            existing.locked = False
+            _set_item_audit(existing, request)
+            existing.save()
+
+            # Delete the redundant edited item
+            item.delete()
+
+            # Update store aisle learning cache if aisle is set
+            if existing.aisle and existing.shopping_list.active_store:
+                StoreItemAisle.objects.update_or_create(
+                    store=existing.shopping_list.active_store,
+                    item_name_normalized=normalized_name,
+                    defaults={
+                        "aisle_name": existing.aisle,
+                        "source": "manual",
+                    },
+                )
+
+            group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+            context = _build_list_context(request, existing.shopping_list, group_by)
+            unit_str = f" {existing.unit_display}" if existing.unit_display else ""
+            toast = f"Combined into '{existing.name}' ({existing.amount_display}{unit_str})"
+            broadcast_shopping_list_update(
+                shopping_list=existing.shopping_list,
+                toast_message=f"✏️ {existing.changed_by_display} combined '{existing.name}' into {existing.amount_display}{unit_str}",
+                actor_name=existing.changed_by_display,
+                sender_client_id=_get_client_id(request),
+            )
+            return render_list_response(request, context, toast_message=toast)
+
+        # Requirement: If not combined, check if amount or unit was increased by editing
+        if is_quantity_increased(old_amount, old_unit, item.amount, item.amount_unit):
+            item.locked = False
+
         _set_item_audit(item, request)
         item.save()
 
@@ -455,7 +528,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         if item.aisle and item.shopping_list.active_store:
             StoreItemAisle.objects.update_or_create(
                 store=item.shopping_list.active_store,
-                item_name_normalized=singularize(item.name.lower()),
+                item_name_normalized=normalized_name,
                 defaults={
                     "aisle_name": item.aisle,
                     "source": "manual",

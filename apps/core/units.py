@@ -645,3 +645,52 @@ def format_amount(amount: Any) -> str:
 
     # Fallback to stripped decimal string
     return str(round(val, 2)).rstrip("0").rstrip(".")
+
+
+def is_quantity_increased(
+    amount1: Decimal | float | int,
+    unit1: str,
+    amount2: Decimal | float | int,
+    unit2: str,
+) -> bool:
+    """
+    Check if (amount2, unit2) represents an increase over (amount1, unit1).
+
+    Handles compatible unit families (e.g. 1 pint to 1 quart is an increase,
+    while 2 quarts to 1 pint is a decrease). If units are identical or without
+    a family, compares amount directly. If the unit itself changed to a different
+    measurement, considers it an increase/alteration requiring pantry re-confirmation.
+
+    Args:
+        amount1: Original quantity.
+        unit1: Original unit string.
+        amount2: New/edited quantity.
+        unit2: New/edited unit string.
+
+    Returns:
+        True if the quantity/unit was increased, False otherwise.
+    """
+    u1_clean = unit1.strip()
+    u2_clean = unit2.strip()
+
+    fam1, scale1, _ = get_unit_family(u1_clean)
+    fam2, scale2, _ = get_unit_family(u2_clean)
+
+    if fam1 is not None and fam1 == fam2:
+        val1 = float(amount1) * scale1
+        val2 = float(amount2) * scale2
+        return val2 > val1
+
+    if singularize(u1_clean.lower()) == singularize(u2_clean.lower()):
+        return Decimal(str(amount2)) > Decimal(str(amount1))
+
+    # If amount increased directly
+    if Decimal(str(amount2)) > Decimal(str(amount1)):
+        return True
+
+    # If unit changed to something else
+    if u1_clean.lower() != u2_clean.lower():
+        return True
+
+    return False
+

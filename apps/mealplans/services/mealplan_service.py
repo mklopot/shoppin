@@ -144,6 +144,8 @@ def add_recipe_to_meal(
                 existing.purpose = f"{existing.purpose}, {recipe.name}" if existing.purpose else f"For {recipe.name}"
             existing.source_meal = meal
             existing.source_recipe = recipe
+            # Combined with additional amount -> reset to not confirmed status
+            existing.locked = False
             existing.save()
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name} (combined)")
         else:

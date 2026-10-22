@@ -140,13 +140,14 @@ def test_add_dish_combines_existing_ingredient(mealplan_setup):
     shopping_list = mealplan_setup["shopping_list"]
     recipe = mealplan_setup["recipe"]
 
-    # Pre-existing item on shopping list: 4 Tortillas
+    # Pre-existing item on shopping list: 4 Tortillas (previously confirmed)
     shopping_list.items.create(
         name="Tortillas",
         amount=Decimal("4.00"),
         amount_unit="count",
         status=ItemStatus.NEED,
         category="bakery",
+        locked=True,
     )
 
     meal = add_meal_to_plan(meal_plan, "Taco Dinner")
@@ -155,6 +156,8 @@ def test_add_dish_combines_existing_ingredient(mealplan_setup):
     tortillas = shopping_list.items.get(name="Tortillas")
     # 4 existing + 8 from recipe = 12
     assert tortillas.amount == Decimal("12.00")
+    # Because it was combined and amount changed, confirmation status is reset
+    assert tortillas.locked is False
 
 
 def test_remove_recipe_from_meal_cleans_up_shopping_list(mealplan_setup):

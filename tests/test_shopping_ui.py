@@ -584,3 +584,95 @@ def test_in_store_view_shows_pantry_check_confirmation_status(client, active_lis
     # Now both are confirmed, so no 'not confirmed' tags or header alerts remain
     assert ">not confirmed<" not in toggle_content
     assert "not confirmed</span>" not in toggle_content
+
+
+@pytest.mark.django_db
+def test_edit_item_triggers_combine_and_resets_confirmation(client, active_list):
+    """Verify editing an item to match another item combines them and resets confirmation status."""
+    bananas = active_list.items.get(name="Bananas")
+    milk = active_list.items.get(name="Almond Milk")
+
+    # Confirm Bananas
+    bananas.locked = True
+    bananas.amount = Decimal("2.00")
+    bananas.save(update_fields=["locked", "amount"])
+
+    milk.amount = Decimal("3.00")
+    milk.save(update_fields=["amount"])
+
+    # Edit milk to also be "Bananas"
+    res = client.post(
+        reverse("shopping:edit_item", args=[milk.id]),
+        {
+            "name": "Bananas",
+            "amount": "3",
+            "amount_unit": "",
+            "category": "produce",
+            "brand": "",
+            "vendor": "",
+            "purpose": "snack",
+        },
+    )
+    assert res.status_code == 200
+
+    # The two items should now be combined into 1 Bananas item with amount 5
+    items = active_list.items.filter(name="Bananas")
+    assert items.count() == 1
+    combined = items.first()
+    assert combined.amount == Decimal("5.00")
+    # Because it was combined, its confirmation status should be reset to False (not confirmed)
+    assert combined.locked is False
+
+
+@pytest.mark.django_db
+def test_edit_item_amount_increase_resets_confirmation(client, active_list):
+    """Verify that editing an item to increase its amount resets confirmation status."""
+    bananas = active_list.items.get(name="Bananas")
+    bananas.amount = Decimal("2.00")
+    bananas.locked = True
+    bananas.save(update_fields=["amount", "locked"])
+
+    # Edit bananas to increase amount from 2 to 6
+    res = client.post(
+        reverse("shopping:edit_item", args=[bananas.id]),
+        {
+            "name": "Bananas",
+            "amount": "6",
+            "amount_unit": "",
+            "category": "produce",
+            "brand": "",
+            "vendor": "",
+            "purpose": "daily",
+        },
+    )
+    assert res.status_code == 200
+    bananas.refresh_from_db()
+    assert bananas.amount == Decimal("6.00")
+    assert bananas.locked is False
+
+
+@pytest.mark.django_db
+def test_edit_item_amount_decrease_preserves_confirmation(client, active_list):
+    """Verify that editing an item to decrease its amount keeps its confirmed status."""
+    bananas = active_list.items.get(name="Bananas")
+    bananas.amount = Decimal("4.00")
+    bananas.locked = True
+    bananas.save(update_fields=["amount", "locked"])
+
+    # Edit bananas to decrease amount from 4 to 2
+    res = client.post(
+        reverse("shopping:edit_item", args=[bananas.id]),
+        {
+            "name": "Bananas",
+            "amount": "2",
+            "amount_unit": "",
+            "category": "produce",
+            "brand": "",
+            "vendor": "",
+            "purpose": "daily",
+        },
+    )
+    assert res.status_code == 200
+    bananas.refresh_from_db()
+    assert bananas.amount == Decimal("2.00")
+    assert bananas.locked is True

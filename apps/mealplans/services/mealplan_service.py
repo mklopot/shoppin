@@ -16,6 +16,7 @@ from apps.core.utils import (
     singularize,
 )
 from apps.mealplans.models import Meal, MealPlan
+from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.recipes.models import Recipe
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
@@ -85,7 +86,7 @@ def add_recipe_to_meal(
     recipe: Recipe,
     shopping_list: ShoppingList,
     request: HttpRequest | None = None,
-) -> None:
+) -> list[str]:
     """
     Add a recipe dish to a meal and populate its ingredients onto the shopping list.
 
@@ -94,14 +95,29 @@ def add_recipe_to_meal(
         recipe: Target Recipe.
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for attribution / WebSocket sender client ID.
+
+    Returns:
+        List of formatted strings describing each added or combined ingredient.
     """
     meal.recipes.add(recipe)
 
+    # Re-evaluate emoji if current meal emoji is empty
+    if not meal.emoji:
+        meal.emoji = get_meal_emoji(f"{meal.name} {recipe.name}")
+        meal.save(update_fields=["emoji"])
+
     # Load ingredients into shopping list
+    added_descriptions: list[str] = []
+
     for ingredient in recipe.ingredients.all():
         normalized_name = singularize(ingredient.name.lower())
         brand = ingredient.brand or ""
         unit = ingredient.amount_unit or ""
+
+        # Format amount and unit for clean user-facing description
+        amount_raw = f"{ingredient.amount:.2g}"
+        amount_fmt = amount_raw.rstrip("0").rstrip(".") if "." in amount_raw else amount_raw
+        unit_str = f" {ingredient.amount_unit}" if ingredient.amount_unit else ""
 
         # Check for existing NEED item on list to combine
         existing = None
@@ -129,6 +145,7 @@ def add_recipe_to_meal(
             existing.source_meal = meal
             existing.source_recipe = recipe
             existing.save()
+            added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name} (combined)")
         else:
             # Infer category
             cat = ingredient.category or categorizer.get_category(ingredient.name)
@@ -155,16 +172,22 @@ def add_recipe_to_meal(
                 source_recipe=recipe,
                 source_ingredient=ingredient,
             )
+            added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}".strip())
 
     # Broadcast WebSocket update
     actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id") if request else ""
+    summary_preview = ", ".join(added_descriptions[:3])
+    if len(added_descriptions) > 3:
+        summary_preview += f", +{len(added_descriptions) - 3} more"
+
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
-        toast_message=f"Added '{recipe.name}' ingredients to shopping list",
+        toast_message=f"Added '{recipe.name}' ingredients to shopping list ({summary_preview})",
         actor_name=actor_name,
         sender_client_id=sender_id,
     )
+    return added_descriptions
 
 
 def remove_recipe_from_meal(

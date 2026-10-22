@@ -551,7 +551,7 @@ def test_in_store_location_not_shown_in_got_and_already_have(client, active_list
 
 @pytest.mark.django_db
 def test_in_store_view_shows_pantry_check_confirmation_status(client, active_list):
-    """Verify that in the In Store view, items clearly show whether they have or haven't been confirmed in Pantry Check."""
+    """Verify that in the In Store view, only unconfirmed items show a subtle 'not confirmed' tag."""
     bananas = active_list.items.get(name="Bananas")
     milk = active_list.items.get(name="Almond Milk")
 
@@ -566,13 +566,14 @@ def test_in_store_view_shows_pantry_check_confirmation_status(client, active_lis
     assert res.status_code == 200
     content = res.content.decode("utf-8")
 
-    # Summary in To Buy header
-    assert "1 confirmed" in content
-    assert "1 unconfirmed" in content
+    # Summary in To Buy header shows unconfirmed count
+    assert "1 not confirmed" in content
 
-    # Confirmed badge for Bananas and Not Confirmed badge for Almond Milk
-    assert "Confirmed" in content
-    assert "Not Confirmed" in content
+    # Confirmed item (Bananas) has NO confirmed tag
+    assert "✓ Confirmed" not in content
+
+    # Unconfirmed item (Almond Milk) has subtle 'not confirmed' tag
+    assert ">not confirmed<" in content
 
     # 2. Toggle lock on Milk to confirm it
     res_toggle = client.post(reverse("shopping:toggle_lock", args=[milk.id]) + "?mode=shopping")
@@ -580,4 +581,6 @@ def test_in_store_view_shows_pantry_check_confirmation_status(client, active_lis
     milk.refresh_from_db()
     assert milk.locked is True
     toggle_content = res_toggle.content.decode("utf-8")
-    assert "2 confirmed" in toggle_content
+    # Now both are confirmed, so no 'not confirmed' tags or header alerts remain
+    assert ">not confirmed<" not in toggle_content
+    assert "not confirmed</span>" not in toggle_content

@@ -33,7 +33,10 @@ def _check_mealplan_write(request: HttpRequest) -> HttpResponseForbidden | None:
     return None
 
 
-def meal_plan_view(request: HttpRequest) -> HttpResponse:
+def meal_plan_view(
+    request: HttpRequest,
+    toast_messages: list[str] | None = None,
+) -> HttpResponse:
     """
     Render the Meal Plan management page or HTMX partial.
     """
@@ -60,6 +63,7 @@ def meal_plan_view(request: HttpRequest) -> HttpResponse:
         "meals_missing_optional": status_info["meals_missing_optional"],
         "available_recipes": available_recipes,
         "can_write": can_write,
+        "toast_messages": toast_messages or [],
     }
 
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
@@ -80,10 +84,12 @@ def add_meal(request: HttpRequest) -> HttpResponse:
     meal_plan = get_active_meal_plan(request, workspace)
 
     meal_name = request.POST.get("meal", "").strip()
+    toast_messages: list[str] = []
     if meal_name:
-        add_meal_to_plan(meal_plan, meal_name)
+        meal = add_meal_to_plan(meal_plan, meal_name)
+        toast_messages.append(f"➕ Added '{meal.name}' to meal plan")
 
-    return meal_plan_view(request)
+    return meal_plan_view(request, toast_messages=toast_messages)
 
 
 @require_POST
@@ -96,10 +102,12 @@ def delete_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
         return forbidden
 
     meal = get_object_or_404(Meal, id=meal_id)
+    meal_name = meal.name
     shopping_list = get_active_list(request)
     delete_meal_from_plan(meal, shopping_list)
 
-    return meal_plan_view(request)
+    toast_messages = [f"🗑 Deleted '{meal_name}' from meal plan"]
+    return meal_plan_view(request, toast_messages=toast_messages)
 
 
 @require_POST
@@ -123,10 +131,20 @@ def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
     elif recipe_name:
         recipe = Recipe.objects.filter(name__iexact=recipe_name).first()
 
+    toast_messages: list[str] = []
     if recipe:
-        add_recipe_to_meal(meal, recipe, shopping_list, request)
+        added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request)
+        toast_messages.append(f"🥘 Added '{recipe.name}' to {meal.name}")
+        if len(added_descriptions) <= 6:
+            for desc in added_descriptions:
+                toast_messages.append(f"🛒 Added {desc} to shopping list")
+        else:
+            for desc in added_descriptions[:5]:
+                toast_messages.append(f"🛒 Added {desc} to shopping list")
+            remaining = len(added_descriptions) - 5
+            toast_messages.append(f"🛒 ...and {remaining} more ingredients added to shopping list")
 
-    return meal_plan_view(request)
+    return meal_plan_view(request, toast_messages=toast_messages)
 
 
 @require_POST
@@ -144,7 +162,8 @@ def delete_dish(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRespo
 
     remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
-    return meal_plan_view(request)
+    toast_messages = [f"🗑 Removed '{recipe.name}' from {meal.name} (ingredients updated on shopping list)"]
+    return meal_plan_view(request, toast_messages=toast_messages)
 
 
 @require_POST
@@ -185,8 +204,16 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
             "is_ready": item.status in ("GOT", "HAVE") if item else False,
         })
 
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    user = getattr(request, "user", None)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    meals = meal_plan.meals.all()
+
     context = {
         "recipe": recipe,
         "ingredients_with_status": ingredients_with_status,
+        "meals": meals,
+        "can_write": can_write,
     }
     return render(request, "mealplans/partials/recipe_modal.html", context)

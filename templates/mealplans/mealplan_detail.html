@@ -3,7 +3,72 @@
 {% block title %}Meal Plan - Shoppin{% endblock %}
 
 {% block content %}
-<div id="mealplan-content" class="max-w-4xl mx-auto space-y-4">
+<div id="mealplan-content" class="max-w-4xl mx-auto space-y-4" data-refresh-url="{% url 'mealplans:detail' %}">
     {% include "mealplans/partials/mealplan_content.html" %}
 </div>
+
+<!-- Modal Dialog Placeholder -->
+<div id="modal-placeholder"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function initMealplanSync() {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/shopping/{{ shopping_list.id }}/`;
+        let socket = null;
+        let reconnectTimeout = null;
+
+        function connect() {
+            if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            try {
+                socket = new WebSocket(wsUrl);
+            } catch (err) {
+                scheduleReconnect();
+                return;
+            }
+
+            socket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    const isSender = data.sender_client_id && data.sender_client_id === window.CLIENT_ID;
+
+                    if (!isSender) {
+                        if (data.toast_message) {
+                            showToast(data.toast_message);
+                        }
+
+                        const container = document.getElementById('mealplan-content');
+                        if (container) {
+                            htmx.ajax('GET', '{% url "mealplans:detail" %}', {
+                                target: '#mealplan-content',
+                                swap: 'innerHTML transition:true'
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("[Mealplan Sync] Error parsing message:", err);
+                }
+            };
+
+            socket.onclose = function() {
+                scheduleReconnect();
+            };
+
+            socket.onerror = function() {
+                try { socket.close(); } catch (_) {}
+            };
+        }
+
+        function scheduleReconnect() {
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(connect, 1500);
+        }
+
+        connect();
+    })();
+</script>
 {% endblock %}

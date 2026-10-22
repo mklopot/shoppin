@@ -186,6 +186,20 @@ class ShoppingListItem(models.Model):
         default=timezone.now,
         help_text="Timestamp when item was placed in current section or changed state",
     )
+    status_changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_items_status_changed",
+        help_text="User who last updated or placed the item in this section",
+    )
+    status_changed_by_name = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        help_text="Display name of who changed the item status or state",
+    )
 
     class Meta:
         ordering = ["order", "id"]
@@ -193,6 +207,14 @@ class ShoppingListItem(models.Model):
     def __str__(self):
         unit_str = f" {self.amount_unit}" if self.amount_unit else ""
         return f"{self.amount:g}{unit_str} {self.name} [{self.status}]"
+
+    @property
+    def changed_by_display(self) -> str:
+        if self.status_changed_by:
+            return self.status_changed_by.username
+        if self.status_changed_by_name:
+            return self.status_changed_by_name
+        return "You"
 
     def reduce_or_delete(self, amount_to_subtract: Decimal):
         new_amount = self.amount - amount_to_subtract

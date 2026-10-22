@@ -38,6 +38,17 @@ class ShoppingListAdmin(admin.ModelAdmin):
 
 @admin.register(ShoppingListItem)
 class ShoppingListItemAdmin(admin.ModelAdmin):
-    list_display = ("name", "shopping_list", "amount", "amount_unit", "category", "aisle", "status", "optional")
-    list_filter = ("status", "category", "optional")
-    search_fields = ("name", "brand", "vendor", "purpose", "aisle")
+    list_display = (
+        "name",
+        "shopping_list",
+        "amount",
+        "amount_unit",
+        "category",
+        "aisle",
+        "status",
+        "optional",
+        "status_changed_at",
+        "status_changed_by",
+    )
+    list_filter = ("status", "category", "optional", "status_changed_by")
+    search_fields = ("name", "brand", "vendor", "purpose", "aisle", "status_changed_by_name")

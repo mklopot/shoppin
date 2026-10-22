@@ -110,13 +110,23 @@ def shopping_list_view(request):
     return render(request, "shopping/list.html", context)
 
 
+def _set_item_audit(item: ShoppingListItem, request) -> None:
+    item.status_changed_at = timezone.now()
+    if request.user.is_authenticated:
+        item.status_changed_by = request.user
+        item.status_changed_by_name = request.user.username
+    else:
+        item.status_changed_by = None
+        item.status_changed_by_name = "You"
+
+
 @require_POST
 def set_item_status(request, item_id: int, new_status: str):
     item = get_object_or_404(ShoppingListItem, id=item_id)
     if new_status in ItemStatus.values:
         item.status = new_status
-        item.status_changed_at = timezone.now()
-        item.save(update_fields=["status", "status_changed_at", "updated_at"])
+        _set_item_audit(item, request)
+        item.save(update_fields=["status", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
 
     shopping_list = item.shopping_list
     group_by = request.GET.get("group_by", "category")
@@ -178,10 +188,13 @@ def add_item(request):
         existing.amount += amount
         if purpose and purpose not in existing.purpose:
             existing.purpose = f"{existing.purpose}, {purpose}".strip(", ")
-        existing.save(update_fields=["amount", "purpose", "updated_at"])
+        _set_item_audit(existing, request)
+        existing.save(update_fields=["amount", "purpose", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
     else:
         # Append to end of order
         max_order = shopping_list.items.count()
+        user = request.user if request.user.is_authenticated else None
+        user_name = request.user.username if request.user.is_authenticated else "You"
         ShoppingListItem.objects.create(
             shopping_list=shopping_list,
             name=raw_name,
@@ -194,6 +207,9 @@ def add_item(request):
             aisle=aisle,
             status=ItemStatus.NEED,
             order=max_order + 1,
+            status_changed_at=timezone.now(),
+            status_changed_by=user,
+            status_changed_by_name=user_name,
         )
 
     group_by = request.GET.get("group_by", "category")
@@ -220,6 +236,7 @@ def edit_item(request, item_id: int):
         item.category = request.POST.get("category", item.category).strip()
         item.aisle = request.POST.get("aisle", item.aisle).strip()
         item.purpose = request.POST.get("purpose", item.purpose).strip() or "one-time purchase"
+        _set_item_audit(item, request)
         item.save()
 
         # If user explicitly edited aisle and store is active, update store learning cache!
@@ -269,8 +286,8 @@ def delete_item(request, item_id: int):
 def toggle_lock_item(request, item_id: int):
     item = get_object_or_404(ShoppingListItem, id=item_id)
     item.locked = not item.locked
-    item.status_changed_at = timezone.now()
-    item.save(update_fields=["locked", "status_changed_at", "updated_at"])
+    _set_item_audit(item, request)
+    item.save(update_fields=["locked", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
 
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, item.shopping_list, group_by)

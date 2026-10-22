@@ -273,15 +273,14 @@
 
     <!-- SECTION 3: ALREADY HAVE / SKIPPED -->
     {% if pantry_items %}
-    <details {% if mode == 'pantry' %}open{% endif %} class="border border-amber-300 mt-5 text-xs" style="background-color: #faf6f0;">
-        <!-- Section Header / Summary -->
-        <summary class="px-3 py-2 border-b border-amber-300 cursor-pointer select-none flex justify-between items-center text-xs" style="background-color: #f1e7d8;">
+    <div class="border border-amber-300 mt-5 text-xs" style="background-color: #faf6f0;">
+        <!-- Section Header -->
+        <div class="px-3 py-2 border-b border-amber-300 flex justify-between items-center text-xs" style="background-color: #f1e7d8;">
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-amber-950 uppercase tracking-wider text-xs">Already Have / Skipped</span>
                 <span class="text-amber-800 font-normal">At home or skipped</span>
             </div>
-            <span class="text-amber-700 font-normal text-xs">Click to show/hide</span>
-        </summary>
+        </div>
 
         <div class="divide-y divide-amber-200">
             {% for item in pantry_items %}
@@ -339,6 +338,6 @@
             </div>
             {% endfor %}
         </div>
-    </details>
+    </div>
     {% endif %}
 </div>

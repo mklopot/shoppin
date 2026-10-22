@@ -162,7 +162,7 @@ def test_item_transitions_and_toast_notifications(client, active_list):
     res = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res.status_code == 200
     content = res.content.decode("utf-8")
-    assert "Moved &#x27;Bananas&#x27; to Cart" in content or "Moved 'Bananas' to Cart" in content
+    assert "You moved &#x27;Bananas&#x27; to Cart" in content or "You moved 'Bananas' to Cart" in content
     assert 'hx-swap-oob="beforeend"' in content
     assert "bg-white/90" in content
     assert "backdrop-blur-sm" in content
@@ -173,13 +173,13 @@ def test_item_transitions_and_toast_notifications(client, active_list):
     res = client.post(reverse("shopping:add_item"), {"name": "Sourdough", "amount": "1"})
     assert res.status_code == 200
     content = res.content.decode("utf-8")
-    assert "+ Added &#x27;Sourdough&#x27; to shopping list" in content or "+ Added 'Sourdough' to shopping list" in content
+    assert "You added &#x27;Sourdough&#x27; to the shopping list" in content or "You added 'Sourdough' to the shopping list" in content
 
     # 3. Delete item toast notification
     res = client.post(reverse("shopping:delete_item", args=[item.id]))
     assert res.status_code == 200
     content = res.content.decode("utf-8")
-    assert "Deleted &#x27;Bananas&#x27;" in content or "Deleted 'Bananas'" in content
+    assert "You deleted &#x27;Bananas&#x27;" in content or "You deleted 'Bananas'" in content
 
 
 @pytest.mark.django_db
@@ -280,7 +280,7 @@ def test_category_and_aisle_pulldown_and_custom_typing(client, active_list):
 
 @pytest.mark.django_db
 def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list):
-    # Add a pantry item (status HAVE) to verify details open/close behavior
+    # Add a pantry item (status HAVE) to verify Already Have rendering
     ShoppingListItem.objects.create(
         shopping_list=active_list,
         name="Olive Oil",
@@ -313,8 +313,8 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     # Got button should NOT have a black background
     assert "bg-gray-800 text-white px-3 py-1 text-xs font-semibold" not in to_buy_section
 
-    # The pantry details section should be collapsed (not open)
-    assert "<details open class=\"border border-amber-300" not in content
+    # The Already Have / Skipped section is permanently visible and non-collapsible
+    assert "<details" not in content
     assert "Already Have / Skipped" in content
 
     # 2. Switch to Pantry Check Mode via query param ?mode=pantry
@@ -335,8 +335,9 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert pantry_to_buy.find("📋 Need") < pantry_to_buy.find("⏭ Skip")
     assert "🛒 Got" not in pantry_to_buy
 
-    # The pantry details section is automatically opened
-    assert "<details open" in pantry_content
+    # The Already Have section is always visible (non-collapsible) in pantry mode too
+    assert "<details" not in pantry_content
+    assert "Already Have / Skipped" in pantry_content
 
     # 3. Session persistence: Subsequent request without ?mode still remembers pantry mode
     res_session = client.get(reverse("shopping:list"))

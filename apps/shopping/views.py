@@ -123,12 +123,12 @@ def set_item_status(request, item_id: int, new_status: str):
     context = _build_list_context(request, shopping_list, group_by)
 
     status_messages = {
-        ItemStatus.GOT: f"🛒 Moved '{item.name}' to Cart",
-        ItemStatus.HAVE: f"🏠 Marked '{item.name}' as Already in Pantry",
-        ItemStatus.DONT_NEED: f"⏭ Skipped '{item.name}'",
-        ItemStatus.NEED: f"📋 Moved '{item.name}' back to To Buy",
+        ItemStatus.GOT: f"🛒 You moved '{item.name}' to Cart",
+        ItemStatus.HAVE: f"🏠 You marked '{item.name}' as Already in Pantry",
+        ItemStatus.DONT_NEED: f"⏭ You skipped '{item.name}'",
+        ItemStatus.NEED: f"📋 You moved '{item.name}' back to To Buy",
     }
-    context["toast_message"] = status_messages.get(new_status, f"Updated '{item.name}'")
+    context["toast_message"] = status_messages.get(new_status, f"You updated '{item.name}'")
     return render(request, "shopping/partials/list_content.html", context)
 
 
@@ -199,9 +199,9 @@ def add_item(request):
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, shopping_list, group_by)
     if existing:
-        context["toast_message"] = f"Increased quantity of '{existing.name}' (+{amount})"
+        context["toast_message"] = f"You increased the quantity of '{existing.name}' (+{amount})"
     else:
-        context["toast_message"] = f"+ Added '{raw_name}' to shopping list"
+        context["toast_message"] = f"You added '{raw_name}' to the shopping list"
     return render(request, "shopping/partials/list_content.html", context)
 
 
@@ -236,7 +236,7 @@ def edit_item(request, item_id: int):
 
         group_by = request.GET.get("group_by", "category")
         context = _build_list_context(request, item.shopping_list, group_by)
-        context["toast_message"] = f"✏️ Updated '{item.name}'"
+        context["toast_message"] = f"✏️ You updated '{item.name}'"
         return render(request, "shopping/partials/list_content.html", context)
 
     known_categories = get_known_categories()
@@ -261,7 +261,7 @@ def delete_item(request, item_id: int):
 
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, shopping_list, group_by)
-    context["toast_message"] = f"🗑 Deleted '{item_name}'"
+    context["toast_message"] = f"🗑 You deleted '{item_name}'"
     return render(request, "shopping/partials/list_content.html", context)
 
 
@@ -275,9 +275,9 @@ def toggle_lock_item(request, item_id: int):
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, item.shopping_list, group_by)
     if item.locked:
-        context["toast_message"] = f"📋 Confirmed '{item.name}' as needed"
+        context["toast_message"] = f"📋 You confirmed '{item.name}' as needed"
     else:
-        context["toast_message"] = f"Unchecked '{item.name}'"
+        context["toast_message"] = f"You unchecked '{item.name}'"
     return render(request, "shopping/partials/list_content.html", context)
 
 
@@ -379,5 +379,5 @@ def clear_completed(request):
 
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, shopping_list, group_by)
-    context["toast_message"] = "Cleared cart items"
+    context["toast_message"] = "You cleared cart items"
     return render(request, "shopping/partials/list_content.html", context)

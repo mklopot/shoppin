@@ -360,6 +360,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     # - Hides the "🏠 Have" button for this item
     # - Button shows "📋 Need"
     lock_content = res_lock.content.decode("utf-8")
+    assert "You set &#x27;Bananas&#x27; to &quot;needed&quot;" in lock_content or "You set 'Bananas' to \"needed\"" in lock_content
     banana_row = [row for row in lock_content.split('id="item-row-') if f'item-row-{banana_item.id}' in f'item-row-{row}'][0]
     assert "📋 Need" in banana_row
     assert "🏠 Have" not in banana_row

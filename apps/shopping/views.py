@@ -275,7 +275,7 @@ def toggle_lock_item(request, item_id: int):
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, item.shopping_list, group_by)
     if item.locked:
-        context["toast_message"] = f"📋 You confirmed '{item.name}' as needed"
+        context["toast_message"] = f'📋 You set \'{item.name}\' to "needed"'
     else:
         context["toast_message"] = f"You unchecked '{item.name}'"
     return render(request, "shopping/partials/list_content.html", context)

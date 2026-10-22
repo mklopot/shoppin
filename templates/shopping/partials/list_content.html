@@ -104,7 +104,7 @@
         <div class="px-3 py-2 bg-amber-50 border-b border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900">
             <div class="flex items-center space-x-1.5">
                 <span class="text-base select-none leading-none">🏠</span>
-                <span><strong>Pantry Check Mode:</strong> Review what you already have at home before heading out. Click <strong>Have</strong> to remove needed items or <strong>Skip</strong> if not buying today.</span>
+                <span><strong>Pantry Check Mode:</strong> Review what you have at home before heading out. Tap <strong>Have</strong> if you already have it, <strong>Skip</strong> if not buying today, or <strong>Need</strong> to confirm you need to buy it.</span>
             </div>
             <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
                     class="text-xs text-amber-800 hover:text-black font-semibold underline whitespace-nowrap">
@@ -131,12 +131,15 @@
                     <!-- Items List (Drag & Drop for individual items within section) -->
                     <div class="sortable-group divide-y divide-gray-200" data-group="{{ group_title }}">
                         {% for item in items %}
-                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
+                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                             <!-- Left: Drag handle + Name + Specs -->
                             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                                 <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 select-none text-sm font-mono">⋮⋮</span>
                                 <div class="min-w-0 flex-1 leading-snug">
                                     <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                                    {% if item.locked and mode == 'pantry' %}
+                                    <span class="ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none">✓ Need</span>
+                                    {% endif %}
                                     <span class="font-normal text-gray-700 ml-1.5">{{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}</span>
 
                                     <!-- Secondary details -->
@@ -153,23 +156,31 @@
                             <!-- Right: Actions -->
                             <div class="flex items-center space-x-1 flex-shrink-0">
                                 {% if mode == 'pantry' %}
+                                {% if not item.locked %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     <button type="submit" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold">
                                         🏠 Have
                                     </button>
                                 </form>
+                                {% endif %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
                                         ⏭ Skip
                                     </button>
                                 </form>
-                                <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
-                                        🛒 Got
+                                    {% if item.locked %}
+                                    <button type="submit" title="Checked: confirmed need (click to uncheck)" class="border border-blue-500 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 text-xs text-blue-900 font-bold">
+                                        ✓ Need
                                     </button>
+                                    {% else %}
+                                    <button type="submit" title="Check item: confirm we need to buy this" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium">
+                                        Need
+                                    </button>
+                                    {% endif %}
                                 </form>
                                 {% else %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">

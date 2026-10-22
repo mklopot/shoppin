@@ -323,11 +323,13 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check Mode:" in pantry_content
     assert "Ready to shop &rarr;" in pantry_content
 
-    # Under To Buy, we see Have, ⏭ Skip, and Got buttons
+    # Under To Buy in Pantry mode:
+    # We see Have, ⏭ Skip, and Need buttons, but NOT 🛒 Got!
     pantry_to_buy = pantry_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in pantry_to_buy
     assert "⏭ Skip" in pantry_to_buy
-    assert "🛒 Got" in pantry_to_buy
+    assert ">Need</button>" in pantry_to_buy or "Need" in pantry_to_buy
+    assert "🛒 Got" not in pantry_to_buy
 
     # The pantry details section is automatically opened
     assert "<details open" in pantry_content
@@ -339,15 +341,40 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     session_to_buy = session_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in session_to_buy
     assert "⏭ Skip" in session_to_buy
+    assert "🛒 Got" not in session_to_buy
 
-    # 4. Marking an item as HAVE in Pantry mode moves it to Already Have
+    # 4. Check/Confirm Need on an item (similar to legacy lock, but reversible)
     banana_item = active_list.items.get(name="Bananas")
+    res_lock = client.post(reverse("shopping:toggle_lock", args=[banana_item.id]))
+    assert res_lock.status_code == 200
+    banana_item.refresh_from_db()
+    assert banana_item.locked is True
+
+    # When locked/confirmed needed:
+    # - Shows visual badge ✓ Need
+    # - Hides the "🏠 Have" button for this item
+    # - Button shows "✓ Need"
+    lock_content = res_lock.content.decode("utf-8")
+    banana_row = [row for row in lock_content.split('id="item-row-') if f'item-row-{banana_item.id}' in f'item-row-{row}'][0]
+    assert "✓ Need" in banana_row
+    assert "🏠 Have" not in banana_row
+
+    # Toggling lock again reverses it cleanly
+    res_unlock = client.post(reverse("shopping:toggle_lock", args=[banana_item.id]))
+    assert res_unlock.status_code == 200
+    banana_item.refresh_from_db()
+    assert banana_item.locked is False
+    unlock_content = res_unlock.content.decode("utf-8")
+    banana_row_unlocked = [row for row in unlock_content.split('id="item-row-') if f'item-row-{banana_item.id}' in f'item-row-{row}'][0]
+    assert "🏠 Have" in banana_row_unlocked
+
+    # 5. Marking an item as HAVE in Pantry mode moves it to Already Have
     res_mark = client.post(reverse("shopping:set_status", args=[banana_item.id, "HAVE"]))
     assert res_mark.status_code == 200
     banana_item.refresh_from_db()
     assert banana_item.status == ItemStatus.HAVE
 
-    # 5. Move an item to GOT and verify that the Got section has Need, but NO Have and NO Skip
+    # 6. Move an item to GOT and verify that the Got section has Need, but NO Have and NO Skip
     milk_item = active_list.items.get(name="Almond Milk")
     res_got = client.post(reverse("shopping:set_status", args=[milk_item.id, "GOT"]))
     assert res_got.status_code == 200
@@ -358,7 +385,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Skip" not in got_section
     assert "⏭" not in got_section
 
-    # 6. Move an item back to NEED and switch back to In Store mode via ?mode=shopping
+    # 7. Move an item back to NEED and switch back to In Store mode via ?mode=shopping
     client.post(reverse("shopping:set_status", args=[banana_item.id, "NEED"]))
     res_shopping = client.get(reverse("shopping:list") + "?mode=shopping")
     assert res_shopping.status_code == 200

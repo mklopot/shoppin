@@ -271,6 +271,10 @@ def toggle_lock_item(request, item_id: int):
 
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, item.shopping_list, group_by)
+    if item.locked:
+        context["toast_message"] = f"✓ Confirmed '{item.name}' as needed"
+    else:
+        context["toast_message"] = f"Unchecked '{item.name}'"
     return render(request, "shopping/partials/list_content.html", context)
 
 
@@ -368,7 +372,7 @@ def reorder_sections(request):
 @require_POST
 def clear_completed(request):
     shopping_list = get_active_list(request)
-    shopping_list.items.filter(status=ItemStatus.GOT, locked=False).delete()
+    shopping_list.items.filter(status=ItemStatus.GOT).delete()
 
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, shopping_list, group_by)

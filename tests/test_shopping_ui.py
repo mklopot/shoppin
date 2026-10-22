@@ -327,11 +327,11 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Ready to shop &rarr;" in pantry_content
 
     # Under To Buy in Pantry mode:
-    # We see Have, ⏭ Skip, and Need buttons, but NOT 🛒 Got!
+    # We see Have, ⏭ Skip, and 📋 Need buttons, but NOT 🛒 Got!
     pantry_to_buy = pantry_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in pantry_to_buy
     assert "⏭ Skip" in pantry_to_buy
-    assert ">Need</button>" in pantry_to_buy or "Need" in pantry_to_buy
+    assert "📋 Need" in pantry_to_buy
     assert "🛒 Got" not in pantry_to_buy
 
     # The pantry details section is automatically opened
@@ -354,12 +354,12 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert banana_item.locked is True
 
     # When locked/confirmed needed:
-    # - Shows visual badge ✓ Need
+    # - Shows visual badge 📋 Need
     # - Hides the "🏠 Have" button for this item
-    # - Button shows "✓ Need"
+    # - Button shows "📋 Need"
     lock_content = res_lock.content.decode("utf-8")
     banana_row = [row for row in lock_content.split('id="item-row-') if f'item-row-{banana_item.id}' in f'item-row-{row}'][0]
-    assert "✓ Need" in banana_row
+    assert "📋 Need" in banana_row
     assert "🏠 Have" not in banana_row
 
     # Toggling lock again reverses it cleanly

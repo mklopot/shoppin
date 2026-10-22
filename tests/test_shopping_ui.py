@@ -292,16 +292,23 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert res.status_code == 200
     content = res.content.decode("utf-8")
 
-    # In Store mode toggle is present
+    # In Store mode toggle is visually higher up than Store selector and sort order
+    in_store_pos = content.find("In Store")
+    store_pos = content.find("Store:")
+    sort_pos = content.find("By Category")
+    assert in_store_pos < store_pos < sort_pos
+
     assert "In Store" in content
     assert "Pantry Check" in content
     assert "Pantry Check Mode:" not in content
 
-    # Under To Buy, we should see the prominent "Got" button, but NOT "Have" or "Skip"
+    # Under To Buy, we should see "Got" (with white background, not black) and "Skip", but NOT "Have"
     to_buy_section = content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🛒 Got" in to_buy_section
+    assert "Skip" in to_buy_section
     assert "🏠 Have" not in to_buy_section
-    assert "Skip" not in to_buy_section
+    # Got button should NOT have a black background
+    assert "bg-gray-800 text-white px-3 py-1 text-xs font-semibold" not in to_buy_section
 
     # The pantry details section should be collapsed (not open)
     assert "<details open class=\"border border-amber-300" not in content
@@ -316,7 +323,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check Mode:" in pantry_content
     assert "Ready to shop &rarr;" in pantry_content
 
-    # Under To Buy, we now see Have, Skip, and Got buttons
+    # Under To Buy, we see Have, Skip, and Got buttons
     pantry_to_buy = pantry_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in pantry_to_buy
     assert "Skip" in pantry_to_buy
@@ -331,6 +338,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check Mode:" in session_content
     session_to_buy = session_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" in session_to_buy
+    assert "Skip" in session_to_buy
 
     # 4. Marking an item as HAVE in Pantry mode moves it to Already Have
     banana_item = active_list.items.get(name="Bananas")
@@ -346,5 +354,5 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "Pantry Check Mode:" not in shopping_content
     shopping_to_buy = shopping_content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "🏠 Have" not in shopping_to_buy
-    assert "Skip" not in shopping_to_buy
+    assert "Skip" in shopping_to_buy
     assert "🛒 Got" in shopping_to_buy

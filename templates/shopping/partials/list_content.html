@@ -8,44 +8,47 @@
     </div>
     {% endif %}
 
-    <!-- Header & Controls: Title, Store Selector & View Toggles Combined -->
-    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2">
+    <!-- Top Header: Title & Workflow Phase Switcher (Higher up and distinct) -->
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
         <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">Shopping List</h1>
 
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-            <!-- Store Selector -->
-            <div class="flex items-center space-x-1.5">
-                <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
-                    {% csrf_token %}
-                    <span class="font-bold text-gray-700">Store:</span>
-                    <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
-                        <option value="">No Store (Default Category Flow)</option>
-                        {% for s in stores %}
-                        <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
-                            {{ s.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </form>
-                <button type="button" onclick="locateNearestStore()" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
-                    📍 Near Me
-                </button>
-            </div>
+        <!-- Workflow Phase: In Store vs Pantry Check -->
+        <div class="inline-flex border border-gray-600 bg-white">
+            <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                    class="px-3 py-1 text-xs font-bold uppercase tracking-wider {% if mode == 'shopping' %}bg-gray-800 text-white{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
+                    title="In-Store Shopping: Fast supermarket experience with Got & Skip">
+                🛒 In Store
+            </button>
+            <button hx-get="{% url 'shopping:list' %}?mode=pantry&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                    class="px-3 py-1 text-xs font-bold uppercase tracking-wider border-l border-gray-600 {% if mode == 'pantry' %}bg-gray-800 text-white{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
+                    title="Pantry Check: Verify at home what you have before heading out">
+                🏠 Pantry Check
+            </button>
+        </div>
+    </div>
 
-            <!-- Shopping Mode Toggle (In Store / Pantry Check) -->
-            <div class="inline-flex border border-gray-400">
-                <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
-                        class="px-2.5 py-1 text-xs font-medium {% if mode == 'shopping' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
-                        title="In-Store Shopping: Fast supermarket experience with prominent Got button">
-                    🛒 In Store
-                </button>
-                <button hx-get="{% url 'shopping:list' %}?mode=pantry&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
-                        class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if mode == 'pantry' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
-                        title="Pantry Check: Verify at home what you have before heading out">
-                    🏠 Pantry Check
-                </button>
-            </div>
+    <!-- Secondary Controls Bar: Store Selector, Sort Order, Clear Cart -->
+    <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">
+        <!-- Store Selector -->
+        <div class="flex items-center space-x-1.5">
+            <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
+                {% csrf_token %}
+                <span class="font-bold text-gray-700">Store:</span>
+                <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+                    <option value="">No Store (Default Category Flow)</option>
+                    {% for s in stores %}
+                    <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
+                        {{ s.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <button type="button" onclick="locateNearestStore()" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
+                📍 Near Me
+            </button>
+        </div>
 
+        <div class="flex items-center space-x-2">
             <!-- Sort Toggle (By Category / By Aisle) -->
             <div class="inline-flex border border-gray-400">
                 <button hx-get="{% url 'shopping:list' %}?group_by=category&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
@@ -171,8 +174,14 @@
                                 {% else %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Got it (Put in Cart)" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 text-xs font-semibold">
+                                    <button type="submit" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
                                         🛒 Got
+                                    </button>
+                                </form>
+                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
+                                        Skip
                                     </button>
                                 </form>
                                 {% endif %}

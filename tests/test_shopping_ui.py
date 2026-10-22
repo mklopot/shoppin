@@ -465,3 +465,34 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
     have_section = have_content.split("Already Have / Skipped")[1]
     assert f"Alice {today_str}" in have_section
     assert "Granola" in have_section
+
+
+@pytest.mark.django_db
+def test_in_store_location_not_shown_in_got_and_already_have(client, active_list):
+    # Bananas has aisle set to "Aisle 1"
+    item = active_list.items.get(name="Bananas")
+    item.aisle = "Aisle 1"
+    item.save(update_fields=["aisle"])
+
+    # 1. Under "To Buy", the in-store location "📍 Aisle 1" IS shown
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+    to_buy_section = content.split("To Buy")[1].split("Already Have / Skipped")[0]
+    assert "📍 Aisle 1" in to_buy_section
+
+    # 2. When moved to GOT, "📍 Aisle 1" is NOT shown in Got section
+    res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
+    assert res_got.status_code == 200
+    got_content = res_got.content.decode("utf-8")
+    got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
+    assert "Bananas" in got_section
+    assert "📍 Aisle 1" not in got_section
+
+    # 3. When moved to HAVE, "📍 Aisle 1" is NOT shown in Already Have section
+    res_have = client.post(reverse("shopping:set_status", args=[item.id, "HAVE"]))
+    assert res_have.status_code == 200
+    have_content = res_have.content.decode("utf-8")
+    have_section = have_content.split("Already Have / Skipped")[1]
+    assert "Bananas" in have_section
+    assert "📍 Aisle 1" not in have_section

@@ -12,6 +12,7 @@ from apps.core.categorizer import categorizer
 from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
+    clean_purpose,
     combine_amounts_and_units,
     singularize,
 )
@@ -109,6 +110,8 @@ def add_recipe_to_meal(
     # Load ingredients into shopping list
     added_descriptions: list[str] = []
 
+    recipe_purpose_name = clean_purpose(recipe.name)
+
     for ingredient in recipe.ingredients.all():
         normalized_name = singularize(ingredient.name.lower())
         brand = ingredient.brand or ""
@@ -140,8 +143,11 @@ def add_recipe_to_meal(
             )
             existing.amount = combined_amount
             existing.amount_unit = combined_unit
-            if recipe.name not in existing.purpose:
-                existing.purpose = f"{existing.purpose}, {recipe.name}" if existing.purpose else f"For {recipe.name}"
+            existing_clean_purpose = clean_purpose(existing.purpose)
+            if recipe_purpose_name not in existing_clean_purpose:
+                existing.purpose = f"{existing_clean_purpose}, {recipe_purpose_name}" if existing_clean_purpose else recipe_purpose_name
+            else:
+                existing.purpose = existing_clean_purpose
             existing.source_meal = meal
             existing.source_recipe = recipe
             # Combined with additional amount -> reset to not confirmed status
@@ -168,7 +174,7 @@ def add_recipe_to_meal(
                 optional=ingredient.optional,
                 category=cat,
                 aisle=aisle,
-                purpose=f"For {recipe.name}",
+                purpose=recipe_purpose_name,
                 status=ItemStatus.NEED,
                 source_meal=meal,
                 source_recipe=recipe,
@@ -231,7 +237,8 @@ def remove_recipe_from_meal(
                 else:
                     item.amount = new_amount
                     # Clean up purpose string
-                    purposes = [p.strip() for p in item.purpose.split(",") if p.strip() and recipe.name not in p]
+                    clean_existing = clean_purpose(item.purpose)
+                    purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe.name not in p]
                     item.purpose = ", ".join(purposes) if purposes else "one-time purchase"
                     item.save()
 

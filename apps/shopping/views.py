@@ -17,6 +17,7 @@ from apps.core.categorizer import categorizer
 from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
+    clean_purpose,
     combine_amounts_and_units,
     is_quantity_increased,
     parse_amount_and_unit,
@@ -323,7 +324,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
     amount, amount_unit = parse_amount_and_unit(raw_amount)
     brand = request.POST.get("brand", "").strip()
     vendor = request.POST.get("vendor", "").strip()
-    purpose = request.POST.get("purpose", "").strip() or "one-time purchase"
+    purpose = clean_purpose(request.POST.get("purpose", "").strip()) or "one-time purchase"
 
     # Category: use user-provided value or infer via categorizer
     raw_category = request.POST.get("category", "").strip()
@@ -362,8 +363,11 @@ def add_item(request: HttpRequest) -> HttpResponse:
         )
         existing.amount = new_amount
         existing.amount_unit = new_unit
-        if purpose and purpose not in existing.purpose:
-            existing.purpose = f"{existing.purpose}, {purpose}".strip(", ")
+        existing_purpose = clean_purpose(existing.purpose)
+        if purpose and purpose not in existing_purpose:
+            existing.purpose = f"{existing_purpose}, {purpose}".strip(", ")
+        else:
+            existing.purpose = existing_purpose
         # Item was combined, so amount changed -> reset to not confirmed status
         existing.locked = False
         _set_item_audit(existing, request)
@@ -454,7 +458,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         item.vendor = request.POST.get("vendor", item.vendor).strip()
         item.category = request.POST.get("category", item.category).strip()
         item.aisle = request.POST.get("aisle", item.aisle).strip()
-        item.purpose = request.POST.get("purpose", item.purpose).strip() or "one-time purchase"
+        item.purpose = clean_purpose(request.POST.get("purpose", item.purpose).strip()) or "one-time purchase"
 
         # Check if editing this item allows it to combine with another item on the list
         normalized_name = singularize(item.name.lower())
@@ -479,8 +483,12 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             )
             existing.amount = combined_amount
             existing.amount_unit = combined_unit
-            if item.purpose and item.purpose not in existing.purpose:
-                existing.purpose = f"{existing.purpose}, {item.purpose}".strip(", ")
+            existing_purpose = clean_purpose(existing.purpose)
+            item_purpose = clean_purpose(item.purpose)
+            if item_purpose and item_purpose not in existing_purpose:
+                existing.purpose = f"{existing_purpose}, {item_purpose}".strip(", ")
+            else:
+                existing.purpose = existing_purpose
             if item.source_meal and not existing.source_meal:
                 existing.source_meal = item.source_meal
             if item.source_recipe and not existing.source_recipe:

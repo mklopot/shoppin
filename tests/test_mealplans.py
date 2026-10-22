@@ -123,7 +123,9 @@ def test_add_dish_loads_ingredients_onto_shopping_list(mealplan_setup):
     tortillas = items.get(name="Tortillas")
     assert tortillas.amount == Decimal("8.00")
     assert tortillas.status == ItemStatus.NEED
-    assert "Fiesta Tacos" in tortillas.purpose
+    assert tortillas.purpose == "Fiesta Tacos"
+    assert not tortillas.purpose.startswith("For ")
+    assert tortillas.purpose_display == "Fiesta Tacos"
     assert tortillas.source_recipe == recipe
 
     beef = items.get(name="Ground Beef")
@@ -293,3 +295,63 @@ def test_recipe_modal_view(client, mealplan_setup):
     assert b"Fiesta Tacos" in resp.content
     assert b"Warm tortillas" in resp.content
     assert b"Tortillas" in resp.content
+
+
+def test_dish_purpose_formatting_and_no_duplicate_for(client, mealplan_setup):
+    """
+    Verify that item purposes originating from recipes do not contain duplicate 'For '
+    and render as 'For [dish name]' without 'For For '.
+    """
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    recipe1 = mealplan_setup["recipe"]  # "Fiesta Tacos"
+
+    # Create a second recipe sharing "Tortillas"
+    recipe2 = Recipe.objects.create(
+        name="Enchilada Bake",
+        directions="Bake enchiladas.",
+    )
+    Ingredient.objects.create(
+        recipe=recipe2,
+        name="Tortillas",
+        amount=Decimal("4.00"),
+        amount_unit="count",
+        category="bakery",
+    )
+
+    meal = add_meal_to_plan(meal_plan, "Dinner Night")
+    add_recipe_to_meal(meal, recipe1, shopping_list)
+
+    tortillas = shopping_list.items.get(name="Tortillas")
+    # Verify no leading "For " is stored
+    assert tortillas.purpose == "Fiesta Tacos"
+    assert not tortillas.purpose.startswith("For ")
+    assert tortillas.purpose_display == "Fiesta Tacos"
+
+    # Add second dish that combines tortillas
+    add_recipe_to_meal(meal, recipe2, shopping_list)
+    tortillas.refresh_from_db()
+    assert tortillas.purpose == "Fiesta Tacos, Enchilada Bake"
+    assert not tortillas.purpose.startswith("For ")
+    assert tortillas.purpose_display == "Fiesta Tacos, Enchilada Bake"
+
+    # Even if an item has leading "For " assigned, model save() cleans it automatically
+    tortillas.purpose = "For For Fiesta Tacos, Enchilada Bake"
+    tortillas.save()
+    tortillas.refresh_from_db()
+    assert tortillas.purpose == "Fiesta Tacos, Enchilada Bake"
+    assert tortillas.purpose_display == "Fiesta Tacos, Enchilada Bake"
+
+    # Render list view via client and verify no "For For" exists in HTML
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    resp = client.get(reverse("shopping:list"))
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+    assert "For Fiesta Tacos, Enchilada Bake" in content
+    assert "For For" not in content

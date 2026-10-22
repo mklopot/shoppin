@@ -316,6 +316,19 @@ class ShoppingListItem(models.Model):
             return self.status_changed_by_name
         return "unknown"
 
+    @property
+    def purpose_display(self) -> str:
+        """Return the cleaned purpose without any leading 'For ' or 'for ' prefixes."""
+        from apps.core.utils import clean_purpose
+        return clean_purpose(self.purpose)
+
+    def save(self, *args, **kwargs):
+        """Normalize purpose before saving."""
+        from apps.core.utils import clean_purpose
+        if self.purpose:
+            self.purpose = clean_purpose(self.purpose)
+        super().save(*args, **kwargs)
+
     def reduce_or_delete(self, amount_to_subtract: Decimal) -> "ShoppingListItem | None":
         """
         Subtract amount from this item. If amount reaches zero or less, deletes the item.

@@ -110,8 +110,27 @@ def parse_amount_and_unit(raw_input: Any) -> tuple[Decimal, str]:
     return Decimal("1.00"), clean_text
 
 
+def clean_purpose(value: str | None) -> str:
+    """
+    Strip repeated leading 'For ' or 'for ' prefixes from a purpose string.
+
+    Args:
+        value: Raw purpose string.
+
+    Returns:
+        Cleaned purpose string without leading 'For ' prefixes.
+    """
+    if not value:
+        return ""
+    val = value.strip()
+    while val.lower().startswith("for "):
+        val = val[4:].strip()
+    return val
+
+
 __all__ = [
     "can_combine_units",
+    "clean_purpose",
     "combine_amounts_and_units",
     "format_amount",
     "is_quantity_increased",

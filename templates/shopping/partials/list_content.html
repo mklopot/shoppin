@@ -191,10 +191,10 @@
                                             {% if can_write %}
                                             <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
                                                 {% csrf_token %}
-                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-500 select-none inline-flex items-center cursor-pointer rounded-none" title="Not confirmed in Pantry Check (click to confirm)">not confirmed</button>
+                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 hover:bg-amber-100 text-amber-800 select-none inline-flex items-center cursor-pointer rounded-none" title="Not confirmed in Pantry Check (click to confirm)">not confirmed</button>
                                             </form>
                                             {% else %}
-                                            <span class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-gray-300 bg-gray-50 text-gray-500 select-none inline-flex items-center rounded-none" title="Not confirmed in Pantry Check">not confirmed</span>
+                                            <span class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 text-amber-800 select-none inline-flex items-center rounded-none" title="Not confirmed in Pantry Check">not confirmed</span>
                                             {% endif %}
                                         {% endif %}
                                     {% endif %}
@@ -202,7 +202,7 @@
 
                                     <!-- Secondary details -->
                                     <span class="text-gray-500 ml-2">
-                                        {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
+                                        {% if item.purpose_display %}<span class="italic text-gray-400">For {{ item.purpose_display }}</span>{% endif %}
                                         {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
                                         {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                                         {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
@@ -302,7 +302,7 @@
 
                         <!-- Secondary details -->
                         <span class="text-gray-500 ml-2">
-                            {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
+                            {% if item.purpose_display %}<span class="italic text-gray-400">For {{ item.purpose_display }}</span>{% endif %}
                             {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                             {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
@@ -363,7 +363,7 @@
 
                         <!-- Secondary details -->
                         <span class="text-gray-500 ml-2">
-                            {% if item.purpose %}<span class="italic text-gray-400">For {{ item.purpose }}</span>{% endif %}
+                            {% if item.purpose_display %}<span class="italic text-gray-400">For {{ item.purpose_display }}</span>{% endif %}
                             {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                             {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}

@@ -12,8 +12,22 @@ from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, Sto
 
 @pytest.fixture
 def active_list():
+    from django.contrib.auth import get_user_model
+
+    from apps.core.models import Workspace
+    User = get_user_model()
+    admin = User.objects.filter(is_superuser=True).first() or User.objects.first()
+    if not admin:
+        admin = User.objects.create(username="admin_fixture")
+    ws = Workspace.objects.first() or Workspace.objects.create(name="Home", owner=admin)
     store = StoreLocation.objects.create(name="Safeway Corona", chain="safeway")
-    s_list = ShoppingList.objects.create(name="Main Shopping List", is_preset=False, active_store=store)
+    s_list = ShoppingList.objects.create(
+        name="Main Shopping List",
+        is_preset=False,
+        active_store=store,
+        workspace=ws,
+        owner=admin,
+    )
     ShoppingListItem.objects.create(
         shopping_list=s_list,
         name="Bananas",
@@ -483,6 +497,13 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
     assert "Granola" in got_section
 
     # 3. Changing status as authenticated user (Alice) records Alice and displays "Alice <today>"
+    if active_list.workspace:
+        from apps.core.models import WorkspaceMember, WorkspaceRole
+        WorkspaceMember.objects.update_or_create(
+            workspace=active_list.workspace,
+            user=alice,
+            defaults={"role": WorkspaceRole.EDITOR},
+        )
     client.force_login(alice)
     res_have = client.post(reverse("shopping:set_status", args=[item.id, "HAVE"]))
     assert res_have.status_code == 200

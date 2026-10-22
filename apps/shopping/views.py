@@ -8,12 +8,13 @@ item and section drag-and-drop reordering, store selection, and Pantry Check mod
 import json
 from typing import Any
 
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.core.categorizer import categorizer
+from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
     combine_amounts_and_units,
@@ -41,23 +42,52 @@ from apps.shopping.services.store_service import (
 
 def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
     """
-    Retrieve or initialize the primary active household shopping list.
+    Retrieve or initialize the active shopping list for the current request's workspace.
 
     Args:
         request: Optional Django HttpRequest.
 
     Returns:
-        The active primary ShoppingList instance.
+        The active primary ShoppingList instance for the workspace.
     """
-    shopping_list = ShoppingList.objects.filter(is_preset=False).first()
+    workspace = get_active_workspace(request)
+    shopping_list = workspace.get_primary_list()
     if not shopping_list:
+        # Check if an unassigned primary list exists (e.g. from fixtures or migrations)
+        unassigned_list = ShoppingList.objects.filter(is_preset=False, workspace__isnull=True).first()
+        if unassigned_list:
+            unassigned_list.workspace = workspace
+            unassigned_list.save(update_fields=["workspace"])
+            return unassigned_list
+
         default_store = StoreLocation.objects.first()
         shopping_list = ShoppingList.objects.create(
-            name="Main Shopping List",
+            name=f"{workspace.name} Shopping List",
+            workspace=workspace,
+            owner=workspace.owner,
             is_preset=False,
             active_store=default_store,
         )
     return shopping_list
+
+
+def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList) -> HttpResponseForbidden | None:
+    """
+    Verify the user has edit/write permissions on the workspace.
+
+    Args:
+        request: Current HttpRequest.
+        shopping_list: ShoppingList target.
+
+    Returns:
+        HttpResponseForbidden if read-only, otherwise None.
+    """
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated:
+        workspace = shopping_list.workspace or get_active_workspace(request)
+        if workspace and not workspace.can_write(user):
+            return HttpResponseForbidden("You have read-only access to this workspace.")
+    return None
 
 
 def _build_list_context(
@@ -94,8 +124,20 @@ def _build_list_context(
     known_categories = get_known_categories()
     known_aisles = get_known_aisles(shopping_list.active_store)
 
+    workspace = shopping_list.workspace or get_active_workspace(request)
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated:
+        can_write = workspace.can_write(user) if workspace else True
+        user_role = workspace.get_user_role(user) if workspace else "owner"
+    else:
+        can_write = True
+        user_role = "owner"
+
     return {
         "shopping_list": shopping_list,
+        "workspace": workspace,
+        "can_write": can_write,
+        "user_role": user_role,
         "grouped_need": grouped_need,
         "need_count": len(need_items),
         "got_items": got_items,
@@ -202,6 +244,10 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
         Rendered HTML partial with updated list and toast notification.
     """
     item = get_object_or_404(ShoppingListItem, id=item_id)
+    forbidden = _check_write_permission(request, item.shopping_list)
+    if forbidden:
+        return forbidden
+
     if new_status in ItemStatus.values:
         item.status = new_status
         _set_item_audit(item, request)
@@ -256,6 +302,10 @@ def add_item(request: HttpRequest) -> HttpResponse:
         Rendered HTML partial or redirect.
     """
     shopping_list = get_active_list(request)
+    forbidden = _check_write_permission(request, shopping_list)
+    if forbidden:
+        return forbidden
+
     raw_name = request.POST.get("name", "").strip()
     if not raw_name:
         return redirect("shopping:list")
@@ -371,6 +421,10 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         Rendered modal HTML on GET, or updated list partial on POST.
     """
     item = get_object_or_404(ShoppingListItem, id=item_id)
+    forbidden = _check_write_permission(request, item.shopping_list)
+    if forbidden:
+        return forbidden
+
     if request.method == "POST":
         item.name = request.POST.get("name", item.name).strip()
         amount_string = request.POST.get("amount", str(item.amount))
@@ -436,6 +490,10 @@ def delete_item(request: HttpRequest, item_id: int) -> HttpResponse:
         Rendered HTML partial with updated list and toast notification.
     """
     item = get_object_or_404(ShoppingListItem, id=item_id)
+    forbidden = _check_write_permission(request, item.shopping_list)
+    if forbidden:
+        return forbidden
+
     item_name = item.name
     shopping_list = item.shopping_list
     item.delete()
@@ -465,6 +523,10 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
         Rendered HTML partial with updated list and toast notification.
     """
     item = get_object_or_404(ShoppingListItem, id=item_id)
+    forbidden = _check_write_permission(request, item.shopping_list)
+    if forbidden:
+        return forbidden
+
     item.locked = not item.locked
     _set_item_audit(item, request)
     item.save(
@@ -507,6 +569,10 @@ def set_store(request: HttpRequest) -> HttpResponse:
         Rendered HTML partial of the shopping list.
     """
     shopping_list = get_active_list(request)
+    forbidden = _check_write_permission(request, shopping_list)
+    if forbidden:
+        return forbidden
+
     store_id = request.POST.get("store_id")
     if store_id:
         store = get_object_or_404(StoreLocation, id=store_id)
@@ -555,6 +621,10 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
         store = nearest_matches[0]["store"]
         distance_miles = nearest_matches[0]["distance_miles"]
         shopping_list = get_active_list(request)
+        forbidden = _check_write_permission(request, shopping_list)
+        if forbidden:
+            return forbidden
+
         shopping_list.active_store = store
         shopping_list.save(update_fields=["active_store"])
 
@@ -577,6 +647,11 @@ def reorder_items(request: HttpRequest) -> HttpResponse:
     Returns:
         204 No Content response on success, or 400 JsonResponse on error.
     """
+    shopping_list = get_active_list(request)
+    forbidden = _check_write_permission(request, shopping_list)
+    if forbidden:
+        return forbidden
+
     try:
         item_ids = request.POST.getlist("item_ids[]")
         if not item_ids:
@@ -607,8 +682,12 @@ def reorder_sections(request: HttpRequest) -> HttpResponse:
     Returns:
         204 No Content response on success, or 400 JsonResponse on error.
     """
+    shopping_list = get_active_list(request)
+    forbidden = _check_write_permission(request, shopping_list)
+    if forbidden:
+        return forbidden
+
     try:
-        shopping_list = get_active_list(request)
         group_by = request.POST.get("group_by", GroupBy.CATEGORY)
         group_names = request.POST.getlist("group_names[]")
         if not group_names:

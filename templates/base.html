@@ -100,6 +100,71 @@
                         </a>
                     </nav>
                 </div>
+
+                <!-- Right: Workspace Selector & Persona Switcher -->
+                <div class="flex items-center space-x-2 text-xs">
+                    <!-- Workspace Dropdown -->
+                    <div class="relative" id="workspace-dropdown-container">
+                        <button type="button" onclick="toggleWorkspaceDropdown()" class="flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-none text-gray-800 font-medium">
+                            <span class="text-xs">🏢</span>
+                            <span class="font-semibold">{{ active_workspace.name }}</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1 py-0.2 {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
+                                {{ workspace_role|title }}
+                            </span>
+                            <span class="text-[9px] text-gray-500">▼</span>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="workspace-dropdown-menu" class="hidden absolute right-0 mt-1 w-56 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
+                            <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                                Switch Workspace
+                            </div>
+                            <div class="py-1 max-h-48 overflow-y-auto">
+                                {% for ws in user_workspaces %}
+                                <a href="{% url 'core:switch_workspace' ws.id %}" class="flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-xs {% if active_workspace.id == ws.id %}bg-blue-50/60 font-semibold text-blue-900{% else %}text-gray-700{% endif %}">
+                                    <span class="truncate">{{ ws.name }}</span>
+                                    <span class="text-[10px] text-gray-400 font-normal">({{ ws.role_display }})</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+
+                            <div class="py-1">
+                                <button type="button" onclick="openNewWorkspaceModal()" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                                    <span>➕</span>
+                                    <span>New Workspace...</span>
+                                </button>
+                                {% if is_workspace_owner %}
+                                <button type="button" hx-get="{% url 'core:workspace_members' active_workspace.id %}" hx-target="#modal-placeholder" onclick="closeWorkspaceDropdown()" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                                    <span>👥</span>
+                                    <span>Share & Members...</span>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dev Persona Switcher (DEBUG mode) -->
+                    {% if debug_mode %}
+                    <div class="relative" id="persona-dropdown-container">
+                        <button type="button" onclick="togglePersonaDropdown()" class="flex items-center space-x-1 border border-gray-300 bg-white hover:bg-gray-50 px-2 py-1 rounded-none text-gray-700 font-medium text-xs">
+                            <span>👤</span>
+                            <span>{{ request.user.username|default:"admin" }}</span>
+                            <span class="text-[9px] text-gray-500">▼</span>
+                        </button>
+                        <div id="persona-dropdown-menu" class="hidden absolute right-0 mt-1 w-44 bg-white border border-gray-300 shadow-lg z-40 py-1">
+                            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                                Test Persona (Dev)
+                            </div>
+                            {% for p in dev_personas %}
+                            <a href="{% url 'core:switch_persona' p.username %}" class="block px-3 py-1.5 hover:bg-gray-50 text-xs {% if request.user.username == p.username %}font-bold text-gray-950 bg-gray-100{% else %}text-gray-700{% endif %}">
+                                <div class="font-medium">{{ p.label }}</div>
+                                <div class="text-[10px] text-gray-400">{{ p.role }}</div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </header>
@@ -112,7 +177,81 @@
     <!-- Floating Toast Notifications Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
+    <!-- Dynamic Modal Container (HTMX) -->
+    <div id="modal-placeholder"></div>
+
+    <!-- Create Workspace Modal -->
+    <div id="new-workspace-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white border border-gray-400 shadow-xl w-full max-w-sm rounded-none p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-300 pb-2">
+                <h3 class="font-bold text-sm text-gray-900">Create New Workspace</h3>
+                <button type="button" onclick="closeNewWorkspaceModal()" class="text-gray-400 hover:text-gray-700 text-lg font-bold leading-none">&times;</button>
+            </div>
+
+            <form action="{% url 'core:create_workspace' %}" method="post" class="space-y-3 text-xs">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-gray-700 font-medium mb-1">Workspace Name:</label>
+                    <input type="text" name="name" placeholder="e.g. Vacation Cabin, Office Pantry, Family" required
+                           class="w-full border border-gray-400 px-2.5 py-1.5 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
+                    <p class="text-[11px] text-gray-500 mt-1">Each workspace contains its own shopping list, preset lists, and meal plan.</p>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t border-gray-200">
+                    <button type="button" onclick="closeNewWorkspaceModal()" class="border border-gray-300 bg-white hover:bg-gray-100 px-3 py-1 text-gray-700">
+                        Cancel
+                    </button>
+                    <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3.5 py-1 font-semibold">
+                        Create Workspace
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function toggleWorkspaceDropdown() {
+            const menu = document.getElementById('workspace-dropdown-menu');
+            if (!menu) return;
+            menu.classList.toggle('hidden');
+            const personaMenu = document.getElementById('persona-dropdown-menu');
+            if (personaMenu) personaMenu.classList.add('hidden');
+        }
+
+        function closeWorkspaceDropdown() {
+            const menu = document.getElementById('workspace-dropdown-menu');
+            if (menu) menu.classList.add('hidden');
+        }
+
+        function togglePersonaDropdown() {
+            const menu = document.getElementById('persona-dropdown-menu');
+            if (!menu) return;
+            menu.classList.toggle('hidden');
+            closeWorkspaceDropdown();
+        }
+
+        function openNewWorkspaceModal() {
+            closeWorkspaceDropdown();
+            const modal = document.getElementById('new-workspace-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeNewWorkspaceModal() {
+            const modal = document.getElementById('new-workspace-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const wsContainer = document.getElementById('workspace-dropdown-container');
+            const personaContainer = document.getElementById('persona-dropdown-container');
+            if (wsContainer && !wsContainer.contains(e.target)) {
+                closeWorkspaceDropdown();
+            }
+            if (personaContainer && !personaContainer.contains(e.target)) {
+                const personaMenu = document.getElementById('persona-dropdown-menu');
+                if (personaMenu) personaMenu.classList.add('hidden');
+            }
+        });
         // Unique client ID per browser tab to coordinate WebSocket synchronization
         window.CLIENT_ID = sessionStorage.getItem('shoppin_client_id') || Math.random().toString(36).substring(2, 15);
         sessionStorage.setItem('shoppin_client_id', window.CLIENT_ID);

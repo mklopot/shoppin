@@ -8,10 +8,23 @@
     </div>
     {% endif %}
 
-    <!-- Top Header: Title & Workflow Phase Switcher (Higher up and distinct) -->
-    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
-        <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">Shopping List</h1>
+    {% if not can_write %}
+    <!-- Read-Only / Static View Banner -->
+    <div class="px-3.5 py-2.5 bg-blue-50 border border-blue-300 flex items-center justify-between text-xs text-blue-950">
+        <div class="flex items-center space-x-2">
+            <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-800 text-white select-none">Read-Only</span>
+            <span>You have <strong>Viewer</strong> access to <strong>{{ workspace.name }}</strong> (Shared by {{ workspace.owner.username }}). Editing controls, drag-and-drop, and filters are disabled.</span>
+        </div>
+    </div>
+    {% endif %}
 
+    <!-- Top Header: Title & Workflow Phase Switcher -->
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
+        <div class="flex items-center space-x-2">
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">{{ shopping_list.name }}</h1>
+        </div>
+
+        {% if can_write %}
         <!-- Workflow Phase: In Store vs Pantry Check -->
         <div class="inline-flex border border-gray-600 bg-white">
             <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
@@ -25,8 +38,10 @@
                 🏠 Pantry Check
             </button>
         </div>
+        {% endif %}
     </div>
 
+    {% if can_write %}
     <!-- Secondary Controls Bar: Store Selector, Sort Order -->
     <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">
         <!-- Store Selector -->
@@ -82,6 +97,7 @@
             </button>
         </form>
     </div>
+    {% endif %}
 
     <!-- SECTION 1: TO BUY (NEED) -->
     <div class="border border-gray-300 bg-white">
@@ -112,7 +128,9 @@
                     <!-- Category/Aisle Header: No underline, drag handle for section reordering -->
                     <div class="flex items-center justify-between pb-1">
                         <div class="flex items-center space-x-2">
+                            {% if can_write %}
                             <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-800 select-none text-base font-mono leading-none" title="Drag to rearrange section">⋮⋮</span>
+                            {% endif %}
                             <h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">
                                 {{ group_title }}
                             </h3>
@@ -125,7 +143,9 @@
                         <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                             <!-- Left: Drag handle + Name + Specs -->
                             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                                {% if can_write %}
                                 <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 select-none text-sm font-mono">⋮⋮</span>
+                                {% endif %}
                                 <div class="min-w-0 flex-1 leading-snug">
                                     <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                                     {% if item.locked and mode == 'pantry' %}
@@ -146,6 +166,7 @@
                             </div>
 
                             <!-- Right: Actions -->
+                            {% if can_write %}
                             <div class="flex items-center space-x-1 flex-shrink-0">
                                 {% if mode == 'pantry' %}
                                 {% if not item.locked %}
@@ -192,6 +213,7 @@
                                     ✏️
                                 </button>
                             </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -243,6 +265,7 @@
                 </div>
 
                 <!-- Right: Actions -->
+                {% if can_write %}
                 <div class="flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
@@ -254,6 +277,7 @@
                         ✏️
                     </button>
                 </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -302,6 +326,7 @@
                 </div>
 
                 <!-- Right: Actions -->
+                {% if can_write %}
                 <div class="flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
@@ -313,6 +338,7 @@
                         ✏️
                     </button>
                 </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>

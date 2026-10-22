@@ -1,0 +1,117 @@
+<div id="members-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white border border-gray-400 shadow-xl w-full max-w-lg rounded-none p-5 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-gray-300 pb-3">
+            <div>
+                <h3 class="font-bold text-base text-gray-900">Manage Workspace Sharing</h3>
+                <p class="text-xs text-gray-500">Workspace: <strong class="text-gray-800">{{ workspace.name }}</strong></p>
+            </div>
+            <button type="button" onclick="document.getElementById('members-modal').remove()" class="text-gray-400 hover:text-gray-700 text-xl font-bold leading-none">&times;</button>
+        </div>
+
+        <!-- Collaborators List -->
+        <div class="space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-600">Current Members</h4>
+            <div class="divide-y divide-gray-200 border border-gray-200 text-xs">
+                <!-- Owner Row -->
+                <div class="p-2.5 flex items-center justify-between bg-gray-50">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold text-gray-900">{{ workspace.owner.username }}</span>
+                        {% if workspace.owner.get_full_name %}
+                        <span class="text-gray-500">({{ workspace.owner.get_full_name }})</span>
+                        {% endif %}
+                    </div>
+                    <span class="px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-gray-800 text-white select-none">
+                        Owner
+                    </span>
+                </div>
+
+                <!-- Shared Members Rows -->
+                {% for mem in memberships %}
+                <div class="p-2.5 flex items-center justify-between hover:bg-gray-50/50">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold text-gray-900">{{ mem.user.username }}</span>
+                        {% if mem.user.get_full_name %}
+                        <span class="text-gray-500">({{ mem.user.get_full_name }})</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        {% if is_owner %}
+                        <!-- Role Update Form -->
+                        <form hx-post="{% url 'core:share_workspace' workspace.id %}" hx-target="#modal-placeholder" class="inline-flex items-center">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ mem.user.id }}">
+                            <select name="role" onchange="this.form.requestSubmit()" class="border border-gray-300 px-2 py-0.5 bg-white text-gray-800 text-xs rounded-none focus:outline-none">
+                                <option value="viewer" {% if mem.role == 'viewer' %}selected{% endif %}>Read-Only (Viewer)</option>
+                                <option value="editor" {% if mem.role == 'editor' %}selected{% endif %}>Read-Write (Editor)</option>
+                            </select>
+                        </form>
+
+                        <!-- Remove Member Form -->
+                        <form hx-post="{% url 'core:remove_member' workspace.id mem.user.id %}" hx-target="#modal-placeholder" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" title="Remove member" class="text-red-600 hover:text-red-800 font-bold px-1.5 py-0.5 text-xs hover:bg-red-50">
+                                Remove
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="px-2 py-0.5 text-[11px] font-semibold border {% if mem.role == 'editor' %}bg-indigo-50 border-indigo-200 text-indigo-700{% else %}bg-blue-50 border-blue-200 text-blue-700{% endif %}">
+                            {{ mem.get_role_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-3 text-center text-gray-400 italic text-xs">
+                    This workspace is not shared with anyone yet.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if is_owner %}
+        <!-- Invite / Share Form -->
+        <div class="space-y-2 pt-2 border-t border-gray-200">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-600">Share Workspace</h4>
+            <form hx-post="{% url 'core:share_workspace' workspace.id %}" hx-target="#modal-placeholder" class="space-y-2">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <label class="block text-gray-600 text-[11px] mb-1">Select User:</label>
+                        {% if available_users %}
+                        <select name="user_id" required class="w-full border border-gray-300 px-2 py-1.5 bg-white rounded-none focus:outline-none">
+                            <option value="">-- Choose User --</option>
+                            {% for u in available_users %}
+                            <option value="{{ u.id }}">{{ u.username }}{% if u.get_full_name %} ({{ u.get_full_name }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input type="text" name="username" placeholder="Type username..." required class="w-full border border-gray-300 px-2 py-1.5 bg-white rounded-none focus:outline-none">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 text-[11px] mb-1">Access Level:</label>
+                        <select name="role" class="w-full border border-gray-300 px-2 py-1.5 bg-white rounded-none focus:outline-none">
+                            <option value="viewer">Read-Only (Viewer)</option>
+                            <option value="editor">Read-Write (Editor)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end pt-1">
+                    <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold text-xs rounded-none">
+                        Share Access
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end pt-2 border-t border-gray-200">
+            <button type="button" onclick="document.getElementById('members-modal').remove()" class="border border-gray-300 bg-white hover:bg-gray-100 px-3 py-1 text-xs text-gray-700 font-medium">
+                Done
+            </button>
+        </div>
+    </div>
+</div>

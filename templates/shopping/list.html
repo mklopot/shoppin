@@ -40,6 +40,9 @@
 
     // 2. SortableJS Drag-and-Drop Reordering Initialization
     function initSortables() {
+        {% if not can_write %}
+        return;
+        {% endif %}
         // A. Section/Aisle level drag-and-drop
         const sectionsContainer = document.getElementById('section-groups-container');
         if (sectionsContainer && !sectionsContainer._sortable) {
@@ -100,7 +103,7 @@
     // 3. Multi-User WebSocket Synchronization
     (function initShoppingWebSocketSync() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/shopping/`;
+        const wsUrl = `${protocol}//${window.location.host}/ws/shopping/{{ shopping_list.id }}/`;
         let socket = null;
         let reconnectTimeout = null;
 

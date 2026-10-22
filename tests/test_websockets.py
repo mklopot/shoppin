@@ -18,7 +18,18 @@ from config.asgi import application
 @pytest.fixture
 def websocket_shopping_list(db):
     """Fixture providing a shopping list for WebSocket tests."""
-    s_list = ShoppingList.objects.create(name="Live Sync List", is_preset=False)
+    from django.contrib.auth import get_user_model
+
+    from apps.core.models import Workspace
+    User = get_user_model()
+    owner, _ = User.objects.get_or_create(username="ws_test_user")
+    ws, _ = Workspace.objects.get_or_create(name="WS Live Sync", defaults={"owner": owner})
+    s_list = ShoppingList.objects.create(
+        name="Live Sync List",
+        is_preset=False,
+        workspace=ws,
+        owner=owner,
+    )
     ShoppingListItem.objects.create(
         shopping_list=s_list,
         name="Oranges",
@@ -86,6 +97,7 @@ def test_item_mutation_triggers_websocket_broadcast(client, websocket_shopping_l
     """Test that performing a list action via HTTP triggers a WebSocket broadcast."""
     from asgiref.sync import sync_to_async
 
+    client.force_login(websocket_shopping_list.owner)
     item_id = websocket_shopping_list.items.first().id
 
     async def run_test():

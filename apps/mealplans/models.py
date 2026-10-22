@@ -14,6 +14,14 @@ class MealPlan(models.Model):
     A named meal plan schedule containing scheduled meals and dietary rules.
     """
     name = models.CharField(max_length=255)
+    workspace = models.ForeignKey(
+        "core.Workspace",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="meal_plans",
+        help_text="Workspace this meal plan belongs to",
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

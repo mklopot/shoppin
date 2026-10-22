@@ -138,6 +138,14 @@ class ShoppingList(models.Model):
     or serve as the primary active household shopping list.
     """
     name = models.CharField(max_length=255, default="Main Shopping List")
+    workspace = models.ForeignKey(
+        "core.Workspace",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="shopping_lists",
+        help_text="Workspace this list belongs to",
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

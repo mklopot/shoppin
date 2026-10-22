@@ -43,6 +43,10 @@ def broadcast_shopping_list_update(
             "sender_client_id": sender_client_id or "",
         }
 
+        groups = ["shopping_list_main"]
+        if shopping_list and shopping_list.id:
+            groups.append(f"shopping_list_{shopping_list.id}")
+
         # Check if an event loop is already running in current thread
         try:
             loop = asyncio.get_running_loop()
@@ -50,17 +54,10 @@ def broadcast_shopping_list_update(
             loop = None
 
         if loop and loop.is_running():
-            asyncio.create_task(channel_layer.group_send("shopping_list_main", payload))
-            if shopping_list and shopping_list.id:
-                asyncio.create_task(
-                    channel_layer.group_send(f"shopping_list_{shopping_list.id}", payload)
-                )
+            for grp in groups:
+                asyncio.create_task(channel_layer.group_send(grp, payload))
         else:
-            async_to_sync(channel_layer.group_send)("shopping_list_main", payload)
-            if shopping_list and shopping_list.id:
-                async_to_sync(channel_layer.group_send)(
-                    f"shopping_list_{shopping_list.id}",
-                    payload,
-                )
+            for grp in groups:
+                async_to_sync(channel_layer.group_send)(grp, payload)
     except Exception as error:
         logger.warning(f"Could not broadcast shopping list update over WebSockets: {error}")

@@ -27,19 +27,16 @@
             </p>
         </div>
 
+        {% if can_write and meals %}
         <div class="flex items-center space-x-2 text-xs">
-            <a href="{% url 'shopping:list' %}" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1">
-                🛒 Shopping List
-            </a>
-            {% if can_write and meals %}
             <form hx-post="{% url 'mealplans:clear' %}" hx-confirm="Are you sure you want to clear the entire meal plan and remove its ingredients from the shopping list?">
                 {% csrf_token %}
                 <button type="submit" class="border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 font-medium px-2.5 py-1">
                     Clear Plan
                 </button>
             </form>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
 
     {% if not can_write %}

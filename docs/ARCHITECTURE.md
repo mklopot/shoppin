@@ -41,6 +41,11 @@ Instead of building a separate Single Page Application (SPA) in React or Vue wit
 2. **Action Requests (Got, Need, Skip, Add, Reorder):** Form submissions or buttons make HTMX requests with `hx-target="#shopping-list-content"` and `hx-swap="outerHTML transition:true"`.
 3. **Partial View Rendering:** The view invokes `render_list_response()`, which renders only `templates/shopping/partials/list_content.html` and returns it directly to the browser.
 4. **Out-of-Band (OOB) Toasts:** Flash notifications render via `<div id="toast-container" hx-swap-oob="beforeend">`, automatically appending notification pills to the screen without disrupting the list contents.
+5. **Real-Time WebSocket Synchronization (Channels + HTMX ws.js):**
+   * Multiple users/tabs connect to `/ws/shopping/` via HTMX's `hx-ext="ws"` extension.
+   * When any user mutates the list (e.g. marking an item Got, adding an item, reordering), `broadcast_shopping_list_update()` broadcasts via Django Channels.
+   * Other connected devices instantly receive the update and out-of-band toast notification (e.g. *"Mike moved 'Apples' to Cart"*), seamlessly refreshing their list without manual reloads.
+   * Tabs send an `X-Client-Id` header so the user who initiated the action does not trigger a redundant re-fetch.
 
 ---
 

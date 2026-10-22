@@ -113,6 +113,12 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
     <script>
+        // Unique client ID per browser tab to coordinate WebSocket synchronization
+        window.CLIENT_ID = Math.random().toString(36).substring(2, 15);
+        document.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['X-Client-Id'] = window.CLIENT_ID;
+        });
+
         function dismissToast(el) {
             if (!el || el.dataset.dismissing) return;
             el.dataset.dismissing = "true";

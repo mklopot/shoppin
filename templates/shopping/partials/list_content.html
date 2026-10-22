@@ -1,4 +1,4 @@
-<div id="shopping-list-content" class="space-y-4">
+<div id="shopping-list-content" class="space-y-4" hx-get="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" hx-trigger="refresh-shopping-list from:body" hx-swap="outerHTML transition:true">
     {% if toast_message %}
     <div id="toast-container" hx-swap-oob="beforeend">
         <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">

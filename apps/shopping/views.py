@@ -29,6 +29,7 @@ from apps.shopping.models import (
     StoreItemAisle,
     StoreLocation,
 )
+from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.list_organizer import ShoppingListOrganizer
 from apps.shopping.services.store_service import (
     get_known_aisles,
@@ -220,6 +221,19 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
         ItemStatus.NEED: f"📋 You moved '{item.name}' back to To Buy",
     }
     toast = status_messages.get(new_status, f"You updated '{item.name}'")
+
+    other_status_messages = {
+        ItemStatus.GOT: f"🛒 {item.changed_by_display} moved '{item.name}' to Cart",
+        ItemStatus.HAVE: f"🏠 {item.changed_by_display} marked '{item.name}' as in Pantry",
+        ItemStatus.DONT_NEED: f"⏭ {item.changed_by_display} skipped '{item.name}'",
+        ItemStatus.NEED: f"📋 {item.changed_by_display} moved '{item.name}' back to To Buy",
+    }
+    broadcast_shopping_list_update(
+        shopping_list=shopping_list,
+        toast_message=other_status_messages.get(new_status, f"{item.changed_by_display} updated '{item.name}'"),
+        actor_name=item.changed_by_display,
+        sender_client_id=request.headers.get("X-Client-Id"),
+    )
     return render_list_response(request, context, toast_message=toast)
 
 
@@ -324,8 +338,17 @@ def add_item(request: HttpRequest) -> HttpResponse:
     if existing:
         unit_str = f" {existing.unit_display}" if existing.unit_display else ""
         toast = f"You updated '{existing.name}' to {existing.amount_display}{unit_str}"
+        broadcast_toast = f"{existing.changed_by_display} updated '{existing.name}' to {existing.amount_display}{unit_str}"
     else:
         toast = f"You added '{raw_name}' to the shopping list"
+        broadcast_toast = f"{audit_user_name} added '{raw_name}' to the shopping list"
+
+    broadcast_shopping_list_update(
+        shopping_list=shopping_list,
+        toast_message=broadcast_toast,
+        actor_name=existing.changed_by_display if existing else audit_user_name,
+        sender_client_id=request.headers.get("X-Client-Id"),
+    )
     return render_list_response(request, context, toast_message=toast)
 
 
@@ -374,6 +397,12 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
         group_by = request.GET.get("group_by", GroupBy.CATEGORY)
         context = _build_list_context(request, item.shopping_list, group_by)
+        broadcast_shopping_list_update(
+            shopping_list=item.shopping_list,
+            toast_message=f"✏️ {item.changed_by_display} edited '{item.name}'",
+            actor_name=item.changed_by_display,
+            sender_client_id=request.headers.get("X-Client-Id"),
+        )
         return render_list_response(request, context, toast_message=f"✏️ You updated '{item.name}'")
 
     known_categories = get_known_categories()
@@ -408,6 +437,13 @@ def delete_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
+    actor_name = request.user.username if request.user.is_authenticated else "unknown"
+    broadcast_shopping_list_update(
+        shopping_list=shopping_list,
+        toast_message=f"🗑 '{item_name}' was removed from the list",
+        actor_name=actor_name,
+        sender_client_id=request.headers.get("X-Client-Id"),
+    )
     return render_list_response(request, context, toast_message=f"🗑 You deleted '{item_name}'")
 
 
@@ -440,8 +476,17 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
     context = _build_list_context(request, item.shopping_list, group_by)
     if item.locked:
         toast = f'📋 You set \'{item.name}\' to "needed"'
+        broadcast_toast = f'📋 {item.changed_by_display} set \'{item.name}\' to "needed"'
     else:
         toast = f"You unchecked '{item.name}'"
+        broadcast_toast = f"{item.changed_by_display} unchecked '{item.name}'"
+
+    broadcast_shopping_list_update(
+        shopping_list=item.shopping_list,
+        toast_message=broadcast_toast,
+        actor_name=item.changed_by_display,
+        sender_client_id=request.headers.get("X-Client-Id"),
+    )
     return render_list_response(request, context, toast_message=toast)
 
 
@@ -471,6 +516,14 @@ def set_store(request: HttpRequest) -> HttpResponse:
         GroupBy.AISLE if shopping_list.active_store else GroupBy.CATEGORY,
     )
     context = _build_list_context(request, shopping_list, group_by)
+    actor_name = request.user.username if request.user.is_authenticated else "unknown"
+    store_name = shopping_list.active_store.name if shopping_list.active_store else "None"
+    broadcast_shopping_list_update(
+        shopping_list=shopping_list,
+        toast_message=f"Store set to {store_name}",
+        actor_name=actor_name,
+        sender_client_id=request.headers.get("X-Client-Id"),
+    )
     return render_list_response(request, context)
 
 
@@ -528,6 +581,11 @@ def reorder_items(request: HttpRequest) -> HttpResponse:
         for index, item_id in enumerate(item_ids):
             ShoppingListItem.objects.filter(id=int(item_id)).update(order=index)
 
+        shopping_list = get_active_list(request)
+        broadcast_shopping_list_update(
+            shopping_list=shopping_list,
+            sender_client_id=request.headers.get("X-Client-Id"),
+        )
         return HttpResponse(status=204)
     except Exception as error:
         return JsonResponse({"error": str(error)}, status=400)
@@ -574,6 +632,11 @@ def reorder_sections(request: HttpRequest) -> HttpResponse:
                     item.order = current_order_index
                     item.save(update_fields=["order"])
                     current_order_index += 1
+
+            broadcast_shopping_list_update(
+                shopping_list=shopping_list,
+                sender_client_id=request.headers.get("X-Client-Id"),
+            )
 
         return HttpResponse(status=204)
     except Exception as error:

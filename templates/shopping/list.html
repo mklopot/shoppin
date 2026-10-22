@@ -3,8 +3,8 @@
 {% block title %}Shopping List - Shoppin{% endblock %}
 
 {% block content %}
-<div class="space-y-3">
-    <!-- Main List Container (HTMX swapped) -->
+<div class="space-y-3" hx-ext="ws" ws-connect="/ws/shopping/">
+    <!-- Main List Container (HTMX swapped & WebSocket synchronized) -->
     {% include "shopping/partials/list_content.html" %}
 </div>
 

@@ -6,7 +6,6 @@ item and section drag-and-drop reordering, store selection, and Pantry Check mod
 """
 
 import json
-from collections import defaultdict
 from decimal import Decimal
 from typing import Any
 
@@ -17,10 +16,17 @@ from django.views.decorators.http import require_POST
 
 from apps.core.categorizer import categorizer
 from apps.core.utils import parse_amount_and_unit, singularize
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, StoreLocation
+from apps.shopping.models import (
+    GroupBy,
+    ItemStatus,
+    ListMode,
+    ShoppingList,
+    ShoppingListItem,
+    StoreItemAisle,
+    StoreLocation,
+)
+from apps.shopping.services.list_organizer import ShoppingListOrganizer
 from apps.shopping.services.store_service import (
-    DEPARTMENT_ORDER,
-    get_aisle_sort_key,
     get_known_aisles,
     get_known_categories,
     get_nearest_stores,
@@ -52,17 +58,16 @@ def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
 def _build_list_context(
     request: HttpRequest | None,
     shopping_list: ShoppingList,
-    group_by: str = "category",
-    mode: str | None = None,
-) -> dict:
+    group_by: GroupBy | str = GroupBy.CATEGORY,
+    mode: ListMode | str | None = None,
+) -> dict[str, Any]:
     """
     Construct the unified template context for rendering the shopping list.
 
-    Separates items into active ('NEED'), cart ('GOT'), and pantry ('HAVE' / 'DONT_NEED'),
-    groups active items by category or store aisle walking order, and respects custom reordering.
+    Delegates status partitioning and section sorting to ShoppingListOrganizer.
 
     Args:
-        request: Current HttpRequest.
+        request: Current HttpRequest (optional).
         shopping_list: Target ShoppingList instance.
         group_by: Grouping key ('category' or 'aisle').
         mode: Shopping mode ('shopping' for In Store, or 'pantry' for Pantry Check).
@@ -70,49 +75,15 @@ def _build_list_context(
     Returns:
         Context dictionary for HTML rendering.
     """
+    active_mode = ShoppingListOrganizer.resolve_view_mode(request, mode)
     items = shopping_list.items.all().order_by("order", "id")
 
-    if not mode and request:
-        mode = request.GET.get("mode") or request.POST.get("mode") or request.session.get("shopping_mode", "shopping")
-    if mode not in ("shopping", "pantry"):
-        mode = "shopping"
-    if request:
-        request.session["shopping_mode"] = mode
-
-    need_items = [item for item in items if item.status == ItemStatus.NEED]
-    got_items = [item for item in items if item.status == ItemStatus.GOT]
-    pantry_items = [item for item in items if item.status in (ItemStatus.HAVE, ItemStatus.DONT_NEED)]
-
-    custom_orders = shopping_list.custom_section_order or {}
-    custom_order_list = custom_orders.get(group_by, [])
-    custom_order_map = {name.lower(): index for index, name in enumerate(custom_order_list)}
-
-    # Group need_items by aisle or category
-    grouped_need = defaultdict(list)
-    if group_by == "aisle" and shopping_list.active_store:
-        for item in need_items:
-            aisle = item.get_effective_aisle()
-            grouped_need[aisle].append(item)
-
-        def aisle_sort_key_fn(group_name: str) -> tuple[int, Any]:
-            if group_name.lower() in custom_order_map:
-                return (0, custom_order_map[group_name.lower()])
-            return (1, get_aisle_sort_key(group_name))
-
-        sorted_keys = sorted(grouped_need.keys(), key=aisle_sort_key_fn)
-        sorted_grouped_need = {group_name: grouped_need[group_name] for group_name in sorted_keys}
-    else:
-        for item in need_items:
-            category_name = (item.category or "other").title()
-            grouped_need[category_name].append(item)
-
-        def category_sort_key_fn(group_name: str) -> tuple[int, Any]:
-            if group_name.lower() in custom_order_map:
-                return (0, custom_order_map[group_name.lower()])
-            return (1, DEPARTMENT_ORDER.get(group_name.lower(), 200))
-
-        sorted_keys = sorted(grouped_need.keys(), key=category_sort_key_fn)
-        sorted_grouped_need = {group_name: grouped_need[group_name] for group_name in sorted_keys}
+    need_items, got_items, pantry_items = ShoppingListOrganizer.partition_items(items)
+    grouped_need = ShoppingListOrganizer.group_and_sort_need_items(
+        need_items=need_items,
+        group_by=group_by,
+        shopping_list=shopping_list,
+    )
 
     stores = StoreLocation.objects.all().order_by("name")
     known_categories = get_known_categories()
@@ -120,19 +91,53 @@ def _build_list_context(
 
     return {
         "shopping_list": shopping_list,
-        "grouped_need": sorted_grouped_need,
+        "grouped_need": grouped_need,
         "need_count": len(need_items),
         "got_items": got_items,
         "got_count": len(got_items),
         "pantry_items": pantry_items,
         "pantry_count": len(pantry_items),
-        "group_by": group_by,
+        "group_by": str(group_by),
         "stores": stores,
         "active_store": shopping_list.active_store,
         "known_categories": known_categories,
         "known_aisles": known_aisles,
-        "mode": mode,
+        "mode": active_mode,
     }
+
+
+def render_list_response(
+    request: HttpRequest,
+    context: dict[str, Any],
+    toast_message: str | None = None,
+    force_partial: bool = True,
+) -> HttpResponse:
+    """
+    Render standardized HTTP responses for shopping list views.
+
+    For action endpoints or HTMX swaps, renders the partial template
+    'shopping/partials/list_content.html'. For direct browser navigations
+    to the list view, renders the full 'shopping/list.html' page.
+
+    Args:
+        request: The current HttpRequest.
+        context: Context dictionary containing shopping list data.
+        toast_message: Optional notification message displayed to the user.
+        force_partial: If True, always render the partial template.
+
+    Returns:
+        Rendered HttpResponse containing the partial or full page.
+    """
+    if toast_message:
+        context["toast_message"] = toast_message
+
+    if force_partial or (
+        request.headers.get("HX-Request")
+        and request.headers.get("HX-Target") == "shopping-list-content"
+    ):
+        return render(request, "shopping/partials/list_content.html", context)
+
+    return render(request, "shopping/list.html", context)
 
 
 def shopping_list_view(request: HttpRequest) -> HttpResponse:
@@ -146,13 +151,9 @@ def shopping_list_view(request: HttpRequest) -> HttpResponse:
         Rendered HTML page or HTMX partial content.
     """
     shopping_list = get_active_list(request)
-    group_by = request.GET.get("group_by", "category")
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
-
-    if request.headers.get("HX-Request") and request.headers.get("HX-Target") == "shopping-list-content":
-        return render(request, "shopping/partials/list_content.html", context)
-
-    return render(request, "shopping/list.html", context)
+    return render_list_response(request, context, force_partial=False)
 
 
 def _set_item_audit(item: ShoppingListItem, request: HttpRequest) -> None:
@@ -194,10 +195,18 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
     if new_status in ItemStatus.values:
         item.status = new_status
         _set_item_audit(item, request)
-        item.save(update_fields=["status", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
+        item.save(
+            update_fields=[
+                "status",
+                "status_changed_at",
+                "status_changed_by",
+                "status_changed_by_name",
+                "updated_at",
+            ]
+        )
 
     shopping_list = item.shopping_list
-    group_by = request.GET.get("group_by", "category")
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
 
     status_messages = {
@@ -206,8 +215,8 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
         ItemStatus.DONT_NEED: f"⏭ You skipped '{item.name}'",
         ItemStatus.NEED: f"📋 You moved '{item.name}' back to To Buy",
     }
-    context["toast_message"] = status_messages.get(new_status, f"You updated '{item.name}'")
-    return render(request, "shopping/partials/list_content.html", context)
+    toast = status_messages.get(new_status, f"You updated '{item.name}'")
+    return render_list_response(request, context, toast_message=toast)
 
 
 @require_POST
@@ -252,7 +261,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
     normalized_name = singularize(raw_name.lower())
     normalized_unit = singularize(amount_unit.lower())
 
-    existing = None
+    existing: ShoppingListItem | None = None
     for candidate in shopping_list.items.filter(status=ItemStatus.NEED):
         if (
             singularize(candidate.name.lower()) == normalized_name
@@ -268,7 +277,16 @@ def add_item(request: HttpRequest) -> HttpResponse:
         if purpose and purpose not in existing.purpose:
             existing.purpose = f"{existing.purpose}, {purpose}".strip(", ")
         _set_item_audit(existing, request)
-        existing.save(update_fields=["amount", "purpose", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
+        existing.save(
+            update_fields=[
+                "amount",
+                "purpose",
+                "status_changed_at",
+                "status_changed_by",
+                "status_changed_by_name",
+                "updated_at",
+            ]
+        )
     else:
         max_order = shopping_list.items.count()
         audit_user = request.user if request.user.is_authenticated else None
@@ -290,13 +308,13 @@ def add_item(request: HttpRequest) -> HttpResponse:
             status_changed_by_name=audit_user_name,
         )
 
-    group_by = request.GET.get("group_by", "category")
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
     if existing:
-        context["toast_message"] = f"You increased the quantity of '{existing.name}' (+{amount})"
+        toast = f"You increased the quantity of '{existing.name}' (+{amount})"
     else:
-        context["toast_message"] = f"You added '{raw_name}' to the shopping list"
-    return render(request, "shopping/partials/list_content.html", context)
+        toast = f"You added '{raw_name}' to the shopping list"
+    return render_list_response(request, context, toast_message=toast)
 
 
 def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
@@ -331,7 +349,6 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
         # If user explicitly edited aisle and store is active, update store learning cache
         if item.aisle and item.shopping_list.active_store:
-            from apps.shopping.models import StoreItemAisle
             StoreItemAisle.objects.update_or_create(
                 store=item.shopping_list.active_store,
                 item_name_normalized=singularize(item.name.lower()),
@@ -341,10 +358,9 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
                 },
             )
 
-        group_by = request.GET.get("group_by", "category")
+        group_by = request.GET.get("group_by", GroupBy.CATEGORY)
         context = _build_list_context(request, item.shopping_list, group_by)
-        context["toast_message"] = f"✏️ You updated '{item.name}'"
-        return render(request, "shopping/partials/list_content.html", context)
+        return render_list_response(request, context, toast_message=f"✏️ You updated '{item.name}'")
 
     known_categories = get_known_categories()
     known_aisles = get_known_aisles(item.shopping_list.active_store)
@@ -376,10 +392,9 @@ def delete_item(request: HttpRequest, item_id: int) -> HttpResponse:
     shopping_list = item.shopping_list
     item.delete()
 
-    group_by = request.GET.get("group_by", "category")
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
-    context["toast_message"] = f"🗑 You deleted '{item_name}'"
-    return render(request, "shopping/partials/list_content.html", context)
+    return render_list_response(request, context, toast_message=f"🗑 You deleted '{item_name}'")
 
 
 @require_POST
@@ -397,15 +412,23 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
     item = get_object_or_404(ShoppingListItem, id=item_id)
     item.locked = not item.locked
     _set_item_audit(item, request)
-    item.save(update_fields=["locked", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
+    item.save(
+        update_fields=[
+            "locked",
+            "status_changed_at",
+            "status_changed_by",
+            "status_changed_by_name",
+            "updated_at",
+        ]
+    )
 
-    group_by = request.GET.get("group_by", "category")
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, item.shopping_list, group_by)
     if item.locked:
-        context["toast_message"] = f'📋 You set \'{item.name}\' to "needed"'
+        toast = f'📋 You set \'{item.name}\' to "needed"'
     else:
-        context["toast_message"] = f"You unchecked '{item.name}'"
-    return render(request, "shopping/partials/list_content.html", context)
+        toast = f"You unchecked '{item.name}'"
+    return render_list_response(request, context, toast_message=toast)
 
 
 @require_POST
@@ -429,9 +452,12 @@ def set_store(request: HttpRequest) -> HttpResponse:
         shopping_list.active_store = None
         shopping_list.save(update_fields=["active_store"])
 
-    group_by = request.GET.get("group_by", "aisle" if shopping_list.active_store else "category")
+    group_by = request.GET.get(
+        "group_by",
+        GroupBy.AISLE if shopping_list.active_store else GroupBy.CATEGORY,
+    )
     context = _build_list_context(request, shopping_list, group_by)
-    return render(request, "shopping/partials/list_content.html", context)
+    return render_list_response(request, context)
 
 
 @require_POST
@@ -460,10 +486,10 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
         shopping_list.active_store = store
         shopping_list.save(update_fields=["active_store"])
 
-        group_by = request.GET.get("group_by", "aisle")
+        group_by = request.GET.get("group_by", GroupBy.AISLE)
         context = _build_list_context(request, shopping_list, group_by)
-        context["toast_message"] = f"Detected nearest store: {store.name} ({distance_miles} mi away)"
-        return render(request, "shopping/partials/list_content.html", context)
+        toast = f"Detected nearest store: {store.name} ({distance_miles} mi away)"
+        return render_list_response(request, context, toast_message=toast)
 
     return JsonResponse({"error": "No stores found nearby"}, status=404)
 
@@ -506,7 +532,7 @@ def reorder_sections(request: HttpRequest) -> HttpResponse:
     """
     try:
         shopping_list = get_active_list(request)
-        group_by = request.POST.get("group_by", "category")
+        group_by = request.POST.get("group_by", GroupBy.CATEGORY)
         group_names = request.POST.getlist("group_names[]")
         if not group_names:
             body = json.loads(request.body.decode()) if request.body else {}
@@ -522,10 +548,14 @@ def reorder_sections(request: HttpRequest) -> HttpResponse:
             # Sync item order numbers so walking sequence strictly respects new section sequence
             current_order_index = 0
             for group_name in group_names:
-                if group_by == "aisle":
-                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, aisle=group_name).order_by("order", "id")
+                if str(group_by) == GroupBy.AISLE:
+                    group_items = shopping_list.items.filter(
+                        status=ItemStatus.NEED, aisle=group_name
+                    ).order_by("order", "id")
                 else:
-                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, category__iexact=group_name).order_by("order", "id")
+                    group_items = shopping_list.items.filter(
+                        status=ItemStatus.NEED, category__iexact=group_name
+                    ).order_by("order", "id")
                 for item in group_items:
                     item.order = current_order_index
                     item.save(update_fields=["order"])

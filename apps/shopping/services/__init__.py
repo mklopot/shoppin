@@ -1,3 +1,25 @@
 """
-Shopping services package for external integrations and aisle resolution logic.
+Shopping services package for external integrations, aisle resolution, and list organization logic.
 """
+
+from apps.shopping.services.list_organizer import ShoppingListOrganizer
+from apps.shopping.services.store_service import (
+    KrogerAPIClient,
+    get_aisle_sort_key,
+    get_known_aisles,
+    get_known_categories,
+    get_nearest_stores,
+    haversine_distance,
+    resolve_store_aisle,
+)
+
+__all__ = [
+    "ShoppingListOrganizer",
+    "KrogerAPIClient",
+    "get_aisle_sort_key",
+    "get_known_aisles",
+    "get_known_categories",
+    "get_nearest_stores",
+    "haversine_distance",
+    "resolve_store_aisle",
+]

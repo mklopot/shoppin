@@ -27,6 +27,28 @@ class ItemStatus(models.TextChoices):
     DONT_NEED = "DONT_NEED", "Don't Actually Need"
 
 
+class ListMode(models.TextChoices):
+    """
+    Workflow mode for interacting with the shopping list.
+
+    - SHOPPING: In-store execution mode with rapid Got / Skip actions.
+    - PANTRY: At-home prep mode with Have / Need / Skip verification.
+    """
+    SHOPPING = "shopping", "In Store"
+    PANTRY = "pantry", "Pantry Check"
+
+
+class GroupBy(models.TextChoices):
+    """
+    Grouping strategy for organizing items in the active 'To Buy' section.
+
+    - CATEGORY: Group items by supermarket department/category (e.g. Produce, Dairy).
+    - AISLE: Group items by store-specific physical aisle numbers.
+    """
+    CATEGORY = "category", "By Category"
+    AISLE = "aisle", "By Aisle"
+
+
 class StoreLocation(models.Model):
     """
     A physical supermarket location (e.g. King Soopers, Safeway) with geolocation.

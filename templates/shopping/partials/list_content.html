@@ -208,13 +208,13 @@
     <!--
       SECTION 2: IN CART (GOT)
       Visual Styling Note:
-      Uses a soft, desaturated mint-green theme (#e1f0e6 header, #f2f8f4 body, emerald-300 border)
-      to clearly communicate successful completion without overwhelming high-contrast colors.
+      Uses a soft, desaturated mint-green theme (bg-cart-header, bg-cart-bg, border-cart-border)
+      configured in Tailwind theme config to clearly communicate completion without harsh contrast.
     -->
     {% if got_items %}
-    <div class="border border-emerald-300 mt-5" style="background-color: #f2f8f4;">
+    <div class="border border-cart-border bg-cart-bg mt-5">
         <!-- Section Header -->
-        <div class="px-3 py-2 border-b border-emerald-300 flex justify-between items-center text-xs" style="background-color: #e1f0e6;">
+        <div class="px-3 py-2 border-b border-cart-border bg-cart-header flex justify-between items-center text-xs">
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-emerald-950 uppercase tracking-wider text-xs">Got</span>
                 <span class="text-emerald-800 font-normal">Purchased in cart</span>
@@ -263,14 +263,13 @@
     <!--
       SECTION 3: ALREADY HAVE / SKIPPED
       Visual Styling Note:
-      Uses a soft, cool sky-blue tint (#e2ecf7 header, #f0f5fa body, blue-300 border)
-      to represent items already at home or deferred, pairing symmetrically with Section 2's mint green
-      while avoiding alarming cautionary amber/yellow tones.
+      Uses a soft, cool sky-blue tint (bg-pantry-header, bg-pantry-bg, border-pantry-border)
+      configured in Tailwind theme config to represent items already at home or deferred.
     -->
     {% if pantry_items %}
-    <div class="border border-blue-300 mt-5 text-xs" style="background-color: #f0f5fa;">
+    <div class="border border-pantry-border bg-pantry-bg mt-5 text-xs">
         <!-- Section Header -->
-        <div class="px-3 py-2 border-b border-blue-300 flex justify-between items-center text-xs" style="background-color: #e2ecf7;">
+        <div class="px-3 py-2 border-b border-pantry-border bg-pantry-header flex justify-between items-center text-xs">
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-blue-950 uppercase tracking-wider text-xs">Already Have / Skipped</span>
                 <span class="text-blue-800 font-normal">At home or skipped</span>

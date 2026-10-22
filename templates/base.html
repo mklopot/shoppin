@@ -5,8 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Shoppin{% endblock %}</title>
 
-    <!-- Tailwind CSS (CDN) -->
+    <!-- Tailwind CSS (CDN) + Semantic Theme Configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cart: {
+                            bg: '#f2f8f4',
+                            header: '#e1f0e6',
+                            border: '#6ee7b7',
+                            hover: '#d1e7d8',
+                        },
+                        pantry: {
+                            bg: '#f0f5fa',
+                            header: '#e2ecf7',
+                            border: '#93c5fd',
+                            hover: '#d4e3f3',
+                        },
+                    },
+                },
+            },
+        };
+    </script>
 
     <!-- HTMX + Extensions -->
     <meta name="htmx-config" content='{"globalViewTransitions": true}'>

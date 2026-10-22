@@ -41,6 +41,22 @@
         {% endif %}
     </div>
 
+    {% if planned_meals %}
+    <!-- Planned Meals Navigation Strip -->
+    <div class="flex flex-wrap items-center gap-1.5 py-1 text-xs text-gray-700 bg-gray-50 border border-gray-200 px-2.5">
+        <span class="font-bold text-gray-600 uppercase text-[10px] tracking-wider">Planned Meals:</span>
+        {% for m in planned_meals %}
+        <a href="{% url 'mealplans:detail' %}" class="inline-flex items-center space-x-1 px-2 py-0.5 bg-white border border-gray-300 hover:border-gray-500 hover:bg-gray-50 text-xs text-gray-800">
+            <span class="font-medium">{{ m.name }}</span>
+            {% if m.emoji %}<span>{{ m.emoji }}</span>{% endif %}
+        </a>
+        {% endfor %}
+        <a href="{% url 'mealplans:detail' %}" class="text-[11px] text-blue-700 hover:underline font-semibold ml-auto">
+            Edit Meal Plan &rarr;
+        </a>
+    </div>
+    {% endif %}
+
     {% if can_write %}
     <!-- Secondary Controls Bar: Store Selector, Sort Order -->
     <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">

@@ -133,9 +133,13 @@ def _build_list_context(
         can_write = True
         user_role = "owner"
 
+    meal_plan = workspace.get_meal_plan() if workspace else None
+    planned_meals = list(meal_plan.meals.prefetch_related("recipes").all()) if meal_plan else []
+
     return {
         "shopping_list": shopping_list,
         "workspace": workspace,
+        "planned_meals": planned_meals,
         "can_write": can_write,
         "user_role": user_role,
         "grouped_need": grouped_need,

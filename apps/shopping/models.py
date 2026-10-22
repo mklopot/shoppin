@@ -243,6 +243,14 @@ class ShoppingListItem(models.Model):
         blank=True,
         related_name="shopping_items",
     )
+    source_meal = models.ForeignKey(
+        "mealplans.Meal",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_items",
+        help_text="Meal entry this shopping item was added for",
+    )
     source_ingredient = models.ForeignKey(
         "recipes.Ingredient",
         on_delete=models.SET_NULL,

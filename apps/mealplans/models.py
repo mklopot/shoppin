@@ -82,6 +82,13 @@ class Meal(models.Model):
     class Meta:
         ordering = ["order", "id"]
 
+    def save(self, *args, **kwargs) -> None:
+        """Auto-populate emoji if not provided."""
+        if not self.emoji:
+            from apps.mealplans.services.emojifier import get_meal_emoji
+            self.emoji = get_meal_emoji(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         """Return formatted meal name with emoji prefix."""
         return f"{self.emoji} {self.name}".strip()

@@ -6,7 +6,6 @@ item and section drag-and-drop reordering, store selection, and Pantry Check mod
 """
 
 import json
-from decimal import Decimal
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -15,7 +14,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.core.categorizer import categorizer
-from apps.core.utils import parse_amount_and_unit, singularize
+from apps.core.utils import (
+    can_combine_units,
+    combine_amounts_and_units,
+    parse_amount_and_unit,
+    singularize,
+)
 from apps.shopping.models import (
     GroupBy,
     ItemStatus,
@@ -259,13 +263,12 @@ def add_item(request: HttpRequest) -> HttpResponse:
 
     # Check for deduplication / stacking with an existing NEED item
     normalized_name = singularize(raw_name.lower())
-    normalized_unit = singularize(amount_unit.lower())
 
     existing: ShoppingListItem | None = None
     for candidate in shopping_list.items.filter(status=ItemStatus.NEED):
         if (
             singularize(candidate.name.lower()) == normalized_name
-            and singularize(candidate.amount_unit.lower()) == normalized_unit
+            and can_combine_units(candidate.amount_unit, amount_unit)
             and candidate.brand.lower() == brand.lower()
             and candidate.vendor.lower() == vendor.lower()
         ):
@@ -273,13 +276,21 @@ def add_item(request: HttpRequest) -> HttpResponse:
             break
 
     if existing:
-        existing.amount += amount
+        new_amount, new_unit = combine_amounts_and_units(
+            existing.amount,
+            existing.amount_unit,
+            amount,
+            amount_unit,
+        )
+        existing.amount = new_amount
+        existing.amount_unit = new_unit
         if purpose and purpose not in existing.purpose:
             existing.purpose = f"{existing.purpose}, {purpose}".strip(", ")
         _set_item_audit(existing, request)
         existing.save(
             update_fields=[
                 "amount",
+                "amount_unit",
                 "purpose",
                 "status_changed_at",
                 "status_changed_by",
@@ -311,7 +322,8 @@ def add_item(request: HttpRequest) -> HttpResponse:
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
     if existing:
-        toast = f"You increased the quantity of '{existing.name}' (+{amount})"
+        unit_str = f" {existing.unit_display}" if existing.unit_display else ""
+        toast = f"You updated '{existing.name}' to {existing.amount_display}{unit_str}"
     else:
         toast = f"You added '{raw_name}' to the shopping list"
     return render_list_response(request, context, toast_message=toast)
@@ -334,11 +346,13 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
     if request.method == "POST":
         item.name = request.POST.get("name", item.name).strip()
         amount_string = request.POST.get("amount", str(item.amount))
-        try:
-            item.amount = Decimal(amount_string)
-        except Exception:
-            pass
-        item.amount_unit = request.POST.get("amount_unit", item.amount_unit).strip()
+        parsed_amount, parsed_unit = parse_amount_and_unit(amount_string)
+        item.amount = parsed_amount
+        raw_unit = request.POST.get("amount_unit", "").strip()
+        if raw_unit:
+            item.amount_unit = raw_unit
+        elif parsed_unit:
+            item.amount_unit = parsed_unit
         item.brand = request.POST.get("brand", item.brand).strip()
         item.vendor = request.POST.get("vendor", item.vendor).strip()
         item.category = request.POST.get("category", item.category).strip()

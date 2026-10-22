@@ -67,6 +67,29 @@ def test_add_item_deduplication(client, active_list):
 
 
 @pytest.mark.django_db
+def test_add_one_pint_plus_one_pint_makes_a_quart(client, active_list):
+    # Add 1 pint of cream
+    client.post(
+        reverse("shopping:add_item"),
+        {"name": "Heavy Cream", "amount": "1 pint"},
+    )
+    cream = active_list.items.get(name="Heavy Cream")
+    assert cream.amount == Decimal("1.00")
+    assert cream.amount_unit == "pint"
+
+    # Add another 1 pint of cream -> should convert to 1 quart!
+    client.post(
+        reverse("shopping:add_item"),
+        {"name": "Heavy Cream", "amount": "1 pint"},
+    )
+    cream.refresh_from_db()
+    assert cream.amount == Decimal("1.00")
+    assert cream.amount_unit == "quart"
+    assert cream.amount_display == "1"
+    assert cream.unit_display == "quart"
+
+
+@pytest.mark.django_db
 def test_item_status_transitions(client, active_list):
     item = active_list.items.get(name="Bananas")
     assert item.status == ItemStatus.NEED

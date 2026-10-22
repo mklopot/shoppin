@@ -269,8 +269,24 @@ class ShoppingListItem(models.Model):
 
     def __str__(self) -> str:
         """Return formatted item quantity, name, and current status."""
-        unit_str = f" {self.amount_unit}" if self.amount_unit else ""
-        return f"{self.amount:g}{unit_str} {self.name} [{self.status}]"
+        unit_str = f" {self.unit_display}" if self.unit_display else ""
+        return f"{self.amount_display}{unit_str} {self.name} [{self.status}]"
+
+    @property
+    def amount_display(self) -> str:
+        """Return the quantity formatted as a clean fraction or integer string."""
+        from apps.core.utils import format_amount
+        return format_amount(self.amount)
+
+    @property
+    def unit_display(self) -> str:
+        """Return the unit properly singularized or pluralized based on the amount."""
+        from apps.core.utils import pluralize_unit, singularize_unit
+        if not self.amount_unit:
+            return ""
+        if self.amount == Decimal("1.00") or self.amount == 1:
+            return singularize_unit(self.amount_unit)
+        return pluralize_unit(self.amount_unit)
 
     @property
     def changed_by_display(self) -> str:

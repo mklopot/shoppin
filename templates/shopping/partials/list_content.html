@@ -1,9 +1,9 @@
 <div id="shopping-list-content" class="space-y-4">
     {% if toast_message %}
     <div id="toast-container" hx-swap-oob="beforeend">
-        <div class="toast-item pointer-events-auto flex items-center justify-between bg-gray-950 text-white text-xs px-3.5 py-2.5 shadow-lg border border-gray-700 min-w-[260px] max-w-sm rounded-none">
+        <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
             <span class="font-medium pr-2">{{ toast_message }}</span>
-            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-white font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
         </div>
     </div>
     {% endif %}

@@ -158,12 +158,15 @@ def test_item_purpose_handling(client, active_list):
 def test_item_transitions_and_toast_notifications(client, active_list):
     item = active_list.items.get(name="Bananas")
 
-    # 1. Transition to GOT: checks toast notification and view-transition-name styling
+    # 1. Transition to GOT: checks toast notification, light transparent styling, and view-transition-name
     res = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res.status_code == 200
     content = res.content.decode("utf-8")
     assert "Moved &#x27;Bananas&#x27; to Cart" in content or "Moved 'Bananas' to Cart" in content
     assert 'hx-swap-oob="beforeend"' in content
+    assert "bg-white/90" in content
+    assert "backdrop-blur-sm" in content
+    assert "bg-gray-950" not in content
     assert f"view-transition-name: item-row-{item.id}" in content
 
     # 2. Add item toast notification

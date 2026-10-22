@@ -209,7 +209,24 @@ def shopping_list_view(request: HttpRequest) -> HttpResponse:
     """
     shopping_list = get_active_list(request)
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
-    context = _build_list_context(request, shopping_list, group_by)
+    mode = request.GET.get("mode")
+    context = _build_list_context(request, shopping_list, group_by, mode=mode)
+    return render_list_response(request, context, force_partial=False)
+
+
+def pantry_check_view(request: HttpRequest) -> HttpResponse:
+    """
+    Render the shopping list in Pantry Check mode.
+
+    Args:
+        request: The incoming HTTP request.
+
+    Returns:
+        Rendered HTML page or HTMX partial content in Pantry Check mode.
+    """
+    shopping_list = get_active_list(request)
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+    context = _build_list_context(request, shopping_list, group_by, mode=ListMode.PANTRY)
     return render_list_response(request, context, force_partial=False)
 
 

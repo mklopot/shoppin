@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Shopping List - Shoppin{% endblock %}
+{% block title %}{% if mode == 'pantry' %}Pantry Check{% else %}Shopping List{% endif %} - Shoppin{% endblock %}
 
 {% block content %}
 <div class="space-y-3">

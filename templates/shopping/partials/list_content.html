@@ -27,27 +27,13 @@
     </div>
     {% endif %}
 
-    <!-- Top Header: Title & Workflow Phase Switcher -->
+    <!-- Top Header: Title -->
     <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
         <div class="flex items-center space-x-2">
-            <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">{{ shopping_list.name }}</h1>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">
+                {{ shopping_list.name }}{% if mode == 'pantry' %} <span class="text-sm font-normal text-gray-500">(Pantry Check)</span>{% endif %}
+            </h1>
         </div>
-
-        {% if can_write %}
-        <!-- Workflow Phase: In Store vs Pantry Check -->
-        <div class="inline-flex border border-gray-600 bg-white">
-            <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
-                    class="px-3 py-1 text-xs font-bold uppercase tracking-wider {% if mode == 'shopping' %}bg-gray-800 text-white{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
-                    title="In-Store Shopping: Fast supermarket experience with Got & Skip">
-                🛒 In Store
-            </button>
-            <button hx-get="{% url 'shopping:list' %}?mode=pantry&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
-                    class="px-3 py-1 text-xs font-bold uppercase tracking-wider border-l border-gray-600 {% if mode == 'pantry' %}bg-gray-800 text-white{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
-                    title="Pantry Check: Verify at home what you have before heading out">
-                🏠 Pantry Check
-            </button>
-        </div>
-        {% endif %}
     </div>
 
     {% if planned_meals %}
@@ -146,10 +132,10 @@
                 <span class="text-base select-none leading-none">🏠</span>
                 <span><strong>Pantry Check Mode:</strong> Review what you have at home before heading out. Tap <strong>Have</strong> if you already have it, <strong>Skip</strong> if not buying today, or <strong>Need</strong> to confirm you need to buy it.</span>
             </div>
-            <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
-                    class="text-xs text-amber-800 hover:text-black font-semibold underline whitespace-nowrap">
+            <a href="{% url 'shopping:list' %}?mode=shopping"
+               class="text-xs text-amber-800 hover:text-black font-semibold underline whitespace-nowrap">
                 Ready to shop &rarr;
-            </button>
+            </a>
         </div>
         {% endif %}
 

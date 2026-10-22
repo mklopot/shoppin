@@ -86,8 +86,11 @@
                         <span>Shoppin</span>
                     </a>
                     <nav class="flex space-x-1 text-xs">
-                        <a href="/" class="px-2.5 py-1 font-semibold {% if request.resolver_match.url_name == 'list' %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <a href="{% url 'shopping:list' %}?mode=shopping" class="px-2.5 py-1 font-semibold {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode != 'pantry' and request.resolver_match.url_name != 'pantry_check' %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
                             Shopping List
+                        </a>
+                        <a href="{% url 'shopping:pantry_check' %}" class="px-2.5 py-1 font-semibold {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' or request.resolver_match.url_name == 'pantry_check' %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                            Pantry Check
                         </a>
                         <a href="/mealplans/" class="px-2.5 py-1 font-medium {% if 'mealplans' in request.path %}text-gray-900 border-b-2 border-gray-800{% else %}text-gray-600 hover:text-gray-900{% endif %}">
                             Meal Plans

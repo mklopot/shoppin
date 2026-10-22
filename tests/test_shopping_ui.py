@@ -337,13 +337,14 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert res.status_code == 200
     content = res.content.decode("utf-8")
 
-    # In Store mode toggle is visually higher up than Store selector and sort order
-    in_store_pos = content.find("In Store")
+    # Shopping List and Pantry Check navigation tabs on top are visually higher up than Store selector and sort order
+    shopping_tab_pos = content.find("Shopping List")
+    pantry_tab_pos = content.find("Pantry Check")
     store_pos = content.find("Store:")
     sort_pos = content.find("By Category")
-    assert in_store_pos < store_pos < sort_pos
+    assert shopping_tab_pos < pantry_tab_pos < store_pos < sort_pos
 
-    assert "In Store" in content
+    assert "Shopping List" in content
     assert "Pantry Check" in content
     assert "Pantry Check Mode:" not in content
 
@@ -359,7 +360,11 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     assert "<details" not in content
     assert "Already Have / Skipped" in content
 
-    # 2. Switch to Pantry Check Mode via query param ?mode=pantry
+    # 2. Switch to Pantry Check Mode via query param ?mode=pantry or dedicated /pantry-check/ route
+    res_direct = client.get(reverse("shopping:pantry_check"))
+    assert res_direct.status_code == 200
+    assert "Pantry Check Mode:" in res_direct.content.decode("utf-8")
+
     res_pantry = client.get(reverse("shopping:list") + "?mode=pantry")
     assert res_pantry.status_code == 200
     pantry_content = res_pantry.content.decode("utf-8")
@@ -676,3 +681,33 @@ def test_edit_item_amount_decrease_preserves_confirmation(client, active_list):
     bananas.refresh_from_db()
     assert bananas.amount == Decimal("2.00")
     assert bananas.locked is True
+
+
+@pytest.mark.django_db
+def test_pantry_check_navigation_tab(client, active_list):
+    """Verify that Pantry Check navigation is in its own top tab next to Shopping List."""
+    # 1. Main Shopping List page
+    res_shop = client.get(reverse("shopping:list") + "?mode=shopping")
+    assert res_shop.status_code == 200
+    shop_html = res_shop.content.decode("utf-8")
+
+    # Both tabs exist in header
+    assert "Shopping List" in shop_html
+    assert "Pantry Check" in shop_html
+    # Dedicated toggle is removed
+    assert "🛒 In Store" not in shop_html
+    # Shopping List tab is active
+    assert 'href="/?mode=shopping" class="px-2.5 py-1 font-semibold text-gray-900 border-b-2 border-gray-800"' in shop_html
+    assert 'href="/pantry-check/" class="px-2.5 py-1 font-semibold text-gray-600 hover:text-gray-900"' in shop_html
+
+    # 2. Pantry Check route
+    res_pantry = client.get(reverse("shopping:pantry_check"))
+    assert res_pantry.status_code == 200
+    pantry_html = res_pantry.content.decode("utf-8")
+
+    # Pantry Check tab is active
+    assert 'href="/pantry-check/" class="px-2.5 py-1 font-semibold text-gray-900 border-b-2 border-gray-800"' in pantry_html
+    assert 'href="/?mode=shopping" class="px-2.5 py-1 font-semibold text-gray-600 hover:text-gray-900"' in pantry_html
+    # Helper banner is shown
+    assert "Pantry Check Mode:" in pantry_html
+    assert "Ready to shop &rarr;" in pantry_html

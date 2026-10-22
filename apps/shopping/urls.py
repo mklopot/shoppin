@@ -10,6 +10,7 @@ app_name = "shopping"
 
 urlpatterns = [
     path("", views.shopping_list_view, name="list"),
+    path("pantry-check/", views.pantry_check_view, name="pantry_check"),
     path("item/add/", views.add_item, name="add_item"),
     path("item/<int:item_id>/status/<str:new_status>/", views.set_item_status, name="set_status"),
     path("item/<int:item_id>/edit/", views.edit_item, name="edit_item"),

@@ -232,7 +232,6 @@
                             {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
                             {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
-                            {% if item.category %}<span class="ml-1 text-gray-500">({{ item.category|title }})</span>{% endif %}
                             <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>

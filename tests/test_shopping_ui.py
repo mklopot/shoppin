@@ -481,18 +481,20 @@ def test_in_store_location_not_shown_in_got_and_already_have(client, active_list
     to_buy_section = content.split("To Buy")[1].split("Already Have / Skipped")[0]
     assert "📍 Aisle 1" in to_buy_section
 
-    # 2. When moved to GOT, "📍 Aisle 1" is NOT shown in Got section
+    # 2. When moved to GOT, neither "📍 Aisle 1" nor section name "(Produce)" is shown in Got section
     res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res_got.status_code == 200
     got_content = res_got.content.decode("utf-8")
     got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
     assert "Bananas" in got_section
     assert "📍 Aisle 1" not in got_section
+    assert "(Produce)" not in got_section
 
-    # 3. When moved to HAVE, "📍 Aisle 1" is NOT shown in Already Have section
+    # 3. When moved to HAVE, "📍 Aisle 1" is NOT shown in Already Have section, but category is preserved
     res_have = client.post(reverse("shopping:set_status", args=[item.id, "HAVE"]))
     assert res_have.status_code == 200
     have_content = res_have.content.decode("utf-8")
     have_section = have_content.split("Already Have / Skipped")[1]
     assert "Bananas" in have_section
     assert "📍 Aisle 1" not in have_section
+    assert "(Produce)" in have_section

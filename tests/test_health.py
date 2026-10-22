@@ -1,3 +1,7 @@
+"""
+Basic sanity tests for Django configuration and installed apps.
+"""
+
 from django.conf import settings
 
 

@@ -36,9 +36,9 @@
                 <span class="font-bold text-gray-700">Store:</span>
                 <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
                     <option value="">No Store (Default Category Flow)</option>
-                    {% for s in stores %}
-                    <option value="{{ s.id }}" {% if active_store and active_store.id == s.id %}selected{% endif %}>
-                        {{ s.name }}
+                    {% for store in stores %}
+                    <option value="{{ store.id }}" {% if active_store and active_store.id == store.id %}selected{% endif %}>
+                        {{ store.name }}
                     </option>
                     {% endfor %}
                 </select>
@@ -205,7 +205,12 @@
         {% endif %}
     </div>
 
-    <!-- SECTION 2: IN CART (GOT) -->
+    <!--
+      SECTION 2: IN CART (GOT)
+      Visual Styling Note:
+      Uses a soft, desaturated mint-green theme (#e1f0e6 header, #f2f8f4 body, emerald-300 border)
+      to clearly communicate successful completion without overwhelming high-contrast colors.
+    -->
     {% if got_items %}
     <div class="border border-emerald-300 mt-5" style="background-color: #f2f8f4;">
         <!-- Section Header -->
@@ -255,7 +260,13 @@
     </div>
     {% endif %}
 
-    <!-- SECTION 3: ALREADY HAVE / SKIPPED -->
+    <!--
+      SECTION 3: ALREADY HAVE / SKIPPED
+      Visual Styling Note:
+      Uses a soft, cool sky-blue tint (#e2ecf7 header, #f0f5fa body, blue-300 border)
+      to represent items already at home or deferred, pairing symmetrically with Section 2's mint green
+      while avoiding alarming cautionary amber/yellow tones.
+    -->
     {% if pantry_items %}
     <div class="border border-blue-300 mt-5 text-xs" style="background-color: #f0f5fa;">
         <!-- Section Header -->

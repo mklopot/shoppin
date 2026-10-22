@@ -1,3 +1,10 @@
+"""
+Data models for culinary recipes, ingredients, ratings, comments, and cooking logs.
+
+Enables full recipe organization with difficulty ratings, equipment,
+prep/cook times, nutritional/dietary tags, and social interactions.
+"""
+
 from decimal import Decimal
 
 from django.conf import settings
@@ -7,6 +14,9 @@ from django.utils.text import slugify
 
 
 class Recipe(models.Model):
+    """
+    A culinary recipe entry containing ingredients, instructions, and metadata.
+    """
     DIFFICULTY_CHOICES = [
         ("easy", "Easy"),
         ("medium", "Medium"),
@@ -107,23 +117,29 @@ class Recipe(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
+        """Auto-populate URL slug from name if not specified."""
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the recipe title."""
         return self.name
 
     @property
-    def average_rating(self):
+    def average_rating(self) -> float | None:
+        """Calculate arithmetic mean of all submitted star ratings."""
         ratings = self.ratings.all()
         if not ratings:
             return None
-        return round(sum(r.stars for r in ratings) / len(ratings), 1)
+        return round(sum(rating.stars for rating in ratings) / len(ratings), 1)
 
 
 class Ingredient(models.Model):
+    """
+    An individual ingredient entry belonging to a recipe.
+    """
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -142,12 +158,16 @@ class Ingredient(models.Model):
     class Meta:
         ordering = ["order", "id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Format ingredient quantity and name."""
         unit_str = f" {self.amount_unit}" if self.amount_unit else ""
         return f"{self.amount:g}{unit_str} {self.name}"
 
 
 class RecipeRating(models.Model):
+    """
+    User star rating (1 to 5) and binary recommendation for a recipe.
+    """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="ratings")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -164,11 +184,15 @@ class RecipeRating(models.Model):
     class Meta:
         unique_together = ("recipe", "user")
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return rating summary string."""
         return f"{self.recipe.name} - {self.stars}★ by {self.user}"
 
 
 class RecipeComment(models.Model):
+    """
+    User text comment or review for a recipe.
+    """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -183,11 +207,15 @@ class RecipeComment(models.Model):
         unique_together = ("recipe", "user")
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return comment summary string."""
         return f"Comment on {self.recipe.name} by {self.user}"
 
 
 class RecipeMadeLog(models.Model):
+    """
+    Historical log of when a user cooked or prepared a recipe.
+    """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="made_logs")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -200,5 +228,6 @@ class RecipeMadeLog(models.Model):
     class Meta:
         ordering = ["-made_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return made log summary string."""
         return f"{self.recipe.name} made on {self.made_at.strftime('%Y-%m-%d')}"

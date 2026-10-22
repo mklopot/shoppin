@@ -1,3 +1,7 @@
+"""
+End-to-end view tests for the main application entry points.
+"""
+
 import pytest
 from django.urls import reverse
 

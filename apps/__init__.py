@@ -1,1 +1,1 @@
-# apps package
+"""Shoppin Django applications package."""

@@ -1,6 +1,11 @@
+"""
+Core application configuration.
+"""
+
 from django.apps import AppConfig
 
 
 class CoreConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.core'
+    """Configuration class for the shared core utilities and categorizer."""
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.core"

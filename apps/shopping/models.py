@@ -1,3 +1,10 @@
+"""
+Data models for shopping lists, items, and supermarket store locations.
+
+Supports multi-mode shopping (In-Store execution vs Pantry Check),
+store-specific aisle sequence learning, and state transitions.
+"""
+
 from decimal import Decimal
 
 from django.conf import settings
@@ -6,6 +13,14 @@ from django.utils import timezone
 
 
 class ItemStatus(models.TextChoices):
+    """
+    Workflow states for items on a shopping list.
+
+    - NEED: To Buy (active item needed for this shopping trip).
+    - GOT: In Cart (purchased during shopping trip).
+    - HAVE: Already Have (verified at home in the pantry).
+    - DONT_NEED: Skipped (deferred or not needed today).
+    """
     NEED = "NEED", "Need"
     GOT = "GOT", "Got"
     HAVE = "HAVE", "Already Have"
@@ -13,6 +28,12 @@ class ItemStatus(models.TextChoices):
 
 
 class StoreLocation(models.Model):
+    """
+    A physical supermarket location (e.g. King Soopers, Safeway) with geolocation.
+
+    Used to map grocery items to specific aisle numbers and compute optimal
+    in-store walking sequence orders.
+    """
     CHAIN_CHOICES = [
         ("kroger", "Kroger / King Soopers"),
         ("safeway", "Safeway"),
@@ -38,14 +59,17 @@ class StoreLocation(models.Model):
     class Meta:
         ordering = ["chain", "name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return human-readable store name and chain display."""
         return f"{self.name} ({self.get_chain_display()})"
 
 
 class StoreItemAisle(models.Model):
     """
-    Cached mapping of an item to an aisle at a specific store location.
-    Populated by the Kroger API or learned via user edits.
+    Cached mapping of an item name to an aisle number/description at a store.
+
+    Populated automatically via store APIs (such as Kroger) or learned organically
+    when users manually edit an item's aisle location.
     """
     SOURCE_CHOICES = [
         ("api", "Kroger API"),
@@ -79,11 +103,18 @@ class StoreItemAisle(models.Model):
         unique_together = ("store", "item_name_normalized")
         ordering = ["sequence_order", "aisle_name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return mapping representation string."""
         return f"{self.item_name_normalized} -> {self.aisle_name} @ {self.store.name}"
 
 
 class ShoppingList(models.Model):
+    """
+    A shopping list container containing items to purchase or check in the pantry.
+
+    Can be marked as a reusable preset template (e.g. 'Spices', 'Pantry Staples')
+    or serve as the primary active household shopping list.
+    """
     name = models.CharField(max_length=255, default="Main Shopping List")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -125,11 +156,18 @@ class ShoppingList(models.Model):
     class Meta:
         ordering = ["is_preset", "name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the list name with preset flag if applicable."""
         return f"{self.name}{' (Preset)' if self.is_preset else ''}"
 
 
 class ShoppingListItem(models.Model):
+    """
+    An individual product or ingredient on a shopping list.
+
+    Tracks quantity, brand/vendor preferences, store aisle locations,
+    item triage status (NEED, GOT, HAVE, DONT_NEED), and status change audit metadata.
+    """
     shopping_list = models.ForeignKey(
         ShoppingList,
         on_delete=models.CASCADE,
@@ -159,7 +197,10 @@ class ShoppingListItem(models.Model):
         choices=ItemStatus.choices,
         default=ItemStatus.NEED,
     )
-    locked = models.BooleanField(default=False)
+    locked = models.BooleanField(
+        default=False,
+        help_text="Whether this item is confirmed needed during Pantry Check",
+    )
     order = models.PositiveIntegerField(
         default=0,
         help_text="Sort order for drag-and-drop reordering",
@@ -204,19 +245,33 @@ class ShoppingListItem(models.Model):
     class Meta:
         ordering = ["order", "id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return formatted item quantity, name, and current status."""
         unit_str = f" {self.amount_unit}" if self.amount_unit else ""
         return f"{self.amount:g}{unit_str} {self.name} [{self.status}]"
 
     @property
     def changed_by_display(self) -> str:
+        """
+        Return the username of who changed status, falling back to 'unknown' if anonymous.
+        Never returns 'You'.
+        """
         if self.status_changed_by:
             return self.status_changed_by.username
         if self.status_changed_by_name and self.status_changed_by_name.lower() != "you":
             return self.status_changed_by_name
         return "unknown"
 
-    def reduce_or_delete(self, amount_to_subtract: Decimal):
+    def reduce_or_delete(self, amount_to_subtract: Decimal) -> "ShoppingListItem | None":
+        """
+        Subtract amount from this item. If amount reaches zero or less, deletes the item.
+
+        Args:
+            amount_to_subtract: The quantity to reduce.
+
+        Returns:
+            The updated item instance, or None if deleted.
+        """
         new_amount = self.amount - amount_to_subtract
         if new_amount <= Decimal("0.00"):
             self.delete()
@@ -227,13 +282,22 @@ class ShoppingListItem(models.Model):
 
     def get_effective_aisle(self, store: StoreLocation | None = None) -> str:
         """
-        Returns store-specific aisle if mapped, else item's saved aisle, else category.
+        Determine the effective aisle name for sorting.
+
+        Checks store-specific mapped aisles first, then item's saved aisle,
+        falling back to title-cased category.
+
+        Args:
+            store: Specific store to check against, or active store on the list.
+
+        Returns:
+            Aisle name string (e.g. 'Aisle 3', 'Produce').
         """
         target_store = store or self.shopping_list.active_store
         if target_store:
             import inflection
-            norm_name = inflection.singularize(self.name.strip().lower())
-            aisle_map = target_store.item_aisles.filter(item_name_normalized=norm_name).first()
+            normalized_name = inflection.singularize(self.name.strip().lower())
+            aisle_map = target_store.item_aisles.filter(item_name_normalized=normalized_name).first()
             if aisle_map:
                 return aisle_map.aisle_name
         return self.aisle or self.category.title()

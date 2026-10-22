@@ -1,1 +1,3 @@
-# management package
+"""
+Management commands package for recipes.
+"""

@@ -1,8 +1,16 @@
+"""
+Shopping list views and HTMX controller endpoints.
+
+Handles item CRUD operations, status transitions (NEED, GOT, HAVE, DONT_NEED),
+item and section drag-and-drop reordering, store selection, and Pantry Check mode.
+"""
+
 import json
 from collections import defaultdict
 from decimal import Decimal
+from typing import Any
 
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -20,8 +28,16 @@ from apps.shopping.services.store_service import (
 )
 
 
-def get_active_list(request) -> ShoppingList:
-    """Helper to retrieve or initialize the primary shopping list."""
+def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
+    """
+    Retrieve or initialize the primary active household shopping list.
+
+    Args:
+        request: Optional Django HttpRequest.
+
+    Returns:
+        The active primary ShoppingList instance.
+    """
     shopping_list = ShoppingList.objects.filter(is_preset=False).first()
     if not shopping_list:
         default_store = StoreLocation.objects.first()
@@ -33,7 +49,27 @@ def get_active_list(request) -> ShoppingList:
     return shopping_list
 
 
-def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "category", mode: str | None = None):
+def _build_list_context(
+    request: HttpRequest | None,
+    shopping_list: ShoppingList,
+    group_by: str = "category",
+    mode: str | None = None,
+) -> dict:
+    """
+    Construct the unified template context for rendering the shopping list.
+
+    Separates items into active ('NEED'), cart ('GOT'), and pantry ('HAVE' / 'DONT_NEED'),
+    groups active items by category or store aisle walking order, and respects custom reordering.
+
+    Args:
+        request: Current HttpRequest.
+        shopping_list: Target ShoppingList instance.
+        group_by: Grouping key ('category' or 'aisle').
+        mode: Shopping mode ('shopping' for In Store, or 'pantry' for Pantry Check).
+
+    Returns:
+        Context dictionary for HTML rendering.
+    """
     items = shopping_list.items.all().order_by("order", "id")
 
     if not mode and request:
@@ -43,40 +79,40 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
     if request:
         request.session["shopping_mode"] = mode
 
-    need_items = [i for i in items if i.status == ItemStatus.NEED]
-    got_items = [i for i in items if i.status == ItemStatus.GOT]
-    pantry_items = [i for i in items if i.status in (ItemStatus.HAVE, ItemStatus.DONT_NEED)]
+    need_items = [item for item in items if item.status == ItemStatus.NEED]
+    got_items = [item for item in items if item.status == ItemStatus.GOT]
+    pantry_items = [item for item in items if item.status in (ItemStatus.HAVE, ItemStatus.DONT_NEED)]
 
     custom_orders = shopping_list.custom_section_order or {}
     custom_order_list = custom_orders.get(group_by, [])
-    custom_order_map = {name.lower(): idx for idx, name in enumerate(custom_order_list)}
+    custom_order_map = {name.lower(): index for index, name in enumerate(custom_order_list)}
 
-    # Group need_items
+    # Group need_items by aisle or category
     grouped_need = defaultdict(list)
     if group_by == "aisle" and shopping_list.active_store:
         for item in need_items:
             aisle = item.get_effective_aisle()
             grouped_need[aisle].append(item)
 
-        def aisle_sort_key_fn(k):
-            if k.lower() in custom_order_map:
-                return (0, custom_order_map[k.lower()])
-            return (1, get_aisle_sort_key(k))
+        def aisle_sort_key_fn(group_name: str) -> tuple[int, Any]:
+            if group_name.lower() in custom_order_map:
+                return (0, custom_order_map[group_name.lower()])
+            return (1, get_aisle_sort_key(group_name))
 
         sorted_keys = sorted(grouped_need.keys(), key=aisle_sort_key_fn)
-        sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
+        sorted_grouped_need = {group_name: grouped_need[group_name] for group_name in sorted_keys}
     else:
         for item in need_items:
-            cat = (item.category or "other").title()
-            grouped_need[cat].append(item)
+            category_name = (item.category or "other").title()
+            grouped_need[category_name].append(item)
 
-        def cat_sort_key_fn(k):
-            if k.lower() in custom_order_map:
-                return (0, custom_order_map[k.lower()])
-            return (1, DEPARTMENT_ORDER.get(k.lower(), 200))
+        def category_sort_key_fn(group_name: str) -> tuple[int, Any]:
+            if group_name.lower() in custom_order_map:
+                return (0, custom_order_map[group_name.lower()])
+            return (1, DEPARTMENT_ORDER.get(group_name.lower(), 200))
 
-        sorted_keys = sorted(grouped_need.keys(), key=cat_sort_key_fn)
-        sorted_grouped_need = {k: grouped_need[k] for k in sorted_keys}
+        sorted_keys = sorted(grouped_need.keys(), key=category_sort_key_fn)
+        sorted_grouped_need = {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
     stores = StoreLocation.objects.all().order_by("name")
     known_categories = get_known_categories()
@@ -99,7 +135,16 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
     }
 
 
-def shopping_list_view(request):
+def shopping_list_view(request: HttpRequest) -> HttpResponse:
+    """
+    Render the main shopping list page, or return an HTMX partial replacement.
+
+    Args:
+        request: The incoming HTTP request.
+
+    Returns:
+        Rendered HTML page or HTMX partial content.
+    """
     shopping_list = get_active_list(request)
     group_by = request.GET.get("group_by", "category")
     context = _build_list_context(request, shopping_list, group_by)
@@ -110,7 +155,17 @@ def shopping_list_view(request):
     return render(request, "shopping/list.html", context)
 
 
-def _set_item_audit(item: ShoppingListItem, request) -> None:
+def _set_item_audit(item: ShoppingListItem, request: HttpRequest) -> None:
+    """
+    Record user attribution and timestamp metadata on an item during state changes.
+
+    Sets status_changed_by to the authenticated user or None, and status_changed_by_name
+    to the username or 'unknown' for anonymous interactions. Never sets 'You'.
+
+    Args:
+        item: The ShoppingListItem instance being updated.
+        request: The current HTTP request.
+    """
     item.status_changed_at = timezone.now()
     if request.user.is_authenticated:
         item.status_changed_by = request.user
@@ -121,7 +176,20 @@ def _set_item_audit(item: ShoppingListItem, request) -> None:
 
 
 @require_POST
-def set_item_status(request, item_id: int, new_status: str):
+def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> HttpResponse:
+    """
+    Transition an item to a new status (NEED, GOT, HAVE, DONT_NEED).
+
+    Updates audit metadata and returns the re-rendered list partial with a toast message.
+
+    Args:
+        request: The POST request.
+        item_id: Primary key of the item.
+        new_status: Target status code string.
+
+    Returns:
+        Rendered HTML partial with updated list and toast notification.
+    """
     item = get_object_or_404(ShoppingListItem, id=item_id)
     if new_status in ItemStatus.values:
         item.status = new_status
@@ -143,7 +211,18 @@ def set_item_status(request, item_id: int, new_status: str):
 
 
 @require_POST
-def add_item(request):
+def add_item(request: HttpRequest) -> HttpResponse:
+    """
+    Add a new item to the active shopping list or increment quantity of an existing one.
+
+    Predicts the department category and resolves the store aisle if a store is active.
+
+    Args:
+        request: The POST request containing name, amount, brand, vendor, aisle, purpose.
+
+    Returns:
+        Rendered HTML partial or redirect.
+    """
     shopping_list = get_active_list(request)
     raw_name = request.POST.get("name", "").strip()
     if not raw_name:
@@ -155,11 +234,11 @@ def add_item(request):
     vendor = request.POST.get("vendor", "").strip()
     purpose = request.POST.get("purpose", "").strip() or "one-time purchase"
 
-    # Category: use provided or fallback to prediction
-    raw_cat = request.POST.get("category", "").strip()
-    category = raw_cat or categorizer.get_category(raw_name)
+    # Category: use user-provided value or infer via categorizer
+    raw_category = request.POST.get("category", "").strip()
+    category = raw_category or categorizer.get_category(raw_name)
 
-    # Aisle: use provided or fallback to prediction if store selected
+    # Aisle: use user-provided value or resolve via store service
     raw_aisle = request.POST.get("aisle", "").strip()
     if raw_aisle:
         aisle = raw_aisle
@@ -169,15 +248,15 @@ def add_item(request):
     else:
         aisle = ""
 
-    # Check for deduplication / stacking with existing NEED item
-    norm_name = singularize(raw_name.lower())
-    norm_unit = singularize(amount_unit.lower())
+    # Check for deduplication / stacking with an existing NEED item
+    normalized_name = singularize(raw_name.lower())
+    normalized_unit = singularize(amount_unit.lower())
 
     existing = None
     for candidate in shopping_list.items.filter(status=ItemStatus.NEED):
         if (
-            singularize(candidate.name.lower()) == norm_name
-            and singularize(candidate.amount_unit.lower()) == norm_unit
+            singularize(candidate.name.lower()) == normalized_name
+            and singularize(candidate.amount_unit.lower()) == normalized_unit
             and candidate.brand.lower() == brand.lower()
             and candidate.vendor.lower() == vendor.lower()
         ):
@@ -191,10 +270,9 @@ def add_item(request):
         _set_item_audit(existing, request)
         existing.save(update_fields=["amount", "purpose", "status_changed_at", "status_changed_by", "status_changed_by_name", "updated_at"])
     else:
-        # Append to end of order
         max_order = shopping_list.items.count()
-        user = request.user if request.user.is_authenticated else None
-        user_name = request.user.username if request.user.is_authenticated else "unknown"
+        audit_user = request.user if request.user.is_authenticated else None
+        audit_user_name = request.user.username if request.user.is_authenticated else "unknown"
         ShoppingListItem.objects.create(
             shopping_list=shopping_list,
             name=raw_name,
@@ -208,8 +286,8 @@ def add_item(request):
             status=ItemStatus.NEED,
             order=max_order + 1,
             status_changed_at=timezone.now(),
-            status_changed_by=user,
-            status_changed_by_name=user_name,
+            status_changed_by=audit_user,
+            status_changed_by_name=audit_user_name,
         )
 
     group_by = request.GET.get("group_by", "category")
@@ -221,13 +299,25 @@ def add_item(request):
     return render(request, "shopping/partials/list_content.html", context)
 
 
-def edit_item(request, item_id: int):
+def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
+    """
+    Render the edit modal dialog (GET) or update item details (POST).
+
+    Also teaches store aisle learning cache if aisle is edited while a store is active.
+
+    Args:
+        request: The HTTP request.
+        item_id: Primary key of the item.
+
+    Returns:
+        Rendered modal HTML on GET, or updated list partial on POST.
+    """
     item = get_object_or_404(ShoppingListItem, id=item_id)
     if request.method == "POST":
         item.name = request.POST.get("name", item.name).strip()
-        amt_str = request.POST.get("amount", str(item.amount))
+        amount_string = request.POST.get("amount", str(item.amount))
         try:
-            item.amount = Decimal(amt_str)
+            item.amount = Decimal(amount_string)
         except Exception:
             pass
         item.amount_unit = request.POST.get("amount_unit", item.amount_unit).strip()
@@ -239,7 +329,7 @@ def edit_item(request, item_id: int):
         _set_item_audit(item, request)
         item.save()
 
-        # If user explicitly edited aisle and store is active, update store learning cache!
+        # If user explicitly edited aisle and store is active, update store learning cache
         if item.aisle and item.shopping_list.active_store:
             from apps.shopping.models import StoreItemAisle
             StoreItemAisle.objects.update_or_create(
@@ -270,7 +360,17 @@ def edit_item(request, item_id: int):
 
 
 @require_POST
-def delete_item(request, item_id: int):
+def delete_item(request: HttpRequest, item_id: int) -> HttpResponse:
+    """
+    Delete a shopping list item permanently.
+
+    Args:
+        request: The POST request.
+        item_id: Primary key of the item to delete.
+
+    Returns:
+        Rendered HTML partial with updated list and toast notification.
+    """
     item = get_object_or_404(ShoppingListItem, id=item_id)
     item_name = item.name
     shopping_list = item.shopping_list
@@ -283,7 +383,17 @@ def delete_item(request, item_id: int):
 
 
 @require_POST
-def toggle_lock_item(request, item_id: int):
+def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
+    """
+    Toggle the 'Need' confirmation lock during Pantry Check mode.
+
+    Args:
+        request: The POST request.
+        item_id: Primary key of the item.
+
+    Returns:
+        Rendered HTML partial with updated list and toast notification.
+    """
     item = get_object_or_404(ShoppingListItem, id=item_id)
     item.locked = not item.locked
     _set_item_audit(item, request)
@@ -299,7 +409,16 @@ def toggle_lock_item(request, item_id: int):
 
 
 @require_POST
-def set_store(request):
+def set_store(request: HttpRequest) -> HttpResponse:
+    """
+    Update the active store location on the primary shopping list.
+
+    Args:
+        request: The POST request containing store_id.
+
+    Returns:
+        Rendered HTML partial of the shopping list.
+    """
     shopping_list = get_active_list(request)
     store_id = request.POST.get("store_id")
     if store_id:
@@ -316,47 +435,75 @@ def set_store(request):
 
 
 @require_POST
-def find_nearest_store(request):
+def find_nearest_store(request: HttpRequest) -> HttpResponse:
+    """
+    Identify and set the closest physical supermarket based on GPS coordinates.
+
+    Args:
+        request: The POST request containing latitude and longitude.
+
+    Returns:
+        Rendered HTML partial with nearest store selected and toast notification,
+        or JsonResponse with error status.
+    """
     try:
-        lat = float(request.POST.get("latitude", 0))
-        lon = float(request.POST.get("longitude", 0))
+        latitude = float(request.POST.get("latitude", 0))
+        longitude = float(request.POST.get("longitude", 0))
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid coordinates"}, status=400)
 
-    nearest = get_nearest_stores(lat, lon, limit=1)
-    if nearest:
-        store = nearest[0]["store"]
-        dist = nearest[0]["distance_miles"]
+    nearest_matches = get_nearest_stores(latitude, longitude, limit=1)
+    if nearest_matches:
+        store = nearest_matches[0]["store"]
+        distance_miles = nearest_matches[0]["distance_miles"]
         shopping_list = get_active_list(request)
         shopping_list.active_store = store
         shopping_list.save(update_fields=["active_store"])
 
         group_by = request.GET.get("group_by", "aisle")
         context = _build_list_context(request, shopping_list, group_by)
-        context["toast_message"] = f"Detected nearest store: {store.name} ({dist} mi away)"
+        context["toast_message"] = f"Detected nearest store: {store.name} ({distance_miles} mi away)"
         return render(request, "shopping/partials/list_content.html", context)
 
     return JsonResponse({"error": "No stores found nearby"}, status=404)
 
 
 @require_POST
-def reorder_items(request):
+def reorder_items(request: HttpRequest) -> HttpResponse:
+    """
+    Persist new drag-and-drop sort order indices for individual items within a section.
+
+    Args:
+        request: POST request with item_ids[] list.
+
+    Returns:
+        204 No Content response on success, or 400 JsonResponse on error.
+    """
     try:
         item_ids = request.POST.getlist("item_ids[]")
         if not item_ids:
-            body = json.loads(request.body.decode())
+            body = json.loads(request.body.decode()) if request.body else {}
             item_ids = body.get("item_ids", [])
 
-        for idx, i_id in enumerate(item_ids):
-            ShoppingListItem.objects.filter(id=int(i_id)).update(order=idx)
+        for index, item_id in enumerate(item_ids):
+            ShoppingListItem.objects.filter(id=int(item_id)).update(order=index)
 
         return HttpResponse(status=204)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    except Exception as error:
+        return JsonResponse({"error": str(error)}, status=400)
 
 
 @require_POST
-def reorder_sections(request):
+def reorder_sections(request: HttpRequest) -> HttpResponse:
+    """
+    Persist custom sequence order for entire category or aisle section blocks.
+
+    Args:
+        request: POST request with group_by and group_names[] list.
+
+    Returns:
+        204 No Content response on success, or 400 JsonResponse on error.
+    """
     try:
         shopping_list = get_active_list(request)
         group_by = request.POST.get("group_by", "category")
@@ -372,18 +519,18 @@ def reorder_sections(request):
             shopping_list.custom_section_order = orders
             shopping_list.save(update_fields=["custom_section_order", "updated_at"])
 
-            # Sync item orders to follow the new section sequence
-            current_order = 0
-            for g_name in group_names:
+            # Sync item order numbers so walking sequence strictly respects new section sequence
+            current_order_index = 0
+            for group_name in group_names:
                 if group_by == "aisle":
-                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, aisle=g_name).order_by("order", "id")
+                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, aisle=group_name).order_by("order", "id")
                 else:
-                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, category__iexact=g_name).order_by("order", "id")
-                for itm in group_items:
-                    itm.order = current_order
-                    itm.save(update_fields=["order"])
-                    current_order += 1
+                    group_items = shopping_list.items.filter(status=ItemStatus.NEED, category__iexact=group_name).order_by("order", "id")
+                for item in group_items:
+                    item.order = current_order_index
+                    item.save(update_fields=["order"])
+                    current_order_index += 1
 
         return HttpResponse(status=204)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    except Exception as error:
+        return JsonResponse({"error": str(error)}, status=400)

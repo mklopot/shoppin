@@ -1,2 +1,6 @@
+"""
+Models for the core application.
 
-# Create your models here.
+Currently, the core application provides shared utilities and categorizer logic
+without standalone database models.
+"""

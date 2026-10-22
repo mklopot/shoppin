@@ -1,3 +1,7 @@
+"""
+URL routing patterns for the Shopping application.
+"""
+
 from django.urls import path
 
 from apps.shopping import views

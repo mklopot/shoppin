@@ -1,1 +1,3 @@
-# commands package
+"""
+Custom Django management commands for recipes.
+"""

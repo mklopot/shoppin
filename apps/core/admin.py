@@ -1,2 +1,3 @@
-
-# Register your models here.
+"""
+Django Admin configuration for the core application.
+"""

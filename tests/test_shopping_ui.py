@@ -1,3 +1,7 @@
+"""
+Integration and UI tests for shopping list views, HTMX interactions, and styling.
+"""
+
 from decimal import Decimal
 
 import pytest

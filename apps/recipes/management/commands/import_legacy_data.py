@@ -1,3 +1,7 @@
+"""
+Management command to import legacy YAML recipes and preset lists into Django models.
+"""
+
 from decimal import Decimal
 from pathlib import Path
 
@@ -12,9 +16,12 @@ from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 
 
 class Command(BaseCommand):
+    """Import recipes and preset lists from legacy YAML files into SQLite/PostgreSQL."""
+
     help = "Import recipes and preset lists from legacy YAML files into the SQLite/Postgres database."
 
     def add_arguments(self, parser):
+        """Register command line arguments."""
         parser.add_argument(
             "--overwrite",
             action="store_true",
@@ -22,6 +29,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """Execute the import process inside an atomic database transaction."""
         base_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
         legacy_dir = base_dir / "legacy"
         recipe_file = legacy_dir / "recipe-database.yaml"

@@ -1,2 +1,3 @@
-
-# Create your views here.
+"""
+Views for the mealplans application.
+"""

@@ -1,8 +1,18 @@
+"""
+Data models for meal planning, meal composition, and scheduling rules.
+
+Enables grouping recipes into meals (e.g. 'Monday Dinner') and tracking
+rules (e.g. 'every dinner needs a veggie protein').
+"""
+
 from django.conf import settings
 from django.db import models
 
 
 class MealPlan(models.Model):
+    """
+    A named meal plan schedule containing scheduled meals and dietary rules.
+    """
     name = models.CharField(max_length=255)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -17,11 +27,15 @@ class MealPlan(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the meal plan name."""
         return self.name
 
 
 class MealPlanRule(models.Model):
+    """
+    A validation or guideline rule for constructing balanced meal plans.
+    """
     meal_plan = models.ForeignKey(
         MealPlan,
         on_delete=models.CASCADE,
@@ -34,11 +48,15 @@ class MealPlanRule(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return the rule description text."""
         return self.rule_text
 
 
 class Meal(models.Model):
+    """
+    An individual planned meal (e.g. 'Monday Dinner', 'Sunday Brunch') consisting of recipes.
+    """
     meal_plan = models.ForeignKey(
         MealPlan,
         on_delete=models.CASCADE,
@@ -56,5 +74,6 @@ class Meal(models.Model):
     class Meta:
         ordering = ["order", "id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Return formatted meal name with emoji prefix."""
         return f"{self.emoji} {self.name}".strip()

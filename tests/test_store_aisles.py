@@ -1,3 +1,7 @@
+"""
+Unit and service tests for store aisle resolution, Kroger API integration, and natural walking order.
+"""
+
 from decimal import Decimal
 
 import pytest

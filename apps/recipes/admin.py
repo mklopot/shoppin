@@ -1,3 +1,7 @@
+"""
+Django admin configuration for recipes and related social models.
+"""
+
 from django.contrib import admin
 
 from apps.recipes.models import (
@@ -10,12 +14,14 @@ from apps.recipes.models import (
 
 
 class IngredientInline(admin.TabularInline):
+    """Inline ingredient editor inside the recipe admin change form."""
     model = Ingredient
     extra = 1
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
+    """Admin interface for managing recipes and their ingredients."""
     list_display = (
         "name",
         "cuisine",
@@ -34,21 +40,26 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.action(description="Approve selected recipes for public browse")
     def approve_recipes(self, request, queryset):
+        """Batch approve recipes for public view."""
         queryset.update(is_approved=True)
 
 
 @admin.register(RecipeRating)
 class RecipeRatingAdmin(admin.ModelAdmin):
+    """Admin interface for recipe user ratings."""
     list_display = ("recipe", "user", "stars", "thumbs_up", "created_at")
     list_filter = ("stars", "thumbs_up")
 
 
 @admin.register(RecipeComment)
 class RecipeCommentAdmin(admin.ModelAdmin):
+    """Admin interface for recipe user comments."""
     list_display = ("recipe", "user", "created_at")
     search_fields = ("comment", "recipe__name", "user__username")
 
 
 @admin.register(RecipeMadeLog)
 class RecipeMadeLogAdmin(admin.ModelAdmin):
+    """Admin interface for user cooking history logs."""
     list_display = ("recipe", "user", "made_at")
+    search_fields = ("recipe__name", "user__username")

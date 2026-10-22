@@ -1,3 +1,7 @@
+"""
+Unit tests for string parsing, fractional numbers, and culinary pluralization/singularization.
+"""
+
 from decimal import Decimal
 
 from apps.core.utils import parse_amount_and_unit, pluralize, singularize

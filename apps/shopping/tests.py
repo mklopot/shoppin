@@ -1,2 +1,5 @@
+"""
+Unit tests for the shopping application.
 
-# Create your tests here.
+Note: The centralized test suite for the project is located in the root `tests/` directory.
+"""

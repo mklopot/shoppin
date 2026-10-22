@@ -1,3 +1,7 @@
+"""
+Integration tests for the legacy YAML data migration command.
+"""
+
 import pytest
 from django.core.management import call_command
 

@@ -273,3 +273,78 @@ def test_category_and_aisle_pulldown_and_custom_typing(client, active_list):
     modal_content_2 = res_modal_2.content.decode("utf-8")
     assert '<option value="Gourmet Specialty">' in modal_content_2
     assert '<option value="Aisle 99">' in modal_content_2
+
+
+@pytest.mark.django_db
+def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list):
+    # Add a pantry item (status HAVE) to verify details open/close behavior
+    ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Olive Oil",
+        amount=Decimal("1.00"),
+        category="pantry",
+        status=ItemStatus.HAVE,
+        order=10,
+    )
+
+    # 1. Default load: Shopping (In Store) Mode
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    content = res.content.decode("utf-8")
+
+    # In Store mode toggle is present
+    assert "In Store" in content
+    assert "Pantry Check" in content
+    assert "Pantry Check Mode:" not in content
+
+    # Under To Buy, we should see the prominent "Got" button, but NOT "Have" or "Skip"
+    to_buy_section = content.split("To Buy")[1].split("Already Have / Skipped")[0]
+    assert "🛒 Got" in to_buy_section
+    assert "🏠 Have" not in to_buy_section
+    assert "Skip" not in to_buy_section
+
+    # The pantry details section should be collapsed (not open)
+    assert "<details open class=\"border border-amber-300" not in content
+    assert "Already Have / Skipped" in content
+
+    # 2. Switch to Pantry Check Mode via query param ?mode=pantry
+    res_pantry = client.get(reverse("shopping:list") + "?mode=pantry")
+    assert res_pantry.status_code == 200
+    pantry_content = res_pantry.content.decode("utf-8")
+
+    # Banner is visible
+    assert "Pantry Check Mode:" in pantry_content
+    assert "Ready to shop &rarr;" in pantry_content
+
+    # Under To Buy, we now see Have, Skip, and Got buttons
+    pantry_to_buy = pantry_content.split("To Buy")[1].split("Already Have / Skipped")[0]
+    assert "🏠 Have" in pantry_to_buy
+    assert "Skip" in pantry_to_buy
+    assert "🛒 Got" in pantry_to_buy
+
+    # The pantry details section is automatically opened
+    assert "<details open" in pantry_content
+
+    # 3. Session persistence: Subsequent request without ?mode still remembers pantry mode
+    res_session = client.get(reverse("shopping:list"))
+    session_content = res_session.content.decode("utf-8")
+    assert "Pantry Check Mode:" in session_content
+    session_to_buy = session_content.split("To Buy")[1].split("Already Have / Skipped")[0]
+    assert "🏠 Have" in session_to_buy
+
+    # 4. Marking an item as HAVE in Pantry mode moves it to Already Have
+    banana_item = active_list.items.get(name="Bananas")
+    res_mark = client.post(reverse("shopping:set_status", args=[banana_item.id, "HAVE"]))
+    assert res_mark.status_code == 200
+    banana_item.refresh_from_db()
+    assert banana_item.status == ItemStatus.HAVE
+
+    # 5. Switch back to In Store mode via ?mode=shopping
+    res_shopping = client.get(reverse("shopping:list") + "?mode=shopping")
+    assert res_shopping.status_code == 200
+    shopping_content = res_shopping.content.decode("utf-8")
+    assert "Pantry Check Mode:" not in shopping_content
+    shopping_to_buy = shopping_content.split("To Buy")[1].split("Already Have / Skipped")[0]
+    assert "🏠 Have" not in shopping_to_buy
+    assert "Skip" not in shopping_to_buy
+    assert "🛒 Got" in shopping_to_buy

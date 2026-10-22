@@ -32,8 +32,15 @@ def get_active_list(request) -> ShoppingList:
     return shopping_list
 
 
-def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "category"):
+def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "category", mode: str | None = None):
     items = shopping_list.items.all().order_by("order", "id")
+
+    if not mode and request:
+        mode = request.GET.get("mode") or request.POST.get("mode") or request.session.get("shopping_mode", "shopping")
+    if mode not in ("shopping", "pantry"):
+        mode = "shopping"
+    if request:
+        request.session["shopping_mode"] = mode
 
     need_items = [i for i in items if i.status == ItemStatus.NEED]
     got_items = [i for i in items if i.status == ItemStatus.GOT]
@@ -87,6 +94,7 @@ def _build_list_context(request, shopping_list: ShoppingList, group_by: str = "c
         "active_store": shopping_list.active_store,
         "known_categories": known_categories,
         "known_aisles": known_aisles,
+        "mode": mode,
     }
 
 

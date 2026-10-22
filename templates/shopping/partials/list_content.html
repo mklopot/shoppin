@@ -15,7 +15,7 @@
         <div class="flex flex-wrap items-center gap-2 text-xs">
             <!-- Store Selector -->
             <div class="flex items-center space-x-1.5">
-                <form hx-post="{% url 'shopping:set_store' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
+                <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
                     {% csrf_token %}
                     <span class="font-bold text-gray-700">Store:</span>
                     <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
@@ -32,20 +32,34 @@
                 </button>
             </div>
 
+            <!-- Shopping Mode Toggle (In Store / Pantry Check) -->
+            <div class="inline-flex border border-gray-400">
+                <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        class="px-2.5 py-1 text-xs font-medium {% if mode == 'shopping' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
+                        title="In-Store Shopping: Fast supermarket experience with prominent Got button">
+                    🛒 In Store
+                </button>
+                <button hx-get="{% url 'shopping:list' %}?mode=pantry&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if mode == 'pantry' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}"
+                        title="Pantry Check: Verify at home what you have before heading out">
+                    🏠 Pantry Check
+                </button>
+            </div>
+
             <!-- Sort Toggle (By Category / By Aisle) -->
             <div class="inline-flex border border-gray-400">
-                <button hx-get="{% url 'shopping:list' %}?group_by=category" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                <button hx-get="{% url 'shopping:list' %}?group_by=category&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
                         class="px-2.5 py-1 text-xs font-medium {% if group_by == 'category' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
                     By Category
                 </button>
-                <button hx-get="{% url 'shopping:list' %}?group_by=aisle" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                <button hx-get="{% url 'shopping:list' %}?group_by=aisle&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
                         class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if group_by == 'aisle' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
                     By Aisle
                 </button>
             </div>
 
             {% if got_items %}
-            <form hx-post="{% url 'shopping:clear_completed' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+            <form hx-post="{% url 'shopping:clear_completed' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
                 {% csrf_token %}
                 <button type="submit" onclick="return confirm('Clear cart items?')" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 px-2 py-1 text-xs">
                     Clear Cart
@@ -57,7 +71,7 @@
 
     <!-- Add Item Bar (High Density, Simple Border) -->
     <div class="bg-gray-50 border border-gray-300 p-2">
-        <form hx-post="{% url 'shopping:add_item' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
+        <form hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
             <input type="text" name="name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
                    class="flex-1 min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none">
@@ -81,6 +95,20 @@
         <div class="px-3 py-2 bg-gray-100 border-b border-gray-300 flex justify-between items-center text-xs">
             <span class="font-bold text-gray-900 uppercase tracking-wider text-xs">To Buy</span>
         </div>
+
+        {% if mode == 'pantry' %}
+        <!-- Helper banner for Pantry Check Mode -->
+        <div class="px-3 py-2 bg-amber-50 border-b border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900">
+            <div class="flex items-center space-x-1.5">
+                <span class="text-base select-none leading-none">🏠</span>
+                <span><strong>Pantry Check Mode:</strong> Review what you already have at home before heading out. Click <strong>Have</strong> to remove needed items or <strong>Skip</strong> if not buying today.</span>
+            </div>
+            <button hx-get="{% url 'shopping:list' %}?mode=shopping&group_by={{ group_by }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                    class="text-xs text-amber-800 hover:text-black font-semibold underline whitespace-nowrap">
+                Ready to shop &rarr;
+            </button>
+        </div>
+        {% endif %}
 
         {% if grouped_need %}
             <!-- Section Groups Container (Drag & Drop to rearrange sections or aisles) -->
@@ -121,24 +149,33 @@
 
                             <!-- Right: Actions -->
                             <div class="flex items-center space-x-1 flex-shrink-0">
-                                <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                {% if mode == 'pantry' %}
+                                <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold">
+                                        🏠 Have
+                                    </button>
+                                </form>
+                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
+                                        Skip
+                                    </button>
+                                </form>
+                                <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     <button type="submit" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
                                         🛒 Got
                                     </button>
                                 </form>
-                                <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                {% else %}
+                                <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Already have at home" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                                        🏠 Have
+                                    <button type="submit" title="Got it (Put in Cart)" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 text-xs font-semibold">
+                                        🛒 Got
                                     </button>
                                 </form>
-                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
-                                    {% csrf_token %}
-                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
-                                        Skip
-                                    </button>
-                                </form>
+                                {% endif %}
                                 <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
                                     ✏️
                                 </button>
@@ -196,19 +233,19 @@
 
                 <!-- Right: Actions -->
                 <div class="flex items-center space-x-1 flex-shrink-0">
-                    <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Put back to To Buy" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
                             📋 Need
                         </button>
                     </form>
-                    <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Already have at home" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-700">
                             🏠 Have
                         </button>
                     </form>
-                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Don't need this trip" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
                             Skip
@@ -226,7 +263,7 @@
 
     <!-- SECTION 3: ALREADY HAVE / SKIPPED -->
     {% if pantry_items %}
-    <details open class="border border-amber-300 mt-5 text-xs" style="background-color: #faf6f0;">
+    <details {% if mode == 'pantry' %}open{% endif %} class="border border-amber-300 mt-5 text-xs" style="background-color: #faf6f0;">
         <!-- Section Header / Summary -->
         <summary class="px-3 py-2 border-b border-amber-300 cursor-pointer select-none flex justify-between items-center text-xs" style="background-color: #f1e7d8;">
             <div class="flex items-center space-x-2">
@@ -263,27 +300,27 @@
 
                 <!-- Right: Actions -->
                 <div class="flex items-center space-x-1 flex-shrink-0">
-                    <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Move back to To Buy" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
                             📋 Need
                         </button>
                     </form>
-                    <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Got it (Put in Cart)" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
                             🛒 Got
                         </button>
                     </form>
                     {% if item.status == 'HAVE' %}
-                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Don't need this trip" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-1.5 py-0.5 text-xs text-gray-500 hover:text-gray-800">
                             Skip
                         </button>
                     </form>
                     {% else %}
-                    <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
                         <button type="submit" title="Already have at home" class="border border-amber-300 hover:border-amber-500 bg-white hover:bg-amber-50 px-2 py-0.5 text-xs text-gray-700">
                             🏠 Have

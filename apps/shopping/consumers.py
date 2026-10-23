@@ -25,17 +25,15 @@ class ShoppingListConsumer(AsyncJsonWebsocketConsumer):
         kwargs = url_route.get("kwargs", {}) if url_route else {}
         self.list_id = kwargs.get("list_id")
 
-        # Always join shopping_list_main so all connected tabs receive real-time updates and toasts
-        await self.channel_layer.group_add("shopping_list_main", self.channel_name)
-        if self.list_id:
-            await self.channel_layer.group_add(f"shopping_list_{self.list_id}", self.channel_name)
+        self.group_name = (
+            f"shopping_list_{self.list_id}" if self.list_id else "shopping_list_main"
+        )
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code: int) -> None:
         """Leave the shopping list group upon client disconnection."""
-        await self.channel_layer.group_discard("shopping_list_main", self.channel_name)
-        if self.list_id:
-            await self.channel_layer.group_discard(f"shopping_list_{self.list_id}", self.channel_name)
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def shopping_update(self, event: dict[str, Any]) -> None:
         """

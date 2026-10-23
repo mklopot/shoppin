@@ -297,10 +297,13 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
 
     if new_status in ItemStatus.values:
         item.status = new_status
+        if new_status == ItemStatus.NEED:
+            item.locked = True
         _set_item_audit(item, request)
         item.save(
             update_fields=[
                 "status",
+                "locked",
                 "status_changed_at",
                 "status_changed_by",
                 "status_changed_by_name",

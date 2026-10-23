@@ -127,6 +127,7 @@ def test_item_status_transitions(client, active_list):
     client.post(reverse("shopping:set_status", args=[item.id, "NEED"]))
     item.refresh_from_db()
     assert item.status == ItemStatus.NEED
+    assert item.locked is True
 
 
 @pytest.mark.django_db
@@ -715,3 +716,80 @@ def test_pantry_check_navigation_tab(client, active_list):
     # Helper banner is shown
     assert "Pantry Check Mode:" in pantry_html
     assert "Ready to shop &rarr;" in pantry_html
+
+
+@pytest.mark.django_db
+def test_need_button_from_got_or_pantry_confirms_item_status(client, active_list):
+    """
+    Pressing 'need' on an item from the 'got' or 'already have/skipped' section
+    must mark the item as confirmed (locked=True), so it never appears with 'not confirmed' status.
+    """
+    # Ensure all existing items are confirmed
+    active_list.items.all().update(locked=True)
+
+    # 1. Unconfirmed item in GOT (In Cart)
+    item_got = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Cart Item",
+        amount=Decimal("1.00"),
+        category="dairy",
+        status=ItemStatus.GOT,
+        locked=False,
+        order=10,
+    )
+    res_need = client.post(
+        reverse("shopping:set_status", args=[item_got.id, "NEED"]) + "?mode=shopping"
+    )
+    assert res_need.status_code == 200
+    item_got.refresh_from_db()
+    assert item_got.status == ItemStatus.NEED
+    assert item_got.locked is True
+
+    # Ensure HTML response doesn't show "not confirmed" badge or count for Cart Item
+    content = res_need.content.decode("utf-8")
+    assert ">not confirmed<" not in content
+    assert "not confirmed</span>" not in content
+
+    # 2. Unconfirmed item in HAVE (Already Have / Pantry)
+    item_have = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Pantry Item",
+        amount=Decimal("1.00"),
+        category="bakery",
+        status=ItemStatus.HAVE,
+        locked=False,
+        order=11,
+    )
+    res_have_need = client.post(
+        reverse("shopping:set_status", args=[item_have.id, "NEED"]) + "?mode=shopping"
+    )
+    assert res_have_need.status_code == 200
+    item_have.refresh_from_db()
+    assert item_have.status == ItemStatus.NEED
+    assert item_have.locked is True
+
+    content_have = res_have_need.content.decode("utf-8")
+    assert ">not confirmed<" not in content_have
+    assert "not confirmed</span>" not in content_have
+
+    # 3. Unconfirmed item in DONT_NEED (Skipped)
+    item_skip = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Skipped Item",
+        amount=Decimal("1.00"),
+        category="snacks",
+        status=ItemStatus.DONT_NEED,
+        locked=False,
+        order=12,
+    )
+    res_skip_need = client.post(
+        reverse("shopping:set_status", args=[item_skip.id, "NEED"]) + "?mode=shopping"
+    )
+    assert res_skip_need.status_code == 200
+    item_skip.refresh_from_db()
+    assert item_skip.status == ItemStatus.NEED
+    assert item_skip.locked is True
+
+    content_skip = res_skip_need.content.decode("utf-8")
+    assert ">not confirmed<" not in content_skip
+    assert "not confirmed</span>" not in content_skip

@@ -14,6 +14,9 @@ urlpatterns = [
     path("meal/<int:meal_id>/delete/", views.delete_meal, name="delete_meal"),
     path("meal/<int:meal_id>/add-dish/", views.add_dish, name="add_dish"),
     path("meal/<int:meal_id>/dish/<int:recipe_id>/delete/", views.delete_dish, name="delete_dish"),
+    path("meal/<int:meal_id>/dish/<int:recipe_id>/made/", views.mark_dish_made, name="mark_dish_made"),
+    path("meal/<int:meal_id>/made/", views.mark_meal_made, name="mark_meal_made"),
+    path("ratings/submit-made/", views.submit_made_ratings, name="submit_made_ratings"),
     path("clear/", views.clear_meal_plan, name="clear"),
     path("recipe/<int:recipe_id>/modal/", views.recipe_modal, name="recipe_modal"),
 ]

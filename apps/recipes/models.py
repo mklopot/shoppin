@@ -66,6 +66,10 @@ class Recipe(models.Model):
     portions = models.PositiveIntegerField(default=4, help_text="Number of portions/servings")
     prep_time_minutes = models.PositiveIntegerField(default=0, help_text="Prep time in minutes")
     cook_time_minutes = models.PositiveIntegerField(default=0, help_text="Cook time in minutes")
+    times_made = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of times this recipe has been prepared/cooked",
+    )
     special_equipment = models.JSONField(
         default=list,
         blank=True,

@@ -19,7 +19,8 @@ from apps.mealplans.services.mealplan_service import (
     get_active_meal_plan,
     remove_recipe_from_meal,
 )
-from apps.recipes.models import Recipe
+from apps.recipes.models import Recipe, RecipeRating
+from apps.recipes.services.recipe_service import record_recipe_made, submit_recipe_rating
 from apps.shopping.views import get_active_list
 
 
@@ -164,6 +165,166 @@ def delete_dish(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRespo
 
     toast_messages = [f"🗑 Removed '{recipe.name}' from {meal.name} (ingredients updated on shopping list)"]
     return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpResponse:
+    """
+    Mark an individual recipe dish in a meal as made.
+    Increments recipe times_made counter, logs cooking event, removes dish
+    from the meal plan (updating shopping list ingredients), and prompts for recipe rating.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    shopping_list = get_active_list(request)
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    user = getattr(request, "user", None)
+
+    # 1. Record recipe made & increment counter
+    record_recipe_made(recipe, user=user)
+
+    # 2. Remove dish from meal and synchronize shopping list
+    remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    # 3. Toast message
+    toast_messages = [
+        f"🍳 Marked '{recipe.name}' as made! (Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''})"
+    ]
+
+    # 4. Context for meal plan content re-render
+    status_info = compute_cooking_status(meal_plan, shopping_list)
+    available_recipes = Recipe.objects.all().order_by("name")
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    meals = meal_plan.meals.prefetch_related("recipes").all()
+
+    # Check for existing user rating
+    existing_rating = None
+    if user and user.is_authenticated:
+        existing_rating = RecipeRating.objects.filter(recipe=recipe, user=user).first()
+
+    context = {
+        "recipes": [recipe],
+        "recipe": recipe,
+        "existing_ratings": {recipe.id: existing_rating} if existing_rating else {},
+        "meal_name": meal.name,
+        "is_entire_meal": False,
+        "workspace": workspace,
+        "shopping_list": shopping_list,
+        "meal_plan": meal_plan,
+        "meals": meals,
+        "recipes_ready": status_info["recipes_ready"],
+        "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "meals_ready": status_info["meals_ready"],
+        "meals_missing_optional": status_info["meals_missing_optional"],
+        "available_recipes": available_recipes,
+        "can_write": can_write,
+        "toast_messages": toast_messages,
+    }
+    return render(request, "mealplans/partials/recipe_rating_modal.html", context)
+
+
+@require_POST
+def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Mark an entire meal as made.
+    Increments recipe times_made counter for each dish in the meal, logs cooking events,
+    removes the meal and all dishes from the meal plan, and prompts for recipe ratings.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    user = getattr(request, "user", None)
+    meal_name = meal.name
+
+    recipes = list(meal.recipes.all())
+    toast_messages = []
+
+    # 1. Record made & remove ingredients for all recipes in the meal
+    for recipe in recipes:
+        record_recipe_made(recipe, user=user)
+        remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    # 2. Delete the meal itself
+    meal.delete()
+
+    toast_messages.append(f"🍽 Marked entire meal '{meal_name}' as made and removed from plan.")
+
+    # 3. Context for meal plan content re-render
+    status_info = compute_cooking_status(meal_plan, shopping_list)
+    available_recipes = Recipe.objects.all().order_by("name")
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    meals = meal_plan.meals.prefetch_related("recipes").all()
+
+    # Check for existing user ratings
+    existing_ratings = {}
+    if user and user.is_authenticated:
+        for r in recipes:
+            rating = RecipeRating.objects.filter(recipe=r, user=user).first()
+            if rating:
+                existing_ratings[r.id] = rating
+
+    context = {
+        "recipes": recipes,
+        "existing_ratings": existing_ratings,
+        "meal_name": meal_name,
+        "is_entire_meal": True,
+        "workspace": workspace,
+        "shopping_list": shopping_list,
+        "meal_plan": meal_plan,
+        "meals": meals,
+        "recipes_ready": status_info["recipes_ready"],
+        "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "meals_ready": status_info["meals_ready"],
+        "meals_missing_optional": status_info["meals_missing_optional"],
+        "available_recipes": available_recipes,
+        "can_write": can_write,
+        "toast_messages": toast_messages,
+    }
+    return render(request, "mealplans/partials/recipe_rating_modal.html", context)
+
+
+@require_POST
+def submit_made_ratings(request: HttpRequest) -> HttpResponse:
+    """
+    Handle submission of recipe ratings prompted after marking dishes as made.
+    """
+    user = getattr(request, "user", None)
+    recipe_ids = request.POST.getlist("recipe_id")
+    toast_messages = []
+
+    if user and user.is_authenticated:
+        for rid in recipe_ids:
+            try:
+                recipe = Recipe.objects.get(id=int(rid))
+            except (ValueError, Recipe.DoesNotExist):
+                continue
+
+            stars_val = request.POST.get(f"stars_{rid}", "5")
+            thumbs_val = request.POST.get(f"thumbs_up_{rid}") in ("true", "1", "on", True)
+            try:
+                stars = int(stars_val)
+            except ValueError:
+                stars = 5
+
+            submit_recipe_rating(recipe, user, stars, thumbs_val)
+            toast_messages.append(f"⭐ Saved {stars}★ rating for '{recipe.name}'")
+    else:
+        toast_messages.append("⭐ Rating noted! Log in to save ratings to your profile.")
+
+    context = {
+        "toast_messages": toast_messages,
+    }
+    return render(request, "mealplans/partials/rating_dismissed.html", context)
 
 
 @require_POST

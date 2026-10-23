@@ -355,3 +355,173 @@ def test_dish_purpose_formatting_and_no_duplicate_for(client, mealplan_setup):
     content = resp.content.decode("utf-8")
     assert "For Fiesta Tacos, Enchilada Bake" in content
     assert "For For" not in content
+
+
+def test_mark_dish_made_and_rating_prompt(client, mealplan_setup):
+    """
+    Test marking an individual dish as made:
+    - Removes dish from meal plan and synchronizes shopping list
+    - Increments recipe times_made counter
+    - Creates RecipeMadeLog entry
+    - Prompts for rating, allowing submission or skipping
+    """
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Taco Night")
+    add_recipe_to_meal(meal, recipe, shopping_list)
+
+    assert recipe.times_made == 0
+    assert meal.recipes.filter(id=recipe.id).exists()
+    assert shopping_list.items.filter(name="Ground Beef").exists()
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # Mark dish as made
+    url = reverse("mealplans:mark_dish_made", args=[meal.id, recipe.id])
+    resp = client.post(url, HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+
+    # Verify dish removed from meal
+    assert not meal.recipes.filter(id=recipe.id).exists()
+    # Verify shopping list ingredients deducted/removed
+    assert not shopping_list.items.filter(name="Ground Beef").exists()
+
+    # Verify times_made incremented
+    recipe.refresh_from_db()
+    assert recipe.times_made == 1
+
+    # Verify rating modal rendered with Skip and Save options
+    assert "Dish Made: Fiesta Tacos" in html
+    assert "Skip Rating" in html
+    assert "Save Rating" in html
+    assert 'name="stars_' in html
+
+    # Submit rating from the prompt
+    rate_url = reverse("mealplans:submit_made_ratings")
+    resp_rate = client.post(
+        rate_url,
+        {
+            "recipe_id": [recipe.id],
+            f"stars_{recipe.id}": "5",
+            f"thumbs_up_{recipe.id}": "true",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    assert resp_rate.status_code == 200
+    assert recipe.ratings.filter(user=owner, stars=5, thumbs_up=True).exists()
+
+
+def test_mark_entire_meal_made_and_skip_rating(client, mealplan_setup):
+    """
+    Test marking an entire meal as made:
+    - Increments times_made for all recipes in the meal
+    - Removes all dishes and deletes the meal
+    - Prompts for rating, and verify user can skip rating
+    """
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    recipe1 = mealplan_setup["recipe"]
+
+    recipe2 = Recipe.objects.create(
+        name="Mexican Rice",
+        cuisine="Mexican",
+        directions="Cook rice with tomatoes.",
+    )
+    Ingredient.objects.create(
+        recipe=recipe2,
+        name="Rice",
+        amount=Decimal("1.00"),
+        amount_unit="cup",
+    )
+
+    meal = add_meal_to_plan(meal_plan, "Sunday Supper")
+    add_recipe_to_meal(meal, recipe1, shopping_list)
+    add_recipe_to_meal(meal, recipe2, shopping_list)
+
+    assert recipe1.times_made == 0
+    assert recipe2.times_made == 0
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # Mark entire meal as made
+    url = reverse("mealplans:mark_meal_made", args=[meal.id])
+    resp = client.post(url, HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+
+    # Verify meal deleted from plan
+    assert not Meal.objects.filter(id=meal.id).exists()
+
+    # Verify both recipe counters incremented
+    recipe1.refresh_from_db()
+    recipe2.refresh_from_db()
+    assert recipe1.times_made == 1
+    assert recipe2.times_made == 1
+
+    # Verify rating modal prompts for both recipes and allows Skip
+    assert "Meal Made: Sunday Supper" in html
+    assert "Fiesta Tacos" in html
+    assert "Mexican Rice" in html
+    assert "Skip Rating" in html
+    assert "Save Ratings" in html
+
+    # Skipping rating: user closes modal without submitting, verify no ratings created
+    assert not recipe1.ratings.filter(user=owner).exists()
+    assert not recipe2.ratings.filter(user=owner).exists()
+
+
+def test_times_made_counter_visibility_in_recipe_views(client, mealplan_setup):
+    """
+    Verify times_made counter is visible when viewing recipes in detail,
+    modals, and card lists.
+    """
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    recipe = mealplan_setup["recipe"]
+    recipe.times_made = 4
+    recipe.save()
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # 1. Full recipe detail view
+    resp_detail = client.get(reverse("recipes:detail", args=[recipe.id]))
+    assert resp_detail.status_code == 200
+    detail_html = resp_detail.content.decode("utf-8")
+    assert "Times Made" in detail_html
+    assert "4 times" in detail_html
+
+    # 2. Recipe quick-view modal in recipes tab
+    resp_modal = client.get(reverse("recipes:detail", args=[recipe.id]) + "?modal=1", HTTP_HX_REQUEST="true")
+    assert resp_modal.status_code == 200
+    modal_html = resp_modal.content.decode("utf-8")
+    assert "Times Made" in modal_html
+    assert "4" in modal_html
+
+    # 3. Recipe modal in mealplans tab
+    resp_mp_modal = client.get(reverse("mealplans:recipe_modal", args=[recipe.id]))
+    assert resp_mp_modal.status_code == 200
+    mp_modal_html = resp_mp_modal.content.decode("utf-8")
+    assert "Made: 4x" in mp_modal_html
+
+    # 4. Recipe card in list view
+    resp_list = client.get(reverse("recipes:list"))
+    assert resp_list.status_code == 200
+    list_html = resp_list.content.decode("utf-8")
+    assert "4x" in list_html
+

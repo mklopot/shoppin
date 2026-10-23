@@ -4,7 +4,7 @@ Service layer for recipe search, multi-faceted filtering, creation, and synchron
 
 from typing import Any
 
-from django.db.models import Avg, Q, QuerySet
+from django.db.models import Avg, F, Q, QuerySet
 from django.http import HttpRequest
 
 from apps.core.categorizer import categorizer
@@ -15,7 +15,7 @@ from apps.core.utils import (
     parse_amount_and_unit,
     singularize,
 )
-from apps.recipes.models import Ingredient, Recipe, RecipeRating
+from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle
@@ -393,6 +393,30 @@ def submit_recipe_rating(recipe: Recipe, user: Any, stars: int, thumbs_up: bool)
         },
     )
     return rating
+
+
+def record_recipe_made(
+    recipe: Recipe,
+    user: Any = None,
+    notes: str = "",
+) -> RecipeMadeLog | None:
+    """
+    Increment times_made counter on a recipe and record a RecipeMadeLog entry.
+
+    Args:
+        recipe: Target Recipe.
+        user: Optional User who prepared the dish.
+        notes: Optional preparation notes or remarks.
+
+    Returns:
+        The created RecipeMadeLog instance if user is authenticated, else None.
+    """
+    Recipe.objects.filter(id=recipe.id).update(times_made=F("times_made") + 1)
+    recipe.refresh_from_db(fields=["times_made"])
+
+    if user and getattr(user, "is_authenticated", False):
+        return RecipeMadeLog.objects.create(recipe=recipe, user=user, notes=notes)
+    return None
 
 
 def add_recipe_to_shopping_list(

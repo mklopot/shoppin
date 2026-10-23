@@ -17,6 +17,7 @@
                     {% if recipe.portions %}
                     <span>Portions: {{ recipe.portions }}</span>
                     {% endif %}
+                    <span class="text-emerald-800 font-semibold">🍳 Made: {{ recipe.times_made }}x</span>
                 </div>
             </div>
             <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" class="text-gray-400 hover:text-gray-800 text-2xl font-bold leading-none">&times;</button>

@@ -119,6 +119,12 @@
                 <span>👍</span>
                 <span>{{ recipe.thumbs_up_count }}</span>
             </span>
+            {% if recipe.times_made > 0 %}
+            <span class="text-emerald-800 font-semibold flex items-center space-x-0.5" title="Times prepared">
+                <span>🍳</span>
+                <span>{{ recipe.times_made }}x</span>
+            </span>
+            {% endif %}
         </div>
 
         <!-- Action Buttons -->

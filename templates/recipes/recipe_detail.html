@@ -44,6 +44,9 @@
                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if recipe.difficulty_level == 'easy' %}bg-emerald-100 text-emerald-900 border border-emerald-300{% elif recipe.difficulty_level == 'hard' %}bg-red-100 text-red-900 border border-red-300{% else %}bg-amber-100 text-amber-900 border border-amber-300{% endif %}">
                     {{ recipe.difficulty_level|title }} Difficulty
                 </span>
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-900 border border-emerald-300">
+                    🍳 Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}
+                </span>
             </div>
 
             <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
@@ -65,7 +68,7 @@
         {% endif %}
 
         <!-- Quick Specifications Strip -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-y border-gray-200 py-3 bg-gray-50/50">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs border-y border-gray-200 py-3 bg-gray-50/50">
             <div>
                 <span class="text-gray-500 block text-[11px] font-bold uppercase tracking-wider">Portions</span>
                 <span class="font-semibold text-gray-900 text-sm">🍽 {{ recipe.portions }} servings</span>
@@ -81,6 +84,10 @@
             <div>
                 <span class="text-gray-500 block text-[11px] font-bold uppercase tracking-wider">Total Time</span>
                 <span class="font-semibold text-gray-900 text-sm">⌛ {{ recipe.total_time_minutes }} mins</span>
+            </div>
+            <div>
+                <span class="text-gray-500 block text-[11px] font-bold uppercase tracking-wider">Times Made</span>
+                <span class="font-semibold text-emerald-900 text-sm">🍳 {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span>
             </div>
         </div>
 

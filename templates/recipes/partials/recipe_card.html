@@ -1,0 +1,149 @@
+<div class="bg-white border border-gray-300 hover:border-gray-500 shadow-sm transition-all duration-150 flex flex-col justify-between overflow-hidden group">
+    <!-- Card Top / Image -->
+    <div>
+        {% if recipe.primary_photo_url %}
+        <div class="relative h-44 bg-gray-100 overflow-hidden border-b border-gray-200">
+            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy">
+            <div class="absolute top-2 left-2 flex flex-wrap gap-1">
+                {% if recipe.cuisine %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-white/90 text-gray-900 border border-gray-300 shadow-sm">{{ recipe.cuisine }}</span>
+                {% endif %}
+                {% if recipe.dish_type %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-white/90 text-gray-900 border border-gray-300 shadow-sm">{{ recipe.dish_type }}</span>
+                {% endif %}
+            </div>
+            <div class="absolute top-2 right-2">
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if recipe.difficulty_level == 'easy' %}bg-emerald-100 text-emerald-900 border border-emerald-300{% elif recipe.difficulty_level == 'hard' %}bg-red-100 text-red-900 border border-red-300{% else %}bg-amber-100 text-amber-900 border border-amber-300{% endif %}">
+                    {{ recipe.difficulty_level|title }}
+                </span>
+            </div>
+        </div>
+        {% else %}
+        <div class="relative h-28 bg-gradient-to-br from-gray-50 to-gray-100 border-b border-gray-200 p-3 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <div class="flex flex-wrap gap-1">
+                    {% if recipe.cuisine %}
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-white text-gray-800 border border-gray-300">{{ recipe.cuisine }}</span>
+                    {% endif %}
+                    {% if recipe.dish_type %}
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-white text-gray-800 border border-gray-300">{{ recipe.dish_type }}</span>
+                    {% endif %}
+                </div>
+                <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider {% if recipe.difficulty_level == 'easy' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% elif recipe.difficulty_level == 'hard' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">
+                    {{ recipe.difficulty_level|title }}
+                </span>
+            </div>
+            <div class="flex items-center space-x-1.5 text-xs text-gray-500">
+                {% if recipe.prep_time_minutes > 0 %}
+                <span>⏱ Prep: {{ recipe.prep_time_minutes }}m</span>
+                {% endif %}
+                {% if recipe.portions > 0 %}
+                <span>&bull; 🍽 {{ recipe.portions }} portions</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Body Details -->
+        <div class="p-3.5 space-y-2">
+            <!-- Title -->
+            <h2 class="text-base font-bold text-gray-900 tracking-tight leading-snug group-hover:text-blue-900">
+                <a href="{% url 'recipes:detail' recipe.id %}">
+                    {{ recipe.name }}
+                </a>
+            </h2>
+
+            <!-- Description (Truncated) -->
+            {% if recipe.description %}
+            <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                {{ recipe.description }}
+            </p>
+            {% endif %}
+
+            <!-- Metadata Badges -->
+            <div class="flex flex-wrap gap-1 pt-1 text-[11px]">
+                {% if recipe.dietary_restrictions %}
+                    {% for tag in recipe.dietary_restrictions %}
+                    <span class="px-1.5 py-0.2 bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+                        {{ tag }}
+                    </span>
+                    {% endfor %}
+                {% endif %}
+
+                {% if recipe.meal_type %}
+                    {% for m in recipe.meal_type %}
+                    <span class="px-1.5 py-0.2 bg-blue-50 border border-blue-200 text-blue-800 font-medium">
+                        {{ m }}
+                    </span>
+                    {% endfor %}
+                {% endif %}
+
+                {% if recipe.special_equipment %}
+                    {% for eq in recipe.special_equipment %}
+                    <span class="px-1.5 py-0.2 bg-gray-100 border border-gray-300 text-gray-700 font-medium" title="Special Equipment Needed">
+                        ⚙️ {{ eq }}
+                    </span>
+                    {% endfor %}
+                {% endif %}
+
+                {% if recipe.occasions %}
+                    {% for occ in recipe.occasions %}
+                    <span class="px-1.5 py-0.2 bg-purple-50 border border-purple-200 text-purple-800 font-medium">
+                        🎉 {{ occ }}
+                    </span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Ingredients Count Preview -->
+            <div class="text-[11px] text-gray-500 pt-0.5">
+                <span>{{ recipe.ingredients.count }} ingredient{{ recipe.ingredients.count|pluralize }}</span>
+                {% if recipe.cook_time_minutes > 0 %}
+                <span class="ml-2">🔥 Cook: {{ recipe.cook_time_minutes }}m</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Bottom / Endorsements & Actions -->
+    <div class="px-3.5 py-2.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs">
+        <!-- Endorsements -->
+        <div class="flex items-center space-x-2">
+            {% if recipe.average_rating %}
+            <span class="text-amber-500 font-bold flex items-center space-x-0.5">
+                <span>★</span>
+                <span class="text-gray-800 font-semibold text-xs">{{ recipe.average_rating }}</span>
+            </span>
+            {% endif %}
+            <span class="text-gray-600 font-medium flex items-center space-x-0.5" title="Thumbs up endorsements">
+                <span>👍</span>
+                <span>{{ recipe.thumbs_up_count }}</span>
+            </span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-1.5">
+            {% if can_write %}
+            <!-- Add to Shopping List button -->
+            <form hx-post="{% url 'recipes:add_to_shopping' recipe.id %}" hx-swap="none" class="inline">
+                {% csrf_token %}
+                <button type="submit" title="Add all ingredients to Shopping List" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-medium text-xs">
+                    🛒 Add
+                </button>
+            </form>
+
+            <!-- Add to Meal Plan button -->
+            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline">
+                {% csrf_token %}
+                <button type="submit" title="Add to Meal Plan" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-medium text-xs">
+                    🥘 Plan
+                </button>
+            </form>
+            {% endif %}
+
+            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs">
+                View &rarr;
+            </a>
+        </div>
+    </div>
+</div>

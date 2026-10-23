@@ -1,0 +1,103 @@
+<div id="recipe-results-container" class="space-y-4">
+    <!-- Results Header / Active Filters Summary -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-gray-200 text-xs">
+        <div class="flex items-center space-x-2">
+            <span class="font-bold text-gray-800">
+                Found {{ recipe_count }} recipe{{ recipe_count|pluralize }}
+            </span>
+            {% if active_filter_count > 0 %}
+            <span class="text-gray-500">({{ active_filter_count }} filter{{ active_filter_count|pluralize }} active)</span>
+            <a href="{% url 'recipes:list' %}"
+               hx-get="{% url 'recipes:list' %}"
+               hx-target="#recipe-results-container"
+               hx-swap="outerHTML"
+               class="text-blue-700 hover:underline font-semibold ml-1">
+                Clear all filters
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="text-gray-500 text-[11px]">
+            Sorted by: <strong class="text-gray-800">{{ params.sort|default:"Name (A-Z)"|title }}</strong>
+        </div>
+    </div>
+
+    <!-- Active Filter Tags Row -->
+    {% if active_filter_count > 0 %}
+    <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Active:</span>
+        {% if params.q %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-800">
+            <span>Query: "{{ params.q }}"</span>
+        </span>
+        {% endif %}
+        {% if params.cuisine and params.cuisine != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-blue-50 border border-blue-200 text-blue-900 font-medium">
+            <span>Cuisine: {{ params.cuisine }}</span>
+        </span>
+        {% endif %}
+        {% if params.dish_type and params.dish_type != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-900 font-medium">
+            <span>Dish: {{ params.dish_type }}</span>
+        </span>
+        {% endif %}
+        {% if params.dietary and params.dietary != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-900 font-medium">
+            <span>Diet: {{ params.dietary }}</span>
+        </span>
+        {% endif %}
+        {% if params.meal_type and params.meal_type != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-900 font-medium">
+            <span>Meal: {{ params.meal_type }}</span>
+        </span>
+        {% endif %}
+        {% if params.occasion and params.occasion != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-900 font-medium">
+            <span>Occasion: {{ params.occasion }}</span>
+        </span>
+        {% endif %}
+        {% if params.difficulty and params.difficulty != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-800 font-medium">
+            <span>Difficulty: {{ params.difficulty|title }}</span>
+        </span>
+        {% endif %}
+        {% if params.equipment and params.equipment != 'all' %}
+        <span class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 border border-gray-300 text-gray-800 font-medium">
+            <span>Equipment: {{ params.equipment }}</span>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Grid of Recipe Cards -->
+    {% if recipes %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for recipe in recipes %}
+        {% include "recipes/partials/recipe_card.html" with recipe=recipe can_write=can_write %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="py-12 px-4 text-center border-2 border-dashed border-gray-300 bg-gray-50/70 space-y-3">
+        <span class="text-3xl block">🔍</span>
+        <h3 class="text-base font-bold text-gray-800">No matching recipes found</h3>
+        <p class="text-xs text-gray-500 max-w-sm mx-auto">
+            Try adjusting your search keywords or clearing some of the filters to broaden your search results.
+        </p>
+        <div>
+            <a href="{% url 'recipes:list' %}"
+               hx-get="{% url 'recipes:list' %}"
+               hx-target="#recipe-results-container"
+               hx-swap="outerHTML"
+               class="inline-block border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-3 py-1.5 text-xs">
+                Reset Filters
+            </a>
+            {% if can_write %}
+            <a href="{% url 'recipes:create' %}" class="inline-block ml-2 bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 text-xs">
+                ➕ Create New Recipe
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

@@ -1,0 +1,77 @@
+<div class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4"
+     onclick="if (event.target === this) document.getElementById('modal-placeholder').innerHTML = '';">
+    <div class="bg-white border border-gray-400 max-w-2xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+        <!-- Close Button -->
+        <button type="button"
+                onclick="document.getElementById('modal-placeholder').innerHTML = '';"
+                class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 font-bold text-xl leading-none">
+            &times;
+        </button>
+
+        <!-- Header -->
+        <div class="space-y-1 pr-8">
+            <div class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider">
+                {% if recipe.cuisine %}
+                <span class="px-2 py-0.5 bg-blue-100 text-blue-900 border border-blue-200">{{ recipe.cuisine }}</span>
+                {% endif %}
+                {% if recipe.dish_type %}
+                <span class="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-200">{{ recipe.dish_type }}</span>
+                {% endif %}
+                <span class="px-2 py-0.5 bg-gray-100 text-gray-800 border border-gray-200">{{ recipe.difficulty_level|title }}</span>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900">{{ recipe.name }}</h2>
+            {% if recipe.description %}
+            <p class="text-xs text-gray-600">{{ recipe.description }}</p>
+            {% endif %}
+        </div>
+
+        {% if recipe.primary_photo_url %}
+        <div class="w-full h-48 bg-gray-100 overflow-hidden border border-gray-300">
+            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover">
+        </div>
+        {% endif %}
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-3 gap-2 text-xs border-y border-gray-200 py-2 bg-gray-50 text-center">
+            <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Servings</span><span class="font-semibold">{{ recipe.portions }}</span></div>
+            <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Prep Time</span><span class="font-semibold">{{ recipe.prep_time_minutes }}m</span></div>
+            <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Cook Time</span><span class="font-semibold">{{ recipe.cook_time_minutes }}m</span></div>
+        </div>
+
+        <!-- Ingredients Preview -->
+        <div class="space-y-2 text-xs">
+            <h3 class="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Ingredients</h3>
+            <ul class="divide-y divide-gray-100 max-h-40 overflow-y-auto pr-2">
+                {% for ing in recipe.ingredients.all %}
+                <li class="py-1 flex justify-between text-gray-800">
+                    <span>{{ ing.name }}{% if ing.optional %} <em class="text-gray-400 text-[10px]">[opt]</em>{% endif %}</span>
+                    <span class="font-semibold text-gray-600">{{ ing.amount|floatformat:"-2" }}{% if ing.amount_unit %} {{ ing.amount_unit }}{% endif %}</span>
+                </li>
+                {% empty %}
+                <li class="py-1 text-gray-400 italic">No ingredients listed.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between pt-3 border-t border-gray-200 text-xs">
+            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm">
+                View Full Recipe & Directions &rarr;
+            </a>
+
+            <div class="flex items-center space-x-2">
+                <form hx-post="{% url 'recipes:add_to_shopping' recipe.id %}" hx-swap="none" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-bold px-3 py-1.5 shadow-sm">
+                        🛒 Add to List
+                    </button>
+                </form>
+                <button type="button"
+                        onclick="document.getElementById('modal-placeholder').innerHTML = '';"
+                        class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-3 py-1.5">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

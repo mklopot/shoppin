@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Recipes - Shoppin{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+    <!-- Header: Title & Actions -->
+    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">Recipes</h1>
+            <p class="text-xs text-gray-500">
+                Browse, search, and plan home-cooked meals across cuisines, dish types, and dietary restrictions.
+            </p>
+        </div>
+
+        {% if can_write %}
+        <div>
+            <a href="{% url 'recipes:create' %}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 text-xs flex items-center space-x-1.5 shadow-sm">
+                <span>➕</span>
+                <span>New Recipe</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search & Filter Controls Panel -->
+    <div class="bg-gray-50 border border-gray-300 p-3.5 space-y-3">
+        <form id="recipe-filter-form"
+              hx-get="{% url 'recipes:list' %}"
+              hx-target="#recipe-results-container"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              class="space-y-3">
+
+            <!-- Primary Search Bar & Sort -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Search Input -->
+                <div class="flex-1 min-w-[240px] relative">
+                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400 text-sm">
+                        🔍
+                    </span>
+                    <input type="text"
+                           id="recipe-search-input"
+                           name="q"
+                           value="{{ params.q }}"
+                           placeholder="Search recipe by name, ingredients, or directions (e.g. Tacos, Garlic, Instant Pot)..."
+                           autocomplete="off"
+                           hx-get="{% url 'recipes:list' %}"
+                           hx-target="#recipe-results-container"
+                           hx-swap="outerHTML"
+                           hx-trigger="keyup changed delay:250ms, search"
+                           hx-include="#recipe-filter-form"
+                           class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">
+                </div>
+
+                <!-- Sort Dropdown -->
+                <div class="flex items-center space-x-1">
+                    <label for="recipe-sort" class="text-xs font-semibold text-gray-600">Sort:</label>
+                    <select id="recipe-sort"
+                            name="sort"
+                            onchange="htmx.trigger('#recipe-filter-form', 'submit')"
+                            class="border border-gray-300 bg-white text-xs px-2 py-1.5 text-gray-800 rounded-none focus:outline-none">
+                        <option value="name" {% if params.sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                        <option value="name_desc" {% if params.sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                        <option value="rating" {% if params.sort == 'rating' %}selected{% endif %}>Highest Rated ★</option>
+                        <option value="time" {% if params.sort == 'time' %}selected{% endif %}>Quickest Prep ⏱</option>
+                        <option value="newest" {% if params.sort == 'newest' %}selected{% endif %}>Newest Added</option>
+                    </select>
+                </div>
+
+                <!-- Reset Filter Button -->
+                {% if active_filter_count > 0 %}
+                <a href="{% url 'recipes:list' %}"
+                   class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 text-xs px-2.5 py-1.5 font-medium">
+                    Reset
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Multi-Facet Filter Selects Row -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 pt-1 text-xs">
+                <!-- Cuisine Filter -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Cuisine</label>
+                    <select name="cuisine" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">All Cuisines</option>
+                        {% for c in filter_options.cuisines %}
+                        <option value="{{ c }}" {% if params.cuisine|lower == c|lower %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Dish Type Filter -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Dish Type</label>
+                    <select name="dish_type" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">All Dish Types</option>
+                        {% for d in filter_options.dish_types %}
+                        <option value="{{ d }}" {% if params.dish_type|lower == d|lower %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Meal Type Filter -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Meal Type</label>
+                    <select name="meal_type" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">All Meals</option>
+                        {% for m in filter_options.meal_types %}
+                        <option value="{{ m }}" {% if params.meal_type|lower == m|lower %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Dietary Restrictions / Allergens -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Dietary</label>
+                    <select name="dietary" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">All Diets</option>
+                        {% for diet in filter_options.dietary_options %}
+                        <option value="{{ diet }}" {% if params.dietary|lower == diet|lower %}selected{% endif %}>{{ diet }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Occasion / Season -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Occasion</label>
+                    <select name="occasion" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">All Occasions</option>
+                        {% for occ in filter_options.occasions %}
+                        <option value="{{ occ }}" {% if params.occasion|lower == occ|lower %}selected{% endif %}>{{ occ }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Special Equipment -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Equipment</label>
+                    <select name="equipment" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">Any Equipment</option>
+                        {% for eq in filter_options.equipment_options %}
+                        <option value="{{ eq }}" {% if params.equipment|lower == eq|lower %}selected{% endif %}>{{ eq }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Difficulty -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Difficulty</label>
+                    <select name="difficulty" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                        <option value="all">All Difficulties</option>
+                        <option value="easy" {% if params.difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                        <option value="medium" {% if params.difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="hard" {% if params.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Grid Container -->
+    {% include "recipes/partials/recipe_grid.html" %}
+</div>
+
+<!-- Modal Dialog Container -->
+<div id="modal-placeholder"></div>
+{% endblock %}

@@ -98,7 +98,7 @@
                            class="px-2.5 py-1 {% if 'mealplans' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Meal Plans
                         </a>
-                        <a href="/recipes/"
+                        <a href="{% url 'recipes:list' %}"
                            class="px-2.5 py-1 {% if 'recipes' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Recipes
                         </a>

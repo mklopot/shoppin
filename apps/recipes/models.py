@@ -135,6 +135,36 @@ class Recipe(models.Model):
             return None
         return round(sum(rating.stars for rating in ratings) / len(ratings), 1)
 
+    @property
+    def primary_photo_url(self) -> str:
+        """Return the primary photo URL if available, else empty string."""
+        if self.photo_urls and len(self.photo_urls) > 0:
+            return self.photo_urls[0]
+        return ""
+
+    @property
+    def thumbs_up_count(self) -> int:
+        """Count of thumbs-up endorsements."""
+        return self.ratings.filter(thumbs_up=True).count()
+
+    @property
+    def rating_count(self) -> int:
+        """Count of all ratings submitted."""
+        return self.ratings.count()
+
+    @property
+    def total_time_minutes(self) -> int:
+        """Total time required combining prep and cook times."""
+        return (self.prep_time_minutes or 0) + (self.cook_time_minutes or 0)
+
+    @property
+    def directions_steps(self) -> list[str]:
+        """Split directions text into list of clean steps."""
+        if not self.directions:
+            return []
+        lines = [line.strip() for line in self.directions.splitlines() if line.strip()]
+        return lines
+
 
 class Ingredient(models.Model):
     """

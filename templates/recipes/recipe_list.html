@@ -45,6 +45,7 @@
                            value="{{ params.q }}"
                            placeholder="Search recipe by name, ingredients, or directions (e.g. Tacos, Garlic, Instant Pot)..."
                            autocomplete="off"
+                           oninput="updateResetButtonState()"
                            hx-get="{% url 'recipes:list' %}"
                            hx-target="#recipe-results-container"
                            hx-swap="outerHTML"
@@ -69,12 +70,15 @@
                 </div>
 
                 <!-- Reset Filter Button -->
-                {% if active_filter_count > 0 %}
-                <a href="{% url 'recipes:list' %}"
-                   class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 text-xs px-2.5 py-1.5 font-medium">
-                    Reset
-                </a>
-                {% endif %}
+                <button type="button"
+                        id="recipe-reset-btn"
+                        onclick="resetRecipeFilters()"
+                        title="Reset all search filters"
+                        class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 text-xs px-2.5 py-1.5 font-medium flex items-center space-x-1 shadow-sm transition-opacity {% if active_filter_count == 0 and not params.q %}opacity-40 cursor-not-allowed{% endif %}"
+                        {% if active_filter_count == 0 and not params.q %}disabled{% endif %}>
+                    <span>✕</span>
+                    <span>Reset Filters</span>
+                </button>
             </div>
 
             <!-- Multi-Facet Filter Selects Row -->
@@ -82,7 +86,7 @@
                 <!-- Cuisine Filter -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Cuisine</label>
-                    <select name="cuisine" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="cuisine" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">All Cuisines</option>
                         {% for c in filter_options.cuisines %}
                         <option value="{{ c }}" {% if params.cuisine|lower == c|lower %}selected{% endif %}>{{ c }}</option>
@@ -93,7 +97,7 @@
                 <!-- Dish Type Filter -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Dish Type</label>
-                    <select name="dish_type" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="dish_type" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">All Dish Types</option>
                         {% for d in filter_options.dish_types %}
                         <option value="{{ d }}" {% if params.dish_type|lower == d|lower %}selected{% endif %}>{{ d }}</option>
@@ -104,7 +108,7 @@
                 <!-- Meal Type Filter -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Meal Type</label>
-                    <select name="meal_type" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="meal_type" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">All Meals</option>
                         {% for m in filter_options.meal_types %}
                         <option value="{{ m }}" {% if params.meal_type|lower == m|lower %}selected{% endif %}>{{ m }}</option>
@@ -115,7 +119,7 @@
                 <!-- Dietary Restrictions / Allergens -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Dietary</label>
-                    <select name="dietary" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="dietary" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">All Diets</option>
                         {% for diet in filter_options.dietary_options %}
                         <option value="{{ diet }}" {% if params.dietary|lower == diet|lower %}selected{% endif %}>{{ diet }}</option>
@@ -126,7 +130,7 @@
                 <!-- Occasion / Season -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Occasion</label>
-                    <select name="occasion" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="occasion" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">All Occasions</option>
                         {% for occ in filter_options.occasions %}
                         <option value="{{ occ }}" {% if params.occasion|lower == occ|lower %}selected{% endif %}>{{ occ }}</option>
@@ -137,7 +141,7 @@
                 <!-- Special Equipment -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Equipment</label>
-                    <select name="equipment" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="equipment" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">Any Equipment</option>
                         {% for eq in filter_options.equipment_options %}
                         <option value="{{ eq }}" {% if params.equipment|lower == eq|lower %}selected{% endif %}>{{ eq }}</option>
@@ -148,7 +152,7 @@
                 <!-- Difficulty -->
                 <div>
                     <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Difficulty</label>
-                    <select name="difficulty" onchange="htmx.trigger('#recipe-filter-form', 'submit')" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
+                    <select name="difficulty" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
                         <option value="all">All Difficulties</option>
                         <option value="easy" {% if params.difficulty == 'easy' %}selected{% endif %}>Easy</option>
                         <option value="medium" {% if params.difficulty == 'medium' %}selected{% endif %}>Medium</option>
@@ -165,4 +169,145 @@
 
 <!-- Modal Dialog Container -->
 <div id="modal-placeholder"></div>
+
+<script>
+    function updateResetButtonState() {
+        const btn = document.getElementById('recipe-reset-btn');
+        if (!btn) return;
+
+        const form = document.getElementById('recipe-filter-form');
+        if (!form) return;
+
+        const searchVal = document.getElementById('recipe-search-input')?.value.trim();
+        let hasFilter = Boolean(searchVal);
+
+        if (!hasFilter) {
+            const selects = form.querySelectorAll('select');
+            for (const s of selects) {
+                if (s.name !== 'sort' && s.value && s.value.toLowerCase() !== 'all') {
+                    hasFilter = true;
+                    break;
+                }
+            }
+        }
+
+        btn.disabled = !hasFilter;
+        if (hasFilter) {
+            btn.classList.remove('opacity-40', 'cursor-not-allowed');
+            btn.classList.add('hover:bg-gray-100');
+        } else {
+            btn.classList.add('opacity-40', 'cursor-not-allowed');
+            btn.classList.remove('hover:bg-gray-100');
+        }
+    }
+
+    function onRecipeFilterChange() {
+        updateResetButtonState();
+        htmx.trigger('#recipe-filter-form', 'submit');
+    }
+
+    function clearSingleRecipeFilter(name) {
+        const form = document.getElementById('recipe-filter-form');
+        if (!form) return;
+
+        if (name === 'q') {
+            const searchInput = document.getElementById('recipe-search-input');
+            if (searchInput) searchInput.value = '';
+        } else {
+            const sel = form.querySelector(`select[name="${name}"]`);
+            if (sel) {
+                sel.value = (name === 'sort') ? 'name' : 'all';
+            }
+        }
+
+        updateResetButtonState();
+        htmx.trigger(form, 'submit');
+    }
+
+    function resetRecipeFilters() {
+        const form = document.getElementById('recipe-filter-form');
+        if (form) {
+            // Reset search input
+            const searchInput = document.getElementById('recipe-search-input');
+            if (searchInput) searchInput.value = '';
+
+            // Reset all filter select pull-downs
+            const selects = form.querySelectorAll('select');
+            selects.forEach(sel => {
+                if (sel.name === 'sort') {
+                    sel.value = 'name';
+                } else {
+                    sel.value = 'all';
+                }
+            });
+        }
+
+        // Clean the browser URL bar
+        if (window.history && window.history.pushState) {
+            window.history.pushState({}, '', "{% url 'recipes:list' %}");
+        }
+
+        // Fetch fresh unfiltered recipes grid via HTMX
+        if (window.htmx) {
+            htmx.ajax('GET', "{% url 'recipes:list' %}", {
+                target: '#recipe-results-container',
+                swap: 'outerHTML',
+            });
+        } else {
+            window.location.href = "{% url 'recipes:list' %}";
+        }
+
+        updateResetButtonState();
+    }
+
+    // Sync form pull-down controls on browser back/forward navigation
+    window.addEventListener('popstate', function() {
+        const params = new URLSearchParams(window.location.search);
+        const form = document.getElementById('recipe-filter-form');
+        if (!form) return;
+
+        const searchInput = document.getElementById('recipe-search-input');
+        if (searchInput) searchInput.value = params.get('q') || '';
+
+        const sortSelect = document.getElementById('recipe-sort');
+        if (sortSelect) sortSelect.value = params.get('sort') || 'name';
+
+        ['cuisine', 'dish_type', 'meal_type', 'dietary', 'occasion', 'equipment', 'difficulty'].forEach(field => {
+            const sel = form.querySelector(`select[name="${field}"]`);
+            if (!sel) return;
+            const val = params.get(field);
+            if (!val || val.toLowerCase() === 'all') {
+                sel.value = 'all';
+            } else {
+                let matched = false;
+                for (const opt of sel.options) {
+                    if (opt.value.toLowerCase() === val.toLowerCase()) {
+                        sel.value = opt.value;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) sel.value = 'all';
+            }
+        });
+
+        updateResetButtonState();
+    });
+
+    // Ensure reset button state matches after any HTMX swap into results container
+    document.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target && evt.detail.target.id === 'recipe-results-container') {
+            updateResetButtonState();
+        }
+    });
+
+    // Expose helpers globally for partial templates
+    window.updateResetButtonState = updateResetButtonState;
+    window.onRecipeFilterChange = onRecipeFilterChange;
+    window.clearSingleRecipeFilter = clearSingleRecipeFilter;
+    window.resetRecipeFilters = resetRecipeFilters;
+
+    // Run on initial page load
+    document.addEventListener('DOMContentLoaded', updateResetButtonState);
+</script>
 {% endblock %}

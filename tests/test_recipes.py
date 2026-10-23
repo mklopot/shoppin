@@ -388,6 +388,8 @@ def test_recipe_views(client: Client, sample_recipes, auth_user):
     assert resp.status_code == 200
     assert "Classic Tacos" in resp.content.decode("utf-8")
     assert "Vegetarian Lasagna" in resp.content.decode("utf-8")
+    assert "resetRecipeFilters()" in resp.content.decode("utf-8")
+    assert 'id="recipe-reset-btn"' in resp.content.decode("utf-8")
 
     # List view HTMX filter GET
     resp_htmx = client.get(
@@ -398,6 +400,20 @@ def test_recipe_views(client: Client, sample_recipes, auth_user):
     html = resp_htmx.content.decode("utf-8")
     assert "Vegetarian Lasagna" in html
     assert "Classic Tacos" not in html
+    assert "Clear all filters" in html
+    assert "resetRecipeFilters()" in html
+    assert "clearSingleRecipeFilter('q')" in html
+
+    # Empty search state has Reset Filters button calling resetRecipeFilters()
+    resp_empty = client.get(
+        reverse("recipes:list") + "?q=nonexistentdish9999",
+        HTTP_HX_REQUEST="true",
+    )
+    assert resp_empty.status_code == 200
+    empty_html = resp_empty.content.decode("utf-8")
+    assert "No matching recipes found" in empty_html
+    assert "Reset Filters" in empty_html
+    assert "resetRecipeFilters()" in empty_html
 
     # Detail view standard GET
     resp_detail = client.get(reverse("recipes:detail", args=[r1.id]))

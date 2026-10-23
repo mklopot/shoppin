@@ -271,17 +271,7 @@
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                        First / Next Occurrence (Optional)
-                                    </label>
-                                    <input type="datetime-local"
-                                           name="next_occurrence"
-                                           class="w-full border border-gray-300 px-2.5 py-1.5 text-sm bg-white">
-                                    <p class="text-[11px] text-gray-500 mt-1">
-                                        Defaults to 1 interval (1 week) from creation, or specify a custom start date/time.
-                                    </p>
-                                </div>
+                                {% include "presets/partials/occurrence_picker.html" %}
                             </div>
                         </div>
                     </div>

@@ -274,16 +274,24 @@ def test_preset_views_and_permissions(client, preset_setup):
     assert resp.status_code == 200
     assert b"Preset Lists" in resp.content
 
-    # 2. Owner creates preset list
+    # 2. Owner creates preset list with intuitive date and time fields
     resp = client.post("/preset-lists/create/", {
         "name": "Taco Night",
         "interval_days": "7",
         "is_schedule_enabled": "on",
+        "next_occurrence_date": "2026-11-05",
+        "next_occurrence_time": "08:00",
     })
     assert resp.status_code == 302
     preset = ShoppingList.objects.get(name="Taco Night", is_preset=True)
     assert preset.is_schedule_enabled is True
     assert preset.interval_days == 7
+    assert preset.next_occurrence is not None
+    local_occurrence = timezone.localtime(preset.next_occurrence)
+    assert local_occurrence.year == 2026
+    assert local_occurrence.month == 11
+    assert local_occurrence.day == 5
+    assert local_occurrence.hour == 8
 
     # 3. Owner adds item
     resp = client.post(f"/preset-lists/{preset.id}/items/add/", {

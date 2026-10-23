@@ -97,19 +97,7 @@
                     </div>
 
                     <!-- Next Occurrence Date/Time Picker -->
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                            Next Occurrence (Editable)
-                        </label>
-                        <input type="datetime-local"
-                               name="next_occurrence"
-                               value="{{ preset_list.next_occurrence|date:'Y-m-d\TH:i' }}"
-                               {% if not can_write %}disabled{% endif %}
-                               class="w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
-                        <p class="text-[11px] text-gray-500 mt-1">
-                            You can change when the next refresh will happen.
-                        </p>
-                    </div>
+                    {% include "presets/partials/occurrence_picker.html" %}
 
                     <!-- Last Run Metadata -->
                     <div class="text-xs text-gray-500 border-t border-gray-100 pt-2 flex justify-between">

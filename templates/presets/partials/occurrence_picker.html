@@ -1,0 +1,142 @@
+<div class="occurrence-picker-block space-y-2.5">
+    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+        Next Refresh Date & Time
+    </label>
+
+    <!-- Friendly Quick Presets -->
+    <div>
+        <p class="text-[11px] text-gray-500 mb-1.5">Quick select shortcuts:</p>
+        <div class="flex flex-wrap gap-1.5">
+            <button type="button"
+                    onclick="presetSetOccurrence(this, 7, '08:00')"
+                    class="px-2 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-medium">
+                In 1 Week (8 AM)
+            </button>
+            <button type="button"
+                    onclick="presetSetOccurrence(this, 1, '08:00')"
+                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium">
+                Tomorrow (8 AM)
+            </button>
+            <button type="button"
+                    onclick="presetSetWeekend(this, '08:00')"
+                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium">
+                This Saturday (8 AM)
+            </button>
+            <button type="button"
+                    onclick="presetSetOccurrence(this, 14, '08:00')"
+                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium">
+                In 2 Weeks (8 AM)
+            </button>
+        </div>
+    </div>
+
+    <!-- Date & Time Inputs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <!-- Separate Date Picker -->
+        <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                Date
+            </label>
+            <input type="date"
+                   name="next_occurrence_date"
+                   value="{{ preset_list.next_occurrence|date:'Y-m-d'|default:default_next_date }}"
+                   onchange="presetUpdatePreview(this.closest('.occurrence-picker-block'))"
+                   {% if not can_write and can_write is not None %}disabled{% endif %}
+                   class="occurrence-date-input w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <!-- Separate Time Dropdown -->
+        <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">
+                Time of Day
+            </label>
+            <select name="next_occurrence_time"
+                    onchange="presetUpdatePreview(this.closest('.occurrence-picker-block'))"
+                    {% if not can_write and can_write is not None %}disabled{% endif %}
+                    class="occurrence-time-select w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
+                <option value="06:00" {% if preset_list.next_occurrence|date:'H:i' == '06:00' %}selected{% endif %}>6:00 AM (Early Morning)</option>
+                <option value="07:00" {% if preset_list.next_occurrence|date:'H:i' == '07:00' %}selected{% endif %}>7:00 AM</option>
+                <option value="08:00" {% if not preset_list.next_occurrence or preset_list.next_occurrence|date:'H:i' == '08:00' %}selected{% endif %}>8:00 AM (Morning - Recommended)</option>
+                <option value="09:00" {% if preset_list.next_occurrence|date:'H:i' == '09:00' %}selected{% endif %}>9:00 AM</option>
+                <option value="10:00" {% if preset_list.next_occurrence|date:'H:i' == '10:00' %}selected{% endif %}>10:00 AM (Mid-Morning)</option>
+                <option value="12:00" {% if preset_list.next_occurrence|date:'H:i' == '12:00' %}selected{% endif %}>12:00 PM (Noon)</option>
+                <option value="14:00" {% if preset_list.next_occurrence|date:'H:i' == '14:00' %}selected{% endif %}>2:00 PM (Afternoon)</option>
+                <option value="17:00" {% if preset_list.next_occurrence|date:'H:i' == '17:00' %}selected{% endif %}>5:00 PM (Evening)</option>
+                <option value="19:00" {% if preset_list.next_occurrence|date:'H:i' == '19:00' %}selected{% endif %}>7:00 PM (Night)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Live Human-Readable Confirmation Banner -->
+    <div class="mt-2 p-2 bg-indigo-50/80 border border-indigo-200 text-xs text-indigo-950 flex items-center space-x-2">
+        <span class="text-base leading-none">📅</span>
+        <span class="occurrence-preview-label font-medium">
+            {% if preset_list.next_occurrence %}
+                Will refresh next on: <strong>{{ preset_list.next_occurrence|date:"l, F j, Y \a\t g:i A" }}</strong>
+            {% else %}
+                Will refresh next on: <strong>in 1 week at 8:00 AM</strong>
+            {% endif %}
+        </span>
+    </div>
+</div>
+
+<script>
+if (typeof presetSetOccurrence === 'undefined') {
+    window.presetSetOccurrence = function(btn, daysFromNow, timeStr) {
+        const container = btn.closest('.occurrence-picker-block');
+        if (!container) return;
+        const d = new Date();
+        d.setDate(d.getDate() + daysFromNow);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateInput = container.querySelector('.occurrence-date-input');
+        const timeSelect = container.querySelector('.occurrence-time-select');
+        if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
+        if (timeSelect && timeStr) timeSelect.value = timeStr;
+        presetUpdatePreview(container);
+    };
+
+    window.presetSetWeekend = function(btn, timeStr) {
+        const container = btn.closest('.occurrence-picker-block');
+        if (!container) return;
+        const d = new Date();
+        const day = d.getDay();
+        let daysUntilSat = (6 - day + 7) % 7;
+        if (daysUntilSat === 0) daysUntilSat = 7;
+        d.setDate(d.getDate() + daysUntilSat);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateInput = container.querySelector('.occurrence-date-input');
+        const timeSelect = container.querySelector('.occurrence-time-select');
+        if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
+        if (timeSelect && timeStr) timeSelect.value = timeStr;
+        presetUpdatePreview(container);
+    };
+
+    window.presetUpdatePreview = function(container) {
+        if (!container) return;
+        const dateInput = container.querySelector('.occurrence-date-input');
+        const timeSelect = container.querySelector('.occurrence-time-select');
+        const labelEl = container.querySelector('.occurrence-preview-label');
+        if (!dateInput || !labelEl) return;
+
+        const dateVal = dateInput.value;
+        const timeVal = (timeSelect ? timeSelect.value : '08:00') || '08:00';
+        if (!dateVal) {
+            labelEl.innerHTML = 'Will refresh next on: <em>No date selected (defaults to 1 interval from now)</em>';
+            return;
+        }
+        try {
+            const parts = dateVal.split('-').map(Number);
+            const timeParts = timeVal.split(':').map(Number);
+            const dt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1]);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+            labelEl.innerHTML = `Will refresh next on: <strong>${dt.toLocaleDateString(undefined, options)}</strong>`;
+        } catch (e) {
+            // ignore
+        }
+    };
+}
+</script>

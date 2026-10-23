@@ -40,16 +40,37 @@ from apps.shopping.services.store_service import get_known_categories
 logger = logging.getLogger(__name__)
 
 
-def _parse_form_datetime(val: str | None) -> timezone.datetime | None:
-    """Parse an HTML5 datetime-local string (YYYY-MM-DDTHH:MM) into an aware datetime."""
+def _parse_form_datetime(
+    val: str | None = None,
+    date_val: str | None = None,
+    time_val: str | None = None,
+) -> timezone.datetime | None:
+    """
+    Parse date and time inputs into an aware timezone.datetime.
+
+    Supports:
+    - Separate date string (YYYY-MM-DD) and time string (HH:MM)
+    - Combined ISO string (YYYY-MM-DDTHH:MM)
+    """
+    if date_val and date_val.strip():
+        d_str = date_val.strip()
+        t_str = (time_val or "08:00").strip()
+        val = f"{d_str}T{t_str}"
+
     if not val or not val.strip():
         return None
     cleaned = val.strip()
-    # If standard ISO without seconds
     try:
         dt = parse_datetime(cleaned)
         if dt is None:
-            dt = datetime.strptime(cleaned, "%Y-%m-%dT%H:%M")
+            for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%d", "%m/%d/%Y %H:%M", "%m/%d/%Y"):
+                try:
+                    dt = datetime.strptime(cleaned, fmt)
+                    break
+                except ValueError:
+                    continue
+        if dt is None:
+            return None
         if timezone.is_naive(dt):
             dt = timezone.make_aware(dt, timezone.get_current_timezone())
         return dt
@@ -85,6 +106,9 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
     can_write = workspace.can_write(user) if (user and user.is_authenticated) else True
     user_role = workspace.get_user_role(user) if (user and user.is_authenticated) else "owner"
 
+    default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
+    default_next_time = "08:00"
+
     context: dict[str, Any] = {
         "workspace": workspace,
         "preset_lists": preset_lists,
@@ -92,6 +116,8 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
         "can_write": can_write,
         "user_role": user_role,
         "default_interval_days": 7,
+        "default_next_date": default_next_date,
+        "default_next_time": default_next_time,
     }
     return render(request, "presets/preset_list_index.html", context)
 
@@ -115,7 +141,11 @@ def preset_create(request: HttpRequest) -> HttpResponse:
         interval_days = 7
 
     is_schedule_enabled = request.POST.get("is_schedule_enabled") in ("on", "true", "1")
-    next_occurrence = _parse_form_datetime(request.POST.get("next_occurrence"))
+    next_occurrence = _parse_form_datetime(
+        val=request.POST.get("next_occurrence"),
+        date_val=request.POST.get("next_occurrence_date"),
+        time_val=request.POST.get("next_occurrence_time"),
+    )
 
     preset_list = create_preset_list(
         workspace=workspace,
@@ -147,6 +177,9 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
     loaded_count = primary_list.items.filter(source_preset=preset_list).count() if primary_list else 0
     is_loaded = loaded_count > 0
 
+    default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
+    default_next_time = "08:00"
+
     context: dict[str, Any] = {
         "workspace": workspace,
         "preset_list": preset_list,
@@ -155,6 +188,8 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
         "can_write": can_write,
         "loaded_count": loaded_count,
         "is_loaded": is_loaded,
+        "default_next_date": default_next_date,
+        "default_next_time": default_next_time,
         "toast_message": request.GET.get("toast", ""),
     }
 
@@ -330,7 +365,11 @@ def preset_update_schedule(request: HttpRequest, preset_id: int) -> HttpResponse
     except ValueError:
         interval_days = 7
 
-    next_occurrence = _parse_form_datetime(request.POST.get("next_occurrence"))
+    next_occurrence = _parse_form_datetime(
+        val=request.POST.get("next_occurrence"),
+        date_val=request.POST.get("next_occurrence_date"),
+        time_val=request.POST.get("next_occurrence_time"),
+    )
 
     update_preset_schedule(
         preset_list=preset_list,
@@ -437,12 +476,17 @@ def preset_schedule_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
     user = getattr(request, "user", None)
     can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
 
+    default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
+    default_next_time = "08:00"
+
     return render(
         request,
         "presets/partials/schedule_modal.html",
         {
             "preset_list": preset_list,
             "can_write": can_write,
+            "default_next_date": default_next_date,
+            "default_next_time": default_next_time,
             "from_shopping_list": request.GET.get("from_shopping_list") == "1",
             "group_by": request.GET.get("group_by", "category"),
             "mode": request.GET.get("mode", ""),

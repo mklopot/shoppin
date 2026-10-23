@@ -193,7 +193,7 @@ def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRe
 
     # 3. Toast message
     toast_messages = [
-        f"🍳 Marked '{recipe.name}' as made! (Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''})"
+        f"✓ Marked '{recipe.name}' as made! (Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''})"
     ]
 
     # 4. Context for meal plan content re-render

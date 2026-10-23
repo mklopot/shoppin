@@ -105,36 +105,16 @@
         </div>
     </div>
 
-    <!-- Card Bottom / Endorsements & Actions -->
-    <div class="px-3.5 py-2.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs">
-        <!-- Endorsements -->
-        <div class="flex items-center space-x-2">
-            {% if recipe.average_rating %}
-            <span class="text-amber-500 font-bold flex items-center space-x-0.5">
-                <span>★</span>
-                <span class="text-gray-800 font-semibold text-xs">{{ recipe.average_rating }}</span>
-            </span>
-            {% endif %}
-            <span class="text-gray-600 font-medium flex items-center space-x-0.5" title="Thumbs up endorsements">
-                <span>👍</span>
-                <span>{{ recipe.thumbs_up_count }}</span>
-            </span>
-            {% if recipe.times_made > 0 %}
-            <span class="text-emerald-800 font-semibold flex items-center space-x-0.5" title="Times prepared">
-                <span>🍳</span>
-                <span>{{ recipe.times_made }}x</span>
-            </span>
-            {% endif %}
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex items-center space-x-1.5">
+    <!-- Card Bottom / Actions & Ratings -->
+    <div class="px-3.5 py-2.5 bg-gray-50 border-t border-gray-200 space-y-2 text-xs">
+        <!-- Action Buttons Row -->
+        <div class="flex items-center justify-between gap-2">
             {% if can_write %}
             <!-- Add to Meal Plan button / dropdown -->
-            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline flex items-center space-x-1">
+            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="flex-1 flex items-center space-x-1 min-w-0">
                 {% csrf_token %}
                 {% if meals %}
-                <select name="meal_id" class="border border-gray-300 bg-white text-[11px] px-1 py-1 text-gray-800 rounded-none focus:outline-none max-w-[110px]" title="Select meal to add to">
+                <select name="meal_id" class="border border-gray-300 bg-white text-[11px] px-1.5 py-1 text-gray-800 rounded-none focus:outline-none flex-1 min-w-0 max-w-[130px]" title="Select meal to add to">
                     {% for m in meals %}
                     <option value="{{ m.id }}">{{ m.name }}</option>
                     {% endfor %}
@@ -143,15 +123,43 @@
                 {% else %}
                 <input type="hidden" name="meal_id" value="new">
                 {% endif %}
-                <button type="submit" title="Add recipe to Meal Plan" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-bold text-xs whitespace-nowrap">
+                <button type="submit" title="Add recipe to Meal Plan" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-bold text-xs whitespace-nowrap flex-shrink-0">
                     🥘 Plan
                 </button>
             </form>
+            {% else %}
+            <div></div>
             {% endif %}
 
-            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs">
-                View &rarr;
+            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center">
+                <span>View Recipe &rarr;</span>
             </a>
+        </div>
+
+        <!-- Lower Line: Ratings, Endorsements & Times Made -->
+        <div class="flex items-center justify-between pt-1.5 border-t border-gray-200/80 text-[11px] text-gray-600">
+            <!-- Ratings & Thumbs Up -->
+            <div class="flex items-center space-x-2">
+                {% if recipe.average_rating %}
+                <span class="text-amber-500 font-bold flex items-center space-x-0.5" title="Average rating">
+                    <span>★</span>
+                    <span class="text-gray-800 font-semibold">{{ recipe.average_rating }}</span>
+                </span>
+                {% endif %}
+                <span class="text-gray-600 font-medium flex items-center space-x-0.5" title="Thumbs up endorsements">
+                    <span>👍</span>
+                    <span>{{ recipe.thumbs_up_count }}</span>
+                </span>
+            </div>
+
+            <!-- Times Made -->
+            <div>
+                {% if recipe.times_made > 0 %}
+                <span class="text-emerald-800 font-medium">
+                    Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}
+                </span>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

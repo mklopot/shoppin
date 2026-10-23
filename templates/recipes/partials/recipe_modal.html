@@ -36,7 +36,7 @@
             <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Servings</span><span class="font-semibold">{{ recipe.portions }}</span></div>
             <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Prep Time</span><span class="font-semibold">{{ recipe.prep_time_minutes }}m</span></div>
             <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Cook Time</span><span class="font-semibold">{{ recipe.cook_time_minutes }}m</span></div>
-            <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Times Made</span><span class="font-semibold text-emerald-800">🍳 {{ recipe.times_made }}</span></div>
+            <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Times Made</span><span class="font-semibold text-emerald-800">Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span></div>
         </div>
 
         <!-- Ingredients Preview -->

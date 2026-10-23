@@ -517,11 +517,19 @@ def test_times_made_counter_visibility_in_recipe_views(client, mealplan_setup):
     resp_mp_modal = client.get(reverse("mealplans:recipe_modal", args=[recipe.id]))
     assert resp_mp_modal.status_code == 200
     mp_modal_html = resp_mp_modal.content.decode("utf-8")
-    assert "Made: 4x" in mp_modal_html
+    assert "Made 4 times" in mp_modal_html
 
     # 4. Recipe card in list view
     resp_list = client.get(reverse("recipes:list"))
     assert resp_list.status_code == 200
     list_html = resp_list.content.decode("utf-8")
-    assert "4x" in list_html
+    assert "Made 4 times" in list_html
+    assert "View Recipe &rarr;" in list_html
+
+    # Verify singular "Made 1 time" when times_made == 1
+    recipe.times_made = 1
+    recipe.save()
+    resp_singular = client.get(reverse("recipes:list"))
+    assert resp_singular.status_code == 200
+    assert "Made 1 time" in resp_singular.content.decode("utf-8")
 

@@ -24,7 +24,7 @@
         <div class="flex items-start justify-between border-b border-gray-300 pb-3 flex-shrink-0">
             <div>
                 <h3 class="font-bold text-base text-gray-900 flex items-center space-x-2">
-                    <span>🍳</span>
+                    <span class="text-emerald-700">✓</span>
                     <span>{% if is_entire_meal %}Meal Made: {{ meal_name }}{% else %}Dish Made: {{ recipes.0.name }}{% endif %}</span>
                 </h3>
                 <p class="text-xs text-gray-500 mt-0.5">
@@ -53,7 +53,7 @@
                         {% endif %}
                         <div>
                             <h4 class="font-bold text-xs text-gray-900 leading-tight">{{ r.name }}</h4>
-                            <span class="text-[11px] text-emerald-800 font-medium block mt-0.5">🍳 Made {{ r.times_made }} time{{ r.times_made|pluralize }}</span>
+                            <span class="text-[11px] text-emerald-800 font-medium block mt-0.5">Made {{ r.times_made }} time{{ r.times_made|pluralize }}</span>
                         </div>
                     </div>
                 </div>

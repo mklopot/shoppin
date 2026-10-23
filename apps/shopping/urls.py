@@ -4,7 +4,7 @@ URL routing patterns for the Shopping application.
 
 from django.urls import path
 
-from apps.shopping import views
+from apps.shopping import views, views_preset
 
 app_name = "shopping"
 
@@ -20,4 +20,17 @@ urlpatterns = [
     path("nearest-store/", views.find_nearest_store, name="nearest_store"),
     path("reorder/", views.reorder_items, name="reorder"),
     path("reorder-sections/", views.reorder_sections, name="reorder_sections"),
+    # Preset Lists Routes
+    path("preset-lists/", views_preset.preset_list_index, name="preset_list_index"),
+    path("preset-lists/create/", views_preset.preset_create, name="preset_create"),
+    path("preset-lists/<int:preset_id>/", views_preset.preset_detail, name="preset_detail"),
+    path("preset-lists/<int:preset_id>/edit-name/", views_preset.preset_edit_name, name="preset_edit_name"),
+    path("preset-lists/<int:preset_id>/delete/", views_preset.preset_delete, name="preset_delete"),
+    path("preset-lists/<int:preset_id>/items/add/", views_preset.preset_add_item, name="preset_add_item"),
+    path("preset-lists/<int:preset_id>/items/<int:item_id>/edit/", views_preset.preset_edit_item, name="preset_edit_item"),
+    path("preset-lists/<int:preset_id>/items/<int:item_id>/delete/", views_preset.preset_delete_item, name="preset_delete_item"),
+    path("preset-lists/<int:preset_id>/schedule/", views_preset.preset_update_schedule, name="preset_update_schedule"),
+    path("preset-lists/<int:preset_id>/run-schedule-now/", views_preset.preset_run_schedule_now, name="preset_run_schedule_now"),
+    path("preset-lists/<int:preset_id>/load-modal/", views_preset.preset_load_modal, name="preset_load_modal"),
+    path("preset-lists/<int:preset_id>/load/", views_preset.preset_load_items, name="preset_load_items"),
 ]

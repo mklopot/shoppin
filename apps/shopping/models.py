@@ -170,6 +170,24 @@ class ShoppingList(models.Model):
         default=False,
         help_text="True if this is a reusable preset list template (e.g. Spices, Breakfasts)",
     )
+    is_schedule_enabled = models.BooleanField(
+        default=False,
+        help_text="Whether this preset list automatically refreshes on the primary shopping list",
+    )
+    interval_days = models.PositiveIntegerField(
+        default=7,
+        help_text="Recurrence interval in days from last occurrence (default: 7 days / 1 week)",
+    )
+    last_applied_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the preset list was last applied to the shopping list",
+    )
+    next_occurrence = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Scheduled timestamp for the next automatic refresh",
+    )
     auto_refresh_schedule = models.CharField(
         max_length=100,
         blank=True,
@@ -189,6 +207,21 @@ class ShoppingList(models.Model):
     def __str__(self) -> str:
         """Return the list name with preset flag if applicable."""
         return f"{self.name}{' (Preset)' if self.is_preset else ''}"
+
+    def is_due_for_refresh(self, now: timezone.datetime | None = None) -> bool:
+        """Return True if this preset list's schedule is active and due to be applied."""
+        if not self.is_preset or not self.is_schedule_enabled:
+            return False
+        if not self.next_occurrence:
+            return False
+        current_time = now or timezone.now()
+        return self.next_occurrence <= current_time
+
+    def compute_next_occurrence(self, base_time: timezone.datetime | None = None) -> timezone.datetime:
+        """Compute the next scheduled run datetime based on interval_days."""
+        anchor = base_time or self.last_applied_at or timezone.now()
+        days = self.interval_days if self.interval_days and self.interval_days > 0 else 7
+        return anchor + timezone.timedelta(days=days)
 
 
 class ShoppingListItem(models.Model):
@@ -257,6 +290,14 @@ class ShoppingListItem(models.Model):
         null=True,
         blank=True,
         related_name="shopping_items",
+    )
+    source_preset = models.ForeignKey(
+        ShoppingList,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_shopping_items",
+        help_text="Preset list this shopping item was loaded or scheduled from",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

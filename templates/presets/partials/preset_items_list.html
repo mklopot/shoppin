@@ -1,0 +1,82 @@
+<div id="preset-items-container" class="space-y-3">
+    {% if items %}
+    <div class="border border-gray-200 divide-y divide-gray-100 bg-white">
+        {% for item in items %}
+        <div class="flex items-center justify-between p-3.5 hover:bg-gray-50 transition-colors" id="preset-item-{{ item.id }}">
+            <div class="flex items-start space-x-3">
+                <div class="pt-0.5 text-gray-400">
+                    •
+                </div>
+                <div>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <span class="font-semibold text-gray-900 text-sm">
+                            {{ item.name }}
+                        </span>
+                        {% if item.amount_display %}
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
+                            {{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}
+                        </span>
+                        {% endif %}
+                        {% if item.optional %}
+                        <span class="text-[11px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 italic rounded">
+                            optional
+                        </span>
+                        {% endif %}
+                        {% if item.category and item.category != 'other' %}
+                        <span class="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                            {{ item.category }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Brand / Best Vendor row (matches legacy attributes) -->
+                    {% if item.brand or item.vendor %}
+                    <div class="mt-1 flex items-center flex-wrap gap-3 text-xs text-gray-500">
+                        {% if item.brand %}
+                        <span><strong class="font-medium text-gray-600">Brand:</strong> {{ item.brand }}</span>
+                        {% endif %}
+                        {% if item.vendor %}
+                        <span><strong class="font-medium text-gray-600">Best Vendor:</strong> {{ item.vendor }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions: Edit & Delete -->
+            {% if can_write %}
+            <div class="flex items-center space-x-1 shrink-0 ml-4">
+                <button type="button"
+                        hx-get="{% url 'shopping:preset_edit_item' preset_list.id item.id %}"
+                        hx-target="#modal-placeholder"
+                        class="p-1 text-gray-400 hover:text-indigo-600"
+                        title="Edit Item">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                    </svg>
+                </button>
+                <form hx-post="{% url 'shopping:preset_delete_item' preset_list.id item.id %}"
+                      hx-target="#preset-items-container"
+                      hx-swap="outerHTML"
+                      class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            onclick="return confirm('Remove {{ item.name|escapejs }} from this preset list?');"
+                            class="p-1 text-gray-400 hover:text-red-600"
+                            title="Delete Item">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-8 text-center bg-gray-50 border border-dashed border-gray-300 text-gray-500 text-sm">
+        No items in this preset list yet. Add your first item below!
+    </div>
+    {% endif %}
+</div>

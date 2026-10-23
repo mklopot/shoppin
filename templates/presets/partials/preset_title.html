@@ -1,0 +1,32 @@
+<div id="preset-title-container" class="flex items-center space-x-3">
+    <h1 class="text-2xl font-bold text-gray-900" id="preset-display-title">
+        {{ preset_list.name }}
+    </h1>
+    {% if can_write %}
+    <button type="button"
+            onclick="document.getElementById('preset-edit-title-form').classList.remove('hidden'); document.getElementById('preset-title-container').classList.add('hidden'); document.getElementById('preset-title-input').focus();"
+            class="text-gray-400 hover:text-gray-600 text-xs font-medium px-2 py-0.5 border border-gray-200 bg-gray-50">
+        Rename
+    </button>
+    {% endif %}
+</div>
+<form id="preset-edit-title-form"
+      hx-post="{% url 'shopping:preset_edit_name' preset_list.id %}"
+      hx-target="#preset-header-title-box"
+      class="hidden flex items-center space-x-2">
+    {% csrf_token %}
+    <input type="text"
+           id="preset-title-input"
+           name="name"
+           value="{{ preset_list.name }}"
+           required
+           class="border border-indigo-500 px-3 py-1 text-xl font-bold text-gray-900 focus:outline-none">
+    <button type="submit" class="px-3 py-1 bg-indigo-600 text-white text-xs font-semibold shadow-sm hover:bg-indigo-700">
+        Save
+    </button>
+    <button type="button"
+            onclick="document.getElementById('preset-edit-title-form').classList.add('hidden'); document.getElementById('preset-title-container').classList.remove('hidden');"
+            class="px-2 py-1 border border-gray-300 text-gray-600 text-xs hover:bg-gray-50">
+        Cancel
+    </button>
+</form>

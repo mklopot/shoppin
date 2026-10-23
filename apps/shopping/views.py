@@ -34,6 +34,7 @@ from apps.shopping.models import (
 )
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.list_organizer import ShoppingListOrganizer
+from apps.shopping.services.preset_service import check_and_apply_due_preset_schedules
 from apps.shopping.services.store_service import (
     get_known_aisles,
     get_known_categories,
@@ -209,6 +210,10 @@ def shopping_list_view(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered HTML page or HTMX partial content.
     """
+    workspace = get_active_workspace(request)
+    if workspace:
+        check_and_apply_due_preset_schedules(workspace, request=request)
+
     shopping_list = get_active_list(request)
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     mode = request.GET.get("mode")
@@ -226,6 +231,10 @@ def pantry_check_view(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered HTML page or HTMX partial content in Pantry Check mode.
     """
+    workspace = get_active_workspace(request)
+    if workspace:
+        check_and_apply_due_preset_schedules(workspace, request=request)
+
     shopping_list = get_active_list(request)
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by, mode=ListMode.PANTRY)

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Preset Lists - Shoppin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gray-200 gap-4">
+        <div>
+            <div class="flex items-center space-x-3">
+                <h1 class="text-2xl font-bold text-gray-900">Preset Lists</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    {{ preset_lists|length }} list{{ preset_lists|length|pluralize }}
+                </span>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+                Reusable shopping list templates with recurring schedules that automatically refresh your grocery list.
+            </p>
+        </div>
+        <div>
+            {% if can_write %}
+            <button type="button"
+                    onclick="document.getElementById('create-preset-modal').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
+                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                New Preset List
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Preset Lists Cards / Grid -->
+    {% if preset_lists %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for preset in preset_lists %}
+        <div class="bg-white border border-gray-200 shadow-sm flex flex-col justify-between hover:border-gray-400 transition-colors">
+            <!-- Card Header & Details -->
+            <div class="p-5">
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="text-lg font-bold text-gray-900 hover:text-indigo-600 truncate">
+                        <a href="{% url 'shopping:preset_detail' preset.id %}">{{ preset.name }}</a>
+                    </h2>
+                    <!-- Schedule Badge -->
+                    {% if preset.is_schedule_enabled %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 shrink-0">
+                        ● Recurring
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-600 shrink-0">
+                        Manual
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="mt-2 text-xs text-gray-500 flex items-center gap-3">
+                    <span>📋 {{ preset.items.count }} item{{ preset.items.count|pluralize }}</span>
+                    {% if preset.is_schedule_enabled %}
+                    <span>⏱ Every {{ preset.interval_days }} day{{ preset.interval_days|pluralize }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Schedule Metadata -->
+                {% if preset.is_schedule_enabled %}
+                <div class="mt-3 p-2.5 bg-gray-50 border border-gray-100 rounded text-xs space-y-1">
+                    <div class="flex justify-between text-gray-600">
+                        <span class="text-gray-400">Next refresh:</span>
+                        <span class="font-medium text-gray-900">
+                            {% if preset.next_occurrence %}
+                                {{ preset.next_occurrence|date:"M j, Y g:i A" }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if preset.last_applied_at %}
+                    <div class="flex justify-between text-gray-500 text-[11px]">
+                        <span class="text-gray-400">Last run:</span>
+                        <span>{{ preset.last_applied_at|date:"M j, Y g:i A" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Preview of Items -->
+                <div class="mt-4">
+                    <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Items Preview</p>
+                    {% if preset.items.all %}
+                    <div class="flex flex-wrap gap-1">
+                        {% for it in preset.items.all|slice:":5" %}
+                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">
+                            {{ it.name }}{% if it.amount_display %} ({{ it.amount_display }}){% endif %}
+                        </span>
+                        {% endfor %}
+                        {% if preset.items.count > 5 %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-gray-400 text-xs">
+                            +{{ preset.items.count|add:"-5" }} more
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-gray-400 italic">No items added yet</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card Actions Footer -->
+            <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between text-xs">
+                <div class="flex items-center space-x-2">
+                    <a href="{% url 'shopping:preset_detail' preset.id %}"
+                       class="font-medium text-indigo-600 hover:text-indigo-900">
+                        Edit List →
+                    </a>
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if can_write and preset.items.count > 0 %}
+                    <button type="button"
+                            hx-get="{% url 'shopping:preset_load_modal' preset.id %}"
+                            hx-target="#modal-placeholder"
+                            class="px-2.5 py-1 bg-white border border-gray-300 font-medium text-gray-700 hover:bg-gray-100 shadow-sm">
+                        Load to Shopping List
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-16 px-4 bg-white border border-dashed border-gray-300">
+        <div class="mx-auto h-12 w-12 text-gray-400 text-4xl mb-3">📝</div>
+        <h3 class="text-base font-semibold text-gray-900">No preset lists yet</h3>
+        <p class="mt-1 text-sm text-gray-500 max-w-sm mx-auto">
+            Preset lists allow you to save reusable grocery bundles (like Weekly Staples, Breakfasts, or Spices) and automatically refresh them on a schedule.
+        </p>
+        {% if can_write %}
+        <div class="mt-6">
+            <button type="button"
+                    onclick="document.getElementById('create-preset-modal').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                + Create Your First Preset List
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal: Create New Preset List -->
+<div id="create-preset-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('create-preset-modal').classList.add('hidden')"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-300">
+            <form action="{% url 'shopping:preset_create' %}" method="POST">
+                {% csrf_token %}
+                <div class="bg-white px-6 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-200 mb-4">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">
+                            Create New Preset List
+                        </h3>
+                        <button type="button" onclick="document.getElementById('create-preset-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500 text-lg font-bold">
+                            ✕
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="preset-name" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                                Preset List Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="preset-name"
+                                   name="name"
+                                   required
+                                   placeholder="e.g. Weekly Essentials, Spices, Taco Night"
+                                   class="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <!-- Schedule Configuration -->
+                        <div class="pt-3 border-t border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <label for="enable-schedule" class="text-sm font-medium text-gray-800">
+                                    Enable Recurring Schedule
+                                </label>
+                                <input type="checkbox"
+                                       id="enable-schedule"
+                                       name="is_schedule_enabled"
+                                       onchange="document.getElementById('schedule-options').classList.toggle('hidden', !this.checked)"
+                                       class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-0">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Automatically removes previous entries from this preset list and re-adds active items fresh on each interval.
+                            </p>
+
+                            <div id="schedule-options" class="hidden mt-4 space-y-3 p-3 bg-gray-50 border border-gray-200">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                                        Recurrence Interval (from last occurrence)
+                                    </label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="number"
+                                               name="interval_days"
+                                               value="{{ default_interval_days }}"
+                                               min="1"
+                                               class="w-24 border border-gray-300 px-2.5 py-1.5 text-sm bg-white">
+                                        <span class="text-xs text-gray-600 font-medium">days (defaults to 1 week / 7 days)</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                                        First / Next Occurrence (Optional)
+                                    </label>
+                                    <input type="datetime-local"
+                                           name="next_occurrence"
+                                           class="w-full border border-gray-300 px-2.5 py-1.5 text-sm bg-white">
+                                    <p class="text-[11px] text-gray-500 mt-1">
+                                        Leave blank to default to 1 interval from now.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-3 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" class="w-full inline-flex justify-center px-4 py-2 bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto shadow-sm">
+                        Create Preset List
+                    </button>
+                    <button type="button" onclick="document.getElementById('create-preset-modal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Placeholder for Load dialog -->
+<div id="modal-placeholder"></div>
+{% endblock %}

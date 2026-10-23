@@ -13,6 +13,7 @@ from apps.shopping.models import ShoppingList, ShoppingListItem, StoreItemAisle,
 class ShoppingListItemInline(admin.TabularInline):
     """Inline admin editor for shopping list items inside a shopping list."""
     model = ShoppingListItem
+    fk_name = "shopping_list"
     extra = 1
 
 

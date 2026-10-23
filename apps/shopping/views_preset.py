@@ -49,13 +49,14 @@ def _parse_form_datetime(
     Parse date and time inputs into an aware timezone.datetime.
 
     Supports:
-    - Separate date string (YYYY-MM-DD) and time string (HH:MM)
+    - Separate date string (YYYY-MM-DD) and time string (HH:MM or 12h h:mm AM/PM)
     - Combined ISO string (YYYY-MM-DDTHH:MM)
     """
     if date_val and date_val.strip():
         d_str = date_val.strip()
-        t_str = (time_val or "08:00").strip()
-        val = f"{d_str}T{t_str}"
+        now_local = timezone.localtime(timezone.now())
+        t_str = (time_val or now_local.strftime("%H:%M")).strip()
+        val = f"{d_str} {t_str}"
 
     if not val or not val.strip():
         return None
@@ -63,7 +64,21 @@ def _parse_form_datetime(
     try:
         dt = parse_datetime(cleaned)
         if dt is None:
-            for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%d", "%m/%d/%Y %H:%M", "%m/%d/%Y"):
+            for fmt in (
+                "%Y-%m-%d %I:%M %p",
+                "%Y-%m-%d %I:%M%p",
+                "%Y-%m-%dT%I:%M %p",
+                "%Y-%m-%dT%I:%M%p",
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%dT%H:%M",
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d %H:%M",
+                "%Y-%m-%d",
+                "%m/%d/%Y %I:%M %p",
+                "%m/%d/%Y %I:%M%p",
+                "%m/%d/%Y %H:%M",
+                "%m/%d/%Y",
+            ):
                 try:
                     dt = datetime.strptime(cleaned, fmt)
                     break
@@ -107,7 +122,7 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
     user_role = workspace.get_user_role(user) if (user and user.is_authenticated) else "owner"
 
     default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-    default_next_time = "08:00"
+    default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
 
     context: dict[str, Any] = {
         "workspace": workspace,
@@ -178,7 +193,7 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
     is_loaded = loaded_count > 0
 
     default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-    default_next_time = "08:00"
+    default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
 
     context: dict[str, Any] = {
         "workspace": workspace,
@@ -477,7 +492,7 @@ def preset_schedule_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
     can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
 
     default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-    default_next_time = "08:00"
+    default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
 
     return render(
         request,

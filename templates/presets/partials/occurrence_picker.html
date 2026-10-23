@@ -1,38 +1,11 @@
-<div class="occurrence-picker-block space-y-2.5">
+<div class="occurrence-picker-block space-y-2">
     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
         Next Refresh Date & Time
     </label>
 
-    <!-- Friendly Quick Presets -->
-    <div>
-        <p class="text-[11px] text-gray-500 mb-1.5">Quick select shortcuts:</p>
-        <div class="flex flex-wrap gap-1.5">
-            <button type="button"
-                    onclick="presetSetOccurrence(this, 7, '08:00')"
-                    class="px-2 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-medium">
-                In 1 Week (8 AM)
-            </button>
-            <button type="button"
-                    onclick="presetSetOccurrence(this, 1, '08:00')"
-                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium">
-                Tomorrow (8 AM)
-            </button>
-            <button type="button"
-                    onclick="presetSetWeekend(this, '08:00')"
-                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium">
-                This Saturday (8 AM)
-            </button>
-            <button type="button"
-                    onclick="presetSetOccurrence(this, 14, '08:00')"
-                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium">
-                In 2 Weeks (8 AM)
-            </button>
-        </div>
-    </div>
-
     <!-- Date & Time Inputs -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-        <!-- Separate Date Picker -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
+        <!-- Date Picker -->
         <div>
             <label class="block text-[11px] font-semibold text-gray-600 mb-1">
                 Date
@@ -45,25 +18,29 @@
                    class="occurrence-date-input w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
         </div>
 
-        <!-- Separate Time Dropdown -->
+        <!-- Android Material Time Picker -->
         <div>
             <label class="block text-[11px] font-semibold text-gray-600 mb-1">
-                Time of Day
+                Time
             </label>
-            <select name="next_occurrence_time"
-                    onchange="presetUpdatePreview(this.closest('.occurrence-picker-block'))"
-                    {% if not can_write and can_write is not None %}disabled{% endif %}
-                    class="occurrence-time-select w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
-                <option value="06:00" {% if preset_list.next_occurrence|date:'H:i' == '06:00' %}selected{% endif %}>6:00 AM (Early Morning)</option>
-                <option value="07:00" {% if preset_list.next_occurrence|date:'H:i' == '07:00' %}selected{% endif %}>7:00 AM</option>
-                <option value="08:00" {% if not preset_list.next_occurrence or preset_list.next_occurrence|date:'H:i' == '08:00' %}selected{% endif %}>8:00 AM (Morning - Recommended)</option>
-                <option value="09:00" {% if preset_list.next_occurrence|date:'H:i' == '09:00' %}selected{% endif %}>9:00 AM</option>
-                <option value="10:00" {% if preset_list.next_occurrence|date:'H:i' == '10:00' %}selected{% endif %}>10:00 AM (Mid-Morning)</option>
-                <option value="12:00" {% if preset_list.next_occurrence|date:'H:i' == '12:00' %}selected{% endif %}>12:00 PM (Noon)</option>
-                <option value="14:00" {% if preset_list.next_occurrence|date:'H:i' == '14:00' %}selected{% endif %}>2:00 PM (Afternoon)</option>
-                <option value="17:00" {% if preset_list.next_occurrence|date:'H:i' == '17:00' %}selected{% endif %}>5:00 PM (Evening)</option>
-                <option value="19:00" {% if preset_list.next_occurrence|date:'H:i' == '19:00' %}selected{% endif %}>7:00 PM (Night)</option>
-            </select>
+            <div class="relative">
+                <input type="text"
+                       name="next_occurrence_time"
+                       value="{{ preset_list.next_occurrence|date:'g:i A'|default:default_next_time }}"
+                       data-time="{{ preset_list.next_occurrence|date:'g:i A'|default:default_next_time }}"
+                       onfocus="initAndOpenTimePicker(this)"
+                       onclick="initAndOpenTimePicker(this)"
+                       readonly
+                       {% if not can_write and can_write is not None %}disabled{% endif %}
+                       class="android-time-input occurrence-time-input w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500 cursor-pointer pr-8 font-medium text-gray-800"
+                       placeholder="Select time">
+                <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-indigo-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-0.5">Tap to pick any hour &amp; minute on clock dial</p>
         </div>
     </div>
 
@@ -74,69 +51,108 @@
             {% if preset_list.next_occurrence %}
                 Will refresh next on: <strong>{{ preset_list.next_occurrence|date:"l, F j, Y \a\t g:i A" }}</strong>
             {% else %}
-                Will refresh next on: <strong>in 1 week at 8:00 AM</strong>
+                Will refresh next on: <strong>{{ default_next_date }} at {{ default_next_time }}</strong>
             {% endif %}
         </span>
     </div>
 </div>
 
 <script>
-if (typeof presetSetOccurrence === 'undefined') {
-    window.presetSetOccurrence = function(btn, daysFromNow, timeStr) {
-        const container = btn.closest('.occurrence-picker-block');
-        if (!container) return;
-        const d = new Date();
-        d.setDate(d.getDate() + daysFromNow);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const dateInput = container.querySelector('.occurrence-date-input');
-        const timeSelect = container.querySelector('.occurrence-time-select');
-        if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
-        if (timeSelect && timeStr) timeSelect.value = timeStr;
-        presetUpdatePreview(container);
-    };
-
-    window.presetSetWeekend = function(btn, timeStr) {
-        const container = btn.closest('.occurrence-picker-block');
-        if (!container) return;
-        const d = new Date();
-        const day = d.getDay();
-        let daysUntilSat = (6 - day + 7) % 7;
-        if (daysUntilSat === 0) daysUntilSat = 7;
-        d.setDate(d.getDate() + daysUntilSat);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        const dateInput = container.querySelector('.occurrence-date-input');
-        const timeSelect = container.querySelector('.occurrence-time-select');
-        if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
-        if (timeSelect && timeStr) timeSelect.value = timeStr;
-        presetUpdatePreview(container);
+if (typeof initAndroidTimePickers === 'undefined') {
+    window.parseTimeTo24 = function(timeStr) {
+        if (!timeStr) return { h: 12, m: 0 };
+        const clean = timeStr.trim();
+        const isPM = /pm/i.test(clean);
+        const isAM = /am/i.test(clean);
+        const match = clean.match(/(\d{1,2}):(\d{2})/);
+        if (!match) return { h: 12, m: 0 };
+        let h = parseInt(match[1], 10);
+        const m = parseInt(match[2], 10);
+        if (isPM && h < 12) h += 12;
+        if (isAM && h === 12) h = 0;
+        return { h: h, m: m };
     };
 
     window.presetUpdatePreview = function(container) {
         if (!container) return;
         const dateInput = container.querySelector('.occurrence-date-input');
-        const timeSelect = container.querySelector('.occurrence-time-select');
+        const timeInput = container.querySelector('.occurrence-time-input');
         const labelEl = container.querySelector('.occurrence-preview-label');
         if (!dateInput || !labelEl) return;
 
         const dateVal = dateInput.value;
-        const timeVal = (timeSelect ? timeSelect.value : '08:00') || '08:00';
+        const timeVal = (timeInput ? timeInput.value : '') || '';
         if (!dateVal) {
-            labelEl.innerHTML = 'Will refresh next on: <em>No date selected (defaults to 1 interval from now)</em>';
+            labelEl.innerHTML = 'Will refresh next on: <em>No date selected</em>';
             return;
         }
         try {
             const parts = dateVal.split('-').map(Number);
-            const timeParts = timeVal.split(':').map(Number);
-            const dt = new Date(parts[0], parts[1] - 1, parts[2], timeParts[0], timeParts[1]);
+            const t = parseTimeTo24(timeVal);
+            const dt = new Date(parts[0], parts[1] - 1, parts[2], t.h, t.m);
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' };
             labelEl.innerHTML = `Will refresh next on: <strong>${dt.toLocaleDateString(undefined, options)}</strong>`;
         } catch (e) {
             // ignore
         }
     };
+
+    window.initAndroidTimePickers = function(container) {
+        if (typeof mdtimepicker === 'undefined') return;
+        const scope = container || document;
+        const inputs = scope.querySelectorAll ? scope.querySelectorAll('.android-time-input') : [];
+        inputs.forEach(function(input) {
+            if (!input._mdtimepicker_initialized) {
+                input._mdtimepicker_initialized = true;
+                mdtimepicker(input, {
+                    format: 'h:mm tt',
+                    theme: 'indigo',
+                    hourPadding: false,
+                    clearBtn: false,
+                    is24hour: false
+                });
+                input.addEventListener('change', function() {
+                    presetUpdatePreview(input.closest('.occurrence-picker-block'));
+                });
+            }
+        });
+    };
+
+    window.initAndOpenTimePicker = function(input) {
+        if (typeof mdtimepicker === 'undefined' || !input) return;
+        if (!input._mdtimepicker_initialized) {
+            input._mdtimepicker_initialized = true;
+            mdtimepicker(input, {
+                format: 'h:mm tt',
+                theme: 'indigo',
+                hourPadding: false,
+                clearBtn: false,
+                is24hour: false
+            });
+            input.addEventListener('change', function() {
+                presetUpdatePreview(input.closest('.occurrence-picker-block'));
+            });
+            try {
+                mdtimepicker(input, 'show');
+            } catch (err) {
+                // fall through
+            }
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initAndroidTimePickers();
+    });
+    document.addEventListener('htmx:afterSwap', function(e) {
+        initAndroidTimePickers(e.target);
+    });
+    document.addEventListener('htmx:afterProcessNode', function(e) {
+        initAndroidTimePickers(e.target);
+    });
+}
+
+// Always try to initialize any uninitialized pickers in this block
+if (typeof initAndroidTimePickers === 'function') {
+    initAndroidTimePickers();
 }
 </script>

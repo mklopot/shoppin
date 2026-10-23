@@ -54,18 +54,37 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center justify-between pt-3 border-t border-gray-200 text-xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 text-xs">
             <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm">
                 View Full Recipe & Directions &rarr;
             </a>
 
             <div class="flex items-center space-x-2">
-                <form hx-post="{% url 'recipes:add_to_shopping' recipe.id %}" hx-swap="none" class="inline">
+                {% if can_write %}
+                <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline flex items-center space-x-1.5">
                     {% csrf_token %}
+                    <select name="meal_id"
+                            id="modal-meal-select"
+                            onchange="if (this.value==='new') { document.getElementById('modal-new-meal').classList.remove('hidden'); document.getElementById('modal-new-meal').focus(); } else { document.getElementById('modal-new-meal').classList.add('hidden'); }"
+                            class="border border-gray-300 bg-white text-xs px-2 py-1 text-gray-800 rounded-none focus:outline-none">
+                        {% for m in meals %}
+                        <option value="{{ m.id }}">{{ m.name }}</option>
+                        {% endfor %}
+                        <option value="new" {% if not meals %}selected{% endif %}>➕ New Meal...</option>
+                    </select>
+
+                    <input type="text"
+                           id="modal-new-meal"
+                           name="meal_name"
+                           placeholder="Meal name..."
+                           class="{% if meals %}hidden{% endif %} border border-gray-300 bg-white text-xs px-2 py-1 text-gray-900 focus:outline-none w-32 rounded-none">
+
                     <button type="submit" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-bold px-3 py-1.5 shadow-sm">
-                        🛒 Add to List
+                        🥘 Add to Meal Plan
                     </button>
                 </form>
+                {% endif %}
+
                 <button type="button"
                         onclick="document.getElementById('modal-placeholder').innerHTML = '';"
                         class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-3 py-1.5">

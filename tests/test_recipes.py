@@ -420,10 +420,20 @@ def test_recipe_views(client: Client, sample_recipes, auth_user):
     assert resp_rate.status_code == 200
     assert RecipeRating.objects.filter(recipe=r1, user=user).exists()
 
-    # Add to shopping list POST
-    resp_add = client.post(reverse("recipes:add_to_shopping", args=[r1.id]))
-    assert resp_add.status_code == 200
-    assert "Classic Tacos" in resp_add.content.decode("utf-8")
+    # Add to meal plan creating a new meal entry
+    resp_plan = client.post(
+        reverse("recipes:add_to_mealplan", args=[r1.id]),
+        {"meal_id": "new", "meal_name": "Friday Fiesta"},
+    )
+    assert resp_plan.status_code == 200
+    assert "Classic Tacos" in resp_plan.content.decode("utf-8")
+    assert "Friday Fiesta" in resp_plan.content.decode("utf-8")
+
+    # Verify meal was created and ingredients synchronized to shopping list
+    meal_plan = workspace.get_meal_plan()
+    assert meal_plan.meals.filter(name="Friday Fiesta").exists()
+    shopping_list = workspace.get_primary_list()
+    assert shopping_list.items.filter(name="Ground Beef").exists()
 
     # Create recipe with photo upload POST
     gif_bytes = b"GIF89a\x01\x00\x01\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"

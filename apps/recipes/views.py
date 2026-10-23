@@ -18,7 +18,6 @@ from apps.mealplans.services.mealplan_service import (
 )
 from apps.recipes.models import Recipe, RecipeRating
 from apps.recipes.services.recipe_service import (
-    add_recipe_to_shopping_list,
     create_or_update_recipe,
     get_filter_options,
     search_recipes,
@@ -49,6 +48,8 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
 
     recipes = search_recipes(params)
     filter_options = get_filter_options()
+    meal_plan = get_active_meal_plan(request, workspace)
+    meals = meal_plan.meals.all() if meal_plan else []
 
     active_filter_count = sum(
         1 for k, v in params.items()
@@ -63,6 +64,8 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         "params": params,
         "active_filter_count": active_filter_count,
         "can_write": can_write,
+        "meal_plan": meal_plan,
+        "meals": meals,
     }
 
     # Render HTMX partial when filtering without full page reload
@@ -204,36 +207,19 @@ def recipe_rate_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
 
 
 @require_POST
-def recipe_add_to_shopping_list_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
-    """
-    Add all recipe ingredients directly to the active shopping list.
-    """
-    recipe = get_object_or_404(Recipe, id=recipe_id)
-    shopping_list = get_active_list(request)
-
-    added = add_recipe_to_shopping_list(recipe, shopping_list, request)
-
-    toast_msg = f"🛒 Added '{recipe.name}' ({len(added)} ingredients) to Shopping List"
-    context = {
-        "toast_message": toast_msg,
-    }
-    return render(request, "recipes/partials/toast_oob.html", context)
-
-
-@require_POST
 def recipe_add_to_mealplan_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
     """
-    Add a recipe to a meal plan meal entry.
+    Add a recipe to a meal plan meal entry, creating a new meal if requested or needed.
     """
     recipe = get_object_or_404(Recipe, id=recipe_id)
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     shopping_list = get_active_list(request)
 
-    meal_id = request.POST.get("meal_id")
+    meal_id = request.POST.get("meal_id", "").strip()
     meal_name = request.POST.get("meal_name", "").strip()
 
-    if meal_id:
+    if meal_id and meal_id != "new":
         meal = get_object_or_404(Meal, id=meal_id, meal_plan=meal_plan)
     else:
         target_name = meal_name or f"{recipe.name} Dinner"

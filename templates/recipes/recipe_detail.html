@@ -146,27 +146,28 @@
 
         <!-- Action Buttons -->
         {% if can_write %}
-        <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-200 text-xs">
-            <!-- Add to Shopping List -->
-            <form hx-post="{% url 'recipes:add_to_shopping' recipe.id %}" hx-swap="none" class="inline">
+        <div class="pt-3 border-t border-gray-200 text-xs">
+            <!-- Add to Meal Plan Form -->
+            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="flex flex-wrap items-center gap-2">
                 {% csrf_token %}
-                <button type="submit" class="border border-gray-800 bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 flex items-center space-x-1.5 shadow-sm">
-                    <span>🛒</span>
-                    <span>Add All Ingredients to Shopping List</span>
-                </button>
-            </form>
-
-            <!-- Add to Meal Plan Form / Modal Trigger -->
-            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline flex items-center space-x-1.5">
-                {% csrf_token %}
-                {% if meals %}
-                <select name="meal_id" class="border border-gray-300 bg-white text-xs px-2 py-1.5 text-gray-800 rounded-none focus:outline-none">
+                <span class="font-bold text-gray-700">Add to Meal Plan:</span>
+                <select name="meal_id"
+                        id="meal-select-detail"
+                        onchange="toggleNewMealInput(this, 'new-meal-input-detail')"
+                        class="border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-800 rounded-none focus:outline-none">
                     {% for m in meals %}
                     <option value="{{ m.id }}">{{ m.name }}{% if m.emoji %} {{ m.emoji }}{% endif %}</option>
                     {% endfor %}
+                    <option value="new" {% if not meals %}selected{% endif %}>➕ Create New Meal...</option>
                 </select>
-                {% endif %}
-                <button type="submit" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-bold px-3 py-1.5 flex items-center space-x-1.5 shadow-sm">
+
+                <input type="text"
+                       id="new-meal-input-detail"
+                       name="meal_name"
+                       placeholder="New meal name (e.g. {{ recipe.name }} Dinner)..."
+                       class="{% if meals %}hidden{% endif %} border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-900 focus:outline-none w-64 rounded-none">
+
+                <button type="submit" class="border border-gray-800 bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 flex items-center space-x-1.5 shadow-sm text-xs">
                     <span>🥘</span>
                     <span>Add to Meal Plan</span>
                 </button>
@@ -290,4 +291,17 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+function toggleNewMealInput(selectEl, inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (selectEl.value === 'new') {
+        input.classList.remove('hidden');
+        input.focus();
+    } else {
+        input.classList.add('hidden');
+    }
+}
+</script>
 {% endblock %}

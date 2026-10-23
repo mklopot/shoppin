@@ -124,18 +124,20 @@
         <!-- Action Buttons -->
         <div class="flex items-center space-x-1.5">
             {% if can_write %}
-            <!-- Add to Shopping List button -->
-            <form hx-post="{% url 'recipes:add_to_shopping' recipe.id %}" hx-swap="none" class="inline">
+            <!-- Add to Meal Plan button / dropdown -->
+            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline flex items-center space-x-1">
                 {% csrf_token %}
-                <button type="submit" title="Add all ingredients to Shopping List" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-medium text-xs">
-                    🛒 Add
-                </button>
-            </form>
-
-            <!-- Add to Meal Plan button -->
-            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline">
-                {% csrf_token %}
-                <button type="submit" title="Add to Meal Plan" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-medium text-xs">
+                {% if meals %}
+                <select name="meal_id" class="border border-gray-300 bg-white text-[11px] px-1 py-1 text-gray-800 rounded-none focus:outline-none max-w-[110px]" title="Select meal to add to">
+                    {% for m in meals %}
+                    <option value="{{ m.id }}">{{ m.name }}</option>
+                    {% endfor %}
+                    <option value="new">➕ New Meal</option>
+                </select>
+                {% else %}
+                <input type="hidden" name="meal_id" value="new">
+                {% endif %}
+                <button type="submit" title="Add recipe to Meal Plan" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-bold text-xs whitespace-nowrap">
                     🥘 Plan
                 </button>
             </form>

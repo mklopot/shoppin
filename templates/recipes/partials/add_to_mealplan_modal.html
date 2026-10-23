@@ -1,0 +1,102 @@
+<div id="add-to-mealplan-modal"
+     onclick="if(event.target === this) document.getElementById('modal-placeholder').innerHTML = ''"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-[fadeIn_0.15s_ease-out]">
+    <div class="bg-white border border-gray-400 shadow-2xl w-full max-w-md flex flex-col rounded-none p-5 space-y-4">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b border-gray-300 pb-3 flex-shrink-0">
+            <div>
+                <h3 class="font-bold text-base text-gray-900 flex items-center space-x-2">
+                    <span>🥘</span>
+                    <span>Add to Meal Plan</span>
+                </h3>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    Choose which meal to add <strong>{{ recipe.name }}</strong> to:
+                </p>
+            </div>
+            <button type="button"
+                    onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                    class="text-gray-400 hover:text-gray-800 text-2xl font-bold leading-none"
+                    title="Close">&times;</button>
+        </div>
+
+        <!-- Recipe Preview Card -->
+        <div class="flex items-center space-x-3 p-2.5 bg-gray-50 border border-gray-200">
+            {% if recipe.primary_photo_url %}
+            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-12 h-12 object-cover border border-gray-300 flex-shrink-0">
+            {% endif %}
+            <div class="min-w-0 flex-1">
+                <h4 class="font-bold text-xs text-gray-900 truncate">{{ recipe.name }}</h4>
+                <div class="text-[11px] text-gray-500 flex items-center space-x-2 mt-0.5">
+                    {% if recipe.cuisine %}<span>{{ recipe.cuisine }}</span>{% endif %}
+                    {% if recipe.prep_time_minutes %}<span>⏱ {{ recipe.prep_time_minutes }}m prep</span>{% endif %}
+                    {% if recipe.times_made > 0 %}<span>• Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Meal Selection Form -->
+        <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}"
+              hx-target="#modal-placeholder"
+              class="space-y-3.5 text-xs">
+            {% csrf_token %}
+
+            <div>
+                <label for="prompt-meal-select" class="block font-bold text-gray-700 mb-1">Select Meal:</label>
+                <select id="prompt-meal-select"
+                        name="meal_id"
+                        onchange="togglePromptNewMeal(this)"
+                        class="w-full border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-800 rounded-none focus:outline-none focus:border-gray-600">
+                    {% for m in meals %}
+                    <option value="{{ m.id }}">{{ m.name }}</option>
+                    {% endfor %}
+                    <option value="new" {% if not meals %}selected{% endif %}>➕ Create New Meal...</option>
+                </select>
+            </div>
+
+            <!-- New Meal Name Input (visible when "new" selected) -->
+            <div id="prompt-new-meal-container" class="{% if meals %}hidden{% endif %} space-y-1">
+                <label for="prompt-new-meal-name" class="block font-bold text-gray-700">New Meal Name:</label>
+                <input type="text"
+                       id="prompt-new-meal-name"
+                       name="meal_name"
+                       value="{% if not meals %}{{ recipe.name }} Dinner{% endif %}"
+                       placeholder="e.g. Friday Dinner, Taco Tuesday..."
+                       class="w-full border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+            </div>
+
+            <!-- Actions Footer -->
+            <div class="flex items-center justify-between pt-3 border-t border-gray-200">
+                <button type="button"
+                        onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                        class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium px-3.5 py-1.5 text-xs shadow-sm">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="bg-gray-900 hover:bg-black text-white font-bold px-4 py-1.5 text-xs shadow-sm flex items-center space-x-1">
+                    <span>➕</span>
+                    <span>Add to Meal Plan</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function togglePromptNewMeal(sel) {
+        const container = document.getElementById('prompt-new-meal-container');
+        const input = document.getElementById('prompt-new-meal-name');
+        if (!container) return;
+        if (sel.value === 'new') {
+            container.classList.remove('hidden');
+            if (input) {
+                if (!input.value.trim()) {
+                    input.value = "{{ recipe.name }} Dinner";
+                }
+                input.focus();
+                input.select();
+            }
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+</script>

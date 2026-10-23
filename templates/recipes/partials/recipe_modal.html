@@ -62,28 +62,13 @@
 
             <div class="flex items-center space-x-2">
                 {% if can_write %}
-                <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="inline flex items-center space-x-1.5">
-                    {% csrf_token %}
-                    <select name="meal_id"
-                            id="modal-meal-select"
-                            onchange="if (this.value==='new') { document.getElementById('modal-new-meal').classList.remove('hidden'); document.getElementById('modal-new-meal').focus(); } else { document.getElementById('modal-new-meal').classList.add('hidden'); }"
-                            class="border border-gray-300 bg-white text-xs px-2 py-1 text-gray-800 rounded-none focus:outline-none">
-                        {% for m in meals %}
-                        <option value="{{ m.id }}">{{ m.name }}</option>
-                        {% endfor %}
-                        <option value="new" {% if not meals %}selected{% endif %}>➕ New Meal...</option>
-                    </select>
-
-                    <input type="text"
-                           id="modal-new-meal"
-                           name="meal_name"
-                           placeholder="Meal name..."
-                           class="{% if meals %}hidden{% endif %} border border-gray-300 bg-white text-xs px-2 py-1 text-gray-900 focus:outline-none w-32 rounded-none">
-
-                    <button type="submit" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-bold px-3 py-1.5 shadow-sm">
-                        🥘 Add to Meal Plan
-                    </button>
-                </form>
+                <button type="button"
+                        hx-get="{% url 'recipes:prompt_add_to_mealplan' recipe.id %}"
+                        hx-target="#modal-placeholder"
+                        class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-bold px-3 py-1.5 shadow-sm flex items-center space-x-1">
+                    <span>🥘</span>
+                    <span>Add to Meal Plan</span>
+                </button>
                 {% endif %}
 
                 <button type="button"

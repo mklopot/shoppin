@@ -386,10 +386,22 @@ def test_recipe_views(client: Client, sample_recipes, auth_user):
     # List view standard GET
     resp = client.get(reverse("recipes:list"))
     assert resp.status_code == 200
-    assert "Classic Tacos" in resp.content.decode("utf-8")
-    assert "Vegetarian Lasagna" in resp.content.decode("utf-8")
-    assert "resetRecipeFilters()" in resp.content.decode("utf-8")
-    assert 'id="recipe-reset-btn"' in resp.content.decode("utf-8")
+    list_content = resp.content.decode("utf-8")
+    assert "Classic Tacos" in list_content
+    assert "Vegetarian Lasagna" in list_content
+    assert "resetRecipeFilters()" in list_content
+    assert 'id="recipe-reset-btn"' in list_content
+    # Verify meals dropdown is NOT displayed on the quick view cards
+    assert 'name="meal_id"' not in list_content
+    assert reverse("recipes:prompt_add_to_mealplan", args=[r1.id]) in list_content
+
+    # Prompt add to meal plan modal GET
+    resp_prompt = client.get(reverse("recipes:prompt_add_to_mealplan", args=[r1.id]), HTTP_HX_REQUEST="true")
+    assert resp_prompt.status_code == 200
+    prompt_html = resp_prompt.content.decode("utf-8")
+    assert "Add to Meal Plan" in prompt_html
+    assert "Classic Tacos" in prompt_html
+    assert 'name="meal_id"' in prompt_html
 
     # List view HTMX filter GET
     resp_htmx = client.get(

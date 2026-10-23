@@ -206,6 +206,27 @@ def recipe_rate_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
     return render(request, "recipes/partials/rating_widget.html", context)
 
 
+def recipe_prompt_mealplan_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+    """
+    Render HTMX modal prompting the user to select or create a meal for the recipe.
+    """
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    meals = meal_plan.meals.all() if meal_plan else []
+    user = getattr(request, "user", None)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+
+    context = {
+        "recipe": recipe,
+        "meals": meals,
+        "meal_plan": meal_plan,
+        "workspace": workspace,
+        "can_write": can_write,
+    }
+    return render(request, "recipes/partials/add_to_mealplan_modal.html", context)
+
+
 @require_POST
 def recipe_add_to_mealplan_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
     """

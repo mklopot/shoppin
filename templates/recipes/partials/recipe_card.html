@@ -110,28 +110,19 @@
         <!-- Action Buttons Row -->
         <div class="flex items-center justify-between gap-2">
             {% if can_write %}
-            <!-- Add to Meal Plan button / dropdown -->
-            <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="flex-1 flex items-center space-x-1 min-w-0">
-                {% csrf_token %}
-                {% if meals %}
-                <select name="meal_id" class="border border-gray-300 bg-white text-[11px] px-1.5 py-1 text-gray-800 rounded-none focus:outline-none flex-1 min-w-0 max-w-[130px]" title="Select meal to add to">
-                    {% for m in meals %}
-                    <option value="{{ m.id }}">{{ m.name }}</option>
-                    {% endfor %}
-                    <option value="new">➕ New Meal</option>
-                </select>
-                {% else %}
-                <input type="hidden" name="meal_id" value="new">
-                {% endif %}
-                <button type="submit" title="Add recipe to Meal Plan" class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 px-2 py-1 font-bold text-xs whitespace-nowrap flex-shrink-0">
-                    🥘 Plan
-                </button>
-            </form>
+            <button type="button"
+                    hx-get="{% url 'recipes:prompt_add_to_mealplan' recipe.id %}"
+                    hx-target="#modal-placeholder"
+                    class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-2.5 py-1 text-xs whitespace-nowrap shadow-sm flex items-center space-x-1"
+                    title="Add {{ recipe.name }} to Meal Plan">
+                <span>➕</span>
+                <span>Meal Plan</span>
+            </button>
             {% else %}
             <div></div>
             {% endif %}
 
-            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center">
+            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center shadow-sm">
                 <span>View Recipe &rarr;</span>
             </a>
         </div>

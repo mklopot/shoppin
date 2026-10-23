@@ -250,6 +250,23 @@ def test_preset_schedule_triggers_websocket_broadcast_and_toasts(client, websock
         assert "Oat Milk" in msg3["toast_message"]
         assert msg3["sender_client_id"] == "tab_A"
 
+        # 4. Background scheduler automated refresh (no HTTP request from either tab!)
+        from django.utils import timezone
+        preset.next_occurrence = timezone.now() - timezone.timedelta(minutes=5)
+        await sync_to_async(preset.save)(update_fields=["next_occurrence"])
+
+        from apps.shopping.services.scheduler import process_due_schedules
+        await sync_to_async(process_due_schedules)()
+
+        # Tab receives broadcast from automated background scheduler with empty sender_client_id
+        msg4 = await communicator.receive_json_from()
+        assert msg4["type"] == "shopping_update"
+        assert "Preset refresh: 'Breakfast Essentials'" in msg4["toast_message"]
+        assert msg4["sender_client_id"] == ""
+
+        # 5. Client WebSocket heartbeat message
+        await communicator.send_json_to({"type": "check_schedules"})
+
         await communicator.disconnect()
 
     async_to_sync(run_test)()

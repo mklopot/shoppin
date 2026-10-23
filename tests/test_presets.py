@@ -234,6 +234,35 @@ def test_automatic_due_schedule_check(preset_setup):
 
 
 @pytest.mark.django_db
+def test_background_scheduler_process_due_schedules(preset_setup):
+    """Test scheduler.process_due_schedules executes due presets across workspaces."""
+    from apps.shopping.services.scheduler import process_due_schedules
+
+    ws = preset_setup["workspace"]
+    primary_list = preset_setup["primary_list"]
+
+    preset = create_preset_list(ws, "Background Scheduled Preset", interval_days=7, is_schedule_enabled=True)
+    add_preset_item(preset, "Greek Yogurt", amount="2", is_active=True)
+
+    # Set due in the past
+    preset.next_occurrence = timezone.now() - timedelta(minutes=10)
+    preset.save()
+
+    results = process_due_schedules()
+    assert len(results) == 1
+    assert results[0]["added_count"] == 1
+    assert results[0]["removed_count"] == 0
+
+    # Verify item was added to the primary shopping list
+    assert primary_list.items.filter(name="Greek Yogurt", source_preset=preset).exists()
+
+    # Verify preset schedule advanced to the future
+    preset.refresh_from_db()
+    assert preset.next_occurrence > timezone.now()
+    assert preset.last_applied_at is not None
+
+
+@pytest.mark.django_db
 def test_management_command_run_preset_schedules(preset_setup):
     """Test management command 'run_preset_schedules' executes due preset lists."""
     ws = preset_setup["workspace"]

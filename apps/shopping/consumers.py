@@ -6,7 +6,10 @@ Broadcasts changes across multiple connected users instantly using Django Channe
 
 from typing import Any
 
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
+from apps.shopping.services.scheduler import process_due_schedules
 
 
 class ShoppingListConsumer(AsyncJsonWebsocketConsumer):
@@ -31,9 +34,18 @@ class ShoppingListConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
+        # Check and apply any schedules that are due immediately upon connection
+        await sync_to_async(process_due_schedules)()
+
     async def disconnect(self, close_code: int) -> None:
         """Leave the shopping list group upon client disconnection."""
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive_json(self, content: dict[str, Any], **kwargs: Any) -> None:
+        """Handle incoming client JSON messages (such as heartbeat or schedule checks)."""
+        msg_type = content.get("type")
+        if msg_type == "check_schedules":
+            await sync_to_async(process_due_schedules)()
 
     async def shopping_update(self, event: dict[str, Any]) -> None:
         """

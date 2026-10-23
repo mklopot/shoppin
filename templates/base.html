@@ -343,7 +343,10 @@
                 }
 
                 socket.onopen = function() {
-                    // WebSocket connected to live updates
+                    // Check for any due schedules upon connection
+                    try {
+                        socket.send(JSON.stringify({ type: 'check_schedules' }));
+                    } catch (_) {}
                 };
 
                 socket.onmessage = function(event) {
@@ -426,6 +429,20 @@
             }
 
             connect();
+
+            // Periodic heartbeat to ensure due schedules process even if tab remains idle
+            setInterval(function() {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    try { socket.send(JSON.stringify({ type: 'check_schedules' })); } catch (_) {}
+                }
+            }, 30000);
+
+            // Trigger check when user returns or focuses the window
+            window.addEventListener('focus', function() {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    try { socket.send(JSON.stringify({ type: 'check_schedules' })); } catch (_) {}
+                }
+            });
         })();
     </script>
 

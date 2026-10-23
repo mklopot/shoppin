@@ -76,6 +76,12 @@ class Recipe(models.Model):
 
     # Media & Reference
     photo_urls = models.JSONField(default=list, blank=True, help_text="List of photo URLs")
+    photo_file = models.ImageField(
+        upload_to="recipes/photos/",
+        blank=True,
+        null=True,
+        help_text="Uploaded photo of the prepared dish",
+    )
     bibliography = models.JSONField(
         default=list,
         blank=True,
@@ -137,7 +143,12 @@ class Recipe(models.Model):
 
     @property
     def primary_photo_url(self) -> str:
-        """Return the primary photo URL if available, else empty string."""
+        """Return the primary photo URL (uploaded file or external URL) if available, else empty string."""
+        if self.photo_file:
+            try:
+                return self.photo_file.url
+            except ValueError:
+                pass
         if self.photo_urls and len(self.photo_urls) > 0:
             return self.photo_urls[0]
         return ""

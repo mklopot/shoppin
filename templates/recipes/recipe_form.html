@@ -23,7 +23,7 @@
         </p>
     </div>
 
-    <form method="post" class="space-y-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
 
         <!-- Card 1: Core Details -->
@@ -57,17 +57,58 @@
                               class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">{% if is_edit %}{{ recipe.description }}{% endif %}</textarea>
                 </div>
 
-                <div>
-                    <label class="block font-bold text-gray-700 mb-1" for="id_photo_url">
-                        Photo URL (Prepared Dish)
+                <!-- Photo Upload & URL -->
+                <div class="space-y-2 pt-1 border-t border-gray-200">
+                    <label class="block font-bold text-gray-700">
+                        Recipe Photo
                     </label>
-                    <input type="url"
-                           id="id_photo_url"
-                           name="photo_url"
-                           value="{% if is_edit %}{{ recipe.primary_photo_url }}{% endif %}"
-                           placeholder="https://images.unsplash.com/... or https://..."
-                           class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">
-                    <span class="text-[11px] text-gray-500 mt-0.5 block">Paste a public image link for display in the recipe grid and detail banner.</span>
+
+                    {% if is_edit and recipe.primary_photo_url %}
+                    <div class="flex items-center space-x-3 p-2 bg-gray-50 border border-gray-200">
+                        <img id="current-photo-preview" src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-16 h-16 object-cover border border-gray-300">
+                        <div class="space-y-1 text-xs">
+                            <span class="font-medium text-gray-800 block">Current Photo</span>
+                            {% if recipe.photo_file %}
+                            <label class="inline-flex items-center space-x-1.5 text-red-600 hover:text-red-800 cursor-pointer">
+                                <input type="checkbox" name="clear_photo" value="1" class="rounded-none border-gray-300 text-red-600 focus:ring-0">
+                                <span>Remove uploaded photo file</span>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Local File Upload Input -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1" for="id_photo_file">
+                            Upload Photo File (JPG, PNG, WEBP)
+                        </label>
+                        <input type="file"
+                               id="id_photo_file"
+                               name="photo_file"
+                               accept="image/*"
+                               onchange="previewUploadedImage(this)"
+                               class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 bg-white focus:outline-none focus:border-gray-600 rounded-none file:mr-3 file:py-1 file:px-2.5 file:border-0 file:text-xs file:font-semibold file:bg-gray-900 file:text-white hover:file:bg-black">
+                        <!-- Dynamic file preview container -->
+                        <div id="new-photo-preview-container" class="hidden mt-2 p-2 bg-gray-50 border border-gray-200 items-center space-x-3">
+                            <img id="new-photo-preview" src="" alt="Selected Preview" class="w-16 h-16 object-cover border border-gray-300">
+                            <span class="text-xs text-gray-600 font-medium">New photo selected (will be saved with this recipe)</span>
+                        </div>
+                    </div>
+
+                    <!-- External URL Fallback -->
+                    <div class="pt-1">
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1" for="id_photo_url">
+                            Or External Image URL
+                        </label>
+                        <input type="url"
+                               id="id_photo_url"
+                               name="photo_url"
+                               value="{% if is_edit and not recipe.photo_file and recipe.primary_photo_url %}{{ recipe.primary_photo_url }}{% endif %}"
+                               placeholder="https://images.unsplash.com/... or https://..."
+                               class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">
+                        <span class="text-[11px] text-gray-500 mt-0.5 block">Paste a public web link if you prefer linking directly to an online image.</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -568,6 +609,23 @@ function removeIngredientRow(btn) {
         const row = btn.closest('tr');
         row.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
         row.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+}
+
+function previewUploadedImage(input) {
+    const container = document.getElementById('new-photo-preview-container');
+    const preview = document.getElementById('new-photo-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        container.classList.add('hidden');
+        container.classList.remove('flex');
     }
 }
 </script>

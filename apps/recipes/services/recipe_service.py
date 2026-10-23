@@ -251,14 +251,16 @@ def parse_tag_list(raw_input: Any) -> list[str]:
 
 def create_or_update_recipe(
     data: dict[str, Any],
+    files: Any = None,
     recipe_id: int | None = None,
     user: Any = None,
 ) -> Recipe:
     """
-    Create a new recipe or update an existing one, parsing metadata and ingredients.
+    Create a new recipe or update an existing one, parsing metadata, uploaded photos, and ingredients.
 
     Args:
         data: Request POST dictionary or mapping with recipe fields.
+        files: Optional Request FILES mapping with uploaded files.
         recipe_id: Optional ID of recipe to update.
         user: Optional creating/editing user.
 
@@ -307,6 +309,12 @@ def create_or_update_recipe(
         recipe.special_equipment = special_equipment
         recipe.bibliography = bibliography
         recipe.photo_urls = photo_urls
+
+        if data.get("clear_photo") in ("1", "true", True):
+            recipe.photo_file = None
+        elif files and "photo_file" in files and files["photo_file"]:
+            recipe.photo_file = files["photo_file"]
+
         recipe.save()
     else:
         recipe = Recipe.objects.create(
@@ -327,6 +335,7 @@ def create_or_update_recipe(
             special_equipment=special_equipment,
             bibliography=bibliography,
             photo_urls=photo_urls,
+            photo_file=files.get("photo_file") if (files and "photo_file" in files) else None,
             created_by=user if user and user.is_authenticated else None,
         )
 

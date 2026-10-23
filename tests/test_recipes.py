@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
 
@@ -286,6 +287,38 @@ def test_create_and_update_recipe(auth_user):
 
 
 @pytest.mark.django_db
+def test_recipe_photo_upload_and_clear(auth_user):
+    user, _ = auth_user
+
+    # Minimal valid 1x1 GIF
+    gif_bytes = b"GIF89a\x01\x00\x01\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+    uploaded = SimpleUploadedFile("homemade_pizza.gif", gif_bytes, content_type="image/gif")
+
+    data = {
+        "name": "Homemade Pizza",
+        "cuisine": "Italian",
+        "dish_type": "Main",
+        "difficulty_level": "medium",
+        "portions": 4,
+    }
+
+    # 1. Create with uploaded file
+    recipe = create_or_update_recipe(data, files={"photo_file": uploaded}, user=user)
+    assert bool(recipe.photo_file) is True
+    assert "homemade_pizza" in recipe.photo_file.name
+    assert recipe.primary_photo_url == recipe.photo_file.url
+
+    # 2. Clear photo on edit
+    clear_data = {
+        "name": "Homemade Pizza",
+        "clear_photo": "1",
+    }
+    updated = create_or_update_recipe(clear_data, recipe_id=recipe.id, user=user)
+    assert bool(updated.photo_file) is False
+    assert updated.primary_photo_url == ""
+
+
+@pytest.mark.django_db
 def test_submit_recipe_rating(sample_recipes, auth_user):
     user, _ = auth_user
     r1, _, _ = sample_recipes
@@ -391,6 +424,23 @@ def test_recipe_views(client: Client, sample_recipes, auth_user):
     resp_add = client.post(reverse("recipes:add_to_shopping", args=[r1.id]))
     assert resp_add.status_code == 200
     assert "Classic Tacos" in resp_add.content.decode("utf-8")
+
+    # Create recipe with photo upload POST
+    gif_bytes = b"GIF89a\x01\x00\x01\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+    upload_file = SimpleUploadedFile("tasty_soup.gif", gif_bytes, content_type="image/gif")
+    resp_create = client.post(
+        reverse("recipes:create"),
+        {
+            "name": "Tasty Soup",
+            "cuisine": "American",
+            "dish_type": "Soup",
+            "portions": 4,
+            "photo_file": upload_file,
+        },
+    )
+    assert resp_create.status_code == 302
+    created_soup = Recipe.objects.get(name="Tasty Soup")
+    assert bool(created_soup.photo_file) is True
 
     # Delete recipe POST
     resp_del = client.post(reverse("recipes:delete", args=[r3.id]))

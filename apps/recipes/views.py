@@ -119,7 +119,7 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
     if request.method == "POST":
-        recipe = create_or_update_recipe(request.POST, user=user)
+        recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user)
         messages.success(request, f"Recipe '{recipe.name}' created successfully!")
         return redirect("recipes:detail", recipe_id=recipe.id)
 
@@ -146,7 +146,7 @@ def recipe_edit_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
     if request.method == "POST":
-        create_or_update_recipe(request.POST, recipe_id=recipe.id, user=user)
+        create_or_update_recipe(request.POST, files=request.FILES, recipe_id=recipe.id, user=user)
         messages.success(request, f"Recipe '{recipe.name}' updated successfully!")
         return redirect("recipes:detail", recipe_id=recipe.id)
 

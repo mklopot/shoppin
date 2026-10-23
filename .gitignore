@@ -169,3 +169,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Uploaded user media
+media/
+!media/.gitkeep

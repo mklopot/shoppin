@@ -322,6 +322,111 @@
 
         document.addEventListener('DOMContentLoaded', initToasts);
         document.addEventListener('htmx:afterSwap', initToasts);
+
+        // Global Multi-Tab WebSocket Synchronization
+        (function initGlobalWebSocketSync() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/shopping/`;
+            let socket = null;
+            let reconnectTimeout = null;
+
+            function connect() {
+                if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
+
+                try {
+                    socket = new WebSocket(wsUrl);
+                } catch (err) {
+                    scheduleReconnect();
+                    return;
+                }
+
+                socket.onopen = function() {
+                    // WebSocket connected to live updates
+                };
+
+                socket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        const isSender = data.sender_client_id && data.sender_client_id === window.CLIENT_ID;
+
+                        // If another tab, user, or background schedule made the change:
+                        if (!isSender) {
+                            // 1. Show notification toast(s)
+                            if (data.toast_messages && Array.isArray(data.toast_messages) && data.toast_messages.length > 0) {
+                                data.toast_messages.forEach(msg => showToast(msg));
+                            } else if (data.toast_message) {
+                                showToast(data.toast_message);
+                            }
+
+                            // 2. Auto-update Shopping List content if present on page
+                            const listContainer = document.getElementById('shopping-list-content');
+                            if (listContainer) {
+                                const refreshUrl = listContainer.getAttribute('data-refresh-url') || window.location.href;
+                                htmx.ajax('GET', refreshUrl, {
+                                    target: '#shopping-list-content',
+                                    swap: 'outerHTML transition:true'
+                                });
+                            }
+
+                            // 3. Auto-update Preset Detail view if present on page
+                            const presetDetailContainer = document.getElementById('preset-detail-container');
+                            if (presetDetailContainer) {
+                                const refreshUrl = presetDetailContainer.getAttribute('data-refresh-url') || window.location.href;
+                                htmx.ajax('GET', refreshUrl, {
+                                    target: '#preset-detail-container',
+                                    select: '#preset-detail-container',
+                                    swap: 'outerHTML transition:true'
+                                });
+                            }
+
+                            // 4. Auto-update Preset Lists Index grid if present on page
+                            const presetGridContainer = document.getElementById('preset-index-grid-container');
+                            if (presetGridContainer) {
+                                const refreshUrl = presetGridContainer.getAttribute('data-refresh-url') || window.location.href;
+                                htmx.ajax('GET', refreshUrl, {
+                                    target: '#preset-index-grid-container',
+                                    select: '#preset-index-grid-container',
+                                    swap: 'outerHTML transition:true'
+                                });
+                            }
+
+                            // 5. Auto-update Mealplan content if present on page
+                            const mealplanContainer = document.getElementById('mealplan-content');
+                            if (mealplanContainer) {
+                                htmx.ajax('GET', window.location.href, {
+                                    target: '#mealplan-content',
+                                    select: '#mealplan-content',
+                                    swap: 'innerHTML transition:true'
+                                });
+                            }
+                        }
+                    } catch (err) {
+                        console.error("[Shoppin Sync] Error parsing WebSocket message:", err);
+                    }
+                };
+
+                socket.onclose = function() {
+                    scheduleReconnect();
+                };
+
+                socket.onerror = function() {
+                    try { socket.close(); } catch (_) {}
+                };
+            }
+
+            function scheduleReconnect() {
+                if (!reconnectTimeout) {
+                    reconnectTimeout = setTimeout(function() {
+                        reconnectTimeout = null;
+                        connect();
+                    }, 2000);
+                }
+            }
+
+            connect();
+        })();
     </script>
 
     {% block extra_scripts %}{% endblock %}

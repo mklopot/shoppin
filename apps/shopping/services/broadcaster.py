@@ -49,9 +49,8 @@ def broadcast_shopping_list_update(
             "sender_client_id": sender_client_id or "",
         }
 
+        # Broadcast to the global shopping_list_main channel group so all open tabs receive the notification
         groups = ["shopping_list_main"]
-        if shopping_list and shopping_list.id:
-            groups.append(f"shopping_list_{shopping_list.id}")
 
         # Check if an event loop is already running in current thread
         try:

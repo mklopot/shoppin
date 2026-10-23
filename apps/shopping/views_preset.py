@@ -24,6 +24,7 @@ from apps.core.categorizer import categorizer
 from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import parse_amount_and_unit
 from apps.shopping.models import ShoppingList
+from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.preset_service import (
     add_preset_item,
     apply_preset_scheduled_refresh,
@@ -182,6 +183,10 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
         is_preset=True,
     )
     workspace = preset_list.workspace or get_active_workspace(request)
+    if workspace:
+        check_and_apply_due_preset_schedules(workspace, request=request)
+        preset_list.refresh_from_db()
+
     user = getattr(request, "user", None)
     can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
 
@@ -354,6 +359,17 @@ def preset_item_toggle_active(request: HttpRequest, preset_id: int, item_id: int
         item.is_active = not item.is_active
     item.save(update_fields=["is_active", "updated_at"])
 
+    actor_name = request.user.username if (request.user and request.user.is_authenticated) else "unknown"
+    sender_id = request.headers.get("X-Client-Id", "")
+    target_list = workspace.get_primary_list() if workspace else None
+    action_str = "active" if item.is_active else "inactive (paused)"
+    broadcast_shopping_list_update(
+        shopping_list=target_list,
+        toast_message=f"Preset '{preset_list.name}': set '{item.name}' to {action_str}",
+        actor_name=actor_name,
+        sender_client_id=sender_id,
+    )
+
     items = preset_list.items.all().order_by("order", "id")
     return render(
         request,
@@ -417,6 +433,7 @@ def preset_update_schedule(request: HttpRequest, preset_id: int) -> HttpResponse
         is_schedule_enabled=is_schedule_enabled,
         interval_days=interval_days,
         next_occurrence=next_occurrence,
+        request=request,
     )
 
     from_shopping_list = request.POST.get("from_shopping_list") == "1"
@@ -441,12 +458,16 @@ def preset_update_schedule(request: HttpRequest, preset_id: int) -> HttpResponse
                 force_partial=True,
             )
 
+        default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
+        default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
         return render(
             request,
             "presets/partials/schedule_section.html",
             {
                 "preset_list": preset_list,
                 "can_write": True,
+                "default_next_date": default_next_date,
+                "default_next_time": default_next_time,
                 "toast_message": "Schedule updated successfully",
             },
         )
@@ -495,12 +516,16 @@ def preset_run_schedule_now(request: HttpRequest, preset_id: int) -> HttpRespons
                 force_partial=True,
             )
 
+        default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
+        default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
         return render(
             request,
             "presets/partials/schedule_section.html",
             {
                 "preset_list": preset_list,
                 "can_write": True,
+                "default_next_date": default_next_date,
+                "default_next_time": default_next_time,
                 "toast_message": msg,
             },
         )

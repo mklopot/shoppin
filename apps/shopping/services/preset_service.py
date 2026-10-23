@@ -159,6 +159,7 @@ def update_preset_schedule(
     is_schedule_enabled: bool,
     interval_days: int = 7,
     next_occurrence: timezone.datetime | None = None,
+    request: HttpRequest | None = None,
 ) -> ShoppingList:
     """
     Update schedule settings for a preset list.
@@ -168,6 +169,7 @@ def update_preset_schedule(
         is_schedule_enabled: Toggle for automated recurring refresh.
         interval_days: Recurrence interval in days from last occurrence.
         next_occurrence: Scheduled next occurrence datetime (user can override).
+        request: Optional HttpRequest for WebSocket attribution.
 
     Returns:
         Updated preset list instance.
@@ -188,6 +190,18 @@ def update_preset_schedule(
     preset_list.save(update_fields=["is_schedule_enabled", "interval_days", "next_occurrence", "updated_at"])
     logger.info("Updated schedule for preset '%s': enabled=%s, interval=%d days, next=%s",
                 preset_list.name, is_schedule_enabled, days, preset_list.next_occurrence)
+
+    actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
+    sender_id = request.headers.get("X-Client-Id") if request else ""
+    target_list = preset_list.workspace.get_primary_list() if preset_list.workspace else None
+    status_str = "enabled" if is_schedule_enabled else "disabled"
+    broadcast_shopping_list_update(
+        shopping_list=target_list,
+        toast_message=f"📅 Schedule {status_str} for preset '{preset_list.name}'",
+        actor_name=actor_name,
+        sender_client_id=sender_id,
+    )
+
     return preset_list
 
 

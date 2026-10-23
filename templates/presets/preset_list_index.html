@@ -31,9 +31,10 @@
         </div>
     </div>
 
-    <!-- Preset Lists Cards / Grid -->
-    {% if preset_lists %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Preset Lists Cards / Grid (WebSocket / HTMX auto-refreshed) -->
+    <div id="preset-index-grid-container" data-refresh-url="{% url 'shopping:preset_list_index' %}">
+        {% if preset_lists %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for preset in preset_lists %}
         <div class="bg-white border border-gray-200 shadow-sm flex flex-col justify-between hover:border-gray-400 transition-colors">
             <!-- Card Header & Details -->
@@ -200,6 +201,7 @@
         {% endif %}
     </div>
     {% endif %}
+    </div>
 </div>
 
 <!-- Modal: Create New Preset List -->

@@ -3,7 +3,7 @@
 {% block title %}{{ preset_list.name }} - Preset List - Shoppin{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6" id="preset-detail-container" data-refresh-url="{% url 'shopping:preset_detail' preset_list.id %}">
     <!-- Navigation Back Link -->
     <div>
         <a href="{% url 'shopping:preset_list_index' %}"

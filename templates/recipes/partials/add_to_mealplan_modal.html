@@ -37,6 +37,7 @@
         <!-- Meal Selection Form -->
         <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}"
               hx-target="#modal-placeholder"
+              hx-swap="outerHTML"
               class="space-y-3.5 text-xs">
             {% csrf_token %}
 

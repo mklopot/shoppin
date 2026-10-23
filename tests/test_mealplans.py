@@ -416,6 +416,10 @@ def test_mark_dish_made_and_rating_prompt(client, mealplan_setup):
         HTTP_HX_REQUEST="true",
     )
     assert resp_rate.status_code == 200
+    rate_html = resp_rate.content.decode("utf-8")
+    assert '<div id="modal-placeholder"></div>' in rate_html
+    assert '<div id="toast-container" hx-swap-oob="beforeend">' in rate_html
+    assert "⭐ Saved 5★ rating" in rate_html
     assert recipe.ratings.filter(user=owner, stars=5, thumbs_up=True).exists()
 
 

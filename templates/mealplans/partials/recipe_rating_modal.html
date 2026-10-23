@@ -11,7 +11,7 @@
 
 <!-- Out-of-band swap to update the mealplan content on the page immediately -->
 <div id="mealplan-content" hx-swap-oob="innerHTML">
-    {% include "mealplans/partials/mealplan_content.html" %}
+    {% include "mealplans/partials/mealplan_content.html" with toast_messages=None toast_message=None %}
 </div>
 
 {% if recipes %}
@@ -40,6 +40,7 @@
         <!-- Rating Form -->
         <form hx-post="{% url 'mealplans:submit_made_ratings' %}"
               hx-target="#modal-placeholder"
+              hx-swap="outerHTML"
               class="space-y-4">
             {% csrf_token %}
 

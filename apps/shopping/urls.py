@@ -29,6 +29,7 @@ urlpatterns = [
     path("preset-lists/<int:preset_id>/items/add/", views_preset.preset_add_item, name="preset_add_item"),
     path("preset-lists/<int:preset_id>/items/<int:item_id>/edit/", views_preset.preset_edit_item, name="preset_edit_item"),
     path("preset-lists/<int:preset_id>/items/<int:item_id>/delete/", views_preset.preset_delete_item, name="preset_delete_item"),
+    path("preset-lists/<int:preset_id>/items/<int:item_id>/toggle-active/", views_preset.preset_item_toggle_active, name="preset_item_toggle_active"),
     path("preset-lists/<int:preset_id>/schedule/", views_preset.preset_update_schedule, name="preset_update_schedule"),
     path("preset-lists/<int:preset_id>/schedule-modal/", views_preset.preset_schedule_modal, name="preset_schedule_modal"),
     path("preset-lists/<int:preset_id>/run-schedule-now/", views_preset.preset_run_schedule_now, name="preset_run_schedule_now"),

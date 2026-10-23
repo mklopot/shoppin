@@ -92,6 +92,7 @@ def add_preset_item(
     vendor: str = "",
     category: str = "",
     optional: bool = False,
+    is_active: bool = True,
 ) -> ShoppingListItem:
     """
     Add a new item to a preset list template.
@@ -105,6 +106,7 @@ def add_preset_item(
         vendor: Optional vendor or store preference.
         category: Department/category name (auto-detected if empty).
         optional: Whether this item is optional.
+        is_active: Whether this item is active on automated schedule runs.
 
     Returns:
         The created ShoppingListItem instance.
@@ -129,6 +131,7 @@ def add_preset_item(
         vendor=vendor.strip(),
         category=cat,
         optional=optional,
+        is_active=is_active,
         purpose=f"Preset: {preset_list.name}",
         status=ItemStatus.NEED,
     )
@@ -324,8 +327,8 @@ def apply_preset_scheduled_refresh(
     logger.info("Scheduled refresh for '%s': removed %d previous items from shopping list",
                 preset_list.name, removed_count)
 
-    # 2. Right away, re-add all active items from the preset list
-    active_items = preset_list.items.all().order_by("order", "id")
+    # 2. Right away, re-add all active items from the preset list (excludes paused/inactive items)
+    active_items = preset_list.items.filter(is_active=True).order_by("order", "id")
     added_items: list[ShoppingListItem] = []
     store = target_list.active_store
 

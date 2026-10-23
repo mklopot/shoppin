@@ -264,6 +264,10 @@ class ShoppingListItem(models.Model):
         default=False,
         help_text="Whether this item is confirmed needed during Pantry Check",
     )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="For preset lists: whether item is active on automated schedule runs",
+    )
     order = models.PositiveIntegerField(
         default=0,
         help_text="Sort order for drag-and-drop reordering",

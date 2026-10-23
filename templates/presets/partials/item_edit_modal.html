@@ -98,6 +98,22 @@
                             Optional item
                         </label>
                     </div>
+
+                    <div class="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-200 rounded">
+                        <div>
+                            <label for="edit-item-active" class="text-xs text-gray-800 font-semibold cursor-pointer">
+                                Active on Schedule
+                            </label>
+                            <p class="text-[11px] text-gray-500">
+                                When active, this item automatically loads when recurring schedules run.
+                            </p>
+                        </div>
+                        <input type="checkbox"
+                               id="edit-item-active"
+                               name="is_active"
+                               {% if item.is_active %}checked{% endif %}
+                               class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-0 cursor-pointer">
+                    </div>
                 </div>
 
                 <div class="bg-gray-50 px-5 py-3 sm:flex sm:flex-row-reverse border-t border-gray-200">

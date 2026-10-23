@@ -326,7 +326,33 @@ def preset_edit_item(request: HttpRequest, preset_id: int, item_id: int) -> Http
     item.vendor = request.POST.get("vendor", "").strip()
     item.category = request.POST.get("category", "").strip() or categorizer.get_category(item.name)
     item.optional = request.POST.get("optional") in ("on", "true", "1")
+    if "is_active" in request.POST:
+        item.is_active = request.POST.get("is_active") in ("on", "true", "1")
     item.save()
+
+    items = preset_list.items.all().order_by("order", "id")
+    return render(
+        request,
+        "presets/partials/preset_items_list.html",
+        {"preset_list": preset_list, "items": items, "can_write": True},
+    )
+
+
+@require_POST
+def preset_item_toggle_active(request: HttpRequest, preset_id: int, item_id: int) -> HttpResponse:
+    """Toggle an item's active/inactive schedule status."""
+    preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
+    item = get_object_or_404(preset_list.items, id=item_id)
+    workspace = preset_list.workspace or get_active_workspace(request)
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated and workspace and not workspace.can_write(user):
+        return HttpResponseForbidden("Read-only access.")
+
+    if "is_active" in request.POST:
+        item.is_active = request.POST.get("is_active") in ("on", "true", "1")
+    else:
+        item.is_active = not item.is_active
+    item.save(update_fields=["is_active", "updated_at"])
 
     items = preset_list.items.all().order_by("order", "id")
     return render(

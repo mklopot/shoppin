@@ -370,3 +370,78 @@ def test_preset_shopping_list_indicator_and_unload(client, preset_setup):
     resp = client.post(f"/preset-lists/{preset.id}/unload/", HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     assert not primary_list.items.filter(source_preset=preset).exists()
+
+
+@pytest.mark.django_db
+def test_preset_item_active_inactive_slider_and_scheduling(client, preset_setup):
+    """
+    Test active/inactive slider for preset schedule items:
+    - Inactive items remain on the preset list.
+    - Inactive items show up on the individual items modal.
+    - Inactive items do NOT load automatically via schedule refresh.
+    - Inactive items can still be manually loaded if explicitly selected in the modal.
+    """
+    owner = preset_setup["owner"]
+    ws = preset_setup["workspace"]
+    primary_list = preset_setup["primary_list"]
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    preset = create_preset_list(ws, "Weekly Staples", interval_days=7, is_schedule_enabled=True)
+    item_milk = add_preset_item(preset, "Whole Milk", amount="1", amount_unit="gal", is_active=True)
+    item_eggs = add_preset_item(preset, "Dozen Eggs", amount="1", is_active=True)
+    item_cinnamon = add_preset_item(preset, "Cinnamon", amount="1", is_active=False)
+
+    # 1. Verify all 3 items remain on preset list
+    assert preset.items.count() == 3
+    assert item_milk.is_active is True
+    assert item_cinnamon.is_active is False
+
+    # 2. Toggle 'Eggs' to inactive via toggle endpoint
+    resp = client.post(f"/preset-lists/{preset.id}/items/{item_eggs.id}/toggle-active/", HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    item_eggs.refresh_from_db()
+    assert item_eggs.is_active is False
+
+    # Preset items count is still 3 (inactive items remain on the list)
+    assert preset.items.count() == 3
+    assert b"Paused for schedule" in resp.content
+
+    # 3. Automated schedule refresh should ONLY load active items (Milk)
+    result = apply_preset_scheduled_refresh(preset, target_list=primary_list)
+    assert result["added_count"] == 1
+    assert primary_list.items.filter(source_preset=preset, name="Whole Milk").exists()
+    assert not primary_list.items.filter(source_preset=preset, name="Dozen Eggs").exists()
+    assert not primary_list.items.filter(source_preset=preset, name="Cinnamon").exists()
+
+    # 4. Individual items modal displays ALL items, including inactive ones
+    modal_resp = client.get(f"/preset-lists/{preset.id}/load-modal/")
+    assert modal_resp.status_code == 200
+    assert b"Whole Milk" in modal_resp.content
+    assert b"Dozen Eggs" in modal_resp.content
+    assert b"Cinnamon" in modal_resp.content
+    assert b"Inactive on schedule" in modal_resp.content
+
+    # 5. Toggle 'Eggs' back to active
+    resp = client.post(f"/preset-lists/{preset.id}/items/{item_eggs.id}/toggle-active/", HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    item_eggs.refresh_from_db()
+    assert item_eggs.is_active is True
+
+    # 6. Next schedule refresh now loads both Milk and Eggs (but still not Cinnamon)
+    result2 = apply_preset_scheduled_refresh(preset, target_list=primary_list)
+    assert result2["added_count"] == 2
+    assert primary_list.items.filter(source_preset=preset, name="Whole Milk").exists()
+    assert primary_list.items.filter(source_preset=preset, name="Dozen Eggs").exists()
+    assert not primary_list.items.filter(source_preset=preset, name="Cinnamon").exists()
+
+    # 7. Inactive items can still be loaded if selected in manual modal
+    resp = client.post(f"/preset-lists/{preset.id}/load/", {
+        "item_ids": [str(item_cinnamon.id)],
+        "replace_existing": "false",
+    })
+    assert resp.status_code in (200, 302)
+    assert primary_list.items.filter(source_preset=preset, name="Cinnamon").exists()

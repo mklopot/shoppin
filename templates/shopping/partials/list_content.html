@@ -52,6 +52,85 @@
     </div>
     {% endif %}
 
+    <!-- Preset Lists Strip (Loaded & Schedule Indicators) -->
+    <div class="bg-gray-50 border border-gray-200 p-2 text-xs">
+        <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-700 uppercase text-[10px] tracking-wider">Include Preset Lists:</span>
+                <span class="text-[11px] text-gray-500 hidden sm:inline">Check box to load/unload items. Indicators show loaded status & schedule.</span>
+            </div>
+            <a href="{% url 'shopping:preset_list_index' %}" class="text-[11px] text-indigo-700 hover:underline font-semibold flex items-center space-x-1">
+                <span>Manage Presets &rarr;</span>
+            </a>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            {% for p in preset_lists %}
+            <div class="inline-flex items-center border shadow-sm divide-x divide-gray-200 text-xs {% if p.is_loaded %}bg-indigo-50/70 border-indigo-300 text-indigo-950 font-medium{% else %}bg-white border-gray-300 text-gray-700{% endif %}">
+                <!-- Checkbox & Loaded Indicator -->
+                <div class="flex items-center space-x-1.5 px-2.5 py-1">
+                    {% if p.is_loaded %}
+                    <form hx-post="{% url 'shopping:preset_unload' p.id %}?group_by={{ group_by }}&mode={{ mode }}"
+                          hx-target="#shopping-list-content"
+                          hx-swap="outerHTML"
+                          class="inline flex items-center">
+                        {% csrf_token %}
+                        <input type="checkbox"
+                               checked
+                               onchange="this.form.requestSubmit()"
+                               title="Click to unload '{{ p.name }}' from shopping list"
+                               class="h-3.5 w-3.5 text-indigo-600 border-gray-300 rounded-none cursor-pointer">
+                    </form>
+                    <span class="font-bold text-gray-900">{{ p.name }}</span>
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold bg-indigo-200/90 text-indigo-900 tracking-wide rounded-none">
+                        ✓ Loaded ({{ p.loaded_items_count }})
+                    </span>
+                    {% else %}
+                    <button type="button"
+                            hx-get="{% url 'shopping:preset_load_modal' p.id %}?from_shopping_list=1&group_by={{ group_by }}&mode={{ mode }}"
+                            hx-target="#modal-placeholder"
+                            title="Click to load '{{ p.name }}' onto shopping list"
+                            class="flex items-center space-x-1.5 hover:text-indigo-600 cursor-pointer">
+                        <input type="checkbox"
+                               class="h-3.5 w-3.5 text-gray-400 border-gray-300 rounded-none pointer-events-none">
+                        <span>{{ p.name }}</span>
+                        <span class="text-gray-400 text-[10px]">({{ p.items.count }})</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Schedule Indicator (on that same pill!) -->
+                <div class="px-2 py-1 bg-white/60">
+                    <button type="button"
+                            hx-get="{% url 'shopping:preset_schedule_modal' p.id %}?from_shopping_list=1&group_by={{ group_by }}&mode={{ mode }}"
+                            hx-target="#modal-placeholder"
+                            class="flex items-center space-x-1 hover:opacity-80 cursor-pointer"
+                            title="View or configure recurring schedule for '{{ p.name }}'">
+                        {% if p.is_schedule_enabled %}
+                        <span class="inline-flex items-center text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-1.5 py-0.2">
+                            ⏱ Every {{ p.interval_days }}d
+                        </span>
+                        {% if p.next_occurrence %}
+                        <span class="text-[10px] text-gray-600 hidden md:inline" title="Next run: {{ p.next_occurrence|date:'M j, Y g:i A' }}">
+                            (Next: {{ p.next_occurrence|date:"M j" }})
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="inline-flex items-center text-[10px] font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 px-1.5 py-0.2" title="No automated refresh schedule. Click to configure.">
+                            ⏱ Schedule Off
+                        </span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-gray-400 italic text-[11px] py-0.5">
+                No preset lists created yet. <a href="{% url 'shopping:preset_list_index' %}" class="text-indigo-600 hover:underline not-italic font-medium">+ Create one now</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     {% if can_write %}
     <!-- Secondary Controls Bar: Store Selector, Sort Order -->
     <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">

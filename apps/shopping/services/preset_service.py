@@ -238,6 +238,7 @@ def load_preset_items_to_shopping_list(
             purpose=f"Preset: {preset_list.name}",
             optional=item.optional,
             status=ItemStatus.NEED,
+            locked=True,
             source_preset=preset_list,
         )
         created_items.append(new_item)
@@ -251,6 +252,34 @@ def load_preset_items_to_shopping_list(
         sender_client_id=sender_id,
     )
     return created_items
+
+
+def unload_preset_from_shopping_list(
+    preset_list: ShoppingList,
+    target_list: ShoppingList,
+    request: HttpRequest | None = None,
+) -> int:
+    """
+    Remove all items previously loaded from a preset list from the primary shopping list.
+
+    Args:
+        preset_list: Source preset list template.
+        target_list: Target primary shopping list.
+        request: Optional HttpRequest for WebSocket attribution.
+
+    Returns:
+        Number of items removed.
+    """
+    removed_count, _ = target_list.items.filter(source_preset=preset_list).delete()
+    actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
+    sender_id = request.headers.get("X-Client-Id") if request else ""
+    broadcast_shopping_list_update(
+        shopping_list=target_list,
+        toast_message=f"Removed '{preset_list.name}' items from shopping list",
+        actor_name=actor_name,
+        sender_client_id=sender_id,
+    )
+    return removed_count
 
 
 def apply_preset_scheduled_refresh(
@@ -320,6 +349,7 @@ def apply_preset_scheduled_refresh(
             purpose=f"Preset: {preset_list.name}",
             optional=item.optional,
             status=ItemStatus.NEED,
+            locked=True,
             source_preset=preset_list,
         )
         added_items.append(new_item)

@@ -111,10 +111,11 @@ def test_load_preset_items_to_shopping_list(preset_setup):
     loaded = load_preset_items_to_shopping_list(preset, primary_list)
     assert len(loaded) == 2
 
-    # Check that loaded items have source_preset set and status NEED
+    # Check that loaded items have source_preset set and status NEED and locked=True (confirmed)
     for it in primary_list.items.all():
         assert it.source_preset == preset
         assert it.status == ItemStatus.NEED
+        assert it.locked is True
         assert f"Preset: {preset.name}" in it.purpose
 
 
@@ -194,6 +195,7 @@ def test_scheduled_refresh_removes_old_items_regardless_of_status_and_readds(pre
     assert preset_shopping_items.count() == 3
     for it in preset_shopping_items:
         assert it.status == ItemStatus.NEED
+        assert it.locked is True
 
     # Verify preset schedule timestamps were advanced
     preset.refresh_from_db()
@@ -313,3 +315,49 @@ def test_preset_views_and_permissions(client, preset_setup):
         "name": "Forbidden Item",
     })
     assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_preset_shopping_list_indicator_and_unload(client, preset_setup):
+    """Test shopping list displays preset indicator with loaded status and schedule, and supports unload."""
+    owner = preset_setup["owner"]
+    ws = preset_setup["workspace"]
+    primary_list = preset_setup["primary_list"]
+
+    preset = create_preset_list(ws, "Breakfast Essentials", interval_days=7, is_schedule_enabled=True)
+    add_preset_item(preset, "Oatmeal", amount="1", amount_unit="box")
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # 1. Initially not loaded
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert b"Breakfast Essentials" in resp.content
+    assert b"Every 7d" in resp.content
+
+    # 2. Schedule modal endpoint
+    resp = client.get(f"/preset-lists/{preset.id}/schedule-modal/")
+    assert resp.status_code == 200
+    assert b"Recurring Refresh Schedule" in resp.content
+
+    # 3. Load items from preset onto shopping list
+    resp = client.post(f"/preset-lists/{preset.id}/load/", {
+        "from_shopping_list": "1",
+    }, HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    assert primary_list.items.filter(source_preset=preset, name="Oatmeal").exists()
+    oatmeal_item = primary_list.items.get(source_preset=preset, name="Oatmeal")
+    assert oatmeal_item.locked is True  # NOT "not confirmed"
+
+    # Shopping list view now shows Loaded indicator
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert b"Loaded (1)" in resp.content
+
+    # 4. Unload preset from shopping list
+    resp = client.post(f"/preset-lists/{preset.id}/unload/", HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    assert not primary_list.items.filter(source_preset=preset).exists()

@@ -32,6 +32,7 @@ from apps.shopping.services.preset_service import (
     delete_preset_item,
     get_workspace_presets,
     load_preset_items_to_shopping_list,
+    unload_preset_from_shopping_list,
     update_preset_schedule,
 )
 from apps.shopping.services.store_service import get_known_categories
@@ -71,6 +72,15 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
     check_and_apply_due_preset_schedules(workspace, request=request)
 
     preset_lists = get_workspace_presets(workspace)
+    primary_list = workspace.get_primary_list()
+    for p in preset_lists:
+        if primary_list:
+            p.loaded_items_count = primary_list.items.filter(source_preset=p).count()
+            p.is_loaded = p.loaded_items_count > 0
+        else:
+            p.loaded_items_count = 0
+            p.is_loaded = False
+
     user = getattr(request, "user", None)
     can_write = workspace.can_write(user) if (user and user.is_authenticated) else True
     user_role = workspace.get_user_role(user) if (user and user.is_authenticated) else "owner"
@@ -78,6 +88,7 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
     context: dict[str, Any] = {
         "workspace": workspace,
         "preset_lists": preset_lists,
+        "primary_list": primary_list,
         "can_write": can_write,
         "user_role": user_role,
         "default_interval_days": 7,
@@ -132,12 +143,18 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
     items = preset_list.items.all().order_by("order", "id")
     known_categories = get_known_categories()
 
+    primary_list = workspace.get_primary_list() if workspace else None
+    loaded_count = primary_list.items.filter(source_preset=preset_list).count() if primary_list else 0
+    is_loaded = loaded_count > 0
+
     context: dict[str, Any] = {
         "workspace": workspace,
         "preset_list": preset_list,
         "items": items,
         "known_categories": known_categories,
         "can_write": can_write,
+        "loaded_count": loaded_count,
+        "is_loaded": is_loaded,
         "toast_message": request.GET.get("toast", ""),
     }
 
@@ -322,7 +339,28 @@ def preset_update_schedule(request: HttpRequest, preset_id: int) -> HttpResponse
         next_occurrence=next_occurrence,
     )
 
+    from_shopping_list = request.POST.get("from_shopping_list") == "1"
     if request.headers.get("HX-Request"):
+        if from_shopping_list:
+            from apps.shopping.views import (
+                _build_list_context,
+                get_active_list,
+                render_list_response,
+            )
+            primary_list = workspace.get_primary_list() if workspace else None
+            if not primary_list:
+                primary_list = get_active_list(request)
+            group_by = request.POST.get("group_by", "category")
+            mode = request.POST.get("mode")
+            context = _build_list_context(request, primary_list, group_by=group_by, mode=mode)
+            # Close modal via OOB and render list
+            return render_list_response(
+                request,
+                context,
+                toast_message=f"Updated schedule for '{preset_list.name}'",
+                force_partial=True,
+            )
+
         return render(
             request,
             "presets/partials/schedule_section.html",
@@ -356,7 +394,27 @@ def preset_run_schedule_now(request: HttpRequest, preset_id: int) -> HttpRespons
         f"re-added {res['added_count']} active items."
     )
 
+    from_shopping_list = request.POST.get("from_shopping_list") == "1"
     if request.headers.get("HX-Request"):
+        if from_shopping_list:
+            from apps.shopping.views import (
+                _build_list_context,
+                get_active_list,
+                render_list_response,
+            )
+            primary_list = workspace.get_primary_list() if workspace else None
+            if not primary_list:
+                primary_list = get_active_list(request)
+            group_by = request.POST.get("group_by", "category")
+            mode = request.POST.get("mode")
+            context = _build_list_context(request, primary_list, group_by=group_by, mode=mode)
+            return render_list_response(
+                request,
+                context,
+                toast_message=msg,
+                force_partial=True,
+            )
+
         return render(
             request,
             "presets/partials/schedule_section.html",
@@ -368,6 +426,28 @@ def preset_run_schedule_now(request: HttpRequest, preset_id: int) -> HttpRespons
         )
 
     return redirect(f"/preset-lists/{preset_id}/?toast={msg}")
+
+
+def preset_schedule_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
+    """
+    Render modal dialog to view or configure recurring schedule for a preset list.
+    """
+    preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
+    workspace = preset_list.workspace or get_active_workspace(request)
+    user = getattr(request, "user", None)
+    can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
+
+    return render(
+        request,
+        "presets/partials/schedule_modal.html",
+        {
+            "preset_list": preset_list,
+            "can_write": can_write,
+            "from_shopping_list": request.GET.get("from_shopping_list") == "1",
+            "group_by": request.GET.get("group_by", "category"),
+            "mode": request.GET.get("mode", ""),
+        },
+    )
 
 
 def preset_load_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
@@ -388,6 +468,9 @@ def preset_load_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
         {
             "preset_list": preset_list,
             "items": items,
+            "from_shopping_list": request.GET.get("from_shopping_list") == "1",
+            "group_by": request.GET.get("group_by", "category"),
+            "mode": request.GET.get("mode", ""),
         },
     )
 
@@ -422,12 +505,58 @@ def preset_load_items(request: HttpRequest, preset_id: int) -> HttpResponse:
 
     msg = f"Added {len(created)} items from '{preset_list.name}' to shopping list."
 
+    from_shopping_list = request.POST.get("from_shopping_list") == "1"
     if request.headers.get("HX-Request"):
-        # Close modal and display toast
+        if from_shopping_list:
+            from apps.shopping.views import _build_list_context, render_list_response
+            group_by = request.POST.get("group_by", "category")
+            mode = request.POST.get("mode")
+            context = _build_list_context(request, primary_list, group_by=group_by, mode=mode)
+            return render_list_response(
+                request,
+                context,
+                toast_message=msg,
+                force_partial=True,
+            )
+
         return render(
             request,
             "recipes/partials/toast_oob.html",
             {"toast_message": msg},
+        )
+
+    return redirect("shopping:list")
+
+
+@require_POST
+def preset_unload(request: HttpRequest, preset_id: int) -> HttpResponse:
+    """
+    Unload/remove all items previously added from this preset list from the primary shopping list.
+    """
+    preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
+    workspace = preset_list.workspace or get_active_workspace(request)
+    primary_list = workspace.get_primary_list() if workspace else None
+    if not primary_list:
+        from apps.shopping.views import get_active_list
+        primary_list = get_active_list(request)
+
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated and workspace and not workspace.can_write(user):
+        return HttpResponseForbidden("Read-only access.")
+
+    removed_count = unload_preset_from_shopping_list(preset_list, primary_list, request=request)
+    msg = f"Removed {removed_count} items from preset '{preset_list.name}'"
+
+    if request.headers.get("HX-Request"):
+        from apps.shopping.views import _build_list_context, render_list_response
+        group_by = request.GET.get("group_by", "category")
+        mode = request.GET.get("mode")
+        context = _build_list_context(request, primary_list, group_by=group_by, mode=mode)
+        return render_list_response(
+            request,
+            context,
+            toast_message=msg,
+            force_partial=True,
         )
 
     return redirect("shopping:list")

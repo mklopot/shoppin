@@ -5,10 +5,20 @@
 
         <div class="inline-block align-bottom bg-white text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-gray-300">
             <form hx-post="{% url 'shopping:preset_load_items' preset_list.id %}"
+                  {% if from_shopping_list %}
+                  hx-target="#shopping-list-content"
+                  hx-swap="outerHTML"
+                  {% else %}
                   hx-target="#toast-container"
                   hx-swap="beforeend"
+                  {% endif %}
                   hx-on::after-request="document.getElementById('modal-placeholder').innerHTML = ''">
                 {% csrf_token %}
+                {% if from_shopping_list %}
+                <input type="hidden" name="from_shopping_list" value="1">
+                <input type="hidden" name="group_by" value="{{ group_by }}">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                {% endif %}
                 <div class="bg-white px-5 pt-5 pb-4 sm:p-6 sm:pb-4 space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-gray-200">
                         <div>

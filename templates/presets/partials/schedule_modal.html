@@ -1,0 +1,144 @@
+<div id="modal-backdrop" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('modal-placeholder').innerHTML = ''"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-gray-300">
+            <form {% if from_shopping_list %}
+                  hx-post="{% url 'shopping:preset_update_schedule' preset_list.id %}"
+                  hx-target="#shopping-list-content"
+                  hx-swap="outerHTML"
+                  hx-on::after-request="document.getElementById('modal-placeholder').innerHTML = ''"
+                  {% else %}
+                  hx-post="{% url 'shopping:preset_update_schedule' preset_list.id %}"
+                  hx-target="#preset-schedule-container"
+                  hx-swap="outerHTML"
+                  hx-on::after-request="document.getElementById('modal-placeholder').innerHTML = ''"
+                  {% endif %}>
+                {% csrf_token %}
+                {% if from_shopping_list %}
+                <input type="hidden" name="from_shopping_list" value="1">
+                <input type="hidden" name="group_by" value="{{ group_by }}">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                {% endif %}
+
+                <div class="bg-white px-5 pt-5 pb-4 sm:p-6 sm:pb-4 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900" id="modal-title">
+                                Recurring Refresh Schedule
+                            </h3>
+                            <p class="text-xs text-gray-500">
+                                Preset: "{{ preset_list.name }}"
+                            </p>
+                        </div>
+                        <button type="button"
+                                onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                                class="text-gray-400 hover:text-gray-500 font-bold text-lg">
+                            ✕
+                        </button>
+                    </div>
+
+                    <!-- Behavior Explanation -->
+                    <div class="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded leading-relaxed">
+                        <strong>Automatic Refresh:</strong> When the schedule triggers, all entries previously added to your shopping list from this preset list are removed (regardless of their status: Need, Got, or Have), and all active preset items are immediately re-added fresh.
+                    </div>
+
+                    <!-- Enable / Disable Toggle -->
+                    <div class="flex items-center justify-between p-3 bg-gray-50 border border-gray-200">
+                        <div>
+                            <label for="sched-modal-enable" class="text-xs font-bold text-gray-800 cursor-pointer">
+                                Enable Automated Schedule
+                            </label>
+                            <p class="text-[11px] text-gray-500">
+                                Turn on to automatically refresh items on your shopping list.
+                            </p>
+                        </div>
+                        <input type="checkbox"
+                               id="sched-modal-enable"
+                               name="is_schedule_enabled"
+                               {% if preset_list.is_schedule_enabled %}checked{% endif %}
+                               {% if not can_write %}disabled{% endif %}
+                               class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-0 cursor-pointer">
+                    </div>
+
+                    <!-- Interval Setting -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                            Recurrence Interval (from last occurrence)
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <input type="number"
+                                   id="modal-interval-days"
+                                   name="interval_days"
+                                   value="{{ preset_list.interval_days|default:7 }}"
+                                   min="1"
+                                   {% if not can_write %}disabled{% endif %}
+                                   class="w-24 border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
+                            <span class="text-xs text-gray-600 font-medium">days (defaults to 1 week / 7 days)</span>
+                        </div>
+                        <div class="mt-1.5 flex gap-1.5">
+                            <button type="button"
+                                    onclick="document.getElementById('modal-interval-days').value=7"
+                                    class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                                1 Week (7d)
+                            </button>
+                            <button type="button"
+                                    onclick="document.getElementById('modal-interval-days').value=14"
+                                    class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                                2 Weeks (14d)
+                            </button>
+                            <button type="button"
+                                    onclick="document.getElementById('modal-interval-days').value=30"
+                                    class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                                1 Month (30d)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Next Occurrence Date/Time Picker -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                            Next Occurrence (Editable)
+                        </label>
+                        <input type="datetime-local"
+                               name="next_occurrence"
+                               value="{{ preset_list.next_occurrence|date:'Y-m-d\TH:i' }}"
+                               {% if not can_write %}disabled{% endif %}
+                               class="w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
+                        <p class="text-[11px] text-gray-500 mt-1">
+                            You can change when the next refresh will happen.
+                        </p>
+                    </div>
+
+                    <!-- Last Run Metadata -->
+                    <div class="text-xs text-gray-500 border-t border-gray-100 pt-2 flex justify-between">
+                        <span>Last occurrence:</span>
+                        <span class="font-medium text-gray-800">
+                            {% if preset_list.last_applied_at %}
+                                {{ preset_list.last_applied_at|date:"M j, Y g:i A" }}
+                            {% else %}
+                                Never executed yet
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-5 py-3 sm:flex sm:flex-row-reverse border-t border-gray-200 justify-between items-center">
+                    <div class="sm:flex sm:flex-row-reverse">
+                        {% if can_write %}
+                        <button type="submit" class="w-full inline-flex justify-center px-4 py-2 bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto shadow-sm">
+                            Save Schedule
+                        </button>
+                        {% endif %}
+                        <button type="button"
+                                onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                                class="mt-3 w-full inline-flex justify-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

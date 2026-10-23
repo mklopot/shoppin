@@ -37,59 +37,103 @@
         {% for preset in preset_lists %}
         <div class="bg-white border border-gray-200 shadow-sm flex flex-col justify-between hover:border-gray-400 transition-colors">
             <!-- Card Header & Details -->
-            <div class="p-5">
+            <div class="p-5 space-y-4">
                 <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-lg font-bold text-gray-900 hover:text-indigo-600 truncate">
-                        <a href="{% url 'shopping:preset_detail' preset.id %}">{{ preset.name }}</a>
-                    </h2>
-                    <!-- Schedule Badge -->
-                    {% if preset.is_schedule_enabled %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 shrink-0">
-                        ● Recurring
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900 hover:text-indigo-600 truncate">
+                            <a href="{% url 'shopping:preset_detail' preset.id %}">{{ preset.name }}</a>
+                        </h2>
+                        <div class="mt-1 text-xs text-gray-500">
+                            <span>📋 {{ preset.items.count }} item{{ preset.items.count|pluralize }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Loaded Status Indicator Badge -->
+                    {% if preset.is_loaded %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-none text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 shrink-0">
+                        ✓ Loaded ({{ preset.loaded_items_count }})
                     </span>
                     {% else %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-600 shrink-0">
-                        Manual
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-none text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200 shrink-0">
+                        Not on List
                     </span>
                     {% endif %}
                 </div>
 
-                <div class="mt-2 text-xs text-gray-500 flex items-center gap-3">
-                    <span>📋 {{ preset.items.count }} item{{ preset.items.count|pluralize }}</span>
-                    {% if preset.is_schedule_enabled %}
-                    <span>⏱ Every {{ preset.interval_days }} day{{ preset.interval_days|pluralize }}</span>
-                    {% endif %}
-                </div>
-
-                <!-- Schedule Metadata -->
-                {% if preset.is_schedule_enabled %}
-                <div class="mt-3 p-2.5 bg-gray-50 border border-gray-100 rounded text-xs space-y-1">
-                    <div class="flex justify-between text-gray-600">
-                        <span class="text-gray-400">Next refresh:</span>
-                        <span class="font-medium text-gray-900">
-                            {% if preset.next_occurrence %}
-                                {{ preset.next_occurrence|date:"M j, Y g:i A" }}
-                            {% else %}
-                                Not set
-                            {% endif %}
+                <!-- Prominent Recurring Schedule Feature Block -->
+                <div class="p-3 bg-gray-50 border border-gray-200 text-xs space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-gray-800 uppercase text-[10px] tracking-wider flex items-center space-x-1">
+                            <span>⏱ Recurring Schedule:</span>
                         </span>
+                        {% if preset.is_schedule_enabled %}
+                        <span class="inline-flex items-center px-2 py-0.2 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                            ● Active (Every {{ preset.interval_days }}d)
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-0.2 rounded text-[11px] font-medium bg-gray-200 text-gray-600">
+                            Off
+                        </span>
+                        {% endif %}
                     </div>
-                    {% if preset.last_applied_at %}
-                    <div class="flex justify-between text-gray-500 text-[11px]">
-                        <span class="text-gray-400">Last run:</span>
-                        <span>{{ preset.last_applied_at|date:"M j, Y g:i A" }}</span>
+
+                    {% if preset.is_schedule_enabled %}
+                    <div class="space-y-1 text-gray-600 text-[11px]">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Next occurrence:</span>
+                            <span class="font-semibold text-gray-900">
+                                {% if preset.next_occurrence %}
+                                    {{ preset.next_occurrence|date:"M j, Y g:i A" }}
+                                {% else %}
+                                    Not set
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if preset.last_applied_at %}
+                        <div class="flex justify-between text-gray-500">
+                            <span class="text-gray-400">Last occurrence:</span>
+                            <span>{{ preset.last_applied_at|date:"M j, Y g:i A" }}</span>
+                        </div>
+                        {% endif %}
                     </div>
+                    {% else %}
+                    <p class="text-[11px] text-gray-500">
+                        Not scheduled to refresh automatically.
+                    </p>
                     {% endif %}
+
+                    <!-- Quick Schedule Action Buttons -->
+                    <div class="pt-1 flex items-center gap-2">
+                        <button type="button"
+                                hx-get="{% url 'shopping:preset_schedule_modal' preset.id %}"
+                                hx-target="#modal-placeholder"
+                                class="px-2 py-1 bg-white border border-gray-300 text-[11px] font-medium text-gray-700 hover:bg-gray-100 shadow-sm">
+                            ⚙ Configure Schedule
+                        </button>
+                        {% if preset.is_schedule_enabled and can_write and preset.items.count > 0 %}
+                        <form hx-post="{% url 'shopping:preset_run_schedule_now' preset.id %}"
+                              hx-target="#toast-container"
+                              hx-swap="beforeend"
+                              class="inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    onclick="return confirm('Execute scheduled refresh now for {{ preset.name|escapejs }}? This clears any previous items from this preset on the shopping list and re-adds all items fresh.');"
+                                    class="px-2 py-1 bg-white border border-gray-300 text-[11px] font-medium text-amber-800 hover:bg-amber-50 shadow-sm"
+                                    title="Manually trigger scheduled refresh now">
+                                ⚡ Run Now
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
 
                 <!-- Preview of Items -->
-                <div class="mt-4">
-                    <p class="text-[11px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Items Preview</p>
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Preset Items</p>
                     {% if preset.items.all %}
                     <div class="flex flex-wrap gap-1">
                         {% for it in preset.items.all|slice:":5" %}
-                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">
+                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">
                             {{ it.name }}{% if it.amount_display %} ({{ it.amount_display }}){% endif %}
                         </span>
                         {% endfor %}
@@ -107,20 +151,30 @@
 
             <!-- Card Actions Footer -->
             <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between text-xs">
+                <a href="{% url 'shopping:preset_detail' preset.id %}"
+                   class="font-medium text-indigo-600 hover:text-indigo-900">
+                    Edit Items &rarr;
+                </a>
+
                 <div class="flex items-center space-x-2">
-                    <a href="{% url 'shopping:preset_detail' preset.id %}"
-                       class="font-medium text-indigo-600 hover:text-indigo-900">
-                        Edit List →
-                    </a>
-                </div>
-                <div class="flex items-center space-x-2">
-                    {% if can_write and preset.items.count > 0 %}
-                    <button type="button"
-                            hx-get="{% url 'shopping:preset_load_modal' preset.id %}"
-                            hx-target="#modal-placeholder"
-                            class="px-2.5 py-1 bg-white border border-gray-300 font-medium text-gray-700 hover:bg-gray-100 shadow-sm">
-                        Load to Shopping List
-                    </button>
+                    {% if can_write %}
+                        {% if preset.is_loaded %}
+                        <form action="{% url 'shopping:preset_unload' preset.id %}" method="POST" class="inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    onclick="return confirm('Remove all items from {{ preset.name|escapejs }} from your shopping list?');"
+                                    class="px-2.5 py-1 bg-white border border-red-300 text-red-700 font-medium hover:bg-red-50 shadow-sm">
+                                Unload from List
+                            </button>
+                        </form>
+                        {% else %}
+                        <button type="button"
+                                hx-get="{% url 'shopping:preset_load_modal' preset.id %}"
+                                hx-target="#modal-placeholder"
+                                class="px-2.5 py-1 bg-indigo-600 font-medium text-white hover:bg-indigo-700 shadow-sm">
+                            Load to Shopping List
+                        </button>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -180,25 +234,26 @@
                                    class="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
                         </div>
 
-                        <!-- Schedule Configuration -->
-                        <div class="pt-3 border-t border-gray-100">
-                            <div class="flex items-center justify-between">
-                                <label for="enable-schedule" class="text-sm font-medium text-gray-800">
-                                    Enable Recurring Schedule
-                                </label>
+                        <!-- Schedule Configuration (Visible by default) -->
+                        <div class="pt-3 border-t border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <label for="enable-schedule" class="text-sm font-bold text-gray-900 cursor-pointer">
+                                        Recurring Schedule (Optional)
+                                    </label>
+                                    <p class="text-[11px] text-gray-500">
+                                        Auto-refreshes items on your shopping list on a recurring cycle.
+                                    </p>
+                                </div>
                                 <input type="checkbox"
                                        id="enable-schedule"
                                        name="is_schedule_enabled"
-                                       onchange="document.getElementById('schedule-options').classList.toggle('hidden', !this.checked)"
-                                       class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-0">
+                                       class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-0 cursor-pointer">
                             </div>
-                            <p class="text-xs text-gray-500 mt-0.5">
-                                Automatically removes previous entries from this preset list and re-adds active items fresh on each interval.
-                            </p>
 
-                            <div id="schedule-options" class="hidden mt-4 space-y-3 p-3 bg-gray-50 border border-gray-200">
+                            <div id="schedule-options" class="space-y-3 p-3 bg-gray-50 border border-gray-200">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                         Recurrence Interval (from last occurrence)
                                     </label>
                                     <div class="flex items-center space-x-2">
@@ -209,17 +264,22 @@
                                                class="w-24 border border-gray-300 px-2.5 py-1.5 text-sm bg-white">
                                         <span class="text-xs text-gray-600 font-medium">days (defaults to 1 week / 7 days)</span>
                                     </div>
+                                    <div class="mt-1 flex gap-1.5">
+                                        <button type="button" onclick="this.form.interval_days.value=7" class="text-[10px] px-2 py-0.5 bg-white border border-gray-300 hover:bg-gray-100">1 Week (7d)</button>
+                                        <button type="button" onclick="this.form.interval_days.value=14" class="text-[10px] px-2 py-0.5 bg-white border border-gray-300 hover:bg-gray-100">2 Weeks (14d)</button>
+                                        <button type="button" onclick="this.form.interval_days.value=30" class="text-[10px] px-2 py-0.5 bg-white border border-gray-300 hover:bg-gray-100">1 Month (30d)</button>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">
+                                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                         First / Next Occurrence (Optional)
                                     </label>
                                     <input type="datetime-local"
                                            name="next_occurrence"
                                            class="w-full border border-gray-300 px-2.5 py-1.5 text-sm bg-white">
                                     <p class="text-[11px] text-gray-500 mt-1">
-                                        Leave blank to default to 1 interval from now.
+                                        Defaults to 1 interval (1 week) from creation, or specify a custom start date/time.
                                     </p>
                                 </div>
                             </div>

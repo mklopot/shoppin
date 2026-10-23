@@ -141,10 +141,19 @@ def _build_list_context(
     meal_plan = workspace.get_meal_plan() if workspace else None
     planned_meals = list(meal_plan.meals.prefetch_related("recipes").all()) if meal_plan else []
 
+    preset_lists = []
+    if workspace:
+        raw_presets = list(workspace.get_preset_lists().prefetch_related("items").order_by("name"))
+        for p in raw_presets:
+            p.loaded_items_count = shopping_list.items.filter(source_preset=p).count()
+            p.is_loaded = p.loaded_items_count > 0
+            preset_lists.append(p)
+
     return {
         "shopping_list": shopping_list,
         "workspace": workspace,
         "planned_meals": planned_meals,
+        "preset_lists": preset_lists,
         "can_write": can_write,
         "user_role": user_role,
         "grouped_need": grouped_need,
@@ -396,8 +405,8 @@ def add_item(request: HttpRequest) -> HttpResponse:
             existing.purpose = f"{existing_purpose}, {purpose}".strip(", ")
         else:
             existing.purpose = existing_purpose
-        # Item was combined, so amount changed -> reset to not confirmed status
-        existing.locked = False
+        # Item was manually added or combined -> confirm it so it is not in "not confirmed" status
+        existing.locked = True
         _set_item_audit(existing, request)
         existing.save(
             update_fields=[
@@ -426,6 +435,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
             category=category,
             aisle=aisle,
             status=ItemStatus.NEED,
+            locked=True,
             order=max_order + 1,
             status_changed_at=timezone.now(),
             status_changed_by=audit_user,

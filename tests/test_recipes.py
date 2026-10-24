@@ -484,3 +484,227 @@ def test_recipe_views(client: Client, sample_recipes, auth_user):
     resp_del = client.post(reverse("recipes:delete", args=[r3.id]))
     assert resp_del.status_code == 302
     assert not Recipe.objects.filter(id=r3.id).exists()
+
+
+MOCK_RECIPE_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Classic Guacamole",
+  "description": "Authentic homemade fresh guacamole.",
+  "recipeYield": "6 servings",
+  "prepTime": "PT10M",
+  "cookTime": "PT5M",
+  "totalTime": "PT15M",
+  "recipeIngredient": [
+    "3 ripe avocados",
+    "1/2 cup diced red onion",
+    "2 tbsp fresh lime juice",
+    "1/2 tsp kosher salt",
+    "1 (15-ounce) can diced tomatoes",
+    "salt and pepper to taste"
+  ],
+  "recipeInstructions": [
+    {"@type": "HowToStep", "text": "Cut avocados and scoop into bowl."},
+    {"@type": "HowToStep", "text": "Mash avocados with lime juice and salt."},
+    {"@type": "HowToStep", "text": "Fold in diced onion and tomatoes, then serve."}
+  ],
+  "image": "https://images.example.com/guac.jpg",
+  "recipeCategory": "Appetizer",
+  "recipeCuisine": "Mexican"
+}
+</script>
+</head>
+<body><h1>Classic Guacamole</h1></body>
+</html>
+"""
+
+
+def test_parse_ingredient_line():
+    """Verify parsing of various free-form ingredient text lines into structured tokens."""
+    from apps.recipes.services.recipe_scraper import parse_ingredient_line
+
+    # 1. Whole number without unit
+    i1 = parse_ingredient_line("3 ripe avocados")
+    assert i1["amount"] == Decimal("3.00")
+    assert i1["amount_unit"] == ""
+    assert i1["name"] == "ripe avocados"
+
+    # 2. Simple fraction with unit
+    i2 = parse_ingredient_line("1/2 cup diced red onion")
+    assert i2["amount"] == Decimal("0.50")
+    assert i2["amount_unit"] == "cup"
+    assert i2["name"] == "diced red onion"
+
+    # 3. Tablespoon unit
+    i3 = parse_ingredient_line("2 tbsp fresh lime juice")
+    assert i3["amount"] == Decimal("2.00")
+    assert i3["amount_unit"] == "tbsp"
+    assert i3["name"] == "fresh lime juice"
+
+    # 4. Mixed fraction
+    i4 = parse_ingredient_line("1 1/2 cups of flour")
+    assert i4["amount"] == Decimal("1.50")
+    assert i4["amount_unit"] == "cups"
+    assert i4["name"] == "flour"
+
+    # 5. Parenthesized can size
+    i5 = parse_ingredient_line("1 (15-ounce) can diced tomatoes")
+    assert i5["amount"] == Decimal("1.00")
+    assert i5["amount_unit"] == "can"
+    assert "(15-ounce) diced tomatoes" in i5["name"]
+
+    # 6. Unicode fraction
+    i6 = parse_ingredient_line("½ tsp salt")
+    assert i6["amount"] == Decimal("0.50")
+    assert i6["amount_unit"] == "tsp"
+    assert i6["name"] == "salt"
+
+    # 7. Non-numeric line
+    i7 = parse_ingredient_line("salt and pepper to taste")
+    assert i7["amount"] == Decimal("1.00")
+    assert i7["name"] == "salt and pepper to taste"
+
+
+def test_scrape_recipe_data_from_mock_html():
+    """Test scrape_recipe_data extracts all fields accurately from Schema.org HTML."""
+    from apps.recipes.services.recipe_scraper import scrape_recipe_data
+
+    url = "https://www.allrecipes.com/recipe/158968/classic-guacamole/"
+    data = scrape_recipe_data(url=url, html=MOCK_RECIPE_HTML)
+
+    assert data["name"] == "Classic Guacamole"
+    assert data["description"] == "Authentic homemade fresh guacamole."
+    assert data["portions"] == 6
+    assert data["prep_time_minutes"] == 10
+    assert data["cook_time_minutes"] == 5
+    assert data["cuisine"] == "Mexican"
+    assert data["dish_type"] == "Appetizer"
+    assert data["photo_url"] == "https://images.example.com/guac.jpg"
+    assert len(data["ingredients"]) == 6
+    assert "Mash avocados" in data["directions"]
+    assert data["domain"] == "www.allrecipes.com"
+
+
+@pytest.mark.django_db
+def test_import_recipe_from_url_service(auth_user):
+    """Test import_recipe_from_url creates Recipe and Ingredients in the database."""
+    from apps.recipes.services.recipe_scraper import import_recipe_from_url
+
+    user, _ = auth_user
+    url = "https://www.allrecipes.com/recipe/158968/classic-guacamole/"
+    recipe = import_recipe_from_url(url=url, user=user, html=MOCK_RECIPE_HTML)
+
+    assert recipe.id is not None
+    assert recipe.name == "Classic Guacamole"
+    assert recipe.portions == 6
+    assert recipe.prep_time_minutes == 10
+    assert recipe.cook_time_minutes == 5
+    assert recipe.cuisine == "Mexican"
+    assert recipe.photo_urls == ["https://images.example.com/guac.jpg"]
+    assert recipe.bibliography == [url]
+    assert recipe.created_by == user
+
+    # Check ingredients created in DB
+    ings = list(recipe.ingredients.all())
+    assert len(ings) == 6
+    assert any(i.name == "ripe avocados" and i.amount == Decimal("3.00") for i in ings)
+    assert any(i.name == "diced red onion" and i.amount_unit == "cup" for i in ings)
+
+    # Importing same URL again avoids duplicate name collision by incrementing suffix
+    recipe2 = import_recipe_from_url(url=url, user=user, html=MOCK_RECIPE_HTML)
+    assert recipe2.name == "Classic Guacamole (1)"
+
+
+@pytest.mark.django_db
+def test_recipe_import_url_view_direct(client: Client, auth_user, monkeypatch):
+    """Test POST to /recipes/import-url/ with action='direct' imports recipe and redirects."""
+    from unittest.mock import MagicMock
+
+    import requests
+
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    mock_resp = MagicMock()
+    mock_resp.text = MOCK_RECIPE_HTML
+    mock_resp.raise_for_status = MagicMock()
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_resp)
+
+    resp = client.post(
+        reverse("recipes:import_url"),
+        {
+            "url": "https://www.allrecipes.com/recipe/158968/classic-guacamole/",
+            "action": "direct",
+        },
+    )
+    assert resp.status_code == 302
+    created = Recipe.objects.get(name="Classic Guacamole")
+    assert resp.url == reverse("recipes:detail", args=[created.id])
+    assert created.ingredients.count() == 6
+
+
+@pytest.mark.django_db
+def test_recipe_create_view_with_import_url_prefill(client: Client, auth_user, monkeypatch):
+    """Test GET /recipes/create/?import_url=... renders form pre-filled with scraped recipe data."""
+    from unittest.mock import MagicMock
+
+    import requests
+
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    mock_resp = MagicMock()
+    mock_resp.text = MOCK_RECIPE_HTML
+    mock_resp.raise_for_status = MagicMock()
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_resp)
+
+    url = "https://www.allrecipes.com/recipe/158968/classic-guacamole/"
+    resp = client.get(reverse("recipes:create") + f"?import_url={url}")
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+
+    assert "Classic Guacamole" in html
+    assert "Authentic homemade fresh guacamole" in html
+    assert "ripe avocados" in html
+    assert "diced red onion" in html
+    assert "Mexican" in html
+    assert "Pre-filled recipe from www.allrecipes.com" in html
+
+
+@pytest.mark.django_db
+def test_recipe_import_url_view_errors(client: Client, auth_user, monkeypatch):
+    """Test validation and error handling for recipe URL imports."""
+    from unittest.mock import MagicMock
+
+    import requests
+
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    # 1. Empty URL
+    resp1 = client.post(reverse("recipes:import_url"), {"url": ""})
+    assert resp1.status_code == 302
+
+    # 2. Page without recipe data
+    mock_empty = MagicMock()
+    mock_empty.text = "<html><body><h1>Just a blog post</h1><p>No food here.</p></body></html>"
+    mock_empty.raise_for_status = MagicMock()
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_empty)
+
+    resp2 = client.post(reverse("recipes:import_url"), {"url": "https://example.com/no-recipe"})
+    assert resp2.status_code == 302
+    assert not Recipe.objects.filter(name="Just a blog post").exists()

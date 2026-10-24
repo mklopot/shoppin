@@ -7,6 +7,7 @@ from typing import Any
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.core.services.workspace_service import get_active_workspace
@@ -17,6 +18,7 @@ from apps.mealplans.services.mealplan_service import (
     get_active_meal_plan,
 )
 from apps.recipes.models import Recipe, RecipeRating
+from apps.recipes.services.recipe_scraper import import_recipe_from_url, scrape_recipe_data
 from apps.recipes.services.recipe_service import (
     create_or_update_recipe,
     get_filter_options,
@@ -115,6 +117,8 @@ def recipe_detail_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
 def recipe_create_view(request: HttpRequest) -> HttpResponse:
     """
     Create a new recipe entry.
+
+    Optionally accepts ?import_url=<url> to scrape and pre-populate the form.
     """
     workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
@@ -129,13 +133,80 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
     filter_options = get_filter_options()
     all_recipes = Recipe.objects.all().order_by("name")
 
+    recipe = None
+    ingredients = []
+    import_url = request.GET.get("import_url", "").strip()
+    if import_url:
+        try:
+            data = scrape_recipe_data(import_url)
+            recipe = Recipe(
+                name=data["name"],
+                description=data["description"],
+                directions=data["directions"],
+                portions=data["portions"],
+                prep_time_minutes=data["prep_time_minutes"],
+                cook_time_minutes=data["cook_time_minutes"],
+                cuisine=data["cuisine"],
+                dish_type=data["dish_type"],
+                photo_urls=[data["photo_url"]] if data["photo_url"] else [],
+                bibliography=[data["source_url"]],
+            )
+            ingredients = data["ingredients"]
+            messages.info(
+                request,
+                f"Pre-filled recipe from {data['domain']}. Review the details and ingredients below, then save.",
+            )
+        except Exception as exc:
+            messages.error(request, f"Could not scrape recipe from URL: {exc}")
+
     context: dict[str, Any] = {
         "workspace": workspace,
         "filter_options": filter_options,
         "all_recipes": all_recipes,
+        "recipe": recipe,
+        "ingredients": ingredients,
+        "import_url": import_url,
         "is_edit": False,
     }
     return render(request, "recipes/recipe_form.html", context)
+
+
+@require_POST
+def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
+    """
+    Import a recipe from an external webpage URL.
+
+    Actions:
+    - 'direct': Scrapes, saves immediately into database, and redirects to recipe detail.
+    - 'prefill': Scrapes and redirects to create form pre-filled for user review.
+    """
+    workspace = get_active_workspace(request)
+    user = getattr(request, "user", None)
+    if workspace and not workspace.can_write(user):
+        return HttpResponseForbidden("You have read-only access to this workspace.")
+
+    url = (request.POST.get("url") or "").strip()
+    action = request.POST.get("action", "direct").strip()
+
+    if not url:
+        messages.error(request, "Please enter a valid recipe webpage URL.")
+        return redirect("recipes:list")
+
+    if action == "prefill":
+        from urllib.parse import urlencode
+
+        return redirect(f"{reverse('recipes:create')}?{urlencode({'import_url': url})}")
+
+    try:
+        recipe = import_recipe_from_url(url=url, user=user)
+        messages.success(request, f"Recipe '{recipe.name}' successfully imported!")
+        return redirect("recipes:detail", recipe_id=recipe.id)
+    except ValueError as ve:
+        messages.error(request, str(ve))
+        return redirect("recipes:list")
+    except Exception as exc:
+        messages.error(request, f"Could not import recipe from '{url}': {exc}")
+        return redirect("recipes:list")
 
 
 def recipe_edit_view(request: HttpRequest, recipe_id: int) -> HttpResponse:

@@ -192,7 +192,16 @@
     </main>
 
     <!-- Floating Toast Notifications Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+                <span class="font-medium pr-2">{{ message }}</span>
+                <button type="button" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" onclick="dismissToast(this.closest('.toast-item'))">&times;</button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
 
     <!-- Dynamic Modal Container (HTMX) -->
     <div id="modal-placeholder"></div>

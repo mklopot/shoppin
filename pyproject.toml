@@ -11,6 +11,9 @@ dependencies = [
     "pyyaml>=6.0",
     "python-dotenv>=1.2",
     "pillow>=11.0",
+    "recipe-scrapers>=15.13",
+    "beautifulsoup4>=4.12",
+    "requests>=2.28",
 ]
 
 [project.optional-dependencies]

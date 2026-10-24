@@ -11,6 +11,7 @@ app_name = "recipes"
 urlpatterns = [
     path("", views.recipe_list_view, name="list"),
     path("create/", views.recipe_create_view, name="create"),
+    path("import-url/", views.recipe_import_url_view, name="import_url"),
     path("<int:recipe_id>/", views.recipe_detail_view, name="detail"),
     path("<int:recipe_id>/edit/", views.recipe_edit_view, name="edit"),
     path("<int:recipe_id>/delete/", views.recipe_delete_view, name="delete"),

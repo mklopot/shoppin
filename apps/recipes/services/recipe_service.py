@@ -16,6 +16,7 @@ from apps.core.utils import (
     singularize,
 )
 from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating
+from apps.recipes.services.nutrition_service import update_recipe_nutrition
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle
@@ -378,6 +379,12 @@ def create_or_update_recipe(
     serve_with_ids = data.getlist("serve_with[]") if hasattr(data, "getlist") else data.get("serve_with[]", [])
     if serve_with_ids:
         recipe.serve_with.set(Recipe.objects.filter(id__in=serve_with_ids))
+
+    # Recalculate nutritional analysis for the updated ingredients and portions
+    try:
+        update_recipe_nutrition(recipe, save=True)
+    except Exception:
+        pass
 
     return recipe
 

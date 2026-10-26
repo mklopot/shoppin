@@ -20,6 +20,7 @@ from recipe_scrapers import scrape_html
 
 from apps.core.categorizer import categorizer
 from apps.recipes.models import Ingredient, Recipe
+from apps.recipes.services.nutrition_service import update_recipe_nutrition
 
 logger = logging.getLogger(__name__)
 
@@ -406,6 +407,12 @@ def import_recipe_from_url(
             category=ing_data["category"],
             order=i,
         )
+
+    # Compute nutritional analysis for imported recipe
+    try:
+        update_recipe_nutrition(recipe, save=True)
+    except Exception as exc:
+        logger.warning("Could not calculate nutrition for '%s': %s", recipe.name, exc)
 
     logger.info("Successfully imported recipe '%s' (ID %d) from '%s'", recipe.name, recipe.id, url)
     return recipe

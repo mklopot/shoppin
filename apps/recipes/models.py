@@ -78,6 +78,51 @@ class Recipe(models.Model):
     storage_instructions = models.TextField(blank=True)
     reheating_instructions = models.TextField(blank=True)
 
+    # Nutritional Analysis (Approximate, per serving)
+    calories_per_serving = models.PositiveIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Approximate calories (kcal) per serving",
+    )
+    protein_per_serving_g = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        default=Decimal("0.0"),
+        db_index=True,
+        help_text="Approximate protein in grams per serving",
+    )
+    carbs_per_serving_g = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        default=Decimal("0.0"),
+        db_index=True,
+        help_text="Approximate carbohydrates in grams per serving",
+    )
+    fat_per_serving_g = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        default=Decimal("0.0"),
+        db_index=True,
+        help_text="Approximate total fat in grams per serving",
+    )
+    fiber_per_serving_g = models.DecimalField(
+        max_digits=6,
+        decimal_places=1,
+        default=Decimal("0.0"),
+        blank=True,
+        help_text="Approximate dietary fiber in grams per serving",
+    )
+    sodium_per_serving_mg = models.PositiveIntegerField(
+        default=0,
+        blank=True,
+        help_text="Approximate sodium in milligrams per serving",
+    )
+    nutrition_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Detailed nutritional breakdown, macro percentages, and per-ingredient items",
+    )
+
     # Media & Reference
     photo_urls = models.JSONField(default=list, blank=True, help_text="List of photo URLs")
     photo_file = models.ImageField(
@@ -179,6 +224,74 @@ class Recipe(models.Model):
             return []
         lines = [line.strip() for line in self.directions.splitlines() if line.strip()]
         return lines
+
+    @property
+    def has_nutrition(self) -> bool:
+        """Check if nutritional analysis is available."""
+        return (self.calories_per_serving or 0) > 0 or bool(self.nutrition_data)
+
+    @property
+    def total_calories(self) -> int:
+        """Total calories for the entire recipe dish."""
+        if self.nutrition_data and "total_recipe" in self.nutrition_data:
+            return int(self.nutrition_data["total_recipe"].get("calories", (self.calories_per_serving or 0) * max(1, self.portions or 1)))
+        return int((self.calories_per_serving or 0) * max(1, self.portions or 1))
+
+    @property
+    def total_protein_g(self) -> float:
+        """Total protein for the entire recipe dish."""
+        if self.nutrition_data and "total_recipe" in self.nutrition_data:
+            return float(self.nutrition_data["total_recipe"].get("protein_g", float(self.protein_per_serving_g or 0) * max(1, self.portions or 1)))
+        return round(float(self.protein_per_serving_g or 0) * max(1, self.portions or 1), 1)
+
+    @property
+    def total_carbs_g(self) -> float:
+        """Total carbohydrates for the entire recipe dish."""
+        if self.nutrition_data and "total_recipe" in self.nutrition_data:
+            return float(self.nutrition_data["total_recipe"].get("carbs_g", float(self.carbs_per_serving_g or 0) * max(1, self.portions or 1)))
+        return round(float(self.carbs_per_serving_g or 0) * max(1, self.portions or 1), 1)
+
+    @property
+    def total_fat_g(self) -> float:
+        """Total fat for the entire recipe dish."""
+        if self.nutrition_data and "total_recipe" in self.nutrition_data:
+            return float(self.nutrition_data["total_recipe"].get("fat_g", float(self.fat_per_serving_g or 0) * max(1, self.portions or 1)))
+        return round(float(self.fat_per_serving_g or 0) * max(1, self.portions or 1), 1)
+
+    @property
+    def total_fiber_g(self) -> float:
+        """Total fiber for the entire recipe dish."""
+        if self.nutrition_data and "total_recipe" in self.nutrition_data:
+            return float(self.nutrition_data["total_recipe"].get("fiber_g", float(self.fiber_per_serving_g or 0) * max(1, self.portions or 1)))
+        return round(float(self.fiber_per_serving_g or 0) * max(1, self.portions or 1), 1)
+
+    @property
+    def total_sodium_mg(self) -> int:
+        """Total sodium for the entire recipe dish."""
+        if self.nutrition_data and "total_recipe" in self.nutrition_data:
+            return int(self.nutrition_data["total_recipe"].get("sodium_mg", (self.sodium_per_serving_mg or 0) * max(1, self.portions or 1)))
+        return int((self.sodium_per_serving_mg or 0) * max(1, self.portions or 1))
+
+    @property
+    def macro_percentages(self) -> dict[str, int]:
+        """
+        Caloric percentage split between Protein (4 kcal/g), Carbs (4 kcal/g), and Fat (9 kcal/g).
+        """
+        if self.nutrition_data and "macro_percentages" in self.nutrition_data:
+            return self.nutrition_data["macro_percentages"]
+
+        p_cals = float(self.protein_per_serving_g or 0) * 4.0
+        c_cals = float(self.carbs_per_serving_g or 0) * 4.0
+        f_cals = float(self.fat_per_serving_g or 0) * 9.0
+        sum_cals = p_cals + c_cals + f_cals
+
+        if sum_cals <= 0:
+            return {"protein_pct": 0, "carbs_pct": 0, "fat_pct": 0}
+
+        p_pct = round((p_cals / sum_cals) * 100)
+        c_pct = round((c_cals / sum_cals) * 100)
+        f_pct = max(0, 100 - (p_pct + c_pct))
+        return {"protein_pct": p_pct, "carbs_pct": c_pct, "fat_pct": f_pct}
 
 
 class Ingredient(models.Model):

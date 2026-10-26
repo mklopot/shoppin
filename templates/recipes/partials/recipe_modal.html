@@ -39,6 +39,19 @@
             <div><span class="text-gray-500 block text-[10px] uppercase font-bold">Times Made</span><span class="font-semibold text-emerald-800">Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span></div>
         </div>
 
+        <!-- Nutrition Summary Strip -->
+        {% if recipe.has_nutrition %}
+        <div class="p-2.5 bg-blue-50/50 border border-blue-200 text-xs flex flex-wrap items-center justify-between gap-2">
+            <span class="font-bold text-blue-900 text-[11px] uppercase tracking-wider">Approx. Nutrition (per serving):</span>
+            <div class="flex items-center space-x-3 text-xs">
+                <span class="text-gray-900 font-bold">🔥 {{ recipe.calories_per_serving }} kcal</span>
+                <span class="text-blue-900 font-semibold">🍗 {{ recipe.protein_per_serving_g|floatformat:1 }}g P</span>
+                <span class="text-amber-900 font-semibold">🍞 {{ recipe.carbs_per_serving_g|floatformat:1 }}g C</span>
+                <span class="text-rose-900 font-semibold">🥑 {{ recipe.fat_per_serving_g|floatformat:1 }}g F</span>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Ingredients Preview -->
         <div class="space-y-2 text-xs">
             <h3 class="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Ingredients</h3>

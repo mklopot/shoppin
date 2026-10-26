@@ -183,6 +183,213 @@
         {% endif %}
     </div>
 
+    <!-- Approximate Nutritional Analysis Card -->
+    {% if recipe.has_nutrition %}
+    <div id="nutritional-analysis-card"
+         class="bg-white border border-gray-300 p-5 space-y-4 shadow-sm"
+         data-serving-cals="{{ recipe.calories_per_serving }}"
+         data-serving-protein="{{ recipe.protein_per_serving_g|floatformat:1 }}"
+         data-serving-carbs="{{ recipe.carbs_per_serving_g|floatformat:1 }}"
+         data-serving-fat="{{ recipe.fat_per_serving_g|floatformat:1 }}"
+         data-serving-fiber="{{ recipe.fiber_per_serving_g|floatformat:1 }}"
+         data-serving-sodium="{{ recipe.sodium_per_serving_mg }}"
+         data-total-cals="{{ recipe.total_calories }}"
+         data-total-protein="{{ recipe.total_protein_g|floatformat:1 }}"
+         data-total-carbs="{{ recipe.total_carbs_g|floatformat:1 }}"
+         data-total-fat="{{ recipe.total_fat_g|floatformat:1 }}"
+         data-total-fiber="{{ recipe.total_fiber_g|floatformat:1 }}"
+         data-total-sodium="{{ recipe.total_sodium_mg }}"
+         data-portions="{{ recipe.portions }}">
+
+        <!-- Nutrition Header & Toggle Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-3">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl">📊</span>
+                <div>
+                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Approximate Nutritional Analysis</h2>
+                    <p class="text-[11px] text-gray-500" id="nutrition-basis-label">
+                        Calculated based on <strong>1 of {{ recipe.portions }} serving{{ recipe.portions|pluralize }}</strong>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Segmented Control: Per Serving vs Total Dish -->
+            <div class="inline-flex border border-gray-300 p-0.5 bg-gray-100 text-xs">
+                <button type="button"
+                        id="btn-nutrition-serving"
+                        onclick="setNutritionViewMode('serving')"
+                        class="px-2.5 py-1 font-bold bg-white text-gray-900 shadow-sm border border-gray-200 cursor-pointer">
+                    Per Serving
+                </button>
+                <button type="button"
+                        id="btn-nutrition-total"
+                        onclick="setNutritionViewMode('total')"
+                        class="px-2.5 py-1 font-medium text-gray-600 hover:text-gray-900 cursor-pointer">
+                    Full Recipe ({{ recipe.portions }} serv)
+                </button>
+            </div>
+        </div>
+
+        <!-- 4 Core Macro Stat Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <!-- Calories Card -->
+            <div class="border border-gray-200 bg-gray-50/70 p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-gray-500 pb-1">
+                    <span class="font-bold text-[10px] uppercase tracking-wider">Calories</span>
+                    <span>🔥</span>
+                </div>
+                <div class="mt-1">
+                    <span id="nutrition-cals" class="text-2xl font-black text-gray-900 tracking-tight">{{ recipe.calories_per_serving }}</span>
+                    <span class="text-xs text-gray-500 ml-0.5">kcal</span>
+                </div>
+                <div class="text-[10px] text-gray-400 mt-1">
+                    Energy
+                </div>
+            </div>
+
+            <!-- Protein Card -->
+            <div class="border border-blue-200 bg-blue-50/40 p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-blue-900 pb-1">
+                    <span class="font-bold text-[10px] uppercase tracking-wider">Protein</span>
+                    <span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-1 py-0.2">
+                        {{ recipe.macro_percentages.protein_pct }}% kcal
+                    </span>
+                </div>
+                <div class="mt-1">
+                    <span id="nutrition-protein" class="text-2xl font-black text-blue-950 tracking-tight">{{ recipe.protein_per_serving_g|floatformat:1 }}</span>
+                    <span class="text-xs text-blue-800 ml-0.5">g</span>
+                </div>
+                <div class="text-[10px] text-blue-700/80 mt-1">
+                    Muscle & Satiety
+                </div>
+            </div>
+
+            <!-- Carbohydrates Card -->
+            <div class="border border-amber-200 bg-amber-50/40 p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-amber-900 pb-1">
+                    <span class="font-bold text-[10px] uppercase tracking-wider">Carbs</span>
+                    <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-1 py-0.2">
+                        {{ recipe.macro_percentages.carbs_pct }}% kcal
+                    </span>
+                </div>
+                <div class="mt-1">
+                    <span id="nutrition-carbs" class="text-2xl font-black text-amber-950 tracking-tight">{{ recipe.carbs_per_serving_g|floatformat:1 }}</span>
+                    <span class="text-xs text-amber-800 ml-0.5">g</span>
+                </div>
+                <div class="text-[10px] text-amber-800/80 mt-1">
+                    Energy & Grains
+                </div>
+            </div>
+
+            <!-- Total Fat Card -->
+            <div class="border border-rose-200 bg-rose-50/40 p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-rose-900 pb-1">
+                    <span class="font-bold text-[10px] uppercase tracking-wider">Total Fat</span>
+                    <span class="text-[10px] font-bold text-rose-800 bg-rose-100 px-1 py-0.2">
+                        {{ recipe.macro_percentages.fat_pct }}% kcal
+                    </span>
+                </div>
+                <div class="mt-1">
+                    <span id="nutrition-fat" class="text-2xl font-black text-rose-950 tracking-tight">{{ recipe.fat_per_serving_g|floatformat:1 }}</span>
+                    <span class="text-xs text-rose-800 ml-0.5">g</span>
+                </div>
+                <div class="text-[10px] text-rose-800/80 mt-1">
+                    Essential Lipids
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Micronutrients Strip & Caloric Ratio Bar -->
+        <div class="bg-gray-50 border border-gray-200 p-3 space-y-3 text-xs">
+            <!-- Caloric Macro Ratio Bar -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between items-center text-[11px] font-semibold text-gray-700">
+                    <span>Caloric Distribution</span>
+                    <div class="flex items-center space-x-3 text-[10px]">
+                        <span class="inline-flex items-center"><span class="w-2.5 h-2.5 bg-blue-600 inline-block mr-1"></span>Protein {{ recipe.macro_percentages.protein_pct }}%</span>
+                        <span class="inline-flex items-center"><span class="w-2.5 h-2.5 bg-amber-500 inline-block mr-1"></span>Carbs {{ recipe.macro_percentages.carbs_pct }}%</span>
+                        <span class="inline-flex items-center"><span class="w-2.5 h-2.5 bg-rose-500 inline-block mr-1"></span>Fat {{ recipe.macro_percentages.fat_pct }}%</span>
+                    </div>
+                </div>
+
+                <div class="w-full h-3 bg-gray-200 overflow-hidden flex">
+                    <div class="bg-blue-600 h-full" style="width: {{ recipe.macro_percentages.protein_pct }}%;" title="Protein: {{ recipe.macro_percentages.protein_pct }}%"></div>
+                    <div class="bg-amber-500 h-full" style="width: {{ recipe.macro_percentages.carbs_pct }}%;" title="Carbohydrates: {{ recipe.macro_percentages.carbs_pct }}%"></div>
+                    <div class="bg-rose-500 h-full" style="width: {{ recipe.macro_percentages.fat_pct }}%;" title="Fat: {{ recipe.macro_percentages.fat_pct }}%"></div>
+                </div>
+            </div>
+
+            <!-- Fiber & Sodium Highlights -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-gray-200 text-xs">
+                <div>
+                    <span class="text-gray-500 block text-[10px] font-bold uppercase">Dietary Fiber</span>
+                    <span class="font-bold text-gray-900"><span id="nutrition-fiber">{{ recipe.fiber_per_serving_g|floatformat:1 }}</span>g</span>
+                </div>
+                <div>
+                    <span class="text-gray-500 block text-[10px] font-bold uppercase">Sodium</span>
+                    <span class="font-bold text-gray-900"><span id="nutrition-sodium">{{ recipe.sodium_per_serving_mg }}</span>mg</span>
+                </div>
+                <div>
+                    <span class="text-gray-500 block text-[10px] font-bold uppercase">Calculation Coverage</span>
+                    <span class="font-semibold text-emerald-800">
+                        {{ recipe.nutrition_data.coverage.percent|default:100 }}% of ingredients matched
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsible Per-Ingredient Breakdown Table -->
+        {% if recipe.nutrition_data.ingredient_breakdown %}
+        <details class="group border border-gray-200 bg-white text-xs">
+            <summary class="p-2.5 bg-gray-50/70 hover:bg-gray-100 font-bold text-gray-700 cursor-pointer select-none flex items-center justify-between">
+                <span>View Per-Ingredient Nutritional Contribution ({{ recipe.nutrition_data.ingredient_breakdown|length }} item{{ recipe.nutrition_data.ingredient_breakdown|length|pluralize }})</span>
+                <span class="text-[10px] text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div class="p-2 overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-gray-500 text-[10px] uppercase font-bold bg-gray-50">
+                            <th class="py-1.5 px-2">Ingredient</th>
+                            <th class="py-1.5 px-2">Quantity</th>
+                            <th class="py-1.5 px-2 text-right">Est. Weight</th>
+                            <th class="py-1.5 px-2 text-right">Calories</th>
+                            <th class="py-1.5 px-2 text-right">Protein</th>
+                            <th class="py-1.5 px-2 text-right">Carbs</th>
+                            <th class="py-1.5 px-2 text-right">Fat</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-800">
+                        {% for item in recipe.nutrition_data.ingredient_breakdown %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-1 px-2 font-medium">
+                                {{ item.name }}
+                                {% if not item.matched %}
+                                <span class="text-[10px] text-amber-700 font-normal italic">(approx)</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-1 px-2 text-gray-600">
+                                {{ item.amount|floatformat:"-2" }}{% if item.amount_unit %} {{ item.amount_unit }}{% endif %}
+                            </td>
+                            <td class="py-1 px-2 text-right text-gray-500">{{ item.weight_g }}g</td>
+                            <td class="py-1 px-2 text-right font-bold text-gray-900">{{ item.calories }} kcal</td>
+                            <td class="py-1 px-2 text-right text-blue-900">{{ item.protein_g }}g</td>
+                            <td class="py-1 px-2 text-right text-amber-900">{{ item.carbs_g }}g</td>
+                            <td class="py-1 px-2 text-right text-rose-900">{{ item.fat_g }}g</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+        {% endif %}
+
+        <!-- Explanatory Footnote -->
+        <p class="text-[11px] text-gray-500 italic pt-1">
+            * Approximate nutritional values calculated from recipe ingredients using USDA standard food reference data. Actual content may vary depending on specific brands, cooking methods, and substitutions.
+        </p>
+    </div>
+    {% endif %}
+
     <!-- Two-Column Layout: Ingredients & Directions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <!-- Left: Ingredients List -->
@@ -308,6 +515,61 @@ function toggleNewMealInput(selectEl, inputId) {
         input.focus();
     } else {
         input.classList.add('hidden');
+    }
+}
+
+function setNutritionViewMode(mode) {
+    const card = document.getElementById('nutritional-analysis-card');
+    if (!card) return;
+
+    const btnServing = document.getElementById('btn-nutrition-serving');
+    const btnTotal = document.getElementById('btn-nutrition-total');
+    const basisLabel = document.getElementById('nutrition-basis-label');
+    const portions = card.dataset.portions || '1';
+
+    const calsEl = document.getElementById('nutrition-cals');
+    const proteinEl = document.getElementById('nutrition-protein');
+    const carbsEl = document.getElementById('nutrition-carbs');
+    const fatEl = document.getElementById('nutrition-fat');
+    const fiberEl = document.getElementById('nutrition-fiber');
+    const sodiumEl = document.getElementById('nutrition-sodium');
+
+    if (mode === 'total') {
+        if (calsEl) calsEl.textContent = card.dataset.totalCals;
+        if (proteinEl) proteinEl.textContent = card.dataset.totalProtein;
+        if (carbsEl) carbsEl.textContent = card.dataset.totalCarbs;
+        if (fatEl) fatEl.textContent = card.dataset.totalFat;
+        if (fiberEl) fiberEl.textContent = card.dataset.totalFiber;
+        if (sodiumEl) sodiumEl.textContent = card.dataset.totalSodium;
+
+        if (basisLabel) {
+            basisLabel.innerHTML = `Calculated for the <strong>full recipe dish (${portions} servings)</strong>`;
+        }
+
+        if (btnTotal) {
+            btnTotal.className = 'px-2.5 py-1 font-bold bg-white text-gray-900 shadow-sm border border-gray-200 cursor-pointer';
+        }
+        if (btnServing) {
+            btnServing.className = 'px-2.5 py-1 font-medium text-gray-600 hover:text-gray-900 cursor-pointer';
+        }
+    } else {
+        if (calsEl) calsEl.textContent = card.dataset.servingCals;
+        if (proteinEl) proteinEl.textContent = card.dataset.servingProtein;
+        if (carbsEl) carbsEl.textContent = card.dataset.servingCarbs;
+        if (fatEl) fatEl.textContent = card.dataset.servingFat;
+        if (fiberEl) fiberEl.textContent = card.dataset.servingFiber;
+        if (sodiumEl) sodiumEl.textContent = card.dataset.servingSodium;
+
+        if (basisLabel) {
+            basisLabel.innerHTML = `Calculated based on <strong>1 of ${portions} serving${portions === '1' ? '' : 's'}</strong>`;
+        }
+
+        if (btnServing) {
+            btnServing.className = 'px-2.5 py-1 font-bold bg-white text-gray-900 shadow-sm border border-gray-200 cursor-pointer';
+        }
+        if (btnTotal) {
+            btnTotal.className = 'px-2.5 py-1 font-medium text-gray-600 hover:text-gray-900 cursor-pointer';
+        }
     }
 }
 </script>

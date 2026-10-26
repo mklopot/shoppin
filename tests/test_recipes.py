@@ -11,7 +11,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
 
-from apps.core.models import Workspace
 from apps.recipes.models import Ingredient, Recipe, RecipeRating
 from apps.recipes.services.recipe_service import (
     add_recipe_to_shopping_list,
@@ -23,17 +22,6 @@ from apps.recipes.services.recipe_service import (
 from apps.shopping.models import ShoppingList
 
 User = get_user_model()
-
-
-@pytest.fixture
-def auth_user(db):
-    user = User.objects.create_user(
-        username="chef_tester",
-        email="chef@example.com",
-        password="testpassword123",
-    )
-    workspace = Workspace.objects.create(name="Chef Test Workspace", owner=user)
-    return user, workspace
 
 
 @pytest.fixture

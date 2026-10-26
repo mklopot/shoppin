@@ -95,11 +95,14 @@
                 {% endif %}
             </div>
 
-            <!-- Ingredients Count Preview -->
-            <div class="text-[11px] text-gray-500 pt-0.5">
+            <!-- Ingredients Count & Nutrition Preview -->
+            <div class="text-[11px] text-gray-500 pt-0.5 flex flex-wrap items-center gap-1.5">
                 <span>{{ recipe.ingredients.count }} ingredient{{ recipe.ingredients.count|pluralize }}</span>
                 {% if recipe.cook_time_minutes > 0 %}
-                <span class="ml-2">🔥 Cook: {{ recipe.cook_time_minutes }}m</span>
+                <span>&bull; 🔥 Cook: {{ recipe.cook_time_minutes }}m</span>
+                {% endif %}
+                {% if recipe.has_nutrition and recipe.calories_per_serving > 0 %}
+                <span class="font-medium text-gray-700">&bull; ⚡ ~{{ recipe.calories_per_serving }} kcal/serv</span>
                 {% endif %}
             </div>
         </div>

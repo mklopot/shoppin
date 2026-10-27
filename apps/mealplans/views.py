@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from apps.core.services.workspace_service import get_active_workspace
-from apps.mealplans.models import Meal
+from apps.mealplans.models import Meal, MealPlanRule
 from apps.mealplans.services.mealplan_service import (
     add_meal_to_plan,
     add_recipe_to_meal,
@@ -19,6 +19,10 @@ from apps.mealplans.services.mealplan_service import (
     delete_meal_from_plan,
     get_active_meal_plan,
     remove_recipe_from_meal,
+)
+from apps.mealplans.services.suggestion_service import (
+    calculate_current_meal_nutrition,
+    get_dish_suggestions,
 )
 from apps.recipes.models import Recipe, RecipeRating
 from apps.recipes.services.recipe_service import record_recipe_made, submit_recipe_rating
@@ -53,12 +57,14 @@ def meal_plan_view(
     can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
 
     meals = meal_plan.meals.prefetch_related("recipes").all()
+    rules = meal_plan.rules.all() if meal_plan else []
 
     context: dict[str, Any] = {
         "workspace": workspace,
         "shopping_list": shopping_list,
         "meal_plan": meal_plan,
         "meals": meals,
+        "rules": rules,
         "recipes_ready": status_info["recipes_ready"],
         "recipes_missing_optional": status_info["recipes_missing_optional"],
         "meals_ready": status_info["meals_ready"],
@@ -388,3 +394,80 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
         "can_write": can_write,
     }
     return render(request, "mealplans/partials/recipe_modal.html", context)
+
+
+def meal_suggestions(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Render dish suggestions partial for a planned meal.
+    """
+    meal = get_object_or_404(Meal, id=meal_id)
+    workspace = get_active_workspace(request)
+    user = getattr(request, "user", None)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+
+    suggestions = get_dish_suggestions(meal, limit=5)
+    current_nutrition = calculate_current_meal_nutrition(meal)
+
+    context = {
+        "meal": meal,
+        "suggestions": suggestions,
+        "current_nutrition": current_nutrition,
+        "can_write": can_write,
+    }
+    return render(request, "mealplans/partials/dish_suggestions.html", context)
+
+
+@require_POST
+def add_meal_rule(request: HttpRequest) -> HttpResponse:
+    """
+    Handle POST request to add a new dietary/balance rule to the active meal plan.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    rule_text = request.POST.get("rule_text", "").strip()
+
+    toast_messages: list[str] = []
+    if rule_text:
+        MealPlanRule.objects.create(meal_plan=meal_plan, rule_text=rule_text, is_active=True)
+        toast_messages.append(f"📋 Added guideline: '{rule_text}'")
+
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def toggle_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
+    """
+    Toggle active/inactive state of a meal plan rule.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    rule = get_object_or_404(MealPlanRule, id=rule_id)
+    rule.is_active = not rule.is_active
+    rule.save(update_fields=["is_active"])
+
+    status_str = "Enabled" if rule.is_active else "Paused"
+    toast_messages = [f"📋 {status_str} guideline: '{rule.rule_text}'"]
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def delete_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
+    """
+    Delete a meal plan rule.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    rule = get_object_or_404(MealPlanRule, id=rule_id)
+    text = rule.rule_text
+    rule.delete()
+
+    toast_messages = [f"🗑 Removed guideline: '{text}'"]
+    return meal_plan_view(request, toast_messages=toast_messages)

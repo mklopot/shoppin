@@ -1,0 +1,129 @@
+<div class="mt-2.5 p-3 bg-gradient-to-br from-indigo-50/70 via-white to-amber-50/40 border border-indigo-200 shadow-sm rounded-none text-xs space-y-3">
+    <!-- Header & Nutritional Context -->
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100 pb-2">
+        <div class="flex items-center space-x-2">
+            <span class="text-base" aria-hidden="true">✨</span>
+            <span class="font-bold text-gray-900">Recommended Dishes for {{ meal.name }}</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Meal Macro Summary Pills -->
+            <div class="flex items-center space-x-1.5 text-[11px] text-gray-600 bg-white/80 border border-gray-200 px-2 py-0.5" title="Current planned nutrition for {{ meal.name }}">
+                <span class="font-semibold text-gray-700">Current meal:</span>
+                <span class="font-medium text-gray-900">{{ current_nutrition.calories }} kcal</span>
+                <span class="text-gray-300">|</span>
+                <span class="font-medium {% if current_nutrition.protein < 15 %}text-amber-700 font-semibold{% else %}text-emerald-700{% endif %}">
+                    {{ current_nutrition.protein|floatformat:1 }}g protein
+                </span>
+                <span class="text-gray-300">|</span>
+                <span class="font-medium {% if current_nutrition.fiber < 4 %}text-amber-700 font-semibold{% else %}text-emerald-700{% endif %}">
+                    {{ current_nutrition.fiber|floatformat:1 }}g fiber
+                </span>
+            </div>
+            <!-- Close Button -->
+            <button type="button"
+                    onclick="document.getElementById('suggestions-container-{{ meal.id }}').innerHTML = ''"
+                    class="text-gray-400 hover:text-gray-700 font-bold px-1.5 py-0.5 text-sm leading-none focus:outline-none"
+                    aria-label="Close suggestions for {{ meal.name }}"
+                    title="Close suggestions">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Suggestions List -->
+    {% if suggestions %}
+    <div class="space-y-2">
+        {% for s in suggestions %}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 bg-white border border-gray-200 hover:border-indigo-300 transition-colors gap-2">
+            <!-- Left Info -->
+            <div class="space-y-1 flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <!-- Role Badge -->
+                    {% if s.role == 'main' %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 border border-indigo-200">Main Dish</span>
+                    {% elif s.role == 'salad' %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">Salad</span>
+                    {% elif s.role == 'soup' %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">Soup</span>
+                    {% elif s.role == 'side' %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-200">Side</span>
+                    {% elif s.role == 'dessert' %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-pink-100 text-pink-800 border border-pink-200">Dessert</span>
+                    {% elif s.role == 'breakfast' %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 border border-orange-200">Breakfast</span>
+                    {% else %}
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-800 border border-gray-200">Complement</span>
+                    {% endif %}
+
+                    <!-- Dish Title Link -->
+                    <button type="button"
+                            hx-get="{% url 'mealplans:recipe_modal' s.recipe.id %}"
+                            hx-target="#modal-placeholder"
+                            class="font-semibold text-gray-900 hover:text-indigo-600 hover:underline text-left truncate">
+                        {{ s.recipe.name }}
+                    </button>
+
+                    <!-- Nutrition Pills -->
+                    {% if s.recipe.calories_per_serving or s.recipe.protein_per_serving_g %}
+                    <span class="text-[10px] text-gray-500 bg-gray-50 px-1.5 py-0.5 border border-gray-100">
+                        {% if s.recipe.calories_per_serving %}{{ s.recipe.calories_per_serving }} kcal{% endif %}
+                        {% if s.recipe.protein_per_serving_g %}{% if s.recipe.calories_per_serving %} &bull; {% endif %}{{ s.recipe.protein_per_serving_g|floatformat:1 }}g protein{% endif %}
+                        {% if s.recipe.fiber_per_serving_g %} &bull; {{ s.recipe.fiber_per_serving_g|floatformat:1 }}g fiber{% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Explanatory Reason Badges -->
+                {% if s.reasons %}
+                <div class="flex flex-wrap gap-1 pt-0.5">
+                    {% for reason in s.reasons %}
+                    {% if "rule" in reason|lower or "fulfills" in reason|lower %}
+                    <span class="inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-900 border border-emerald-300" title="Meets active meal plan guideline">
+                        {{ reason }}
+                    </span>
+                    {% elif "gap" in reason|lower or "protein" in reason|lower or "fiber" in reason|lower %}
+                    <span class="inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium bg-blue-50 text-blue-900 border border-blue-200" title="Completes nutritional balance">
+                        {{ reason }}
+                    </span>
+                    {% elif "main" in reason|lower or "hearty" in reason|lower or "complement" in reason|lower %}
+                    <span class="inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium bg-purple-50 text-purple-900 border border-purple-200" title="Course type balance">
+                        {{ reason }}
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium bg-amber-50 text-amber-900 border border-amber-200">
+                        {{ reason }}
+                    </span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right: 1-Click Add Action -->
+            {% if can_write %}
+            <div class="flex items-center space-x-1.5 flex-shrink-0 self-end sm:self-center">
+                <form hx-post="{% url 'mealplans:add_dish' meal.id %}" hx-target="#mealplan-content" class="flex items-center space-x-1.5">
+                    {% csrf_token %}
+                    <input type="hidden" name="recipe_id" value="{{ s.recipe.id }}">
+                    <label for="scale-sugg-{{ meal.id }}-{{ s.recipe.id }}" class="sr-only">Scale for {{ s.recipe.name }}</label>
+                    <input type="number" id="scale-sugg-{{ meal.id }}-{{ s.recipe.id }}" name="scale_factor" value="1" min="0.1" max="100" step="any"
+                           title="Scale factor" aria-label="Scale factor"
+                           class="w-12 border border-gray-300 px-1 py-1 bg-white text-gray-900 text-xs text-center rounded-none focus:outline-none focus:border-indigo-500">
+                    <button type="submit"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-2.5 py-1 flex items-center space-x-1 rounded-none shadow-sm transition-colors text-xs"
+                            title="Add {{ s.recipe.name }} to {{ meal.name }}">
+                        <span aria-hidden="true">+</span>
+                        <span>Add</span>
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-3 text-center text-gray-500 text-xs italic bg-white border border-gray-200">
+        No candidate recipe suggestions found for this meal.
+    </div>
+    {% endif %}
+</div>

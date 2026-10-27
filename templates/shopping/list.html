@@ -93,10 +93,20 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', initSortables);
+    function syncCardState() {
+        if (typeof applyPresetListsCardState === 'function') {
+            applyPresetListsCardState();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initSortables();
+        syncCardState();
+    });
     document.addEventListener('htmx:afterSwap', function(evt) {
         if (evt.detail.target.id === 'shopping-list-content') {
             initSortables();
+            syncCardState();
         }
     });
 </script>

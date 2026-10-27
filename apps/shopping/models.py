@@ -44,9 +44,11 @@ class GroupBy(models.TextChoices):
 
     - CATEGORY: Group items by supermarket department/category (e.g. Produce, Dairy).
     - AISLE: Group items by store-specific physical aisle numbers.
+    - PRIORITY: Group or sort items by priority (high priority items first).
     """
     CATEGORY = "category", "By Category"
     AISLE = "aisle", "By Aisle"
+    PRIORITY = "priority", "By Priority"
 
 
 class StoreLocation(models.Model):
@@ -263,6 +265,10 @@ class ShoppingListItem(models.Model):
     locked = models.BooleanField(
         default=False,
         help_text="Whether this item is confirmed needed during Pantry Check",
+    )
+    priority = models.BooleanField(
+        default=False,
+        help_text="Priority item indicated by a burgundy badge",
     )
     is_active = models.BooleanField(
         default=True,

@@ -149,11 +149,14 @@ def _build_list_context(
             p.is_loaded = p.loaded_items_count > 0
             preset_lists.append(p)
 
+    preset_lists_open = request.COOKIES.get("preset_lists_open", "true") != "false"
+
     return {
         "shopping_list": shopping_list,
         "workspace": workspace,
         "planned_meals": planned_meals,
         "preset_lists": preset_lists,
+        "preset_lists_open": preset_lists_open,
         "can_write": can_write,
         "user_role": user_role,
         "grouped_need": grouped_need,
@@ -360,6 +363,12 @@ def add_item(request: HttpRequest) -> HttpResponse:
     if not raw_name:
         return redirect("shopping:list")
 
+    priority_flag = request.POST.get("priority") in ("true", "1", "on", True)
+    for trigger in ("🚩", "!", "^"):
+        if trigger in raw_name:
+            priority_flag = True
+            raw_name = raw_name.replace(trigger, "").strip()
+
     raw_amount = request.POST.get("amount", "1")
     amount, amount_unit = parse_amount_and_unit(raw_amount)
     brand = request.POST.get("brand", "").strip()
@@ -408,6 +417,8 @@ def add_item(request: HttpRequest) -> HttpResponse:
             existing.purpose = f"{existing_purpose}, {purpose}".strip(", ")
         else:
             existing.purpose = existing_purpose
+        if priority_flag:
+            existing.priority = True
         # Item was manually added or combined -> confirm it so it is not in "not confirmed" status
         existing.locked = True
         _set_item_audit(existing, request)
@@ -417,6 +428,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
                 "amount_unit",
                 "purpose",
                 "locked",
+                "priority",
                 "status_changed_at",
                 "status_changed_by",
                 "status_changed_by_name",
@@ -437,6 +449,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
             purpose=purpose,
             category=category,
             aisle=aisle,
+            priority=priority_flag,
             status=ItemStatus.NEED,
             locked=True,
             order=max_order + 1,
@@ -500,6 +513,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         item.category = request.POST.get("category", item.category).strip()
         item.aisle = request.POST.get("aisle", item.aisle).strip()
         item.purpose = clean_purpose(request.POST.get("purpose", item.purpose).strip()) or "one-time purchase"
+        item.priority = request.POST.get("priority") in ("true", "1", "on", True)
 
         # Check if editing this item allows it to combine with another item on the list
         normalized_name = singularize(item.name.lower())
@@ -515,6 +529,8 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
                 break
 
         if existing:
+            if item.priority:
+                existing.priority = True
             # Combine into existing item
             combined_amount, combined_unit = combine_amounts_and_units(
                 existing.amount,
@@ -684,6 +700,44 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
         actor_name=item.changed_by_display,
         sender_client_id=_get_client_id(request),
     )
+    return render_list_response(request, context, toast_message=toast)
+
+
+@require_POST
+def toggle_priority(request: HttpRequest, item_id: int) -> HttpResponse:
+    """
+    Toggle priority status for a shopping list item.
+    """
+    item = get_object_or_404(ShoppingListItem, id=item_id)
+    forbidden = _check_write_permission(request, item.shopping_list)
+    if forbidden:
+        return forbidden
+
+    item.priority = not item.priority
+    _set_item_audit(item, request)
+    item.save(
+        update_fields=[
+            "priority",
+            "status_changed_at",
+            "status_changed_by",
+            "status_changed_by_name",
+            "updated_at",
+        ]
+    )
+
+    group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+    context = _build_list_context(request, item.shopping_list, group_by)
+
+    status_str = "marked as High Priority" if item.priority else "removed from Priority"
+    toast = f"📌 '{item.name}' {status_str}"
+
+    broadcast_shopping_list_update(
+        shopping_list=item.shopping_list,
+        toast_message=f"📌 {item.changed_by_display} {status_str} '{item.name}'",
+        actor_name=item.changed_by_display,
+        sender_client_id=_get_client_id(request),
+    )
+
     return render_list_response(request, context, toast_message=toast)
 
 

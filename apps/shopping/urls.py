@@ -16,6 +16,7 @@ urlpatterns = [
     path("item/<int:item_id>/edit/", views.edit_item, name="edit_item"),
     path("item/<int:item_id>/delete/", views.delete_item, name="delete_item"),
     path("item/<int:item_id>/lock/", views.toggle_lock_item, name="toggle_lock"),
+    path("item/<int:item_id>/priority/", views.toggle_priority, name="toggle_priority"),
     path("set-store/", views.set_store, name="set_store"),
     path("nearest-store/", views.find_nearest_store, name="nearest_store"),
     path("reorder/", views.reorder_items, name="reorder"),

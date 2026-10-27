@@ -76,6 +76,20 @@ class ShoppingListOrganizer:
 
         grouped_need: defaultdict[str, list[ShoppingListItem]] = defaultdict(list)
 
+        if str(group_by) == GroupBy.PRIORITY:
+            for item in need_items:
+                group_name = "Priority Items" if item.priority else "Standard Items"
+                grouped_need[group_name].append(item)
+
+            def priority_sort_key_fn(group_name: str) -> tuple[int, Any]:
+                group_name_lower = group_name.lower()
+                if group_name_lower in custom_order_map:
+                    return (0, custom_order_map[group_name_lower])
+                return (1, 0 if "priority" in group_name_lower else 1)
+
+            sorted_keys = sorted(grouped_need.keys(), key=priority_sort_key_fn)
+            return {group_name: grouped_need[group_name] for group_name in sorted_keys}
+
         if str(group_by) == GroupBy.AISLE and shopping_list.active_store:
             for item in need_items:
                 aisle = item.get_effective_aisle()
@@ -88,6 +102,8 @@ class ShoppingListOrganizer:
                 return (1, get_aisle_sort_key(group_name))
 
             sorted_keys = sorted(grouped_need.keys(), key=aisle_sort_key_fn)
+            for key in sorted_keys:
+                grouped_need[key].sort(key=lambda it: (not it.priority, it.order, it.id))
             return {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
         # Default: group by category
@@ -102,6 +118,8 @@ class ShoppingListOrganizer:
             return (1, DEPARTMENT_ORDER.get(group_name_lower, 200))
 
         sorted_keys = sorted(grouped_need.keys(), key=category_sort_key_fn)
+        for key in sorted_keys:
+            grouped_need[key].sort(key=lambda it: (not it.priority, it.order, it.id))
         return {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
     @staticmethod

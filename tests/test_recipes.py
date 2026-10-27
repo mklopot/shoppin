@@ -635,7 +635,7 @@ def test_recipe_import_url_view_direct(client: Client, auth_user, monkeypatch):
     )
     assert resp.status_code == 302
     created = Recipe.objects.get(name="Classic Guacamole")
-    assert resp.url == reverse("recipes:detail", args=[created.id])
+    assert resp.url == created.get_absolute_url()
     assert created.ingredients.count() == 6
 
 

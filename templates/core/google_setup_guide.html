@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Google OAuth Setup Guide - Shoppin{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto my-6 space-y-6">
+    <div class="bg-white border border-gray-300 p-6 shadow-sm space-y-4">
+        <div class="flex items-center space-x-2 border-b border-gray-200 pb-3">
+            <span class="text-2xl">⚙️</span>
+            <div>
+                <h1 class="text-base font-bold text-gray-900 uppercase tracking-wider">Google OAuth Configuration Required</h1>
+                <p class="text-xs text-gray-500">How to enable Google Sign-In on your Shoppin installation</p>
+            </div>
+        </div>
+
+        <div class="text-xs text-gray-700 space-y-3 leading-relaxed">
+            <p>
+                To enable <strong>Sign in with Google</strong>, you need to register a free OAuth 2.0 Client ID in the Google Cloud Console.
+            </p>
+
+            <div class="p-3 bg-gray-50 border border-gray-200 space-y-2">
+                <span class="font-bold text-gray-900 block text-xs">Step-by-step Setup:</span>
+                <ol class="list-decimal list-inside space-y-1 text-gray-600">
+                    <li>Go to the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline font-semibold">Google Cloud Console &rarr; APIs & Services &rarr; Credentials</a>.</li>
+                    <li>Click <strong>+ Create Credentials &rarr; OAuth client ID</strong>.</li>
+                    <li>Select <strong>Web application</strong> as Application type.</li>
+                    <li>
+                        In <strong>Authorized redirect URIs</strong>, add:
+                        <div class="mt-1 font-mono bg-white border border-gray-300 p-1.5 text-[11px] text-gray-900 select-all">
+                            {{ redirect_uri }}
+                        </div>
+                    </li>
+                    <li>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong>.</li>
+                    <li>
+                        Add them to your project's <code class="font-mono bg-white px-1 py-0.5 border border-gray-200 text-gray-900">.env</code> file:
+                        <pre class="mt-1 font-mono bg-white border border-gray-300 p-2 text-[11px] text-gray-900 overflow-x-auto">
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-google-client-secret
+GOOGLE_OAUTH_REDIRECT_URI={{ redirect_uri }}
+                        </pre>
+                    </li>
+                </ol>
+            </div>
+
+            <p class="text-[11px] text-gray-500">
+                Once saved in <code class="font-mono">.env</code>, restarting the dev server will activate one-click Google Sign-In for all users.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 text-xs">
+            <a href="{% url 'core:login' %}" class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-3 py-1.5">
+                &larr; Back to Login
+            </a>
+
+            {% if debug_mode %}
+            <a href="{% url 'core:switch_persona' 'admin' %}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm">
+                Continue as Admin (Dev) &rarr;
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

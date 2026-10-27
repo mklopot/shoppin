@@ -40,7 +40,10 @@ class DevAutoLoginMiddleware:
             HttpResponse from downstream middleware/view.
         """
         is_testing = "pytest" in sys.modules or (len(sys.argv) > 1 and sys.argv[1] == "test")
-        if settings.DEBUG and not is_testing:
+        dev_auto_login = getattr(settings, "DEV_AUTO_LOGIN", False)
+        guest_mode = bool(request.session.get("guest_mode", False)) if hasattr(request, "session") else False
+
+        if settings.DEBUG and not is_testing and dev_auto_login and not guest_mode:
             if hasattr(request, "user") and not request.user.is_authenticated:
                 admin_user = (
                     User.objects.filter(username="admin").first()

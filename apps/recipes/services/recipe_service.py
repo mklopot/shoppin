@@ -103,26 +103,31 @@ POPULAR_EQUIPMENT: list[str] = [
 ]
 
 
-def search_recipes(params: dict[str, Any]) -> QuerySet[Recipe]:
+def search_recipes(params: dict[str, Any], user: Any = None) -> QuerySet[Recipe]:
     """
     Search and filter recipes using multiple query parameters.
 
+    Anonymous guests see publicly published and approved recipes. Authenticated
+    users also see their own unpublished/pending recipes, while moderators (staff)
+    can browse all recipes.
+
     Args:
-        params: Dictionary containing filter options:
-            - q: Free-text search string.
-            - cuisine: Cuisine name string.
-            - dish_type: Dish type string.
-            - meal_type: Meal type string.
-            - dietary: Dietary restriction string.
-            - occasion: Occasion or season string.
-            - difficulty: Difficulty level ('easy', 'medium', 'hard').
-            - equipment: Required equipment string.
-            - sort: Sort order key.
+        params: Dictionary containing filter options.
+        user: Optional requesting user instance.
 
     Returns:
         Filtered and sorted QuerySet of Recipe objects.
     """
-    qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").filter(is_public=True)
+    if user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
+        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").all()
+    elif user and user.is_authenticated:
+        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").filter(
+            Q(is_public=True, is_approved=True) | Q(created_by=user)
+        )
+    else:
+        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").filter(
+            is_public=True, is_approved=True
+        )
 
     # 1. Free-text search
     q_str = str(params.get("q", "")).strip()

@@ -69,7 +69,7 @@
 
         <!-- Actions -->
         <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 text-xs">
-            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm">
+            <a href="{{ recipe.get_absolute_url }}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm">
                 View Full Recipe & Directions &rarr;
             </a>
 

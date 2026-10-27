@@ -48,7 +48,7 @@
         <div class="p-3.5 space-y-2">
             <!-- Title -->
             <h2 class="text-base font-bold text-gray-900 tracking-tight leading-snug group-hover:text-blue-900">
-                <a href="{% url 'recipes:detail' recipe.id %}">
+                <a href="{{ recipe.get_absolute_url }}">
                     {{ recipe.name }}
                 </a>
             </h2>
@@ -125,7 +125,7 @@
             <div></div>
             {% endif %}
 
-            <a href="{% url 'recipes:detail' recipe.id %}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center shadow-sm">
+            <a href="{{ recipe.get_absolute_url }}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center shadow-sm">
                 <span>View Recipe &rarr;</span>
             </a>
         </div>

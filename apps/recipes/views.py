@@ -5,7 +5,7 @@ Views for culinary recipes, interactive multi-facet search, detail, ratings, and
 from typing import Any
 
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -28,13 +28,33 @@ from apps.recipes.services.recipe_service import (
 from apps.shopping.views import get_active_list
 
 
+def _get_recipe_by_id_or_slug(
+    recipe_id: int | None = None,
+    slug: str | None = None,
+    prefetch: bool = False,
+) -> Recipe:
+    """
+    Retrieve recipe by numeric primary key or human-readable slug.
+    """
+    qs = Recipe.objects.all()
+    if prefetch:
+        qs = qs.prefetch_related("ingredients", "serve_with", "ratings", "comments")
+    if recipe_id is not None:
+        return get_object_or_404(qs, id=recipe_id)
+    if slug:
+        return get_object_or_404(qs, slug=slug)
+    raise Http404("Recipe not found")
+
+
 def recipe_list_view(request: HttpRequest) -> HttpResponse:
     """
     Render the main Recipes directory page or HTMX filtered results grid.
+    Publicly published and moderator-approved recipes are visible without being logged in.
     """
     workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    is_authenticated = bool(user and user.is_authenticated)
+    can_write = workspace.can_write(user) if (is_authenticated and workspace) else False
 
     params: dict[str, Any] = {
         "q": request.GET.get("q", "").strip(),
@@ -48,9 +68,9 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         "sort": request.GET.get("sort", "name").strip(),
     }
 
-    recipes = search_recipes(params)
+    recipes = search_recipes(params, user=user)
     filter_options = get_filter_options()
-    meal_plan = get_active_meal_plan(request, workspace)
+    meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
     meals = meal_plan.meals.all() if meal_plan else []
 
     active_filter_count = sum(
@@ -77,23 +97,39 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
     return render(request, "recipes/recipe_list.html", context)
 
 
-def recipe_detail_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+def recipe_detail_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
     """
     Render full recipe detail page or HTMX quick-view modal.
-    """
-    recipe = get_object_or_404(
-        Recipe.objects.prefetch_related("ingredients", "serve_with", "ratings", "comments"),
-        id=recipe_id,
-    )
-    workspace = get_active_workspace(request)
-    shopping_list = get_active_list(request)
-    meal_plan = get_active_meal_plan(request, workspace)
 
+    Accepts either an ID or straightforward slug URL (e.g. /recipes/crepes/).
+    Publicly published and moderator-approved recipes are visible without being logged in.
+    """
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug, prefetch=True)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    is_authenticated = bool(user and user.is_authenticated)
+
+    # Visibility & Moderation Access Control:
+    # Public & approved recipes can be viewed by anyone without logging in.
+    # Private or unapproved recipes require authentication and creator/moderator privileges.
+    if not (recipe.is_public and recipe.is_approved):
+        if not is_authenticated:
+            messages.info(request, "This recipe is private or pending moderator approval. Please sign in to view it.")
+            return redirect(f"{reverse('core:login')}?next={request.path}")
+        if recipe.created_by != user and not (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
+            return HttpResponseForbidden("This recipe is private or pending moderator approval.")
+
+    workspace = get_active_workspace(request)
+    shopping_list = get_active_list(request) if is_authenticated else None
+    meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
+
+    can_write = workspace.can_write(user) if (is_authenticated and workspace) else False
 
     user_rating = None
-    if user and user.is_authenticated:
+    if is_authenticated:
         user_rating = RecipeRating.objects.filter(recipe=recipe, user=user).first()
 
     context: dict[str, Any] = {
@@ -102,7 +138,7 @@ def recipe_detail_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
         "meal_plan": meal_plan,
         "recipe": recipe,
         "ingredients": recipe.ingredients.all(),
-        "serve_with_recipes": recipe.serve_with.all(),
+        "serve_with_recipes": recipe.serve_with.filter(is_public=True, is_approved=True) if not is_authenticated else recipe.serve_with.all(),
         "user_rating": user_rating,
         "can_write": can_write,
         "meals": meal_plan.meals.all() if meal_plan else [],
@@ -116,19 +152,23 @@ def recipe_detail_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
 
 def recipe_create_view(request: HttpRequest) -> HttpResponse:
     """
-    Create a new recipe entry.
+    Create a new recipe entry. Requires authentication.
 
     Optionally accepts ?import_url=<url> to scrape and pre-populate the form.
     """
-    workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        messages.info(request, "Please sign in to create or import recipes.")
+        return redirect(f"{reverse('core:login')}?next={request.path}")
+
+    workspace = get_active_workspace(request)
     if workspace and not workspace.can_write(user):
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
     if request.method == "POST":
         recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user)
         messages.success(request, f"Recipe '{recipe.name}' created successfully!")
-        return redirect("recipes:detail", recipe_id=recipe.id)
+        return redirect(recipe.get_absolute_url())
 
     filter_options = get_filter_options()
     all_recipes = Recipe.objects.all().order_by("name")
@@ -180,8 +220,12 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
     - 'direct': Scrapes, saves immediately into database, and redirects to recipe detail.
     - 'prefill': Scrapes and redirects to create form pre-filled for user review.
     """
-    workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        messages.info(request, "Please sign in to import recipes.")
+        return redirect(f"{reverse('core:login')}?next={reverse('recipes:list')}")
+
+    workspace = get_active_workspace(request)
     if workspace and not workspace.can_write(user):
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
@@ -200,7 +244,7 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
     try:
         recipe = import_recipe_from_url(url=url, user=user)
         messages.success(request, f"Recipe '{recipe.name}' successfully imported!")
-        return redirect("recipes:detail", recipe_id=recipe.id)
+        return redirect(recipe.get_absolute_url())
     except ValueError as ve:
         messages.error(request, str(ve))
         return redirect("recipes:list")
@@ -209,20 +253,28 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
         return redirect("recipes:list")
 
 
-def recipe_edit_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+def recipe_edit_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
     """
     Edit an existing recipe entry and ingredients.
     """
-    recipe = get_object_or_404(Recipe, id=recipe_id)
-    workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        messages.info(request, "Please sign in to edit recipes.")
+        return redirect(f"{reverse('core:login')}?next={request.path}")
+
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
+    workspace = get_active_workspace(request)
     if workspace and not workspace.can_write(user):
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
     if request.method == "POST":
         create_or_update_recipe(request.POST, files=request.FILES, recipe_id=recipe.id, user=user)
         messages.success(request, f"Recipe '{recipe.name}' updated successfully!")
-        return redirect("recipes:detail", recipe_id=recipe.id)
+        return redirect(recipe.get_absolute_url())
 
     filter_options = get_filter_options()
     all_recipes = Recipe.objects.exclude(id=recipe.id).order_by("name")
@@ -239,13 +291,20 @@ def recipe_edit_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
 
 
 @require_POST
-def recipe_delete_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+def recipe_delete_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
     """
     Delete a recipe entry.
     """
-    recipe = get_object_or_404(Recipe, id=recipe_id)
-    workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Must be logged in to delete recipes.")
+
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
+    workspace = get_active_workspace(request)
     if workspace and not workspace.can_write(user):
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
@@ -256,15 +315,19 @@ def recipe_delete_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
 
 
 @require_POST
-def recipe_rate_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+def recipe_rate_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
     """
     Handle user rating and endorsement (stars and thumbs-up).
     """
-    recipe = get_object_or_404(Recipe, id=recipe_id)
     user = getattr(request, "user", None)
     if not (user and user.is_authenticated):
         return HttpResponseForbidden("Must be logged in to rate recipes.")
 
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
     stars = int(request.POST.get("stars", 5))
     thumbs_up = request.POST.get("thumbs_up") in ("true", "1", True)
 
@@ -277,16 +340,24 @@ def recipe_rate_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
     return render(request, "recipes/partials/rating_widget.html", context)
 
 
-def recipe_prompt_mealplan_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+def recipe_prompt_mealplan_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
     """
     Render HTMX modal prompting the user to select or create a meal for the recipe.
     """
-    recipe = get_object_or_404(Recipe, id=recipe_id)
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        messages.info(request, "Please sign in to add recipes to your meal plan.")
+        return redirect(f"{reverse('core:login')}?next={recipe.get_absolute_url()}")
+
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     meals = meal_plan.meals.all() if meal_plan else []
-    user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    can_write = workspace.can_write(user) if workspace else True
 
     context = {
         "recipe": recipe,
@@ -299,11 +370,19 @@ def recipe_prompt_mealplan_view(request: HttpRequest, recipe_id: int) -> HttpRes
 
 
 @require_POST
-def recipe_add_to_mealplan_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+def recipe_add_to_mealplan_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
     """
     Add a recipe to a meal plan meal entry, creating a new meal if requested or needed.
     """
-    recipe = get_object_or_404(Recipe, id=recipe_id)
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Must be logged in to add recipes to meal plans.")
+
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     shopping_list = get_active_list(request)

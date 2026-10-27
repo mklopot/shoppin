@@ -10,6 +10,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 
 
@@ -181,6 +182,12 @@ class Recipe(models.Model):
     def __str__(self) -> str:
         """Return the recipe title."""
         return self.name
+
+    def get_absolute_url(self) -> str:
+        """Return straightforward public URL for this recipe."""
+        if self.slug:
+            return reverse("recipes:detail_slug", kwargs={"slug": self.slug})
+        return reverse("recipes:detail", kwargs={"recipe_id": self.id})
 
     @property
     def average_rating(self) -> float | None:

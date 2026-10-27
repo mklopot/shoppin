@@ -29,8 +29,8 @@ def workspace_context(request: HttpRequest) -> dict[str, Any]:
         role = ws.get_user_role(user) if ws else "owner"
         can_write = ws.can_write(user) if ws else True
     else:
-        role = "owner"
-        can_write = True
+        role = "guest"
+        can_write = False
     is_owner = (role == "owner")
 
     user_workspaces = get_user_workspaces(user) if user else []

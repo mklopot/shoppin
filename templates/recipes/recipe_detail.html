@@ -180,6 +180,18 @@
                 </button>
             </form>
         </div>
+        {% elif not request.user.is_authenticated %}
+        <div class="pt-3 border-t border-gray-200 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-blue-50/60 border border-blue-200 p-2.5">
+                <div class="flex items-center space-x-2 text-blue-950">
+                    <span>🥘</span>
+                    <span>Sign in with Google to add <strong>{{ recipe.name }}</strong> to your meal plan or shopping list.</span>
+                </div>
+                <a href="{% url 'core:login' %}?next={{ request.path }}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1 text-xs shadow-sm">
+                    Sign in with Google &rarr;
+                </a>
+            </div>
+        </div>
         {% endif %}
     </div>
 
@@ -473,7 +485,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {% for pairing in serve_with_recipes %}
-            <a href="{% url 'recipes:detail' pairing.id %}" class="p-2.5 border border-gray-200 hover:border-gray-500 bg-gray-50 hover:bg-white text-xs block transition-colors group">
+            <a href="{{ pairing.get_absolute_url }}" class="p-2.5 border border-gray-200 hover:border-gray-500 bg-gray-50 hover:bg-white text-xs block transition-colors group">
                 <span class="font-bold text-gray-900 group-hover:text-blue-900 block">{{ pairing.name }}</span>
                 <span class="text-gray-500 text-[11px]">
                     {% if pairing.cuisine %}{{ pairing.cuisine }} &bull; {% endif %}

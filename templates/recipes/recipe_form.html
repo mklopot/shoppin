@@ -6,7 +6,7 @@
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Breadcrumb / Back Navigation -->
     <div class="flex items-center justify-between text-xs pb-2 border-b border-gray-300">
-        <a href="{% if is_edit %}{% url 'recipes:detail' recipe.id %}{% else %}{% url 'recipes:list' %}{% endif %}" class="text-blue-700 hover:underline font-semibold flex items-center space-x-1">
+        <a href="{% if is_edit %}{{ recipe.get_absolute_url }}{% else %}{% url 'recipes:list' %}{% endif %}" class="text-blue-700 hover:underline font-semibold flex items-center space-x-1">
             <span>&larr;</span>
             <span>{% if is_edit %}Cancel and return to recipe{% else %}Back to recipes{% endif %}</span>
         </a>

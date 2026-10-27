@@ -4,12 +4,16 @@ URL routing patterns for Core workspace and persona management.
 
 from django.urls import path
 
-from apps.core import views
+from apps.core import auth_views, views
 
 app_name = "core"
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("login/", auth_views.login_view, name="login"),
+    path("logout/", auth_views.logout_view, name="logout"),
+    path("google/login/", auth_views.google_login_view, name="google_login"),
+    path("google/callback/", auth_views.google_callback_view, name="google_callback"),
     path("workspace/switch/<int:workspace_id>/", views.switch_workspace, name="switch_workspace"),
     path("workspace/create/", views.create_workspace_view, name="create_workspace"),
     path("workspace/<int:workspace_id>/members/", views.workspace_members_modal, name="workspace_members"),

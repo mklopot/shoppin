@@ -3,6 +3,7 @@ Views and HTMX endpoints for Meal Planning, recipe dish composition,
 and ingredient synchronization with the active shopping list.
 """
 
+from decimal import Decimal
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
@@ -112,6 +113,7 @@ def delete_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
 
 
 @require_POST
+@require_POST
 def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
     """
     Handle POST request to add a recipe dish to a meal.
@@ -125,6 +127,13 @@ def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
 
     recipe_name = request.POST.get("recipe", "").strip()
     recipe_id = request.POST.get("recipe_id")
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        scale_factor = Decimal(scale_raw)
+        if scale_factor <= Decimal("0"):
+            scale_factor = Decimal("1.00")
+    except Exception:
+        scale_factor = Decimal("1.00")
 
     recipe = None
     if recipe_id:
@@ -134,8 +143,9 @@ def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
 
     toast_messages: list[str] = []
     if recipe:
-        added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request)
-        toast_messages.append(f"🥘 Added '{recipe.name}' to {meal.name}")
+        added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request, scale_factor=scale_factor)
+        scale_tag = f" ({scale_factor.normalize():f}x)" if scale_factor != Decimal("1.00") else ""
+        toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name}")
         if len(added_descriptions) <= 6:
             for desc in added_descriptions:
                 toast_messages.append(f"🛒 Added {desc} to shopping list")

@@ -2,6 +2,7 @@
 Views for culinary recipes, interactive multi-facet search, detail, ratings, and creation.
 """
 
+from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
@@ -389,6 +390,13 @@ def recipe_add_to_mealplan_view(
 
     meal_id = request.POST.get("meal_id", "").strip()
     meal_name = request.POST.get("meal_name", "").strip()
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        scale_factor = Decimal(scale_raw)
+        if scale_factor <= Decimal("0"):
+            scale_factor = Decimal("1.00")
+    except Exception:
+        scale_factor = Decimal("1.00")
 
     if meal_id and meal_id != "new":
         meal = get_object_or_404(Meal, id=meal_id, meal_plan=meal_plan)
@@ -396,9 +404,10 @@ def recipe_add_to_mealplan_view(
         target_name = meal_name or f"{recipe.name} Dinner"
         meal = add_meal_to_plan(meal_plan, target_name)
 
-    added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request)
+    added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request, scale_factor=scale_factor)
 
-    toast_msg = f"🥘 Added '{recipe.name}' to {meal.name} and loaded {len(added_descriptions)} ingredients onto Shopping List"
+    scale_tag = f" ({scale_factor.normalize():f}x)" if scale_factor != Decimal("1.00") else ""
+    toast_msg = f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name} and loaded {len(added_descriptions)} ingredients onto Shopping List"
     context = {
         "toast_message": toast_msg,
     }

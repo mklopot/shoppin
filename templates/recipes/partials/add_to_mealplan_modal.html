@@ -69,6 +69,35 @@
                        class="w-full border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
             </div>
 
+            <!-- Recipe Scaling Factor -->
+            <div class="space-y-1.5 pt-1">
+                <div class="flex items-center justify-between">
+                    <label for="prompt-scale-factor" class="block font-bold text-gray-700">Portion Scaling Factor:</label>
+                    <span id="prompt-scaled-portions" class="text-[11px] text-gray-500 font-medium">
+                        Yield: <strong>{{ recipe.portions|default:4 }} servings</strong> (1x)
+                    </span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="number"
+                           id="prompt-scale-factor"
+                           name="scale_factor"
+                           value="1"
+                           min="0.1"
+                           max="100"
+                           step="any"
+                           aria-label="Portion scaling factor"
+                           oninput="updateModalPortions(this.value, {{ recipe.portions|default:4 }})"
+                           class="w-20 border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+                    <div class="flex items-center space-x-1">
+                        <button type="button" onclick="setModalScaleFactor(0.5, {{ recipe.portions|default:4 }})" class="border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 py-1 text-[11px] text-gray-700 font-medium">0.5x</button>
+                        <button type="button" onclick="setModalScaleFactor(1, {{ recipe.portions|default:4 }})" class="border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 py-1 text-[11px] text-gray-700 font-medium">1x</button>
+                        <button type="button" onclick="setModalScaleFactor(1.5, {{ recipe.portions|default:4 }})" class="border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 py-1 text-[11px] text-gray-700 font-medium">1.5x</button>
+                        <button type="button" onclick="setModalScaleFactor(2, {{ recipe.portions|default:4 }})" class="border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 py-1 text-[11px] text-gray-700 font-medium">2x</button>
+                        <button type="button" onclick="setModalScaleFactor(3, {{ recipe.portions|default:4 }})" class="border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 py-1 text-[11px] text-gray-700 font-medium">3x</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Actions Footer -->
             <div class="flex items-center justify-between pt-3 border-t border-gray-200">
                 <button type="button"
@@ -102,6 +131,26 @@
             }
         } else {
             container.classList.add('hidden');
+        }
+    }
+
+    function updateModalPortions(factorVal, basePortions) {
+        const el = document.getElementById('prompt-scaled-portions');
+        if (!el) return;
+        const factor = parseFloat(factorVal);
+        if (!factor || factor <= 0) {
+            el.innerHTML = `Yield: <strong>${basePortions} servings</strong> (1x)`;
+            return;
+        }
+        const scaled = Math.round(basePortions * factor * 10) / 10;
+        el.innerHTML = `Yield: <strong>${scaled} servings</strong> (${factorVal}x)`;
+    }
+
+    function setModalScaleFactor(factor, basePortions) {
+        const input = document.getElementById('prompt-scale-factor');
+        if (input) {
+            input.value = factor;
+            updateModalPortions(factor, basePortions);
         }
     }
 </script>

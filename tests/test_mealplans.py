@@ -11,7 +11,7 @@ from django.urls import reverse
 
 from apps.core.models import WorkspaceRole
 from apps.core.services.workspace_service import create_workspace, share_workspace
-from apps.mealplans.models import Meal
+from apps.mealplans.models import Meal, MealDish
 from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.mealplans.services.mealplan_service import (
     add_meal_to_plan,
@@ -536,4 +536,136 @@ def test_times_made_counter_visibility_in_recipe_views(client, mealplan_setup):
     resp_singular = client.get(reverse("recipes:list"))
     assert resp_singular.status_code == 200
     assert "Made 1 time" in resp_singular.content.decode("utf-8")
+
+
+def test_add_dish_scaled_up_and_remove(mealplan_setup):
+    """Verify adding a recipe scaled up (2x) doubles shopping list amounts and cleans up completely."""
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Sunday Party")
+    add_recipe_to_meal(meal, recipe, shopping_list, scale_factor=Decimal("2.00"))
+
+    # Verify MealDish record
+    dish = MealDish.objects.get(meal=meal, recipe=recipe)
+    assert dish.scale_factor == Decimal("2.00")
+    assert dish.scale_display == "2x"
+    assert dish.scaled_portions == 8  # 4 * 2
+
+    # Verify shopping list items scaled by factor 2
+    tortillas = shopping_list.items.get(name="Tortillas")
+    assert tortillas.amount == Decimal("16.00")  # 8 * 2
+
+    beef = shopping_list.items.get(name="Ground Beef")
+    assert beef.amount == Decimal("2.00")  # 1 * 2
+
+    # Verify remove deducts the full 2x scaled amounts
+    remove_recipe_from_meal(meal, recipe, shopping_list)
+    assert shopping_list.items.count() == 0
+    assert not MealDish.objects.filter(meal=meal, recipe=recipe).exists()
+
+
+def test_add_dish_scaled_down(mealplan_setup):
+    """Verify adding a recipe scaled down (0.5x) halves shopping list amounts."""
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Solo Dinner")
+    add_recipe_to_meal(meal, recipe, shopping_list, scale_factor=Decimal("0.50"))
+
+    dish = MealDish.objects.get(meal=meal, recipe=recipe)
+    assert dish.scale_factor == Decimal("0.50")
+    assert dish.scale_display == "0.5x"
+    assert dish.scaled_portions == 2  # 4 * 0.5
+
+    tortillas = shopping_list.items.get(name="Tortillas")
+    assert tortillas.amount == Decimal("4.00")  # 8 * 0.5
+
+    beef = shopping_list.items.get(name="Ground Beef")
+    assert beef.amount == Decimal("0.50")  # 1 * 0.5
+
+
+def test_add_dish_scaled_combines_with_existing(mealplan_setup):
+    """Verify adding a scaled recipe correctly combines amounts with existing items."""
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    # Pre-existing 3 Tortillas on shopping list
+    shopping_list.items.create(
+        name="Tortillas",
+        amount=Decimal("3.00"),
+        amount_unit="count",
+        status=ItemStatus.NEED,
+        category="bakery",
+    )
+
+    meal = add_meal_to_plan(meal_plan, "Big Taco Night")
+    # Base: 8 Tortillas scaled by 1.5 = 12
+    add_recipe_to_meal(meal, recipe, shopping_list, scale_factor=Decimal("1.50"))
+
+    tortillas = shopping_list.items.get(name="Tortillas")
+    # 3 pre-existing + 12 scaled = 15
+    assert tortillas.amount == Decimal("15.00")
+
+
+def test_add_dish_post_endpoint_with_scale_factor(client, mealplan_setup):
+    """Verify adding a dish via POST /mealplans/meal/<id>/add-dish/ with scale_factor."""
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Family Feast")
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    resp = client.post(
+        reverse("mealplans:add_dish", args=[meal.id]),
+        {"recipe": recipe.name, "scale_factor": "2.5"},
+    )
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "2.5x" in html
+
+    dish = MealDish.objects.get(meal=meal, recipe=recipe)
+    assert dish.scale_factor == Decimal("2.50")
+    assert dish.scaled_portions == 10  # 4 * 2.5
+
+    tortillas = shopping_list.items.get(name="Tortillas")
+    assert tortillas.amount == Decimal("20.00")  # 8 * 2.5
+
+
+def test_recipe_add_to_mealplan_endpoint_with_scale_factor(client, mealplan_setup):
+    """Verify adding a recipe via POST /recipes/<id>/add-to-mealplan/ with scale_factor."""
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Meal Prep")
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    resp = client.post(
+        reverse("recipes:add_to_mealplan", args=[recipe.id]),
+        {"meal_id": meal.id, "scale_factor": "0.5"},
+    )
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "(0.5x)" in html
+
+    tortillas = shopping_list.items.get(name="Tortillas")
+    assert tortillas.amount == Decimal("4.00")
+
 

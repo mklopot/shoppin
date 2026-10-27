@@ -5,6 +5,8 @@ Enables grouping recipes into meals (e.g. 'Monday Dinner') and tracking
 rules (e.g. 'every dinner needs a veggie protein').
 """
 
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 
@@ -92,3 +94,67 @@ class Meal(models.Model):
     def __str__(self) -> str:
         """Return formatted meal name with emoji prefix."""
         return f"{self.emoji} {self.name}".strip()
+
+    @property
+    def dishes_list(self) -> list["MealDish"]:
+        """
+        Return list of MealDish objects, preserving order and falling back gracefully
+        if a recipe is attached in M2M without an explicit MealDish record.
+        """
+        existing = {d.recipe_id: d for d in self.dishes.select_related("recipe").all()}
+        results = []
+        for recipe in self.recipes.all():
+            if recipe.id in existing:
+                results.append(existing[recipe.id])
+            else:
+                results.append(MealDish(meal=self, recipe=recipe, scale_factor=Decimal("1.00")))
+        return results
+
+
+class MealDish(models.Model):
+    """
+    An individual recipe dish planned within a meal, tracking portion scaling.
+    """
+    meal = models.ForeignKey(
+        Meal,
+        on_delete=models.CASCADE,
+        related_name="dishes",
+    )
+    recipe = models.ForeignKey(
+        "recipes.Recipe",
+        on_delete=models.CASCADE,
+        related_name="meal_dishes",
+    )
+    scale_factor = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("1.00"),
+        help_text="Portion scaling factor (e.g. 0.5 for half, 2.0 for double)",
+    )
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "created_at", "id"]
+        unique_together = [("meal", "recipe")]
+
+    def __str__(self) -> str:
+        """Return formatted dish name with scale factor if scaled."""
+        factor_str = f"{self.scale_factor.normalize():f}x" if self.scale_factor != Decimal("1.00") else ""
+        return f"{self.recipe.name}{f' ({factor_str})' if factor_str else ''}"
+
+    @property
+    def scale_display(self) -> str:
+        """Return human-readable scale string like '2x' or '0.5x' (empty if 1x)."""
+        if self.scale_factor == Decimal("1.00"):
+            return ""
+        return f"{self.scale_factor.normalize():f}x"
+
+    @property
+    def scaled_portions(self) -> int | float:
+        """Return portions adjusted by the scaling factor."""
+        base = self.recipe.portions or 4
+        scaled = Decimal(str(base)) * self.scale_factor
+        if scaled == scaled.to_integral():
+            return int(scaled)
+        return float(scaled.normalize())

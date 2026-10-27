@@ -176,6 +176,24 @@
                        placeholder="New meal name (e.g. {{ recipe.name }} Dinner)..."
                        class="{% if meals %}hidden{% endif %} border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-900 focus:outline-none w-64 rounded-none">
 
+                <div class="flex items-center space-x-1.5">
+                    <label for="scale-factor-detail" class="font-bold text-gray-700">Scale:</label>
+                    <input type="number"
+                           id="scale-factor-detail"
+                           name="scale_factor"
+                           value="1"
+                           min="0.1"
+                           max="100"
+                           step="any"
+                           aria-label="Scale recipe by factor"
+                           oninput="updateDetailPortions(this.value, {{ recipe.portions|default:4 }})"
+                           class="w-16 border border-gray-300 bg-white text-xs px-2 py-1.5 text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+                    <span class="text-xs text-gray-500 font-bold" aria-hidden="true">x</span>
+                    <span id="detail-scaled-portions" class="text-[11px] text-gray-500 font-medium whitespace-nowrap">
+                        ({{ recipe.portions|default:4 }} serv)
+                    </span>
+                </div>
+
                 <button type="submit" class="border border-gray-800 bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 flex items-center space-x-1.5 shadow-sm text-xs">
                     <span aria-hidden="true">🥘</span>
                     <span>Add to Meal Plan</span>
@@ -593,6 +611,18 @@ function setNutritionViewMode(mode) {
             btnTotal.setAttribute('aria-selected', 'false');
         }
     }
+}
+
+function updateDetailPortions(factorVal, basePortions) {
+    const el = document.getElementById('detail-scaled-portions');
+    if (!el) return;
+    const factor = parseFloat(factorVal);
+    if (!factor || factor <= 0) {
+        el.textContent = `(${basePortions} serv)`;
+        return;
+    }
+    const scaled = Math.round(basePortions * factor * 10) / 10;
+    el.textContent = `(${scaled} serv)`;
 }
 </script>
 {% endblock %}

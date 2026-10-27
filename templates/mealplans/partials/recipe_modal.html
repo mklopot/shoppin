@@ -76,7 +76,7 @@
         <!-- Modal Footer -->
         <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 flex-shrink-0">
             {% if can_write and meals %}
-            <form class="flex items-center space-x-1.5 text-xs">
+            <form class="flex flex-wrap items-center gap-1.5 text-xs">
                 {% csrf_token %}
                 <span class="text-gray-600 font-medium">Add to Meal:</span>
                 <select name="meal_id" class="border border-gray-400 px-2 py-1 bg-white text-xs rounded-none focus:outline-none">
@@ -84,20 +84,30 @@
                     <option value="{{ m.id }}">{{ m.name }}{% if m.emoji %} {{ m.emoji }}{% endif %}</option>
                     {% endfor %}
                 </select>
+                <div class="flex items-center space-x-1">
+                    <label for="modal-scale-input" class="text-gray-600 font-medium">Scale:</label>
+                    <input type="number" id="modal-scale-input" name="scale_factor" value="1" min="0.1" max="100" step="any"
+                           aria-label="Scale factor" class="w-14 border border-gray-400 px-1.5 py-1 bg-white text-xs rounded-none focus:outline-none">
+                    <span class="text-xs text-gray-500 font-bold" aria-hidden="true">x</span>
+                </div>
                 <button type="button"
                         onclick="
                             const modal = document.getElementById('recipe-detail-modal');
                             const select = this.form.querySelector('select[name=meal_id]');
                             if (!select) return;
                             const mealId = select.value;
+                            const scaleVal = this.form.querySelector('input[name=scale_factor]')?.value || '1';
                             htmx.ajax('POST', '/mealplans/meal/' + mealId + '/add-dish/', {
                                 target: '#mealplan-content',
                                 swap: 'innerHTML transition:true',
-                                values: { recipe_id: '{{ recipe.id }}', csrfmiddlewaretoken: '{{ csrf_token }}' }
+                                values: { recipe_id: '{{ recipe.id }}', scale_factor: scaleVal, csrfmiddlewaretoken: '{{ csrf_token }}' }
                             });
                             if (modal) modal.remove();
                         "
                         class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none cursor-pointer">
+                    + Add Dish
+                </button>
+            </form>
                     + Add Dish
                 </button>
             </form>

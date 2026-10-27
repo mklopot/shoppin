@@ -16,7 +16,7 @@ from apps.core.utils import (
     combine_amounts_and_units,
     singularize,
 )
-from apps.mealplans.models import Meal, MealPlan
+from apps.mealplans.models import Meal, MealDish, MealPlan
 from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.recipes.models import Recipe
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
@@ -81,7 +81,7 @@ def delete_meal_from_plan(
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for attribution / WebSocket sender client ID.
     """
-    for recipe in meal.recipes.all():
+    for recipe in list(meal.recipes.all()):
         remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
     meal.delete()
@@ -92,20 +92,35 @@ def add_recipe_to_meal(
     recipe: Recipe,
     shopping_list: ShoppingList,
     request: HttpRequest | None = None,
+    scale_factor: Decimal | float | str = Decimal("1.00"),
 ) -> list[str]:
     """
-    Add a recipe dish to a meal and populate its ingredients onto the shopping list.
+    Add a recipe dish to a meal and populate its ingredients onto the shopping list,
+    optionally scaled up or down by a given factor.
 
     Args:
         meal: Target Meal.
         recipe: Target Recipe.
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for attribution / WebSocket sender client ID.
+        scale_factor: Portion scaling factor (e.g. 0.5, 1.0, 2.0).
 
     Returns:
         List of formatted strings describing each added or combined ingredient.
     """
+    try:
+        factor = Decimal(str(scale_factor))
+        if factor <= Decimal("0"):
+            factor = Decimal("1.00")
+    except Exception:
+        factor = Decimal("1.00")
+
     meal.recipes.add(recipe)
+    MealDish.objects.update_or_create(
+        meal=meal,
+        recipe=recipe,
+        defaults={"scale_factor": factor},
+    )
 
     # Re-evaluate emoji if current meal emoji is empty
     if not meal.emoji:
@@ -122,8 +137,11 @@ def add_recipe_to_meal(
         brand = ingredient.brand or ""
         unit = ingredient.amount_unit or ""
 
+        # Calculate scaled amount
+        scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
+
         # Format amount and unit for clean user-facing description
-        amount_raw = f"{ingredient.amount:.2g}"
+        amount_raw = f"{scaled_amount.normalize():f}"
         amount_fmt = amount_raw.rstrip("0").rstrip(".") if "." in amount_raw else amount_raw
         unit_str = f" {ingredient.amount_unit}" if ingredient.amount_unit else ""
 
@@ -143,7 +161,7 @@ def add_recipe_to_meal(
             combined_amount, combined_unit = combine_amounts_and_units(
                 existing.amount,
                 existing.amount_unit,
-                ingredient.amount,
+                scaled_amount,
                 unit,
             )
             existing.amount = combined_amount
@@ -172,7 +190,7 @@ def add_recipe_to_meal(
             ShoppingListItem.objects.create(
                 shopping_list=shopping_list,
                 name=ingredient.name,
-                amount=ingredient.amount,
+                amount=scaled_amount,
                 amount_unit=ingredient.amount_unit,
                 brand=ingredient.brand,
                 vendor=ingredient.vendor,
@@ -194,7 +212,8 @@ def add_recipe_to_meal(
     if len(added_descriptions) > 3:
         summary_preview += f", +{len(added_descriptions) - 3} more"
 
-    broadcast_messages = [f"🥘 Added '{recipe.name}' to {meal.name}"]
+    scale_tag = f" ({factor.normalize():f}x)" if factor != Decimal("1.00") else ""
+    broadcast_messages = [f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name}"]
     if len(added_descriptions) <= 6:
         for desc in added_descriptions:
             broadcast_messages.append(f"🛒 Added {desc} to shopping list")
@@ -206,7 +225,7 @@ def add_recipe_to_meal(
 
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
-        toast_message=f"Added '{recipe.name}' ingredients to shopping list ({summary_preview})",
+        toast_message=f"Added '{recipe.name}'{scale_tag} ingredients to shopping list ({summary_preview})",
         toast_messages=broadcast_messages,
         actor_name=actor_name,
         sender_client_id=sender_id,
@@ -221,7 +240,7 @@ def remove_recipe_from_meal(
     request: HttpRequest | None = None,
 ) -> None:
     """
-    Remove a recipe dish from a meal and deduct its ingredients from the shopping list.
+    Remove a recipe dish from a meal and deduct its scaled ingredients from the shopping list.
 
     Args:
         meal: Target Meal.
@@ -229,9 +248,15 @@ def remove_recipe_from_meal(
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for WebSocket attribution.
     """
+    dish = MealDish.objects.filter(meal=meal, recipe=recipe).first()
+    factor = dish.scale_factor if dish else Decimal("1.00")
+
     meal.recipes.remove(recipe)
+    if dish:
+        dish.delete()
 
     for ingredient in recipe.ingredients.all():
+        scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
         normalized_name = singularize(ingredient.name.lower())
         items = shopping_list.items.filter(name__iexact=ingredient.name)
         if not items.exists():
@@ -244,7 +269,7 @@ def remove_recipe_from_meal(
             if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe.name in item.purpose:
                 # Deduct amount
                 try:
-                    new_amount = item.amount - ingredient.amount
+                    new_amount = item.amount - scaled_amount
                 except Exception:
                     new_amount = Decimal("0.00")
 

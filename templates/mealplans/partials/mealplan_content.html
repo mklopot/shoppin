@@ -132,12 +132,7 @@
                     <span class="inline-block w-3.5 h-3.5 rounded-full bg-gray-200 border border-gray-300 flex-shrink-0" role="img" aria-label="Status: Ingredients needed on shopping list." title="Ingredients needed on shopping list."></span>
                     {% endif %}
 
-                    <h3 class="font-bold text-sm text-gray-900 flex items-center space-x-1.5">
-                        <span>{{ meal.name }}</span>
-                        {% if meal.emoji %}
-                        <span class="text-base leading-none" aria-hidden="true">{{ meal.emoji }}</span>
-                        {% endif %}
-                    </h3>
+                    {% include "mealplans/partials/meal_header.html" with meal=meal can_write=can_write %}
                 </div>
 
                 {% if can_write %}

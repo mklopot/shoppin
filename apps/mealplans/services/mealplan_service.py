@@ -68,6 +68,18 @@ def add_meal_to_plan(meal_plan: MealPlan, meal_name: str) -> Meal:
     return meal
 
 
+def update_meal_name(meal: Meal, new_name: str) -> Meal:
+    """
+    Update a meal's name and recompute its culinary emoji.
+    """
+    cleaned_name = new_name.strip()
+    if cleaned_name:
+        meal.name = cleaned_name
+        meal.emoji = get_meal_emoji(cleaned_name)
+        meal.save(update_fields=["name", "emoji"])
+    return meal
+
+
 def delete_meal_from_plan(
     meal: Meal,
     shopping_list: ShoppingList,

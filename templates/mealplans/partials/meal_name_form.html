@@ -1,0 +1,28 @@
+<form id="meal-header-{{ meal.id }}"
+      hx-post="{% url 'mealplans:edit_meal' meal.id %}"
+      hx-target="#mealplan-content"
+      class="flex items-center space-x-1.5 text-xs">
+    {% csrf_token %}
+    <label for="meal-name-input-{{ meal.id }}" class="sr-only">Meal Name</label>
+    <input type="text"
+           id="meal-name-input-{{ meal.id }}"
+           name="name"
+           value="{{ meal.name }}"
+           required
+           autocomplete="off"
+           autofocus
+           class="border border-gray-400 px-2 py-0.5 text-xs text-gray-900 font-bold bg-white focus:outline-none focus:border-gray-800 rounded-none w-44 sm:w-56">
+    <button type="submit"
+            class="text-[11px] font-semibold bg-gray-900 hover:bg-black text-white px-2 py-0.5 rounded-none shadow-sm"
+            title="Save name">
+        Save
+    </button>
+    <button type="button"
+            hx-get="{% url 'mealplans:edit_meal' meal.id %}?cancel=1"
+            hx-target="#meal-header-{{ meal.id }}"
+            hx-swap="outerHTML"
+            class="text-[11px] text-gray-500 hover:text-gray-900 px-1 py-0.5 border border-gray-300 bg-white hover:bg-gray-100 rounded-none"
+            title="Cancel">
+        Cancel
+    </button>
+</form>

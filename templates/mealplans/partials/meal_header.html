@@ -1,0 +1,19 @@
+<div id="meal-header-{{ meal.id }}" class="flex items-center space-x-1.5">
+    <h3 class="font-bold text-sm text-gray-900 flex items-center space-x-1.5">
+        <span>{{ meal.name }}</span>
+        {% if meal.emoji %}
+        <span class="text-base leading-none" aria-hidden="true">{{ meal.emoji }}</span>
+        {% endif %}
+    </h3>
+    {% if can_write %}
+    <button type="button"
+            hx-get="{% url 'mealplans:edit_meal' meal.id %}"
+            hx-target="#meal-header-{{ meal.id }}"
+            hx-swap="outerHTML"
+            class="text-gray-400 hover:text-gray-800 text-xs px-1 leading-none focus:outline-none"
+            aria-label="Edit meal name for {{ meal.name }}"
+            title="Edit meal name">
+        <span aria-hidden="true">✎</span>
+    </button>
+    {% endif %}
+</div>

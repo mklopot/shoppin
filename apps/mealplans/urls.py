@@ -11,6 +11,7 @@ app_name = "mealplans"
 urlpatterns = [
     path("", views.meal_plan_view, name="detail"),
     path("meal/add/", views.add_meal, name="add_meal"),
+    path("meal/<int:meal_id>/edit/", views.edit_meal, name="edit_meal"),
     path("meal/<int:meal_id>/suggestions/", views.meal_suggestions, name="meal_suggestions"),
     path("meal/<int:meal_id>/delete/", views.delete_meal, name="delete_meal"),
     path("meal/<int:meal_id>/add-dish/", views.add_dish, name="add_dish"),

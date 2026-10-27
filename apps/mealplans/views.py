@@ -19,6 +19,7 @@ from apps.mealplans.services.mealplan_service import (
     delete_meal_from_plan,
     get_active_meal_plan,
     remove_recipe_from_meal,
+    update_meal_name,
 )
 from apps.mealplans.services.suggestion_service import (
     calculate_current_meal_nutrition,
@@ -98,6 +99,33 @@ def add_meal(request: HttpRequest) -> HttpResponse:
         toast_messages.append(f"➕ Added '{meal.name}' to meal plan")
 
     return meal_plan_view(request, toast_messages=toast_messages)
+
+
+def edit_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Handle inline editing of a meal's name.
+    GET: renders meal_name_form partial (or meal_header partial if ?cancel=1).
+    POST: updates meal name, recomputes emoji, and returns updated meal plan view.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+
+    if request.method == "POST":
+        new_name = request.POST.get("name", "").strip()
+        toast_messages: list[str] = []
+        if new_name and new_name != meal.name:
+            old_name = meal.name
+            update_meal_name(meal, new_name)
+            toast_messages.append(f"✏️ Renamed '{old_name}' to '{meal.name}'")
+        return meal_plan_view(request, toast_messages=toast_messages)
+
+    if request.GET.get("cancel"):
+        return render(request, "mealplans/partials/meal_header.html", {"meal": meal, "can_write": True})
+
+    return render(request, "mealplans/partials/meal_name_form.html", {"meal": meal})
 
 
 @require_POST

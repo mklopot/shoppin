@@ -19,6 +19,7 @@ from apps.mealplans.services.mealplan_service import (
     compute_cooking_status,
     delete_meal_from_plan,
     remove_recipe_from_meal,
+    update_meal_name,
 )
 from apps.recipes.models import Ingredient, Recipe
 from apps.shopping.models import ItemStatus
@@ -667,3 +668,71 @@ def test_recipe_add_to_mealplan_endpoint_with_scale_factor(client, mealplan_setu
     assert tortillas.amount == Decimal("4.00")
 
 
+
+
+def test_update_meal_name_service(mealplan_setup):
+    """Test updating meal name directly via service function."""
+    meal_plan = mealplan_setup["meal_plan"]
+    meal = add_meal_to_plan(meal_plan, "Regular Dinner")
+    assert meal.name == "Regular Dinner"
+
+    updated = update_meal_name(meal, "Taco Tuesday Fiesta")
+    assert updated.name == "Taco Tuesday Fiesta"
+    assert "🌮" in updated.emoji
+    meal.refresh_from_db()
+    assert meal.name == "Taco Tuesday Fiesta"
+    assert "🌮" in meal.emoji
+
+
+def test_edit_meal_name_endpoints(client, mealplan_setup):
+    """Verify GET and POST endpoints for editing meal name."""
+    owner = mealplan_setup["owner"]
+    viewer = mealplan_setup["viewer"]
+    ws = mealplan_setup["workspace"]
+    meal_plan = mealplan_setup["meal_plan"]
+
+    meal = add_meal_to_plan(meal_plan, "Sunday Supper")
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # 1. GET edit form
+    resp_get = client.get(reverse("mealplans:edit_meal", args=[meal.id]))
+    assert resp_get.status_code == 200
+    assert 'name="name"' in resp_get.content.decode("utf-8")
+    assert 'value="Sunday Supper"' in resp_get.content.decode("utf-8")
+
+    # 2. GET cancel returns header
+    resp_cancel = client.get(reverse("mealplans:edit_meal", args=[meal.id]) + "?cancel=1")
+    assert resp_cancel.status_code == 200
+    assert "Sunday Supper" in resp_cancel.content.decode("utf-8")
+    assert 'name="name"' not in resp_cancel.content.decode("utf-8")
+
+    # 3. POST new name updates meal and emoji
+    resp_post = client.post(
+        reverse("mealplans:edit_meal", args=[meal.id]),
+        {"name": "Pizza Party Friday"},
+    )
+    assert resp_post.status_code == 200
+    html = resp_post.content.decode("utf-8")
+    assert "Pizza Party Friday" in html
+    assert "🍕" in html
+    meal.refresh_from_db()
+    assert meal.name == "Pizza Party Friday"
+    assert "🍕" in meal.emoji
+
+    # 4. Viewer receives 403 Forbidden
+    client.force_login(viewer)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    resp_v_post = client.post(
+        reverse("mealplans:edit_meal", args=[meal.id]),
+        {"name": "Hacked Meal Name"},
+    )
+    assert resp_v_post.status_code == 403
+    meal.refresh_from_db()
+    assert meal.name == "Pizza Party Friday"

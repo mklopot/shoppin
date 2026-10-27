@@ -31,6 +31,7 @@ def test_haversine_distance():
 
 @pytest.mark.django_db
 def test_nearest_stores():
+    StoreLocation.objects.all().delete()
     king = StoreLocation.objects.create(
         name="King Soopers Downtown",
         chain="kroger",
@@ -49,6 +50,55 @@ def test_nearest_stores():
     assert len(nearest) == 2
     assert nearest[0]["store"] == king
     assert nearest[0]["distance_miles"] < nearest[1]["distance_miles"]
+
+
+@pytest.mark.django_db
+def test_get_nearest_five_stores(client):
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+
+    from apps.core.models import Workspace
+    User = get_user_model()
+    admin = User.objects.create_user(username="store_test_user")
+    ws = Workspace.objects.create(name="Store Test WS", owner=admin)
+    s_list = ShoppingList.objects.create(name="Store Test List", workspace=ws, owner=admin)
+    client.force_login(admin)
+
+    # Query from LoDo coordinates (39.753, -105.000)
+    nearest = get_nearest_stores(39.753, -105.000, limit=5)
+    assert len(nearest) == 5
+
+    # Distances must be strictly non-decreasing
+    for i in range(len(nearest) - 1):
+        assert nearest[i]["distance_miles"] <= nearest[i + 1]["distance_miles"]
+
+    store_names = [n["store"].name for n in nearest]
+    # Whole Foods Union Station and King Soopers Chestnut are much closer than Cherry Creek
+    assert "Whole Foods Market (Union Station)" in store_names
+    assert "King Soopers #01400115 (Chestnut / LoDo)" in store_names
+
+    # Test POST to find_nearest_store endpoint returns modal with 5 stores
+    response = client.post(
+        reverse("shopping:nearest_store"),
+        {
+            "latitude": "39.753",
+            "longitude": "-105.000",
+        },
+    )
+    assert response.status_code == 200
+    assert b"Stores Closest to You" in response.content
+    assert b"Whole Foods Market (Union Station)" in response.content
+    assert b"Select Store" in response.content
+
+    # Select the first store
+    first_store = nearest[0]["store"]
+    set_resp = client.post(
+        reverse("shopping:set_store"),
+        {"store_id": str(first_store.id)},
+    )
+    assert set_resp.status_code == 200
+    s_list.refresh_from_db()
+    assert s_list.active_store == first_store
 
 
 @pytest.mark.django_db

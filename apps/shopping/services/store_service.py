@@ -121,9 +121,83 @@ def haversine_distance(latitude1: float, longitude1: float, latitude2: float, lo
     return round(earth_radius_miles * central_angle, 2)
 
 
+def discover_nearby_stores_osm(latitude: float, longitude: float) -> list[StoreLocation]:
+    """
+    Dynamically discover supermarkets near coordinates via OpenStreetMap Nominatim.
+    Ingests discovered locations into StoreLocation with chain heuristic.
+    """
+    delta = 0.15
+    url = (
+        f"https://nominatim.openstreetmap.org/search?format=json"
+        f"&q=supermarket&bounded=1&viewbox={longitude - delta},{latitude + delta},{longitude + delta},{latitude - delta}"
+        f"&limit=15&addressdetails=1"
+    )
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "ShoppinApp-StoreLocator/2.0"},
+    )
+    created_stores = []
+    try:
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode())
+            for item in data:
+                addr = item.get("address", {})
+                raw_name = (
+                    item.get("namedetails", {}).get("name")
+                    or addr.get("supermarket")
+                    or item.get("display_name", "").split(",")[0].strip()
+                )
+                if not raw_name:
+                    continue
+                road = addr.get("road", "")
+                house = addr.get("house_number", "")
+                street = f"{house} {road}".strip() or addr.get("suburb", "")
+                city = addr.get("city") or addr.get("town") or addr.get("suburb", "")
+                state = addr.get("state", "")
+                postcode = addr.get("postcode", "")
+                lat = float(item["lat"])
+                lon = float(item["lon"])
+
+                name_lower = raw_name.lower()
+                if any(k in name_lower for k in ["kroger", "king soopers", "ralphs", "fred meyer"]):
+                    chain = "kroger"
+                elif any(k in name_lower for k in ["safeway", "albertsons", "vons"]):
+                    chain = "safeway"
+                elif "whole foods" in name_lower:
+                    chain = "whole_foods"
+                elif "trader joe" in name_lower:
+                    chain = "trader_joes"
+                elif "sprouts" in name_lower:
+                    chain = "sprouts"
+                elif "target" in name_lower:
+                    chain = "target"
+                else:
+                    chain = "other"
+
+                store_obj, _ = StoreLocation.objects.get_or_create(
+                    name=raw_name,
+                    latitude=lat,
+                    longitude=lon,
+                    defaults={
+                        "chain": chain,
+                        "address": street,
+                        "city": city,
+                        "state": state,
+                        "zip_code": postcode,
+                    },
+                )
+                created_stores.append(store_obj)
+    except Exception as error:
+        logger.warning(f"Dynamic store discovery failed or timed out: {error}")
+
+    return created_stores
+
+
 def get_nearest_stores(latitude: float, longitude: float, limit: int = 5) -> list[dict[str, Any]]:
     """
     Find the nearest StoreLocation records to the given coordinates.
+    If the closest store in the database is more than 25 miles away,
+    attempts dynamic discovery via OpenStreetMap Nominatim.
 
     Args:
         latitude: Target latitude coordinate.
@@ -142,6 +216,21 @@ def get_nearest_stores(latitude: float, longitude: float, limit: int = 5) -> lis
             "distance_miles": distance_miles,
         })
     store_results.sort(key=lambda result: result["distance_miles"])
+
+    # If all existing stores are far away (> 25 miles), attempt dynamic discovery
+    if not store_results or store_results[0]["distance_miles"] > 25.0:
+        discovered = discover_nearby_stores_osm(latitude, longitude)
+        if discovered:
+            stores = StoreLocation.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+            store_results = []
+            for store in stores:
+                distance_miles = haversine_distance(latitude, longitude, store.latitude, store.longitude)
+                store_results.append({
+                    "store": store,
+                    "distance_miles": distance_miles,
+                })
+            store_results.sort(key=lambda result: result["distance_miles"])
+
     return store_results[:limit]
 
 

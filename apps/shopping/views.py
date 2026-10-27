@@ -773,26 +773,27 @@ def set_store(request: HttpRequest) -> HttpResponse:
     context = _build_list_context(request, shopping_list, group_by)
     actor_name = request.user.username if request.user.is_authenticated else "unknown"
     store_name = shopping_list.active_store.name if shopping_list.active_store else "None"
+    toast = f"📍 Active store set to '{store_name}'" if shopping_list.active_store else "Cleared active store"
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
-        toast_message=f"Store set to {store_name}",
+        toast_message=toast,
         actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
-    return render_list_response(request, context)
+    return render_list_response(request, context, toast_message=toast)
 
 
 @require_POST
 def find_nearest_store(request: HttpRequest) -> HttpResponse:
     """
-    Identify and set the closest physical supermarket based on GPS coordinates.
+    Find the 5 closest physical supermarkets based on GPS coordinates
+    and render the selection modal dialog.
 
     Args:
         request: The POST request containing latitude and longitude.
 
     Returns:
-        Rendered HTML partial with nearest store selected and toast notification,
-        or JsonResponse with error status.
+        Rendered HTML partial of the nearest stores modal dialog.
     """
     try:
         latitude = float(request.POST.get("latitude", 0))
@@ -800,24 +801,24 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid coordinates"}, status=400)
 
-    nearest_matches = get_nearest_stores(latitude, longitude, limit=1)
-    if nearest_matches:
-        store = nearest_matches[0]["store"]
-        distance_miles = nearest_matches[0]["distance_miles"]
-        shopping_list = get_active_list(request)
-        forbidden = _check_write_permission(request, shopping_list)
-        if forbidden:
-            return forbidden
+    nearest_matches = get_nearest_stores(latitude, longitude, limit=5)
+    shopping_list = get_active_list(request)
+    group_by = request.GET.get("group_by", GroupBy.AISLE)
+    mode = request.GET.get("mode", "shopping")
 
-        shopping_list.active_store = store
-        shopping_list.save(update_fields=["active_store"])
-
-        group_by = request.GET.get("group_by", GroupBy.AISLE)
-        context = _build_list_context(request, shopping_list, group_by)
-        toast = f"Detected nearest store: {store.name} ({distance_miles} mi away)"
-        return render_list_response(request, context, toast_message=toast)
-
-    return JsonResponse({"error": "No stores found nearby"}, status=404)
+    return render(
+        request,
+        "shopping/partials/nearest_stores_modal.html",
+        {
+            "nearest_matches": nearest_matches,
+            "active_store": shopping_list.active_store,
+            "shopping_list": shopping_list,
+            "group_by": group_by,
+            "mode": mode,
+            "latitude": latitude,
+            "longitude": longitude,
+        },
+    )
 
 
 @require_POST

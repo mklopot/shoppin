@@ -23,8 +23,8 @@
         navigator.geolocation.getCurrentPosition(
             function(position) {
                 htmx.ajax('POST', '{% url "shopping:nearest_store" %}', {
-                    target: '#shopping-list-content',
-                    swap: 'outerHTML',
+                    target: '#modal-placeholder',
+                    swap: 'innerHTML',
                     values: {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude,

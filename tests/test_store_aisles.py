@@ -178,3 +178,19 @@ def test_aisle_natural_sorting():
         "Aisle 36",
         "Dairy",
     ]
+
+@pytest.mark.django_db
+def test_nearest_stores_deduplication():
+    # Create duplicate records at the same address/chain
+    StoreLocation.objects.create(
+        name="Safeway Corona Duplicate",
+        chain="safeway",
+        external_store_id="1466",
+        address="560 Corona St",
+        latitude=39.7259,
+        longitude=-104.9733,
+    )
+    # Query at Corona St coords
+    nearest = get_nearest_stores(39.726, -104.973, limit=5)
+    addresses = [n["store"].address for n in nearest if n["store"].address]
+    assert len(addresses) == len(set(addresses)), f"Duplicate addresses found in nearest: {addresses}"

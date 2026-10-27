@@ -193,9 +193,40 @@ def discover_nearby_stores_osm(latitude: float, longitude: float) -> list[StoreL
     return created_stores
 
 
+def _collect_deduped_store_distances(latitude: float, longitude: float) -> list[dict[str, Any]]:
+    """
+    Collect all valid stores with distances, strictly deduplicating by chain + external_id/address/coords.
+    """
+    stores = StoreLocation.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+    store_results = []
+    seen_identities: set[str] = set()
+
+    for store in stores:
+        if store.chain and store.external_store_id:
+            ident = f"{store.chain}:{store.external_store_id}"
+        elif store.address:
+            ident = f"{store.chain}:{store.address.lower().strip()}"
+        else:
+            ident = f"{store.chain}:{round(store.latitude, 3)}:{round(store.longitude, 3)}"
+
+        if ident in seen_identities:
+            continue
+        seen_identities.add(ident)
+
+        distance_miles = haversine_distance(latitude, longitude, store.latitude, store.longitude)
+        store_results.append({
+            "store": store,
+            "distance_miles": distance_miles,
+        })
+
+    store_results.sort(key=lambda result: result["distance_miles"])
+    return store_results
+
+
 def get_nearest_stores(latitude: float, longitude: float, limit: int = 5) -> list[dict[str, Any]]:
     """
-    Find the nearest StoreLocation records to the given coordinates.
+    Find the nearest StoreLocation records to the given coordinates,
+    strictly deduplicating identical physical locations.
     If the closest store in the database is more than 25 miles away,
     attempts dynamic discovery via OpenStreetMap Nominatim.
 
@@ -207,29 +238,13 @@ def get_nearest_stores(latitude: float, longitude: float, limit: int = 5) -> lis
     Returns:
         List of dicts containing store instance and distance_miles.
     """
-    stores = StoreLocation.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
-    store_results = []
-    for store in stores:
-        distance_miles = haversine_distance(latitude, longitude, store.latitude, store.longitude)
-        store_results.append({
-            "store": store,
-            "distance_miles": distance_miles,
-        })
-    store_results.sort(key=lambda result: result["distance_miles"])
+    store_results = _collect_deduped_store_distances(latitude, longitude)
 
     # If all existing stores are far away (> 25 miles), attempt dynamic discovery
     if not store_results or store_results[0]["distance_miles"] > 25.0:
         discovered = discover_nearby_stores_osm(latitude, longitude)
         if discovered:
-            stores = StoreLocation.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
-            store_results = []
-            for store in stores:
-                distance_miles = haversine_distance(latitude, longitude, store.latitude, store.longitude)
-                store_results.append({
-                    "store": store,
-                    "distance_miles": distance_miles,
-                })
-            store_results.sort(key=lambda result: result["distance_miles"])
+            store_results = _collect_deduped_store_distances(latitude, longitude)
 
     return store_results[:limit]
 

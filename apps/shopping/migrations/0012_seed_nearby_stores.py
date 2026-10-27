@@ -167,7 +167,7 @@ STORES_DATA = [
 
     # Safeway
     {
-        "name": "Safeway #1466 (Corona St / Capitol Hill)",
+        "name": "Safeway #1466 (Corona St)",
         "chain": "safeway",
         "external_store_id": "1466",
         "address": "560 Corona St",
@@ -306,10 +306,22 @@ STORES_DATA = [
 def seed_stores(apps, schema_editor):
     StoreLocation = apps.get_model("shopping", "StoreLocation")
     for s_data in STORES_DATA:
-        StoreLocation.objects.update_or_create(
-            name=s_data["name"],
-            defaults=s_data,
-        )
+        ext_id = s_data.get("external_store_id")
+        addr = s_data.get("address")
+        existing = None
+        if ext_id:
+            existing = StoreLocation.objects.filter(external_store_id=ext_id).first()
+        if not existing and addr:
+            existing = StoreLocation.objects.filter(address__iexact=addr).first()
+        if not existing:
+            existing = StoreLocation.objects.filter(name__iexact=s_data["name"]).first()
+
+        if existing:
+            for k, v in s_data.items():
+                setattr(existing, k, v)
+            existing.save()
+        else:
+            StoreLocation.objects.create(**s_data)
 
 
 def unseed_stores(apps, schema_editor):

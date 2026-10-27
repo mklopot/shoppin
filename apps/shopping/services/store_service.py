@@ -358,18 +358,23 @@ class KrogerAPIClient:
 kroger_client = KrogerAPIClient()
 
 
-def resolve_store_aisle(store: StoreLocation, item_name: str) -> dict[str, Any]:
+def resolve_store_aisle(
+    store: StoreLocation,
+    item_name: str,
+    category: str | None = None,
+) -> dict[str, Any]:
     """
     Resolve and cache the physical store aisle for a grocery item.
 
     Resolution strategy:
     1. Check the local StoreItemAisle database cache.
     2. If missing and store is a Kroger location with API enabled, query live Kroger API and cache result.
-    3. Fallback to category-based walking order from the categorizer engine.
+    3. Fallback to category-based walking order from the categorizer engine or provided category.
 
     Args:
         store: Target StoreLocation instance.
         item_name: The name of the grocery item.
+        category: Optional known grocery category for fallback department resolution.
 
     Returns:
         Dict with aisle_name, bay_number, sequence_order, and source ('api', 'manual', 'default').
@@ -406,9 +411,13 @@ def resolve_store_aisle(store: StoreLocation, item_name: str) -> dict[str, Any]:
             }
 
     # 3. Department / Category fallback
-    predicted_category = categorizer.get_category(clean_name)
-    sequence_order = DEPARTMENT_ORDER.get(predicted_category.lower(), 200)
-    display_name = predicted_category.title()
+    if category and category.lower() != "other":
+        dept = category
+    else:
+        dept = categorizer.get_category(clean_name) or "other"
+
+    sequence_order = DEPARTMENT_ORDER.get(dept.lower(), 200)
+    display_name = dept.title()
 
     # Cache as default so future queries hit DB directly
     StoreItemAisle.objects.create(

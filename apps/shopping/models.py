@@ -416,6 +416,6 @@ class ShoppingListItem(models.Model):
             import inflection
             normalized_name = inflection.singularize(self.name.strip().lower())
             aisle_map = target_store.item_aisles.filter(item_name_normalized=normalized_name).first()
-            if aisle_map:
+            if aisle_map and aisle_map.aisle_name:
                 return aisle_map.aisle_name
-        return self.aisle or self.category.title()
+        return self.aisle or (self.category or "other").title()

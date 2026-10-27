@@ -762,6 +762,9 @@ def set_store(request: HttpRequest) -> HttpResponse:
         store = get_object_or_404(StoreLocation, id=store_id)
         shopping_list.active_store = store
         shopping_list.save(update_fields=["active_store"])
+        # Warm / resolve store aisles for active need items
+        for item in shopping_list.items.filter(status=ItemStatus.NEED):
+            resolve_store_aisle(store, item.name, category=item.category)
     else:
         shopping_list.active_store = None
         shopping_list.save(update_fields=["active_store"])

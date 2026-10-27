@@ -194,3 +194,50 @@ def test_nearest_stores_deduplication():
     nearest = get_nearest_stores(39.726, -104.973, limit=5)
     addresses = [n["store"].address for n in nearest if n["store"].address]
     assert len(addresses) == len(set(addresses)), f"Duplicate addresses found in nearest: {addresses}"
+
+@pytest.mark.django_db
+def test_select_store_updates_dropdown_and_aisles(client):
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+
+    from apps.core.models import Workspace
+
+    User = get_user_model()
+    user = User.objects.create_user(username="leetsdale_tester")
+    ws = Workspace.objects.create(name="Leetsdale WS", owner=user)
+    s_list = ShoppingList.objects.create(name="Leetsdale List", workspace=ws, owner=user)
+    client.force_login(user)
+
+    ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Cheddar Cheese",
+        amount=Decimal("1.00"),
+        category="dairy",
+        status=ItemStatus.NEED,
+    )
+    ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="French Baguette",
+        amount=Decimal("1.00"),
+        category="bakery",
+        status=ItemStatus.NEED,
+    )
+
+    leetsdale = StoreLocation.objects.filter(name__icontains="Leetsdale").first()
+    assert leetsdale is not None
+
+    response = client.post(
+        reverse("shopping:set_store") + "?group_by=aisle",
+        {"store_id": str(leetsdale.id)},
+    )
+    assert response.status_code == 200
+    s_list.refresh_from_db()
+    assert s_list.active_store == leetsdale
+
+    content = response.content.decode("utf-8")
+    assert f'value="{leetsdale.id}" selected' in content
+    assert 'aria-pressed="true"' in content
+    assert 'Active store set to' in content
+    assert 'Leetsdale' in content
+    assert "Dairy" in content
+    assert "Bakery" in content

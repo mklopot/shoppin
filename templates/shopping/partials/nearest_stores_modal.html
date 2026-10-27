@@ -44,13 +44,15 @@
                         ✓ Active
                     </span>
                     {% else %}
-                    <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}"
+                    <form hx-post="{% url 'shopping:set_store' %}?group_by=aisle&mode={{ mode }}"
                           hx-target="#shopping-list-content"
                           hx-swap="outerHTML transition:true"
-                          onclick="document.getElementById('modal-container')?.remove()">
+                          hx-on::after-request="document.getElementById('modal-container')?.remove()">
                         {% csrf_token %}
                         <input type="hidden" name="store_id" value="{{ match.store.id }}">
-                        <button type="submit" class="border border-gray-900 bg-gray-900 hover:bg-black text-white px-2.5 py-1 text-xs font-semibold select-none cursor-pointer">
+                        <button type="submit"
+                                onclick="setTimeout(() => document.getElementById('modal-container')?.remove(), 100)"
+                                class="border border-gray-900 bg-gray-900 hover:bg-black text-white px-2.5 py-1 text-xs font-semibold select-none cursor-pointer">
                             Select Store
                         </button>
                     </form>

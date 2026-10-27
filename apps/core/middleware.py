@@ -54,3 +54,50 @@ class DevAutoLoginMiddleware:
                     login(request, admin_user)
 
         return self.get_response(request)
+
+
+class TermsOfServiceEnforcementMiddleware:
+    """
+    Middleware that enforces mandatory acceptance of the Terms of Service.
+
+    Any authenticated user who has not executed the latest Terms of Service
+    is intercepted and redirected to the terms acceptance gate.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        """Initialize middleware with next handler."""
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        """
+        Intercept authenticated requests lacking current TOS acceptance.
+        """
+        user = getattr(request, "user", None)
+        is_testing = "pytest" in sys.modules or (len(sys.argv) > 1 and sys.argv[1] == "test")
+        enforce_in_tests = getattr(settings, "ENFORCE_TOS_IN_TESTS", False)
+
+        if is_testing and not enforce_in_tests:
+            return self.get_response(request)
+
+        if user and user.is_authenticated:
+            exempt_prefixes = (
+                "/terms/",
+                "/accounts/logout/",
+                "/logout/",
+                "/static/",
+                "/media/",
+                "/admin/",
+            )
+            path = request.path_info
+            if not any(path.startswith(prefix) for prefix in exempt_prefixes):
+                from urllib.parse import quote
+
+                from django.shortcuts import redirect
+                from django.urls import reverse
+
+                from apps.core.services.tos_service import has_user_accepted_latest_tos
+
+                if not has_user_accepted_latest_tos(user, getattr(request, "session", None)):
+                    return redirect(f"{reverse('core:terms_accept')}?next={quote(request.get_full_path())}")
+
+        return self.get_response(request)

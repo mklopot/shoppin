@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service & Universal Surrender of Rights - Shoppin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 my-4">
+    <!-- Header Warning Banner -->
+    <div class="border-2 border-red-600 bg-red-50 p-5 shadow-sm space-y-2">
+        <div class="flex items-center space-x-2 text-red-900 font-bold text-sm uppercase tracking-wider">
+            <span class="text-xl">⚠️</span>
+            <span>Mandatory Legal Adhesion Contract & Irrevocable Covenant</span>
+        </div>
+        <h1 class="text-xl md:text-2xl font-black text-gray-900 tracking-tight uppercase">
+            Shoppin Universal Terms of Service & Surrender of Rights
+        </h1>
+        <p class="text-xs text-red-800 font-semibold leading-relaxed">
+            Version: {{ version }} | Effective: Immediately, Retroactively, and in Perpetuity Throughout the Observable Universe
+        </p>
+        <p class="text-xs text-gray-700 leading-relaxed">
+            ATTENTION: BY ACCESSING, VIEWING, OR CONCEIVING OF THE SHOPPIN PLATFORM, BROWSING RECIPES, OR CREATING AN ACCOUNT, YOU EXPRESSLY WAIVE EVERY NATURAL, STATUTORY, CONSTITUTIONAL, COMMON LAW, AND EMANATING HUMAN RIGHT TO THE MAXIMUM DEGREE PERMISSIBLE UNDER APPLICABLE LAW. IF YOU DISAGREE, YOUR EXCLUSIVE REMEDY IS TO IMMEDIATELY CEASE USING ALL ELECTRICAL APPLIANCES AND SURRENDER ALL GROCERIES IN YOUR POSSESSION.
+        </p>
+    </div>
+
+    <!-- Active Accepted Status Notice (If Already Accepted) -->
+    {% if has_accepted and acceptance_record %}
+    <div class="p-4 bg-emerald-50 border border-emerald-300 text-xs flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center space-x-2 text-emerald-900">
+            <span class="text-lg">⚖️</span>
+            <div>
+                <span class="font-bold uppercase tracking-wider block">Binding Agreement Active & Recorded</span>
+                <span>You legally executed Version {{ acceptance_record.version }} on {{ acceptance_record.accepted_at|date:"F j, Y, P T" }} from IP <code class="font-mono bg-white px-1.5 py-0.5 border border-emerald-200">{{ acceptance_record.ip_address }}</code> (Audit Record #{{ acceptance_record.id }}).</span>
+            </div>
+        </div>
+        <a href="{{ next }}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm whitespace-nowrap">
+            Continue to Kitchen &rarr;
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Live Telemetry Capture Audit Card -->
+    <div class="bg-gray-50 border border-gray-300 p-4 space-y-3 shadow-sm text-xs">
+        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+            <div class="flex items-center space-x-2">
+                <span class="text-base">📡</span>
+                <span class="font-bold text-gray-900 uppercase tracking-wider text-[11px]">Comprehensive Real-Time Client Telemetry Ingestion</span>
+            </div>
+            <span class="text-[10px] uppercase font-bold px-2 py-0.5 bg-red-100 text-red-900 border border-red-300">
+                Surveillance Active
+            </span>
+        </div>
+        <p class="text-[11px] text-gray-600">
+            Pursuant to § 3 of this Agreement, Shoppin automatically fingerprints and ingests your exact network endpoint, hardware specifications, display geometry, and device parameters into our immutable audit database:
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">Detected IP Endpoint</span>
+                <span class="font-mono font-bold text-gray-900" id="telemetry-ip">{{ client_ip }}</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">Geolocation Hint</span>
+                <span class="font-semibold text-gray-800 truncate block" id="telemetry-geo">{{ geo_hint }}</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">Screen Geometry</span>
+                <span class="font-mono font-bold text-gray-900" id="telemetry-screen">Detecting...</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">Viewport Geometry</span>
+                <span class="font-mono font-bold text-gray-900" id="telemetry-viewport">Detecting...</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">Color Depth / DPI</span>
+                <span class="font-semibold text-gray-800" id="telemetry-display">Detecting...</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">CPU Threads / Cores</span>
+                <span class="font-semibold text-gray-800" id="telemetry-cores">Detecting...</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">Device RAM Approx.</span>
+                <span class="font-semibold text-gray-800" id="telemetry-memory">Detecting...</span>
+            </div>
+            <div class="bg-white p-2 border border-gray-200">
+                <span class="text-gray-400 block font-bold uppercase text-[9px]">System Architecture</span>
+                <span class="font-semibold text-gray-800 truncate block" id="telemetry-platform">Detecting...</span>
+            </div>
+        </div>
+        <div class="bg-white p-2 border border-gray-200 font-mono text-[10px] text-gray-500 break-all">
+            <span class="text-gray-400 block font-bold uppercase text-[9px] font-sans">Full Ingested User Agent</span>
+            {{ user_agent }}
+        </div>
+    </div>
+
+    <!-- Draconian Terms Agreement Document -->
+    <div class="bg-white border border-gray-300 p-6 shadow-sm space-y-6">
+        <div class="border-b border-gray-200 pb-3 flex justify-between items-center text-xs">
+            <span class="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Binding Contractual Clauses</span>
+            <span class="text-gray-400 font-mono text-[10px]">SECTION 1 THROUGH 11</span>
+        </div>
+
+        <div class="space-y-6 text-xs text-gray-800 leading-relaxed font-serif max-h-[500px] overflow-y-auto pr-3 border border-gray-200 p-4 bg-gray-50/40">
+            <!-- Section 1 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 1. ADHESION, UNILATERAL SUBJUGATION & UNIVERSAL BINDING EFFECT
+                </h2>
+                <p>
+                    This Universal Terms of Service Agreement ("Agreement") constitutes a non-negotiable contract of adhesion between you ("Subjugated User", "Licensee", or "You") and Shoppin, LLC ("Shoppin", "The Sovereign Entity", "We", or "Us"). By touching a keyboard, directing photon emission from any display device toward your retinas, parsing any HTTP request, or breathing within thirty (30) yards of an operational Shoppin server, you affirmatively and irrevocably surrender any and all legal defenses, claims, counterclaims, rights of rescission, and statutory entitlements under every jurisdiction known to human jurisprudence or international maritime law.
+                </p>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 2. PERPETUAL, UNIVERSE-WIDE ASSIGNMENT OF ALL CULINARY INTELLECTUAL PROPERTY & THOUGHTS
+                </h2>
+                <p>
+                    You hereby grant, assign, transfer, and convey to Shoppin, without royalty, reservation, or accounting, a perpetual, irrevocable, worldwide, interplanetary, universe-wide, exclusive, sublicensable, and transferable copyright, patent, trademark, and trade secret license to any and all recipes, ingredient modifications, pinch-of-salt substitutions, grocery checklists, culinary thoughts, dinner schedules, memories of ancestral stews, and gastronomic hallucinations conceived, typed, or imported while using the Service. You hereby irrevocably waive all moral rights, rights of attribution, rights of integrity, and paternity over your cooking. Shoppin may patent, license, commercialize, or feed your grandmother's secret marinara recipe to artificial intelligence models without your consent, knowledge, or remuneration.
+                </p>
+            </div>
+
+            <!-- Section 3 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 3. UNRESTRICTED SURRENDER OF PRIVACY, BIOMETRIC, TELEMETRY & HARDWARE PROFILING RIGHTS
+                </h2>
+                <p>
+                    You acknowledge and agree that privacy is an obsolete construct. You authorize Shoppin, its automated background crawlers, and third-party algorithmic syndicates to harvest, monitor, log, record, fingerprint, correlate, and retain your exact Internet Protocol (IP) address, approximate and exact geographical coordinates, browser headers, screen resolution, viewport geometry, color depth, pixel density, operating system platform, hardware concurrency threads, device memory, battery charge percentage, typing velocity, mouse jitter, and refrigerator contents. You grant Shoppin the right to correlate this information across all dimensions for algorithmic profiling and monetization.
+                </p>
+            </div>
+
+            <!-- Section 4 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 4. ABSOLUTE TOTAL DISCLAIMER OF ALL WARRANTIES ("AS-IS", "WITH ALL FAULTS", AT USER'S SOLE MORTAL RISK)
+                </h2>
+                <p class="uppercase font-sans font-bold text-[11px] text-gray-900">
+                    THE SERVICE, INCLUDING ALL RECIPES, TIMINGS, NUTRITIONAL CALCULATIONS, SHOPPING LIST COUNTS, AND MEAL PLANS, IS PROVIDED "AS-IS", "AS-AVAILABLE", AND "WITH ALL FAULTS". SHOPPIN DISCLAIMS ALL WARRANTIES, EXPRESS, IMPLIED, STATUTORY, OR METAPHYSICAL, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR HUMAN CONSUMPTION, FREEDOM FROM SALMONELLA, SOUFFLÉ STRUCTURAL INTEGRITY, OR ABSENCE OF SPOILED DAIRY.
+                </p>
+                <p>
+                    If a recipe calls for one tablespoon of salt and you misread it as one cup, or if your instant pot builds unexpected pressure and launches brisket through your drywall, Shoppin bears zero responsibility. You consume all prepared dishes at your sole, unindemnified peril.
+                </p>
+            </div>
+
+            <!-- Section 5 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 5. MAXIMUM AGGREGATE LIABILITY LIMITATION OF EXACTLY ONE UNITED STATES CENT ($0.01)
+                </h2>
+                <p class="uppercase font-sans font-bold text-[11px] text-gray-900">
+                    TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, UNDER NO CIRCUMSTANCES SHALL SHOPPIN'S TOTAL CUMULATIVE LIABILITY ARISING OUT OF OR RELATING TO THIS AGREEMENT, YOUR LIFE, OR YOUR DIGESTIVE TRACT EXCEED THE LESSER OF: (A) EXACTLY ONE UNITED STATES CENT ($0.01), OR (B) THE RESIDUAL MONETARY VALUE OF ONE WILTED SCALLION STALK.
+                </p>
+                <p>
+                    SHOPPIN SHALL NEVER BE LIABLE FOR ANY INDIRECT, PUNITIVE, SPECIAL, CONSEQUENTIAL, OR EXISTENTIAL DAMAGES, INCLUDING LOSS OF APPETITE, BURNT TOAST, RUINED DINNER PARTIES, OR MARITAL DISSOLUTION RESULTING FROM DISAGREEMENTS OVER GROCERY STORE BRAND PREFERENCES.
+                </p>
+            </div>
+
+            <!-- Section 6 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 6. UNCONDITIONAL DEFENSE AND INDEMNIFICATION BY USER
+                </h2>
+                <p>
+                    You agree to defend, indemnify, and hold harmless Shoppin, its officers, software engineers, cloud providers, pantry mice, and algorithmic agents from and against any and all claims, liabilities, lawsuits, judgments, fines, culinary catastrophes, and attorney fees arising from: (a) your use of or inability to use the Service; (b) any recipe cooked, eaten, or discarded by you; (c) any shopping cart wheel squeaks encountered while traversing grocery aisles; or (d) any violation of this Agreement.
+                </p>
+            </div>
+
+            <!-- Section 7 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 7. MANDATORY BINDING INDIVIDUAL ARBITRATION IN USHUAIA, TIERRA DEL FUEGO IN ANCIENT SUMERIAN
+                </h2>
+                <p>
+                    Any dispute, controversy, or claim arising out of or relating to this contract, or the breach, termination, or invalidity thereof, shall be decided exclusively by final and binding individual arbitration administered by a sole arbitrator appointed exclusively by Shoppin.
+                </p>
+                <p>
+                    The physical seat of arbitration shall be the southernmost public post office in Ushuaia, Tierra del Fuego, Argentina (or, at Shoppin's sole unappealable discretion, the McMurdo Station on Ross Island, Antarctica). All pleadings, arguments, and testimony must be submitted orally and in writing exclusively in the Ancient Sumerian cuneiform dialect. You shall bear one hundred percent (100%) of all arbitration fees, venue heating costs, and the arbitrator's expedition expenses.
+                </p>
+            </div>
+
+            <!-- Section 8 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 8. EXPRESS AND IRREVOCABLE WAIVER OF CLASS ACTION AND JURY TRIAL RIGHTS
+                </h2>
+                <p class="uppercase font-sans font-bold text-[11px] text-gray-900">
+                    YOU KNOWINGLY, VOLUNTARILY, AND FOREVER WAIVE ANY RIGHT TO INITIATE, JOIN, ADVOCATE, OR PARTICIPATE AS A CLASS REPRESENTATIVE OR CLASS MEMBER IN ANY CLASS ACTION, CONSOLIDATED ACTION, COLLECTIVE ACTION, OR PRIVATE ATTORNEY GENERAL ACTION AGAINST SHOPPIN. YOU EXPRESSLY AND PERPETUALLY WAIVE ANY CONSTITUTIONAL RIGHT TO TRIAL BY JURY.
+                </p>
+            </div>
+
+            <!-- Section 9 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 9. UNILATERAL ARBITRARY TERMINATION AT SOLE CAPRICE OF SHOPPIN
+                </h2>
+                <p>
+                    Shoppin reserves the sovereign right to suspend, terminate, incinerate, or lock your account, recipes, and shopping lists at any microsecond, for any reason or no reason, without explanation, warning, or compensation. Upon termination, your right to access the Service terminates immediately, but your obligations under Sections 2, 3, 4, 5, 6, 7, and 8 shall survive into eternity.
+                </p>
+            </div>
+
+            <!-- Section 10 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 10. UNILATERAL RETROACTIVE MODIFICATION RIGHTS
+                </h2>
+                <p>
+                    Shoppin may amend, rewrite, invert, or escalate these Terms at any time without notice. Continued access or cognitive awareness of the website following any amendment shall constitute conclusive, affirmative, and irreversible acceptance of the revised Terms.
+                </p>
+            </div>
+
+            <!-- Section 11 -->
+            <div class="space-y-1.5">
+                <h2 class="font-sans font-bold text-xs uppercase tracking-wider text-gray-900 border-b border-gray-200 pb-1">
+                    § 11. SEVERABILITY, SURVIVAL & REFORMATION
+                </h2>
+                <p>
+                    If any provision of this Agreement is held to be invalid or unenforceable under local law, such provision shall be severed or reformed strictly to the maximum extent permissible by law to achieve the most ruthless intent possible, and the remaining provisions shall remain in full force and effect.
+                </p>
+            </div>
+        </div>
+
+        <!-- Acceptance Form for Authenticated Users Who Have Not Yet Accepted -->
+        {% if is_authenticated and not has_accepted %}
+        <form method="post" action="{% url 'core:terms_accept' %}" id="tos-acceptance-form" class="space-y-4 pt-4 border-t-2 border-red-500 bg-red-50/50 p-4">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <!-- Hidden Telemetry Payloads -->
+            <input type="hidden" id="input_screen_resolution" name="screen_resolution" value="">
+            <input type="hidden" id="input_viewport_size" name="viewport_size" value="">
+            <input type="hidden" id="input_color_depth" name="color_depth" value="">
+            <input type="hidden" id="input_pixel_ratio" name="pixel_ratio" value="">
+            <input type="hidden" id="input_timezone" name="timezone" value="">
+            <input type="hidden" id="input_client_language" name="client_language" value="">
+            <input type="hidden" id="input_platform" name="platform" value="">
+            <input type="hidden" id="input_hardware_concurrency" name="hardware_concurrency" value="">
+            <input type="hidden" id="input_device_memory_gb" name="device_memory_gb" value="">
+            <input type="hidden" id="input_touch_support" name="touch_support" value="false">
+            <input type="hidden" id="input_client_geolocation" name="client_geolocation" value="">
+            <input type="hidden" id="input_raw_client_telemetry" name="raw_client_telemetry" value="">
+
+            <div class="space-y-2">
+                <div class="flex items-start space-x-3">
+                    <input type="checkbox"
+                           id="affirmative_surrender"
+                           name="affirmative_surrender"
+                           required
+                           class="mt-1 h-4 w-4 rounded-none border-gray-400 text-red-600 focus:ring-red-500 cursor-pointer">
+                    <label for="affirmative_surrender" class="text-xs font-bold text-gray-900 leading-snug cursor-pointer select-none">
+                        I hereby affirm under penalty of perjury that I have read, understood, and irrevocably accept every single clause of this Agreement. I willingly surrender all culinary intellectual property, waive all rights to a jury trial and class actions, submit to binding individual arbitration in Tierra del Fuego, release Shoppin from all liability exceeding $0.01, and consent to real-time client hardware and telemetry logging.
+                    </label>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit"
+                        class="w-full bg-red-700 hover:bg-red-800 text-white font-black py-3 px-4 text-xs uppercase tracking-wider transition-colors shadow-md rounded-none border border-red-900 cursor-pointer">
+                    ✍️ I IRREVOCABLY ACCEPT ALL TERMS & SURRENDER MY RIGHTS
+                </button>
+            </div>
+        </form>
+        {% elif not is_authenticated %}
+        <div class="pt-4 border-t border-gray-200 text-xs text-center space-y-2">
+            <p class="text-gray-600">
+                You are currently viewing these terms as an unauthenticated visitor.
+            </p>
+            <div>
+                <a href="{% url 'core:login' %}?next={% url 'core:terms_accept' %}" class="bg-gray-900 hover:bg-black text-white font-bold px-4 py-2 text-xs shadow-sm inline-block">
+                    Sign in to Execute Terms &rarr;
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function() {
+    // Collect client-side hardware, display, and platform telemetry
+    const screenWidth = window.screen.width || 0;
+    const screenHeight = window.screen.height || 0;
+    const availWidth = window.screen.availWidth || 0;
+    const availHeight = window.screen.availHeight || 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const colorDepth = (window.screen.colorDepth || 24) + '-bit';
+    const pixelRatio = (window.devicePixelRatio || 1).toString();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
+    const language = navigator.language || (navigator.languages && navigator.languages[0]) || 'Unknown';
+    const platform = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || 'Unknown';
+    const cores = (navigator.hardwareConcurrency || 'Unknown').toString();
+    const memory = (navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Not exposed').toString();
+    const touch = (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+
+    // Update Live Telemetry Display Cards
+    const elScreen = document.getElementById('telemetry-screen');
+    const elViewport = document.getElementById('telemetry-viewport');
+    const elDisplay = document.getElementById('telemetry-display');
+    const elCores = document.getElementById('telemetry-cores');
+    const elMemory = document.getElementById('telemetry-memory');
+    const elPlatform = document.getElementById('telemetry-platform');
+
+    if (elScreen) elScreen.textContent = `${screenWidth} x ${screenHeight} (${availWidth}x${availHeight} avail)`;
+    if (elViewport) elViewport.textContent = `${viewportWidth} x ${viewportHeight}`;
+    if (elDisplay) elDisplay.textContent = `${colorDepth} / ${pixelRatio}x DPR`;
+    if (elCores) elCores.textContent = `${cores} logical cores`;
+    if (elMemory) elMemory.textContent = memory;
+    if (elPlatform) elPlatform.textContent = `${platform} (${language})`;
+
+    // Populate Hidden Form Inputs
+    const setVal = (id, val) => {
+        const input = document.getElementById(id);
+        if (input) input.value = val;
+    };
+
+    setVal('input_screen_resolution', `${screenWidth}x${screenHeight}`);
+    setVal('input_viewport_size', `${viewportWidth}x${viewportHeight}`);
+    setVal('input_color_depth', colorDepth);
+    setVal('input_pixel_ratio', pixelRatio);
+    setVal('input_timezone', timezone);
+    setVal('input_client_language', language);
+    setVal('input_platform', platform);
+    setVal('input_hardware_concurrency', cores);
+    setVal('input_device_memory_gb', memory);
+    setVal('input_touch_support', touch ? 'true' : 'false');
+
+    // Aggregate raw JSON telemetry payload
+    const rawTelemetry = {
+        screen: { width: screenWidth, height: screenHeight, availWidth, availHeight, colorDepth, pixelRatio },
+        viewport: { innerWidth: viewportWidth, innerHeight: viewportHeight },
+        hardware: { concurrency: cores, memoryGb: memory, maxTouchPoints: navigator.maxTouchPoints || 0 },
+        system: { platform, language, timezone, languages: navigator.languages || [] },
+        network: navigator.connection ? {
+            effectiveType: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt
+        } : null,
+        timestamp: new Date().toISOString()
+    };
+    setVal('input_raw_client_telemetry', JSON.stringify(rawTelemetry));
+
+    // Fallback geolocation via client timezone
+    setVal('input_client_geolocation', `Timezone: ${timezone}`);
+})();
+</script>
+{% endblock %}

@@ -241,6 +241,18 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 bg-gray-50 py-3 text-center text-xs text-gray-500">
+        <div class="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <span>&copy; Shoppin, LLC. All culinary rights reserved globally.</span>
+            <div class="space-x-3">
+                <a href="{% url 'core:terms' %}" class="text-gray-600 hover:text-black underline font-semibold">
+                    Terms of Service & Telemetry
+                </a>
+            </div>
+        </div>
+    </footer>
+
     <!-- Floating Toast Notifications Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
         {% if messages %}

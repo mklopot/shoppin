@@ -86,11 +86,16 @@
         </div>
         {% endif %}
 
-        <!-- Guest Browsing Link -->
-        <div class="pt-2 text-center text-xs border-t border-gray-100">
-            <a href="{% url 'recipes:list' %}" class="text-blue-700 hover:underline font-semibold">
-                &larr; Browse published recipes as Guest (No login required)
-            </a>
+        <!-- Guest Browsing Link & Terms Notice -->
+        <div class="pt-2 text-center text-xs border-t border-gray-100 space-y-1.5">
+            <div>
+                <a href="{% url 'recipes:list' %}" class="text-blue-700 hover:underline font-semibold">
+                    &larr; Browse published recipes as Guest (No login required)
+                </a>
+            </div>
+            <div class="text-[10px] text-gray-400">
+                By signing in, you agree to our <a href="{% url 'core:terms' %}" class="text-gray-600 underline hover:text-black">Terms of Service</a>.
+            </div>
         </div>
     </div>
 </div>

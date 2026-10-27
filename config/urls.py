@@ -8,11 +8,14 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
-from apps.core import auth_views
+from apps.core import auth_views, tos_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
+    # Terms of Service & Compliance
+    path('terms/', tos_views.terms_view, name='terms_root'),
+    path('terms/accept/', tos_views.terms_accept_view, name='terms_accept_root'),
     # Authentication & Google OAuth
     path('accounts/login/', auth_views.login_view, name='login'),
     path('accounts/logout/', auth_views.logout_view, name='logout'),

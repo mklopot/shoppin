@@ -17,6 +17,7 @@ from apps.core.services.oauth_service import (
     handle_google_callback,
     is_google_oauth_configured,
 )
+from apps.core.services.tos_service import has_user_accepted_latest_tos
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
@@ -35,9 +36,12 @@ def login_view(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            request.session.set_expiry(settings.SESSION_COOKIE_AGE)
             request.session.pop("guest_mode", None)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
             target = next_url if next_url and next_url.startswith("/") else reverse("recipes:list")
+            if not has_user_accepted_latest_tos(user, request.session):
+                return redirect(f"{reverse('core:terms_accept')}?next={target}")
             return redirect(target)
         else:
             messages.error(request, "Invalid username or password.")
@@ -91,8 +95,11 @@ def google_callback_view(request: HttpRequest) -> HttpResponse:
         return redirect(reverse("core:login") + (f"?next={next_url}" if next_url else ""))
 
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    request.session.set_expiry(settings.SESSION_COOKIE_AGE)
     messages.success(request, f"Signed in as {user.email or user.username}.")
     target = next_url if next_url and next_url.startswith("/") else reverse("recipes:list")
+    if not has_user_accepted_latest_tos(user, request.session):
+        return redirect(f"{reverse('core:terms_accept')}?next={target}")
     return redirect(target)
 
 

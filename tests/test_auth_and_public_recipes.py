@@ -237,6 +237,20 @@ def test_logout_redirects_and_sets_guest_mode(client: Client, auth_user):
     assert session.get("guest_mode") is True
 
 
+@pytest.mark.django_db
+def test_session_retention_defaults_to_one_year(client: Client, auth_user, settings):
+    """Verify session expiry is configured for 1 full year by default (31,536,000 seconds)."""
+    assert settings.SESSION_COOKIE_AGE == 60 * 60 * 24 * 365
+    assert settings.SESSION_EXPIRE_AT_BROWSER_CLOSE is False
+    assert settings.SESSION_SAVE_EVERY_REQUEST is True
+
+    user, _ = auth_user
+    client.login(username=user.username, password="password123")
+    # Verify session cookie age
+    session = client.session
+    assert session.get_expiry_age() == 60 * 60 * 24 * 365
+
+
 # ---------------------------------------------------------------------------
 # Google OAuth Flow (Mocked)
 # ---------------------------------------------------------------------------
@@ -311,9 +325,9 @@ def test_google_callback_success_creates_user_and_workspace(
     callback_url = f"{reverse('core:google_callback')}?state=csrf-token-abc&code=auth-code-xyz"
     response = client.get(callback_url)
 
-    # Should redirect to oauth_next (/recipes/)
+    # Should redirect new user to terms acceptance gate before target
     assert response.status_code == 302
-    assert response.url == "/recipes/"
+    assert response.url == f"{reverse('core:terms_accept')}?next=/recipes/"
 
     # Verify user was created
     created_user = User.objects.get(email="newchef@example.com")

@@ -115,3 +115,50 @@ class WorkspaceMember(models.Model):
     def __str__(self) -> str:
         """Return human-readable membership description."""
         return f"{self.user} ({self.get_role_display()}) in {self.workspace.name}"
+
+
+class TermsOfServiceAcceptance(models.Model):
+    """
+    Audit record of a user's binding acceptance of the Terms of Service,
+    storing comprehensive client telemetry, network headers, and device specs.
+    """
+    CURRENT_VERSION = "2026.1-DRACONIAN"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tos_acceptances",
+        null=True,
+        blank=True,
+    )
+    version = models.CharField(max_length=64, default=CURRENT_VERSION)
+    accepted_at = models.DateTimeField(auto_now_add=True)
+
+    # Network & Geolocation Telemetry
+    ip_address = models.CharField(max_length=128, blank=True, default="")
+    user_agent = models.TextField(blank=True, default="")
+    geolocation = models.CharField(max_length=255, blank=True, default="")
+
+    # Hardware & Screen Telemetry
+    screen_resolution = models.CharField(max_length=64, blank=True, default="")
+    viewport_size = models.CharField(max_length=64, blank=True, default="")
+    color_depth = models.CharField(max_length=32, blank=True, default="")
+    pixel_ratio = models.CharField(max_length=32, blank=True, default="")
+    timezone = models.CharField(max_length=128, blank=True, default="")
+    client_language = models.CharField(max_length=64, blank=True, default="")
+    platform = models.CharField(max_length=128, blank=True, default="")
+    hardware_concurrency = models.CharField(max_length=32, blank=True, default="")
+    device_memory_gb = models.CharField(max_length=32, blank=True, default="")
+    touch_support = models.BooleanField(default=False)
+
+    # Comprehensive raw telemetry dump
+    raw_telemetry = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-accepted_at"]
+        verbose_name = "Terms of Service Acceptance"
+        verbose_name_plural = "Terms of Service Acceptances"
+
+    def __str__(self) -> str:
+        username = self.user.username if self.user else "Anonymous"
+        return f"TOS Acceptance v{self.version} by {username} at {self.accepted_at}"

@@ -1,32 +1,32 @@
-<div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+<div id="modal-container" role="dialog" aria-modal="true" aria-labelledby="edit-item-modal-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
     <div class="bg-white border border-gray-400 max-w-md w-full p-4 space-y-3 shadow-lg">
         <div class="flex justify-between items-center border-b border-gray-300 pb-2">
-            <h3 class="font-bold text-gray-900 text-sm uppercase">Edit Item</h3>
-            <button type="button" onclick="document.getElementById('modal-container').remove()" class="text-gray-500 hover:text-black font-bold text-lg">&times;</button>
+            <h3 id="edit-item-modal-title" class="font-bold text-gray-900 text-sm uppercase">Edit Item</h3>
+            <button type="button" onclick="document.getElementById('modal-container').remove()" aria-label="Close dialog" class="text-gray-500 hover:text-black font-bold text-lg"><span aria-hidden="true">&times;</span></button>
         </div>
 
         <form hx-post="{% url 'shopping:edit_item' item.id %}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="space-y-2.5 text-xs">
             {% csrf_token %}
             <div>
-                <label class="block font-bold text-gray-700 mb-0.5">Item Name</label>
-                <input type="text" name="name" value="{{ item.name }}" required class="w-full px-2 py-1 border border-gray-400 bg-white">
+                <label for="edit-item-name" class="block font-bold text-gray-700 mb-0.5">Item Name</label>
+                <input type="text" id="edit-item-name" name="name" value="{{ item.name }}" required class="w-full px-2 py-1 border border-gray-400 bg-white">
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block font-bold text-gray-700 mb-0.5">Amount</label>
-                    <input type="text" name="amount" value="{{ item.amount_display }}" placeholder="e.g. 1, 1/2, 1/3, 1 1/2" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                    <label for="edit-item-amount" class="block font-bold text-gray-700 mb-0.5">Amount</label>
+                    <input type="text" id="edit-item-amount" name="amount" value="{{ item.amount_display }}" placeholder="e.g. 1, 1/2, 1/3, 1 1/2" class="w-full px-2 py-1 border border-gray-400 bg-white">
                 </div>
                 <div>
-                    <label class="block font-bold text-gray-700 mb-0.5">Unit</label>
-                    <input type="text" name="amount_unit" value="{{ item.amount_unit }}" placeholder="e.g. lb, can, bunch" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                    <label for="edit-item-unit" class="block font-bold text-gray-700 mb-0.5">Unit</label>
+                    <input type="text" id="edit-item-unit" name="amount_unit" value="{{ item.amount_unit }}" placeholder="e.g. lb, can, bunch" class="w-full px-2 py-1 border border-gray-400 bg-white">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block font-bold text-gray-700 mb-0.5">Category</label>
-                    <input type="text" name="category" list="category-datalist" value="{{ item.category }}" placeholder="Select or type category..." autocomplete="off" class="w-full px-2 py-1 border border-gray-400 bg-white rounded-none focus:outline-none focus:border-gray-700">
+                    <label for="edit-item-category" class="block font-bold text-gray-700 mb-0.5">Category</label>
+                    <input type="text" id="edit-item-category" name="category" list="category-datalist" value="{{ item.category }}" placeholder="Select or type category..." autocomplete="off" class="w-full px-2 py-1 border border-gray-400 bg-white rounded-none focus:outline-none focus:border-gray-700">
                     <datalist id="category-datalist">
                         {% for category_option in known_categories %}
                         <option value="{{ category_option }}">
@@ -34,8 +34,8 @@
                     </datalist>
                 </div>
                 <div>
-                    <label class="block font-bold text-gray-700 mb-0.5">Aisle</label>
-                    <input type="text" name="aisle" list="aisle-datalist" value="{{ item.aisle }}" placeholder="Select or type aisle..." autocomplete="off" class="w-full px-2 py-1 border border-gray-400 bg-white rounded-none focus:outline-none focus:border-gray-700">
+                    <label for="edit-item-aisle" class="block font-bold text-gray-700 mb-0.5">Aisle</label>
+                    <input type="text" id="edit-item-aisle" name="aisle" list="aisle-datalist" value="{{ item.aisle }}" placeholder="Select or type aisle..." autocomplete="off" class="w-full px-2 py-1 border border-gray-400 bg-white rounded-none focus:outline-none focus:border-gray-700">
                     <datalist id="aisle-datalist">
                         {% for aisle_option in known_aisles %}
                         <option value="{{ aisle_option }}">
@@ -46,18 +46,18 @@
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block font-bold text-gray-700 mb-0.5">Brand (optional)</label>
-                    <input type="text" name="brand" value="{{ item.brand }}" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                    <label for="edit-item-brand" class="block font-bold text-gray-700 mb-0.5">Brand (optional)</label>
+                    <input type="text" id="edit-item-brand" name="brand" value="{{ item.brand }}" class="w-full px-2 py-1 border border-gray-400 bg-white">
                 </div>
                 <div>
-                    <label class="block font-bold text-gray-700 mb-0.5">Vendor (optional)</label>
-                    <input type="text" name="vendor" value="{{ item.vendor }}" placeholder="King Soopers, etc" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                    <label for="edit-item-vendor" class="block font-bold text-gray-700 mb-0.5">Vendor (optional)</label>
+                    <input type="text" id="edit-item-vendor" name="vendor" value="{{ item.vendor }}" placeholder="King Soopers, etc" class="w-full px-2 py-1 border border-gray-400 bg-white">
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold text-gray-700 mb-0.5">Purpose</label>
-                <input type="text" name="purpose" value="{{ item.purpose_display }}" placeholder="e.g. one-time purchase, snack" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                <label for="edit-item-purpose" class="block font-bold text-gray-700 mb-0.5">Purpose</label>
+                <input type="text" id="edit-item-purpose" name="purpose" value="{{ item.purpose_display }}" placeholder="e.g. one-time purchase, snack" class="w-full px-2 py-1 border border-gray-400 bg-white">
             </div>
 
             <div class="flex justify-end space-x-2 pt-2 border-t border-gray-300">

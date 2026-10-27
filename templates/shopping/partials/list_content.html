@@ -4,7 +4,7 @@
         {% for msg in toast_messages %}
         <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
             <span class="font-medium pr-2">{{ msg }}</span>
-            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
         </div>
         {% endfor %}
     </div>
@@ -12,7 +12,7 @@
     <div id="toast-container" hx-swap-oob="beforeend">
         <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
             <span class="font-medium pr-2">{{ toast_message }}</span>
-            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
         </div>
     </div>
     {% endif %}
@@ -79,6 +79,7 @@
                                checked
                                onchange="this.form.requestSubmit()"
                                title="Click to unload '{{ p.name }}' from shopping list"
+                               aria-label="Unload {{ p.name }} from shopping list"
                                class="h-3.5 w-3.5 text-indigo-600 border-gray-300 rounded-none cursor-pointer">
                     </form>
                     <span class="font-bold text-gray-900">{{ p.name }}</span>
@@ -90,11 +91,14 @@
                             hx-get="{% url 'shopping:preset_load_modal' p.id %}?from_shopping_list=1&group_by={{ group_by }}&mode={{ mode }}"
                             hx-target="#modal-placeholder"
                             title="Click to load '{{ p.name }}' onto shopping list"
+                            aria-label="Load preset {{ p.name }} onto shopping list"
                             class="flex items-center space-x-1.5 hover:text-indigo-600 cursor-pointer">
                         <input type="checkbox"
+                               aria-hidden="true"
+                               tabindex="-1"
                                class="h-3.5 w-3.5 text-gray-400 border-gray-300 rounded-none pointer-events-none">
                         <span>{{ p.name }}</span>
-                        <span class="text-gray-400 text-[10px]">({{ p.items.count }})</span>
+                        <span class="text-gray-500 text-[10px]">({{ p.items.count }})</span>
                     </button>
                     {% endif %}
                 </div>
@@ -105,6 +109,7 @@
                             hx-get="{% url 'shopping:preset_schedule_modal' p.id %}?from_shopping_list=1&group_by={{ group_by }}&mode={{ mode }}"
                             hx-target="#modal-placeholder"
                             class="flex items-center space-x-1 hover:opacity-80 cursor-pointer"
+                            aria-label="Recurring schedule settings for {{ p.name }}"
                             title="View or configure recurring schedule for '{{ p.name }}'">
                         {% if p.is_schedule_enabled %}
                         <span class="inline-flex items-center text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-1.5 py-0.2">
@@ -116,7 +121,7 @@
                         </span>
                         {% endif %}
                         {% else %}
-                        <span class="inline-flex items-center text-[10px] font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 px-1.5 py-0.2" title="No automated refresh schedule. Click to configure.">
+                        <span class="inline-flex items-center text-[10px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-1.5 py-0.2" title="No automated refresh schedule. Click to configure.">
                             ⏱ Schedule Off
                         </span>
                         {% endif %}
@@ -124,8 +129,8 @@
                 </div>
             </div>
             {% empty %}
-            <div class="text-gray-400 italic text-[11px] py-0.5">
-                No preset lists created yet. <a href="{% url 'shopping:preset_list_index' %}" class="text-indigo-600 hover:underline not-italic font-medium">+ Create one now</a>
+            <div class="text-gray-600 italic text-[11px] py-0.5">
+                No preset lists created yet. <a href="{% url 'shopping:preset_list_index' %}" class="text-indigo-700 hover:underline not-italic font-medium">+ Create one now</a>
             </div>
             {% endfor %}
         </div>
@@ -138,8 +143,8 @@
         <div class="flex items-center space-x-1.5">
             <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
                 {% csrf_token %}
-                <span class="font-bold text-gray-700">Store:</span>
-                <select name="store_id" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
+                <label for="store-selector-select" class="font-bold text-gray-700">Store:</label>
+                <select id="store-selector-select" name="store_id" aria-label="Select active grocery store" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
                     <option value="">No Store (Default Category Flow)</option>
                     {% for store in stores %}
                     <option value="{{ store.id }}" {% if active_store and active_store.id == store.id %}selected{% endif %}>
@@ -148,19 +153,21 @@
                     {% endfor %}
                 </select>
             </form>
-            <button type="button" onclick="locateNearestStore()" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
+            <button type="button" onclick="locateNearestStore()" aria-label="Locate nearest store using GPS" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
                 📍 Near Me
             </button>
         </div>
 
         <div class="flex items-center space-x-2">
             <!-- Sort Toggle (By Category / By Aisle) -->
-            <div class="inline-flex border border-gray-400">
+            <div class="inline-flex border border-gray-400" role="group" aria-label="Sort order">
                 <button hx-get="{% url 'shopping:list' %}?group_by=category&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        aria-pressed="{% if group_by == 'category' %}true{% else %}false{% endif %}"
                         class="px-2.5 py-1 text-xs font-medium {% if group_by == 'category' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
                     By Category
                 </button>
                 <button hx-get="{% url 'shopping:list' %}?group_by=aisle&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        aria-pressed="{% if group_by == 'aisle' %}true{% else %}false{% endif %}"
                         class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if group_by == 'aisle' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
                     By Aisle
                 </button>
@@ -172,15 +179,15 @@
     <div class="bg-gray-50 border border-gray-300 p-2">
         <form hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
-            <input type="text" name="name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
+            <input type="text" name="name" id="add-item-name" aria-label="Item name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
                    class="flex-1 min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none">
-            <input type="text" name="amount" value="1" placeholder="Amount" style="width: 65px;"
+            <input type="text" name="amount" id="add-item-amount" aria-label="Item amount" value="1" placeholder="Amount" style="width: 65px;"
                    class="border border-gray-400 px-2 py-1 bg-white text-center rounded-none focus:outline-none">
-            <input type="text" name="brand" placeholder="Brand (opt)" style="width: 110px;"
+            <input type="text" name="brand" id="add-item-brand" aria-label="Item brand (optional)" placeholder="Brand (opt)" style="width: 110px;"
                    class="hidden sm:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
-            <input type="text" name="vendor" placeholder="Vendor (opt)" style="width: 110px;"
+            <input type="text" name="vendor" id="add-item-vendor" aria-label="Item vendor (optional)" placeholder="Vendor (opt)" style="width: 110px;"
                    class="hidden md:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
-            <input type="text" name="purpose" placeholder="Purpose (opt)" style="width: 115px;"
+            <input type="text" name="purpose" id="add-item-purpose" aria-label="Item purpose (optional)" placeholder="Purpose (opt)" style="width: 115px;"
                    class="hidden lg:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
             <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none">
                 + Add Item
@@ -227,7 +234,7 @@
                     <div class="flex items-center justify-between pb-1">
                         <div class="flex items-center space-x-2">
                             {% if can_write %}
-                            <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-800 select-none text-base font-mono leading-none" title="Drag to rearrange section">⋮⋮</span>
+                            <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-800 select-none text-base font-mono leading-none" title="Drag to rearrange section" aria-hidden="true">⋮⋮</span>
                             {% endif %}
                             <h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">
                                 {{ group_title }}
@@ -242,7 +249,7 @@
                             <!-- Left: Drag handle + Name + Specs -->
                             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                                 {% if can_write %}
-                                <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-600 select-none text-sm font-mono">⋮⋮</span>
+                                <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 select-none text-sm font-mono" aria-hidden="true">⋮⋮</span>
                                 {% endif %}
                                 <div class="min-w-0 flex-1 leading-snug">
                                     <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
@@ -256,7 +263,7 @@
                                             {% if can_write %}
                                             <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
                                                 {% csrf_token %}
-                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 hover:bg-amber-100 text-amber-800 select-none inline-flex items-center cursor-pointer rounded-none" title="Not confirmed in Pantry Check (click to confirm)">not confirmed</button>
+                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 hover:bg-amber-100 text-amber-800 select-none inline-flex items-center cursor-pointer rounded-none" aria-label="Confirm need for {{ item.name }}" title="Not confirmed in Pantry Check (click to confirm)">not confirmed</button>
                                             </form>
                                             {% else %}
                                             <span class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 text-amber-800 select-none inline-flex items-center rounded-none" title="Not confirmed in Pantry Check">not confirmed</span>
@@ -266,11 +273,11 @@
                                     <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                                     <!-- Secondary details -->
-                                    <span class="text-gray-500 ml-2">
-                                        {% if item.purpose_display %}<span class="italic text-gray-400">For {{ item.purpose_display }}</span>{% endif %}
-                                        {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
-                                        {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
-                                        {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
+                                    <span class="text-gray-600 ml-2">
+                                        {% if item.purpose_display %}<span class="italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                                        {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                                        {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                                        {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
                                         {% if item.aisle %}<span class="ml-1 text-gray-700 font-medium">📍 {{ item.aisle }}</span>{% endif %}
                                         <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                                     </span>
@@ -284,7 +291,7 @@
                                 {% if not item.locked %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold">
+                                    <button type="submit" aria-label="Mark {{ item.name }} as have at home" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold">
                                         🏠 Have
                                     </button>
                                 </form>
@@ -292,37 +299,37 @@
                                 <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     {% if item.locked %}
-                                    <button type="submit" title="Confirmed need (click to uncheck)" class="border border-blue-500 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 text-xs text-blue-900 font-bold">
+                                    <button type="submit" aria-label="Uncheck confirmed need for {{ item.name }}" title="Confirmed need (click to uncheck)" class="border border-blue-500 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 text-xs text-blue-900 font-bold">
                                         📋 Need
                                     </button>
                                     {% else %}
-                                    <button type="submit" title="Check item: confirm we need to buy this" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium">
+                                    <button type="submit" aria-label="Confirm need to buy {{ item.name }}" title="Check item: confirm we need to buy this" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium">
                                         📋 Need
                                     </button>
                                     {% endif %}
                                 </form>
                                 <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
+                                    <button type="submit" aria-label="Skip {{ item.name }} for this trip" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
                                         ⏭ Skip
                                     </button>
                                 </form>
                                 {% else %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                                    <button type="submit" aria-label="Mark {{ item.name }} as got in cart" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium">
                                         🛒 Got
                                     </button>
                                 </form>
                                 <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
+                                    <button type="submit" aria-label="Skip {{ item.name }} for this trip" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
                                         ⏭ Skip
                                     </button>
                                 </form>
                                 {% endif %}
-                                <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
-                                    ✏️
+                                <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                                    <span aria-hidden="true">✏️</span>
                                 </button>
                             </div>
                             {% endif %}
@@ -360,17 +367,17 @@
             <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status check + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
-                    <span class="text-emerald-700 font-bold select-none text-sm">✓</span>
+                    <span class="text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
                     <div class="min-w-0 flex-1 leading-snug">
                         <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                         <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                         <!-- Secondary details -->
-                        <span class="text-gray-500 ml-2">
-                            {% if item.purpose_display %}<span class="italic text-gray-400">For {{ item.purpose_display }}</span>{% endif %}
-                            {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
-                            {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
-                            {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
+                        <span class="text-gray-600 ml-2">
+                            {% if item.purpose_display %}<span class="italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                            {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                            {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                            {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
                             <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>
@@ -381,12 +388,12 @@
                 <div class="flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
-                        <button type="submit" title="Put back to To Buy" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                        <button type="submit" aria-label="Put {{ item.name }} back to To Buy" title="Put back to To Buy" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
-                        ✏️
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                        <span aria-hidden="true">✏️</span>
                     </button>
                 </div>
                 {% endif %}
@@ -418,20 +425,20 @@
                 <!-- Left: Status Icon + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     {% if item.status == 'HAVE' %}
-                    <span class="text-blue-800 font-bold select-none text-sm" title="Already have at home">🏠</span>
+                    <span class="text-blue-800 font-bold select-none text-sm" title="Already have at home" aria-label="Already have at home" role="img">🏠</span>
                     {% else %}
-                    <span class="text-gray-500 font-bold select-none text-sm" title="Skipped">⏭</span>
+                    <span class="text-gray-600 font-bold select-none text-sm" title="Skipped" aria-label="Skipped" role="img">⏭</span>
                     {% endif %}
                     <div class="min-w-0 flex-1 leading-snug">
                         <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                         <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                         <!-- Secondary details -->
-                        <span class="text-gray-500 ml-2">
-                            {% if item.purpose_display %}<span class="italic text-gray-400">For {{ item.purpose_display }}</span>{% endif %}
-                            {% if item.optional %}<span class="italic text-gray-400 ml-1">[optional]</span>{% endif %}
-                            {% if item.brand %}<span class="ml-1 italic text-gray-600">Brand: {{ item.brand }}</span>{% endif %}
-                            {% if item.vendor %}<span class="ml-1 italic text-gray-600">Vendor: {{ item.vendor }}</span>{% endif %}
+                        <span class="text-gray-600 ml-2">
+                            {% if item.purpose_display %}<span class="italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                            {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                            {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                            {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
                             <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>
@@ -442,12 +449,12 @@
                 <div class="flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
-                        <button type="submit" title="Move back to To Buy" class="border border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                        <button type="submit" aria-label="Move {{ item.name }} back to To Buy" title="Move back to To Buy" class="border border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-400 hover:text-gray-800 px-1 py-0.5" title="Edit">
-                        ✏️
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                        <span aria-hidden="true">✏️</span>
                     </button>
                 </div>
                 {% endif %}

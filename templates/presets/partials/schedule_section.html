@@ -58,11 +58,12 @@
 
         <!-- Interval Days Setting -->
         <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+            <label for="section-interval-days" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                 Recurrence Interval (from last occurrence)
             </label>
             <div class="flex items-center space-x-2">
                 <input type="number"
+                       id="section-interval-days"
                        name="interval_days"
                        value="{{ preset_list.interval_days|default:7 }}"
                        min="1"

@@ -33,12 +33,12 @@
                     {{ recipe.difficulty_level|title }}
                 </span>
             </div>
-            <div class="flex items-center space-x-1.5 text-xs text-gray-500">
+            <div class="flex items-center space-x-1.5 text-xs text-gray-600">
                 {% if recipe.prep_time_minutes > 0 %}
-                <span>⏱ Prep: {{ recipe.prep_time_minutes }}m</span>
+                <span><span aria-hidden="true">⏱</span> Prep: {{ recipe.prep_time_minutes }}m</span>
                 {% endif %}
                 {% if recipe.portions > 0 %}
-                <span>&bull; 🍽 {{ recipe.portions }} portions</span>
+                <span>&bull; <span aria-hidden="true">🍽</span> {{ recipe.portions }} portions</span>
                 {% endif %}
             </div>
         </div>
@@ -55,7 +55,7 @@
 
             <!-- Description (Truncated) -->
             {% if recipe.description %}
-            <p class="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+            <p class="text-xs text-gray-700 line-clamp-2 leading-relaxed">
                 {{ recipe.description }}
             </p>
             {% endif %}
@@ -81,7 +81,7 @@
                 {% if recipe.special_equipment %}
                     {% for eq in recipe.special_equipment %}
                     <span class="px-1.5 py-0.2 bg-gray-100 border border-gray-300 text-gray-700 font-medium" title="Special Equipment Needed">
-                        ⚙️ {{ eq }}
+                        <span aria-hidden="true">⚙️</span> {{ eq }}
                     </span>
                     {% endfor %}
                 {% endif %}
@@ -89,20 +89,20 @@
                 {% if recipe.occasions %}
                     {% for occ in recipe.occasions %}
                     <span class="px-1.5 py-0.2 bg-purple-50 border border-purple-200 text-purple-800 font-medium">
-                        🎉 {{ occ }}
+                        <span aria-hidden="true">🎉</span> {{ occ }}
                     </span>
                     {% endfor %}
                 {% endif %}
             </div>
 
             <!-- Ingredients Count & Nutrition Preview -->
-            <div class="text-[11px] text-gray-500 pt-0.5 flex flex-wrap items-center gap-1.5">
+            <div class="text-[11px] text-gray-600 pt-0.5 flex flex-wrap items-center gap-1.5">
                 <span>{{ recipe.ingredients.count }} ingredient{{ recipe.ingredients.count|pluralize }}</span>
                 {% if recipe.cook_time_minutes > 0 %}
-                <span>&bull; 🔥 Cook: {{ recipe.cook_time_minutes }}m</span>
+                <span>&bull; <span aria-hidden="true">🔥</span> Cook: {{ recipe.cook_time_minutes }}m</span>
                 {% endif %}
                 {% if recipe.has_nutrition and recipe.calories_per_serving > 0 %}
-                <span class="font-medium text-gray-700">&bull; ⚡ ~{{ recipe.calories_per_serving }} kcal/serv</span>
+                <span class="font-medium text-gray-700">&bull; <span aria-hidden="true">⚡</span> ~{{ recipe.calories_per_serving }} kcal/serv</span>
                 {% endif %}
             </div>
         </div>
@@ -117,15 +117,16 @@
                     hx-get="{% url 'recipes:prompt_add_to_mealplan' recipe.id %}"
                     hx-target="#modal-placeholder"
                     class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-2.5 py-1 text-xs whitespace-nowrap shadow-sm flex items-center space-x-1"
+                    aria-label="Add {{ recipe.name }} to meal plan"
                     title="Add {{ recipe.name }} to Meal Plan">
-                <span>➕</span>
+                <span aria-hidden="true">➕</span>
                 <span>Meal Plan</span>
             </button>
             {% else %}
             <div></div>
             {% endif %}
 
-            <a href="{{ recipe.get_absolute_url }}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center shadow-sm">
+            <a href="{{ recipe.get_absolute_url }}" aria-label="View recipe: {{ recipe.name }}" class="bg-gray-900 hover:bg-black text-white font-semibold px-2.5 py-1 text-xs whitespace-nowrap flex-shrink-0 inline-flex items-center shadow-sm">
                 <span>View Recipe &rarr;</span>
             </a>
         </div>

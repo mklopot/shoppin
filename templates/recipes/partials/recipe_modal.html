@@ -1,11 +1,12 @@
-<div class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4"
+<div role="dialog" aria-modal="true" aria-labelledby="recipe-preview-modal-title" class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4"
      onclick="if (event.target === this) document.getElementById('modal-placeholder').innerHTML = '';">
     <div class="bg-white border border-gray-400 max-w-2xl w-full p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
         <!-- Close Button -->
         <button type="button"
                 onclick="document.getElementById('modal-placeholder').innerHTML = '';"
+                aria-label="Close dialog"
                 class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 font-bold text-xl leading-none">
-            &times;
+            <span aria-hidden="true">&times;</span>
         </button>
 
         <!-- Header -->
@@ -19,7 +20,7 @@
                 {% endif %}
                 <span class="px-2 py-0.5 bg-gray-100 text-gray-800 border border-gray-200">{{ recipe.difficulty_level|title }}</span>
             </div>
-            <h2 class="text-xl font-bold text-gray-900">{{ recipe.name }}</h2>
+            <h2 id="recipe-preview-modal-title" class="text-xl font-bold text-gray-900">{{ recipe.name }}</h2>
             {% if recipe.description %}
             <p class="text-xs text-gray-600">{{ recipe.description }}</p>
             {% endif %}

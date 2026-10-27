@@ -34,8 +34,9 @@
                         </div>
                         <button type="button"
                                 onclick="document.getElementById('modal-placeholder').innerHTML = ''"
-                                class="text-gray-400 hover:text-gray-500 font-bold text-lg">
-                            ✕
+                                aria-label="Close dialog"
+                                class="text-gray-500 hover:text-gray-800 font-bold text-lg">
+                            <span aria-hidden="true">✕</span>
                         </button>
                     </div>
 
@@ -50,7 +51,7 @@
                             <label for="sched-modal-enable" class="text-xs font-bold text-gray-800 cursor-pointer">
                                 Enable Automated Schedule
                             </label>
-                            <p class="text-[11px] text-gray-500">
+                            <p class="text-[11px] text-gray-600">
                                 Turn on to automatically refresh items on your shopping list.
                             </p>
                         </div>
@@ -64,7 +65,7 @@
 
                     <!-- Interval Setting -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                        <label for="modal-interval-days" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
                             Recurrence Interval (from last occurrence)
                         </label>
                         <div class="flex items-center space-x-2">

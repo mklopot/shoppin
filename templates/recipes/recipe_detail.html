@@ -157,9 +157,10 @@
             <!-- Add to Meal Plan Form -->
             <form hx-post="{% url 'recipes:add_to_mealplan' recipe.id %}" hx-swap="none" class="flex flex-wrap items-center gap-2">
                 {% csrf_token %}
-                <span class="font-bold text-gray-700">Add to Meal Plan:</span>
+                <label for="meal-select-detail" class="font-bold text-gray-700">Add to Meal Plan:</label>
                 <select name="meal_id"
                         id="meal-select-detail"
+                        aria-label="Select target meal"
                         onchange="toggleNewMealInput(this, 'new-meal-input-detail')"
                         class="border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-800 rounded-none focus:outline-none">
                     {% for m in meals %}
@@ -171,11 +172,12 @@
                 <input type="text"
                        id="new-meal-input-detail"
                        name="meal_name"
+                       aria-label="New meal name"
                        placeholder="New meal name (e.g. {{ recipe.name }} Dinner)..."
                        class="{% if meals %}hidden{% endif %} border border-gray-300 bg-white text-xs px-2.5 py-1.5 text-gray-900 focus:outline-none w-64 rounded-none">
 
                 <button type="submit" class="border border-gray-800 bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 flex items-center space-x-1.5 shadow-sm text-xs">
-                    <span>🥘</span>
+                    <span aria-hidden="true">🥘</span>
                     <span>Add to Meal Plan</span>
                 </button>
             </form>
@@ -216,25 +218,29 @@
         <!-- Nutrition Header & Toggle Bar -->
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-3">
             <div class="flex items-center space-x-2">
-                <span class="text-xl">📊</span>
+                <span class="text-xl" aria-hidden="true">📊</span>
                 <div>
                     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Approximate Nutritional Analysis</h2>
-                    <p class="text-[11px] text-gray-500" id="nutrition-basis-label">
+                    <p class="text-[11px] text-gray-600" id="nutrition-basis-label">
                         Calculated based on <strong>1 of {{ recipe.portions }} serving{{ recipe.portions|pluralize }}</strong>
                     </p>
                 </div>
             </div>
 
             <!-- Segmented Control: Per Serving vs Total Dish -->
-            <div class="inline-flex border border-gray-300 p-0.5 bg-gray-100 text-xs">
+            <div class="inline-flex border border-gray-300 p-0.5 bg-gray-100 text-xs" role="tablist" aria-label="Nutritional calculation basis">
                 <button type="button"
                         id="btn-nutrition-serving"
+                        role="tab"
+                        aria-selected="true"
                         onclick="setNutritionViewMode('serving')"
                         class="px-2.5 py-1 font-bold bg-white text-gray-900 shadow-sm border border-gray-200 cursor-pointer">
                     Per Serving
                 </button>
                 <button type="button"
                         id="btn-nutrition-total"
+                        role="tab"
+                        aria-selected="false"
                         onclick="setNutritionViewMode('total')"
                         class="px-2.5 py-1 font-medium text-gray-600 hover:text-gray-900 cursor-pointer">
                     Full Recipe ({{ recipe.portions }} serv)
@@ -560,9 +566,11 @@ function setNutritionViewMode(mode) {
 
         if (btnTotal) {
             btnTotal.className = 'px-2.5 py-1 font-bold bg-white text-gray-900 shadow-sm border border-gray-200 cursor-pointer';
+            btnTotal.setAttribute('aria-selected', 'true');
         }
         if (btnServing) {
             btnServing.className = 'px-2.5 py-1 font-medium text-gray-600 hover:text-gray-900 cursor-pointer';
+            btnServing.setAttribute('aria-selected', 'false');
         }
     } else {
         if (calsEl) calsEl.textContent = card.dataset.servingCals;
@@ -578,9 +586,11 @@ function setNutritionViewMode(mode) {
 
         if (btnServing) {
             btnServing.className = 'px-2.5 py-1 font-bold bg-white text-gray-900 shadow-sm border border-gray-200 cursor-pointer';
+            btnServing.setAttribute('aria-selected', 'true');
         }
         if (btnTotal) {
             btnTotal.className = 'px-2.5 py-1 font-medium text-gray-600 hover:text-gray-900 cursor-pointer';
+            btnTotal.setAttribute('aria-selected', 'false');
         }
     }
 }

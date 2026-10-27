@@ -90,37 +90,82 @@
         .toast-item {
             animation: toastSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
+        /* ADA Compliance & WCAG 2.1 AA Focus Accessibility */
+        :focus-visible {
+            outline: 2px solid #111827 !important;
+            outline-offset: 2px !important;
+        }
+
+        /* WCAG 2.1 AA Contrast Compliance (>= 4.5:1 ratio on light backgrounds) */
+        .text-gray-400 {
+            color: #4b5563 !important; /* Meets 7:1 contrast ratio against white */
+        }
+
+        /* Screen reader utility fallbacks */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border-width: 0 !important;
+        }
+        .not-sr-only {
+            position: static !important;
+            width: auto !important;
+            height: auto !important;
+            padding: initial !important;
+            margin: initial !important;
+            overflow: visible !important;
+            clip: auto !important;
+            white-space: normal !important;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full flex flex-col bg-white text-gray-900 antialiased text-sm">
+    <!-- Skip to Main Content Link (Keyboard / Screen Reader Accessibility) -->
+    <a href="#main-content"
+       class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-gray-950 focus:font-bold focus:shadow-xl focus:border focus:border-gray-900 focus:outline-none">
+        Skip to main content
+    </a>
+
     <!-- Navbar -->
-    <header class="bg-white border-b border-gray-300 sticky top-0 z-30">
+    <header role="banner" class="bg-white border-b border-gray-300 sticky top-0 z-30">
         <div class="max-w-5xl mx-auto px-3 sm:px-4">
             <div class="flex justify-between h-11 items-center">
                 <div class="flex items-center space-x-6">
-                    <a href="/" class="flex items-center space-x-1.5 font-bold text-base text-gray-900">
-                        <span>🛒</span>
+                    <a href="/" aria-label="Shoppin Home" class="flex items-center space-x-1.5 font-bold text-base text-gray-900">
+                        <span aria-hidden="true">🛒</span>
                         <span>Shoppin</span>
                     </a>
-                    <nav class="flex space-x-1 text-xs">
+                    <nav aria-label="Primary Navigation" class="flex space-x-1 text-xs">
                         <a href="{% url 'shopping:list' %}?mode=shopping"
+                           {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}aria-current="page"{% endif %}
                            class="px-2.5 py-1 {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Shopping List
                         </a>
                         <a href="{% url 'shopping:pantry_check' %}"
+                           {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}aria-current="page"{% endif %}
                            class="px-2.5 py-1 {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Pantry Check
                         </a>
                         <a href="/mealplans/"
+                           {% if 'mealplans' in request.path %}aria-current="page"{% endif %}
                            class="px-2.5 py-1 {% if 'mealplans' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Meal Plans
                         </a>
                         <a href="{% url 'recipes:list' %}"
+                           {% if 'recipes' in request.path %}aria-current="page"{% endif %}
                            class="px-2.5 py-1 {% if 'recipes' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Recipes
                         </a>
                         <a href="/preset-lists/"
+                           {% if 'preset' in request.path %}aria-current="page"{% endif %}
                            class="px-2.5 py-1 {% if 'preset' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
                             Preset Lists
                         </a>
@@ -132,37 +177,56 @@
                     {% if request.user.is_authenticated %}
                     <!-- Workspace Dropdown (Authenticated) -->
                     <div class="relative" id="workspace-dropdown-container">
-                        <button type="button" onclick="toggleWorkspaceDropdown()" class="flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-none text-gray-800 font-medium">
-                            <span class="text-xs">🏢</span>
+                        <button type="button"
+                                id="workspace-dropdown-btn"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                                aria-controls="workspace-dropdown-menu"
+                                onclick="toggleWorkspaceDropdown()"
+                                class="flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-none text-gray-800 font-medium">
+                            <span class="text-xs" aria-hidden="true">🏢</span>
                             <span class="font-semibold">{{ active_workspace.name }}</span>
                             <span class="text-[10px] uppercase font-bold tracking-wider px-1 py-0.2 {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
                                 {{ workspace_role|title }}
                             </span>
-                            <span class="text-[9px] text-gray-500">▼</span>
+                            <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
                         </button>
 
                         <!-- Dropdown Menu -->
-                        <div id="workspace-dropdown-menu" class="hidden absolute right-0 mt-1 w-56 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
-                            <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                        <div id="workspace-dropdown-menu"
+                             role="menu"
+                             aria-labelledby="workspace-dropdown-btn"
+                             class="hidden absolute right-0 mt-1 w-56 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
+                            <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500" role="presentation">
                                 Switch Workspace
                             </div>
-                            <div class="py-1 max-h-48 overflow-y-auto">
+                            <div class="py-1 max-h-48 overflow-y-auto" role="none">
                                 {% for ws in user_workspaces %}
-                                <a href="{% url 'core:switch_workspace' ws.id %}" class="flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-xs {% if active_workspace.id == ws.id %}bg-blue-50/60 font-semibold text-blue-900{% else %}text-gray-700{% endif %}">
+                                <a href="{% url 'core:switch_workspace' ws.id %}"
+                                   role="menuitem"
+                                   class="flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-xs {% if active_workspace.id == ws.id %}bg-blue-50/60 font-semibold text-blue-900{% else %}text-gray-700{% endif %}">
                                     <span class="truncate">{{ ws.name }}</span>
-                                    <span class="text-[10px] text-gray-400 font-normal">({{ ws.role_display }})</span>
+                                    <span class="text-[10px] text-gray-500 font-normal">({{ ws.role_display }})</span>
                                 </a>
                                 {% endfor %}
                             </div>
 
-                            <div class="py-1">
-                                <button type="button" onclick="openNewWorkspaceModal()" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
-                                    <span>➕</span>
+                            <div class="py-1" role="none">
+                                <button type="button"
+                                        role="menuitem"
+                                        onclick="openNewWorkspaceModal()"
+                                        class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                                    <span aria-hidden="true">➕</span>
                                     <span>New Workspace...</span>
                                 </button>
                                 {% if is_workspace_owner %}
-                                <button type="button" hx-get="{% url 'core:workspace_members' active_workspace.id %}" hx-target="#modal-placeholder" onclick="closeWorkspaceDropdown()" class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
-                                    <span>👥</span>
+                                <button type="button"
+                                        role="menuitem"
+                                        hx-get="{% url 'core:workspace_members' active_workspace.id %}"
+                                        hx-target="#modal-placeholder"
+                                        onclick="closeWorkspaceDropdown()"
+                                        class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                                    <span aria-hidden="true">👥</span>
                                     <span>Share & Members...</span>
                                 </button>
                                 {% endif %}
@@ -172,20 +236,29 @@
 
                     <!-- User Account / Logout Menu -->
                     <div class="relative" id="user-dropdown-container">
-                        <button type="button" onclick="toggleUserDropdown()" class="flex items-center space-x-1.5 border border-gray-300 bg-white hover:bg-gray-50 px-2 py-1 rounded-none text-gray-800 font-medium text-xs">
-                            <span>👤</span>
+                        <button type="button"
+                                id="user-dropdown-btn"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                                aria-controls="user-dropdown-menu"
+                                onclick="toggleUserDropdown()"
+                                class="flex items-center space-x-1.5 border border-gray-300 bg-white hover:bg-gray-50 px-2 py-1 rounded-none text-gray-800 font-medium text-xs">
+                            <span aria-hidden="true">👤</span>
                             <span class="font-semibold">{{ request.user.first_name|default:request.user.username }}</span>
-                            <span class="text-[9px] text-gray-500">▼</span>
+                            <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
                         </button>
-                        <div id="user-dropdown-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
-                            <div class="px-3 py-1.5 text-[11px] text-gray-600">
+                        <div id="user-dropdown-menu"
+                             role="menu"
+                             aria-labelledby="user-dropdown-btn"
+                             class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
+                            <div class="px-3 py-1.5 text-[11px] text-gray-600" role="presentation">
                                 <div class="font-bold text-gray-900 truncate">{{ request.user.get_full_name|default:request.user.username }}</div>
                                 {% if request.user.email %}
-                                <div class="text-[10px] text-gray-400 truncate">{{ request.user.email }}</div>
+                                <div class="text-[10px] text-gray-500 truncate">{{ request.user.email }}</div>
                                 {% endif %}
                             </div>
-                            <div class="py-1">
-                                <a href="{% url 'core:logout' %}" class="block px-3 py-1.5 hover:bg-red-50 text-xs text-red-700 font-medium">
+                            <div class="py-1" role="none">
+                                <a href="{% url 'core:logout' %}" role="menuitem" class="block px-3 py-1.5 hover:bg-red-50 text-xs text-red-700 font-medium">
                                     Sign Out
                                 </a>
                             </div>
@@ -194,8 +267,9 @@
                     {% else %}
                     <!-- Guest State: Sign In Button -->
                     <a href="{% url 'core:login' %}?next={{ request.path }}"
+                       aria-label="Sign in to Shoppin"
                        class="inline-flex items-center space-x-1.5 border border-gray-300 bg-white hover:bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-800 shadow-sm transition-colors">
-                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5" aria-hidden="true" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
@@ -208,23 +282,35 @@
                     <!-- Dev Persona Switcher (DEBUG mode) -->
                     {% if debug_mode %}
                     <div class="relative" id="persona-dropdown-container">
-                        <button type="button" onclick="togglePersonaDropdown()" class="flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-none text-gray-700 font-medium text-xs" title="Switch developer test persona">
-                            <span>🛠</span>
+                        <button type="button"
+                                id="persona-dropdown-btn"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                                aria-controls="persona-dropdown-menu"
+                                onclick="togglePersonaDropdown()"
+                                class="flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-none text-gray-700 font-medium text-xs"
+                                title="Switch developer test persona">
+                            <span aria-hidden="true">🛠</span>
                             <span>{% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}</span>
-                            <span class="text-[9px] text-gray-500">▼</span>
+                            <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
                         </button>
-                        <div id="persona-dropdown-menu" class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-300 shadow-lg z-40 py-1">
-                            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100">
+                        <div id="persona-dropdown-menu"
+                             role="menu"
+                             aria-labelledby="persona-dropdown-btn"
+                             class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-300 shadow-lg z-40 py-1">
+                            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100" role="presentation">
                                 Test Persona (Dev)
                             </div>
                             {% for p in dev_personas %}
-                            <a href="{% url 'core:switch_persona' p.username %}" class="block px-3 py-1.5 hover:bg-gray-50 text-xs {% if request.user.username == p.username %}font-bold text-gray-950 bg-gray-100{% else %}text-gray-700{% endif %}">
+                            <a href="{% url 'core:switch_persona' p.username %}"
+                               role="menuitem"
+                               class="block px-3 py-1.5 hover:bg-gray-50 text-xs {% if request.user.username == p.username %}font-bold text-gray-950 bg-gray-100{% else %}text-gray-700{% endif %}">
                                 <div class="font-medium">{{ p.label }}</div>
-                                <div class="text-[10px] text-gray-400">{{ p.role }}</div>
+                                <div class="text-[10px] text-gray-500">{{ p.role }}</div>
                             </a>
                             {% endfor %}
-                            <div class="border-t border-gray-100 mt-1 pt-1">
-                                <a href="{% url 'core:logout' %}" class="block px-3 py-1 hover:bg-gray-50 text-[11px] text-gray-600">
+                            <div class="border-t border-gray-100 mt-1 pt-1" role="none">
+                                <a href="{% url 'core:logout' %}" role="menuitem" class="block px-3 py-1 hover:bg-gray-50 text-[11px] text-gray-600">
                                     Browse as Guest (Logged Out)
                                 </a>
                             </div>
@@ -237,7 +323,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-3">
+    <main id="main-content" tabindex="-1" class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-3 focus:outline-none">
         {% block content %}{% endblock %}
     </main>
 
@@ -253,34 +339,40 @@
         </div>
     </footer>
 
-    <!-- Floating Toast Notifications Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
+    <!-- Floating Toast Notifications Container (Screen Reader Live Region) -->
+    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
         {% if messages %}
             {% for message in messages %}
             <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
                 <span class="font-medium pr-2">{{ message }}</span>
-                <button type="button" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" onclick="dismissToast(this.closest('.toast-item'))">&times;</button>
+                <button type="button" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" onclick="dismissToast(this.closest('.toast-item'))">
+                    <span class="sr-only">Dismiss</span>
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             {% endfor %}
         {% endif %}
     </div>
 
     <!-- Dynamic Modal Container (HTMX) -->
-    <div id="modal-placeholder"></div>
+    <div id="modal-placeholder" role="region" aria-live="polite"></div>
 
     <!-- Create Workspace Modal -->
-    <div id="new-workspace-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div id="new-workspace-modal" role="dialog" aria-modal="true" aria-labelledby="new-ws-modal-title" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
         <div class="bg-white border border-gray-400 shadow-xl w-full max-w-sm rounded-none p-5 space-y-4">
             <div class="flex items-center justify-between border-b border-gray-300 pb-2">
-                <h3 class="font-bold text-sm text-gray-900">Create New Workspace</h3>
-                <button type="button" onclick="closeNewWorkspaceModal()" class="text-gray-400 hover:text-gray-700 text-lg font-bold leading-none">&times;</button>
+                <h3 id="new-ws-modal-title" class="font-bold text-sm text-gray-900">Create New Workspace</h3>
+                <button type="button" aria-label="Close dialog" onclick="closeNewWorkspaceModal()" class="text-gray-500 hover:text-gray-800 text-lg font-bold leading-none">
+                    <span class="sr-only">Close</span>
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
 
             <form action="{% url 'core:create_workspace' %}" method="post" class="space-y-3 text-xs">
                 {% csrf_token %}
                 <div>
-                    <label class="block text-gray-700 font-medium mb-1">Workspace Name:</label>
-                    <input type="text" name="name" placeholder="e.g. Vacation Cabin, Office Pantry, Family" required
+                    <label for="new-ws-name" class="block text-gray-700 font-medium mb-1">Workspace Name:</label>
+                    <input type="text" id="new-ws-name" name="name" placeholder="e.g. Vacation Cabin, Office Pantry, Family" required
                            class="w-full border border-gray-400 px-2.5 py-1.5 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
                     <p class="text-[11px] text-gray-500 mt-1">Each workspace contains its own shopping list, preset lists, and meal plan.</p>
                 </div>
@@ -299,48 +391,87 @@
 
     <script>
         function toggleWorkspaceDropdown() {
+            const btn = document.getElementById('workspace-dropdown-btn');
             const menu = document.getElementById('workspace-dropdown-menu');
             if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
             menu.classList.toggle('hidden');
-            const personaMenu = document.getElementById('persona-dropdown-menu');
-            if (personaMenu) personaMenu.classList.add('hidden');
-            const userMenu = document.getElementById('user-dropdown-menu');
-            if (userMenu) userMenu.classList.add('hidden');
+            if (btn) btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            closePersonaDropdown();
+            closeUserDropdown();
         }
 
         function closeWorkspaceDropdown() {
+            const btn = document.getElementById('workspace-dropdown-btn');
             const menu = document.getElementById('workspace-dropdown-menu');
             if (menu) menu.classList.add('hidden');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
         }
 
         function toggleUserDropdown() {
+            const btn = document.getElementById('user-dropdown-btn');
             const menu = document.getElementById('user-dropdown-menu');
             if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
             menu.classList.toggle('hidden');
+            if (btn) btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
             closeWorkspaceDropdown();
-            const personaMenu = document.getElementById('persona-dropdown-menu');
-            if (personaMenu) personaMenu.classList.add('hidden');
+            closePersonaDropdown();
+        }
+
+        function closeUserDropdown() {
+            const btn = document.getElementById('user-dropdown-btn');
+            const menu = document.getElementById('user-dropdown-menu');
+            if (menu) menu.classList.add('hidden');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
         }
 
         function togglePersonaDropdown() {
+            const btn = document.getElementById('persona-dropdown-btn');
             const menu = document.getElementById('persona-dropdown-menu');
             if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
             menu.classList.toggle('hidden');
+            if (btn) btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
             closeWorkspaceDropdown();
-            const userMenu = document.getElementById('user-dropdown-menu');
-            if (userMenu) userMenu.classList.add('hidden');
+            closeUserDropdown();
+        }
+
+        function closePersonaDropdown() {
+            const btn = document.getElementById('persona-dropdown-btn');
+            const menu = document.getElementById('persona-dropdown-menu');
+            if (menu) menu.classList.add('hidden');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
         }
 
         function openNewWorkspaceModal() {
             closeWorkspaceDropdown();
             const modal = document.getElementById('new-workspace-modal');
-            if (modal) modal.classList.remove('hidden');
+            if (modal) {
+                modal.classList.remove('hidden');
+                const input = document.getElementById('new-ws-name');
+                if (input) input.focus();
+            }
         }
 
         function closeNewWorkspaceModal() {
             const modal = document.getElementById('new-workspace-modal');
             if (modal) modal.classList.add('hidden');
         }
+
+        // Global Escape Key Listener for Modals and Menus (WCAG 2.1 Operable)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modalPlaceholder = document.getElementById('modal-placeholder');
+                if (modalPlaceholder && modalPlaceholder.children.length > 0) {
+                    modalPlaceholder.innerHTML = '';
+                }
+                closeNewWorkspaceModal();
+                closeWorkspaceDropdown();
+                closeUserDropdown();
+                closePersonaDropdown();
+            }
+        });
 
         document.addEventListener('click', function(e) {
             const wsContainer = document.getElementById('workspace-dropdown-container');
@@ -350,12 +481,10 @@
                 closeWorkspaceDropdown();
             }
             if (personaContainer && !personaContainer.contains(e.target)) {
-                const personaMenu = document.getElementById('persona-dropdown-menu');
-                if (personaMenu) personaMenu.classList.add('hidden');
+                closePersonaDropdown();
             }
             if (userContainer && !userContainer.contains(e.target)) {
-                const userMenu = document.getElementById('user-dropdown-menu');
-                if (userMenu) userMenu.classList.add('hidden');
+                closeUserDropdown();
             }
         });
         // Unique client ID per browser tab to coordinate WebSocket synchronization.

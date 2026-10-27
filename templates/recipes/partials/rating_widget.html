@@ -7,34 +7,40 @@
             {% csrf_token %}
             <input type="hidden" name="stars" value="{{ forloop.counter }}">
             <input type="hidden" name="thumbs_up" value="{% if user_rating %}{{ user_rating.thumbs_up|yesno:'true,false' }}{% else %}true{% endif %}">
-            <button type="submit" class="text-sm focus:outline-none transition-transform hover:scale-125" title="Rate {{ forloop.counter }} stars">
+            <button type="submit"
+                    class="text-sm focus:outline-none transition-transform hover:scale-125"
+                    aria-label="Rate {{ forloop.counter }} of 5 stars for {{ recipe.name }}"
+                    title="Rate {{ forloop.counter }} stars">
                 {% if user_rating and user_rating.stars >= forloop.counter %}
-                <span class="text-amber-500 font-bold">★</span>
+                <span class="text-amber-500 font-bold" aria-hidden="true">★</span>
                 {% elif recipe.average_rating and recipe.average_rating >= forloop.counter %}
-                <span class="text-amber-400">★</span>
+                <span class="text-amber-400" aria-hidden="true">★</span>
                 {% else %}
-                <span class="text-gray-300 hover:text-amber-400">★</span>
+                <span class="text-gray-300 hover:text-amber-400" aria-hidden="true">★</span>
                 {% endif %}
             </button>
         </form>
         {% endfor %}
-        <span class="text-gray-500 font-semibold ml-1.5">
+        <span class="text-gray-600 font-semibold ml-1.5">
             {% if recipe.average_rating %}{{ recipe.average_rating }} / 5.0{% else %}No ratings{% endif %}
         </span>
         {% if recipe.rating_count > 0 %}
-        <span class="text-gray-400 text-[11px]">({{ recipe.rating_count }})</span>
+        <span class="text-gray-500 text-[11px]">({{ recipe.rating_count }})</span>
         {% endif %}
     </div>
 
-    <span class="text-gray-300">|</span>
+    <span class="text-gray-300" aria-hidden="true">|</span>
 
     <!-- Thumbs Up Endorsement -->
     <form hx-post="{% url 'recipes:rate' recipe.id %}" hx-target="#recipe-rating-widget-{{ recipe.id }}" hx-swap="outerHTML" class="inline flex items-center space-x-1">
         {% csrf_token %}
         <input type="hidden" name="stars" value="{% if user_rating %}{{ user_rating.stars }}{% else %}5{% endif %}">
         <input type="hidden" name="thumbs_up" value="{% if user_rating and user_rating.thumbs_up %}false{% else %}true{% endif %}">
-        <button type="submit" class="inline-flex items-center space-x-1 px-2 py-0.5 border text-xs font-semibold {% if user_rating and user_rating.thumbs_up %}bg-amber-100 border-amber-300 text-amber-900{% else %}bg-white border-gray-300 text-gray-700 hover:bg-gray-100{% endif %}" title="{% if user_rating and user_rating.thumbs_up %}You endorsed this! Click to remove{% else %}Endorse this recipe (thumbs up){% endif %}">
-            <span>👍</span>
+        <button type="submit"
+                class="inline-flex items-center space-x-1 px-2 py-0.5 border text-xs font-semibold {% if user_rating and user_rating.thumbs_up %}bg-amber-100 border-amber-300 text-amber-900{% else %}bg-white border-gray-300 text-gray-700 hover:bg-gray-100{% endif %}"
+                aria-label="{% if user_rating and user_rating.thumbs_up %}Remove thumbs up endorsement for {{ recipe.name }}{% else %}Endorse {{ recipe.name }} with thumbs up{% endif %}"
+                title="{% if user_rating and user_rating.thumbs_up %}You endorsed this! Click to remove{% else %}Endorse this recipe (thumbs up){% endif %}">
+            <span aria-hidden="true">👍</span>
             <span>{{ recipe.thumbs_up_count }}</span>
         </button>
     </form>

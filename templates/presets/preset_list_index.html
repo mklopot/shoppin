@@ -22,7 +22,7 @@
             <button type="button"
                     onclick="document.getElementById('create-preset-modal').classList.remove('hidden')"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
-                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 New Preset List
@@ -81,7 +81,7 @@
                     {% if preset.is_schedule_enabled %}
                     <div class="space-y-1 text-gray-600 text-[11px]">
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Next occurrence:</span>
+                            <span class="text-gray-600">Next occurrence:</span>
                             <span class="font-semibold text-gray-900">
                                 {% if preset.next_occurrence %}
                                     {{ preset.next_occurrence|date:"M j, Y g:i A" }}
@@ -91,14 +91,14 @@
                             </span>
                         </div>
                         {% if preset.last_applied_at %}
-                        <div class="flex justify-between text-gray-500">
-                            <span class="text-gray-400">Last occurrence:</span>
+                        <div class="flex justify-between text-gray-600">
+                            <span class="text-gray-600">Last occurrence:</span>
                             <span>{{ preset.last_applied_at|date:"M j, Y g:i A" }}</span>
                         </div>
                         {% endif %}
                     </div>
                     {% else %}
-                    <p class="text-[11px] text-gray-500">
+                    <p class="text-[11px] text-gray-600">
                         Not scheduled to refresh automatically.
                     </p>
                     {% endif %}
@@ -108,6 +108,7 @@
                         <button type="button"
                                 hx-get="{% url 'shopping:preset_schedule_modal' preset.id %}"
                                 hx-target="#modal-placeholder"
+                                aria-label="Configure schedule for {{ preset.name }}"
                                 class="px-2 py-1 bg-white border border-gray-300 text-[11px] font-medium text-gray-700 hover:bg-gray-100 shadow-sm">
                             ⚙ Configure Schedule
                         </button>
@@ -119,6 +120,7 @@
                             {% csrf_token %}
                             <button type="submit"
                                     onclick="return confirm('Execute scheduled refresh now for {{ preset.name|escapejs }}? This clears any previous items from this preset on the shopping list and re-adds all items fresh.');"
+                                    aria-label="Run scheduled refresh now for {{ preset.name }}"
                                     class="px-2 py-1 bg-white border border-gray-300 text-[11px] font-medium text-amber-800 hover:bg-amber-50 shadow-sm"
                                     title="Manually trigger scheduled refresh now">
                                 ⚡ Run Now
@@ -130,7 +132,7 @@
 
                 <!-- Preview of Items -->
                 <div>
-                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Preset Items</p>
+                    <p class="text-[10px] uppercase font-bold text-gray-600 tracking-wider mb-1.5">Preset Items</p>
                     {% if preset.items.all %}
                     <div class="flex flex-wrap gap-1">
                         {% for it in preset.items.all|slice:":5" %}
@@ -139,13 +141,13 @@
                         </span>
                         {% endfor %}
                         {% if preset.items.count > 5 %}
-                        <span class="inline-flex items-center px-1.5 py-0.5 text-gray-400 text-xs">
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-gray-600 text-xs">
                             +{{ preset.items.count|add:"-5" }} more
                         </span>
                         {% endif %}
                     </div>
                     {% else %}
-                    <p class="text-xs text-gray-400 italic">No items added yet</p>
+                    <p class="text-xs text-gray-600 italic">No items added yet</p>
                     {% endif %}
                 </div>
             </div>
@@ -218,8 +220,8 @@
                         <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">
                             Create New Preset List
                         </h3>
-                        <button type="button" onclick="document.getElementById('create-preset-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500 text-lg font-bold">
-                            ✕
+                        <button type="button" onclick="document.getElementById('create-preset-modal').classList.add('hidden')" aria-label="Close dialog" class="text-gray-500 hover:text-gray-800 text-lg font-bold">
+                            <span aria-hidden="true">✕</span>
                         </button>
                     </div>
 
@@ -255,11 +257,12 @@
 
                             <div id="schedule-options" class="space-y-3 p-3 bg-gray-50 border border-gray-200">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                                    <label for="create-preset-interval" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                         Recurrence Interval (from last occurrence)
                                     </label>
                                     <div class="flex items-center space-x-2">
                                         <input type="number"
+                                               id="create-preset-interval"
                                                name="interval_days"
                                                value="{{ default_interval_days }}"
                                                min="1"

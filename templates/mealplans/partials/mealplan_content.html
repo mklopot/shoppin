@@ -3,7 +3,7 @@
     {% for msg in toast_messages %}
     <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[280px] max-w-sm rounded-none">
         <span class="font-medium pr-2">{{ msg }}</span>
-        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
     </div>
     {% endfor %}
 </div>
@@ -11,7 +11,7 @@
 <div id="toast-container" hx-swap-oob="beforeend">
     <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[280px] max-w-sm rounded-none">
         <span class="font-medium pr-2">{{ toast_message }}</span>
-        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
     </div>
 </div>
 {% endif %}
@@ -53,17 +53,17 @@
                 <div class="flex items-center space-x-2">
                     <!-- Meal Readiness Indicator -->
                     {% if meal.id in meals_ready %}
-                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-emerald-500 border border-emerald-600 flex-shrink-0" title="Ready to Cook! All ingredients in cart or at home."></span>
+                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-emerald-500 border border-emerald-600 flex-shrink-0" role="img" aria-label="Status: Ready to cook. All ingredients in cart or at home." title="Ready to Cook! All ingredients in cart or at home."></span>
                     {% elif meal.id in meals_missing_optional %}
-                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-500 flex-shrink-0" title="Missing only optional ingredients."></span>
+                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-500 flex-shrink-0" role="img" aria-label="Status: Missing only optional ingredients." title="Missing only optional ingredients."></span>
                     {% else %}
-                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-gray-200 border border-gray-300 flex-shrink-0" title="Ingredients needed on shopping list."></span>
+                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-gray-200 border border-gray-300 flex-shrink-0" role="img" aria-label="Status: Ingredients needed on shopping list." title="Ingredients needed on shopping list."></span>
                     {% endif %}
 
                     <h3 class="font-bold text-sm text-gray-900 flex items-center space-x-1.5">
                         <span>{{ meal.name }}</span>
                         {% if meal.emoji %}
-                        <span class="text-base leading-none">{{ meal.emoji }}</span>
+                        <span class="text-base leading-none" aria-hidden="true">{{ meal.emoji }}</span>
                         {% endif %}
                     </h3>
                 </div>
@@ -77,15 +77,16 @@
                         {% csrf_token %}
                         <button type="submit"
                                 class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 flex items-center space-x-1"
+                                aria-label="Mark meal {{ meal.name }} as made"
                                 title="Mark entire meal '{{ meal.name }}' as made">
-                            <span>✓</span>
+                            <span aria-hidden="true">✓</span>
                             <span>Meal Made</span>
                         </button>
                     </form>
                     <form hx-post="{% url 'mealplans:delete_meal' meal.id %}" hx-target="#mealplan-content" hx-confirm="Delete '{{ meal.name }}' and remove its ingredients from the shopping list?" class="inline">
                         {% csrf_token %}
-                        <button type="submit" class="text-gray-400 hover:text-red-700 font-bold text-sm px-1.5 leading-none" title="Delete meal">
-                            &times;
+                        <button type="submit" class="text-gray-500 hover:text-red-700 font-bold text-sm px-1.5 leading-none" aria-label="Delete meal {{ meal.name }}" title="Delete meal">
+                            <span aria-hidden="true">&times;</span>
                         </button>
                     </form>
                 </div>
@@ -99,11 +100,11 @@
                     <div class="flex items-center space-x-2">
                         <!-- Recipe Readiness Indicator -->
                         {% if recipe.id in recipes_ready %}
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" title="Ready to cook!"></span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" role="img" aria-label="Status: Ready to cook" title="Ready to cook!"></span>
                         {% elif recipe.id in recipes_missing_optional %}
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" title="Missing only optional ingredients"></span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" role="img" aria-label="Status: Missing only optional ingredients" title="Missing only optional ingredients"></span>
                         {% else %}
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300" title="Ingredients needed"></span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300" role="img" aria-label="Status: Ingredients needed" title="Ingredients needed"></span>
                         {% endif %}
 
                         <button type="button" hx-get="{% url 'mealplans:recipe_modal' recipe.id %}" hx-target="#modal-placeholder"
@@ -118,22 +119,23 @@
                             {% csrf_token %}
                             <button type="submit"
                                     class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 flex items-center space-x-1"
+                                    aria-label="Mark {{ recipe.name }} as made"
                                     title="Mark '{{ recipe.name }}' as made">
-                                <span>✓</span>
+                                <span aria-hidden="true">✓</span>
                                 <span>Made</span>
                             </button>
                         </form>
                         <form hx-post="{% url 'mealplans:delete_dish' meal.id recipe.id %}" hx-target="#mealplan-content" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="text-gray-400 hover:text-red-600 font-bold text-xs px-1 leading-none" title="Remove recipe from meal">
-                                &times;
+                            <button type="submit" class="text-gray-500 hover:text-red-600 font-bold text-xs px-1 leading-none" aria-label="Remove {{ recipe.name }} from {{ meal.name }}" title="Remove recipe from meal">
+                                <span aria-hidden="true">&times;</span>
                             </button>
                         </form>
                     </div>
                     {% endif %}
                 </div>
                 {% empty %}
-                <div class="text-gray-400 italic text-xs py-1">
+                <div class="text-gray-500 italic text-xs py-1">
                     No dishes added yet. Add a dish from the recipe database below.
                 </div>
                 {% endfor %}
@@ -143,7 +145,7 @@
                 <div class="pt-1.5">
                     <form hx-post="{% url 'mealplans:add_dish' meal.id %}" hx-target="#mealplan-content" class="flex items-center space-x-1.5 text-xs">
                         {% csrf_token %}
-                        <input list="recipelist-{{ meal.id }}" name="recipe" placeholder="+ Add dish (e.g. Tacos, Salad)..." required autocomplete="off"
+                        <input list="recipelist-{{ meal.id }}" name="recipe" aria-label="Add dish to {{ meal.name }}" placeholder="+ Add dish (e.g. Tacos, Salad)..." required autocomplete="off"
                                class="border border-gray-300 px-2 py-1 bg-white text-gray-900 text-xs rounded-none focus:outline-none focus:border-gray-600 flex-1 max-w-xs">
                         <datalist id="recipelist-{{ meal.id }}">
                             {% for r in available_recipes %}
@@ -171,8 +173,8 @@
     <div class="border border-gray-300 bg-gray-50 p-3">
         <form hx-post="{% url 'mealplans:add_meal' %}" hx-target="#mealplan-content" class="flex flex-wrap items-center gap-2 text-xs">
             {% csrf_token %}
-            <label class="font-bold text-gray-700">Add Meal:</label>
-            <input type="text" name="meal" placeholder="Meal name, like 'Monday Dinner' or 'Tacos Tuesday'..." required autocomplete="off"
+            <label for="new-meal-plan-name" class="font-bold text-gray-700">Add Meal:</label>
+            <input type="text" id="new-meal-plan-name" name="meal" aria-label="New meal name" placeholder="Meal name, like 'Monday Dinner' or 'Tacos Tuesday'..." required autocomplete="off"
                    class="flex-1 min-w-[220px] border border-gray-400 px-2.5 py-1.5 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
             <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white font-semibold px-4 py-1.5 rounded-none">
                 + Add Meal

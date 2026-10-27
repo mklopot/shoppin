@@ -359,6 +359,7 @@
                                            name="ingredient_name[]"
                                            required
                                            value="{{ ing.name }}"
+                                           aria-label="Ingredient name"
                                            placeholder="e.g. Yellow onion, Diced tomatoes"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
@@ -366,6 +367,7 @@
                                     <input type="text"
                                            name="ingredient_amount[]"
                                            value="{{ ing.amount|floatformat:'-2' }}"
+                                           aria-label="Ingredient amount"
                                            placeholder="1"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
@@ -373,6 +375,7 @@
                                     <input type="text"
                                            name="ingredient_unit[]"
                                            value="{{ ing.amount_unit }}"
+                                           aria-label="Ingredient unit"
                                            placeholder="cup, lb, tbsp"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
@@ -380,6 +383,7 @@
                                     <input type="text"
                                            name="ingredient_brand[]"
                                            value="{{ ing.brand }}"
+                                           aria-label="Ingredient brand"
                                            placeholder="Brand"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
@@ -387,6 +391,7 @@
                                     <input type="text"
                                            name="ingredient_vendor[]"
                                            value="{{ ing.vendor }}"
+                                           aria-label="Ingredient vendor"
                                            placeholder="Vendor/Store"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
@@ -394,6 +399,7 @@
                                     <input type="checkbox"
                                            name="ingredient_optional[]"
                                            value="1"
+                                           aria-label="Optional ingredient"
                                            {% if ing.optional %}checked{% endif %}
                                            class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                                 </td>
@@ -401,8 +407,9 @@
                                     <button type="button"
                                             onclick="removeIngredientRow(this)"
                                             class="text-red-600 hover:text-red-800 font-bold text-sm"
+                                            aria-label="Remove ingredient"
                                             title="Remove row">
-                                        &times;
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </td>
                             </tr>
@@ -414,6 +421,7 @@
                                     <input type="text"
                                            name="ingredient_name[]"
                                            required
+                                           aria-label="Ingredient name"
                                            placeholder="e.g. Yellow onion, Olive oil"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
@@ -422,38 +430,44 @@
                                            name="ingredient_amount[]"
                                            placeholder="1"
                                            value="1"
+                                           aria-label="Ingredient amount"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_unit[]"
                                            placeholder="cup, tbsp, lb"
+                                           aria-label="Ingredient unit"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_brand[]"
                                            placeholder="Brand"
+                                           aria-label="Ingredient brand"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_vendor[]"
                                            placeholder="Vendor/Store"
+                                           aria-label="Ingredient vendor"
                                            class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5 text-center align-middle">
                                     <input type="checkbox"
                                            name="ingredient_optional[]"
                                            value="1"
+                                           aria-label="Optional ingredient"
                                            class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                                 </td>
                                 <td class="p-1.5 text-center align-middle">
                                     <button type="button"
                                             onclick="removeIngredientRow(this)"
                                             class="text-red-600 hover:text-red-800 font-bold text-sm"
+                                            aria-label="Remove ingredient"
                                             title="Remove row">
-                                        &times;
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </td>
                             </tr>
@@ -577,6 +591,7 @@ function addIngredientRow() {
             <input type="text"
                    name="ingredient_name[]"
                    required
+                   aria-label="Ingredient name"
                    placeholder="e.g. Yellow onion, Olive oil"
                    class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
@@ -585,38 +600,44 @@ function addIngredientRow() {
                    name="ingredient_amount[]"
                    placeholder="1"
                    value="1"
+                   aria-label="Ingredient amount"
                    class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_unit[]"
                    placeholder="cup, tbsp, lb"
+                   aria-label="Ingredient unit"
                    class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_brand[]"
                    placeholder="Brand"
+                   aria-label="Ingredient brand"
                    class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_vendor[]"
                    placeholder="Vendor/Store"
+                   aria-label="Ingredient vendor"
                    class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5 text-center align-middle">
             <input type="checkbox"
                    name="ingredient_optional[]"
                    value="1"
+                   aria-label="Optional ingredient"
                    class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
         </td>
         <td class="p-1.5 text-center align-middle">
             <button type="button"
                     onclick="removeIngredientRow(this)"
                     class="text-red-600 hover:text-red-800 font-bold text-sm"
+                    aria-label="Remove ingredient"
                     title="Remove row">
-                &times;
+                <span aria-hidden="true">&times;</span>
             </button>
         </td>
     `;

@@ -16,16 +16,18 @@
                         </h3>
                         <button type="button"
                                 onclick="document.getElementById('modal-placeholder').innerHTML = ''"
-                                class="text-gray-400 hover:text-gray-500 font-bold">
-                            ✕
+                                aria-label="Close dialog"
+                                class="text-gray-500 hover:text-gray-800 font-bold">
+                            <span aria-hidden="true">✕</span>
                         </button>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                        <label for="preset-edit-item-name" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                             Item Name <span class="text-red-500">*</span>
                         </label>
                         <input type="text"
+                               id="preset-edit-item-name"
                                name="name"
                                value="{{ item.name }}"
                                required
@@ -34,19 +36,21 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            <label for="preset-edit-item-amount" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                 Amount
                             </label>
                             <input type="text"
+                                   id="preset-edit-item-amount"
                                    name="amount"
                                    value="{{ item.amount_display }}"
                                    class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            <label for="preset-edit-item-unit" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                 Unit
                             </label>
                             <input type="text"
+                                   id="preset-edit-item-unit"
                                    name="amount_unit"
                                    value="{{ item.amount_unit }}"
                                    placeholder="e.g. can, gallon"
@@ -56,20 +60,22 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            <label for="preset-edit-item-brand" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                 Brand
                             </label>
                             <input type="text"
+                                   id="preset-edit-item-brand"
                                    name="brand"
                                    value="{{ item.brand }}"
                                    placeholder="Optional"
                                    class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            <label for="preset-edit-item-vendor" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                 Best Vendor
                             </label>
                             <input type="text"
+                                   id="preset-edit-item-vendor"
                                    name="vendor"
                                    value="{{ item.vendor }}"
                                    placeholder="e.g. Safeway"
@@ -78,10 +84,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                        <label for="preset-edit-item-category" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                             Category / Department
                         </label>
-                        <select name="category" class="w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
+                        <select id="preset-edit-item-category" name="category" class="w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
                             {% for cat in known_categories %}
                             <option value="{{ cat }}" {% if item.category == cat %}selected{% endif %}>{{ cat|title }}</option>
                             {% endfor %}

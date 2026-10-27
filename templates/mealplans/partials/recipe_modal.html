@@ -1,9 +1,9 @@
-<div id="recipe-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+<div id="recipe-detail-modal" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
     <div class="bg-white border border-gray-400 shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col rounded-none p-5 space-y-4 animate-[fadeIn_0.15s_ease-out]">
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-gray-300 pb-3 flex-shrink-0">
             <div>
-                <h3 class="font-bold text-lg text-gray-900 leading-tight">{{ recipe.name }}</h3>
+                <h3 id="recipe-detail-modal-title" class="font-bold text-lg text-gray-900 leading-tight">{{ recipe.name }}</h3>
                 <div class="flex items-center space-x-2 text-xs text-gray-500 mt-1">
                     {% if recipe.cuisine %}
                     <span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 border border-gray-300">{{ recipe.cuisine }}</span>
@@ -20,7 +20,7 @@
                     <span class="text-emerald-800 font-semibold">Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span>
                 </div>
             </div>
-            <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" class="text-gray-400 hover:text-gray-800 text-2xl font-bold leading-none">&times;</button>
+            <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" aria-label="Close dialog" class="text-gray-500 hover:text-gray-900 text-2xl font-bold leading-none"><span aria-hidden="true">&times;</span></button>
         </div>
 
         <!-- Scrollable Content -->

@@ -17,24 +17,28 @@
 {% if recipes %}
 <!-- Rating Prompt Modal Dialog -->
 <div id="recipe-rating-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="recipe-rating-modal-title"
      onclick="if(event.target === this) document.getElementById('modal-placeholder').innerHTML = ''"
      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-[fadeIn_0.15s_ease-out]">
     <div class="bg-white border border-gray-400 shadow-2xl w-full max-w-lg flex flex-col rounded-none p-5 space-y-4 max-h-[90vh] overflow-y-auto">
         <!-- Header -->
         <div class="flex items-start justify-between border-b border-gray-300 pb-3 flex-shrink-0">
             <div>
-                <h3 class="font-bold text-base text-gray-900 flex items-center space-x-2">
-                    <span class="text-emerald-700">✓</span>
+                <h3 id="recipe-rating-modal-title" class="font-bold text-base text-gray-900 flex items-center space-x-2">
+                    <span class="text-emerald-700" aria-hidden="true">✓</span>
                     <span>{% if is_entire_meal %}Meal Made: {{ meal_name }}{% else %}Dish Made: {{ recipes.0.name }}{% endif %}</span>
                 </h3>
-                <p class="text-xs text-gray-500 mt-0.5">
+                <p class="text-xs text-gray-600 mt-0.5">
                     Removed from meal plan &amp; recipe counter updated. How did it turn out?
                 </p>
             </div>
             <button type="button"
                     onclick="document.getElementById('modal-placeholder').innerHTML = ''"
-                    class="text-gray-400 hover:text-gray-800 text-2xl font-bold leading-none"
-                    title="Skip rating">&times;</button>
+                    class="text-gray-500 hover:text-gray-900 text-2xl font-bold leading-none"
+                    aria-label="Skip rating"
+                    title="Skip rating"><span aria-hidden="true">&times;</span></button>
         </div>
 
         <!-- Rating Form -->
@@ -69,8 +73,9 @@
                                 onclick="setStarRating('{{ r.id }}', {{ forloop.counter }})"
                                 class="star-btn-{{ r.id }} text-2xl focus:outline-none transition-transform hover:scale-110 text-amber-400 p-0.5"
                                 data-val="{{ forloop.counter }}"
+                                aria-label="Rate {{ forloop.counter }} stars for {{ r.name }}"
                                 title="{{ forloop.counter }} star{{ forloop.counter|pluralize }}">
-                            ★
+                            <span aria-hidden="true">★</span>
                         </button>
                         {% endfor %}
                         <span id="stars-label-{{ r.id }}" class="text-xs font-semibold text-gray-700 ml-2">5 stars</span>

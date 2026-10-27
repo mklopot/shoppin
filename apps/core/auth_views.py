@@ -24,8 +24,19 @@ def login_view(request: HttpRequest) -> HttpResponse:
     """
     Render login page with Google OAuth button, standard auth, and dev personas.
     """
+    disallowed_prefixes = (
+        "/login",
+        "/accounts/login",
+        "/core/login",
+        "/logout",
+        "/accounts/logout",
+        "/core/logout",
+    )
+
     if request.user.is_authenticated:
         next_url = request.GET.get("next") or reverse("recipes:list")
+        if not next_url.startswith("/") or any(next_url.startswith(p) for p in disallowed_prefixes):
+            next_url = reverse("recipes:list")
         return redirect(next_url)
 
     next_url = request.GET.get("next", "")
@@ -39,7 +50,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
             request.session.set_expiry(settings.SESSION_COOKIE_AGE)
             request.session.pop("guest_mode", None)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
-            target = next_url if next_url and next_url.startswith("/") else reverse("recipes:list")
+            target = next_url if (next_url and next_url.startswith("/") and not any(next_url.startswith(p) for p in disallowed_prefixes)) else reverse("recipes:list")
             if not has_user_accepted_latest_tos(user, request.session):
                 return redirect(f"{reverse('core:terms_accept')}?next={target}")
             return redirect(target)

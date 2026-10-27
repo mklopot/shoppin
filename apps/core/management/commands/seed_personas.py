@@ -40,6 +40,19 @@ class Command(BaseCommand):
             users[username] = user
             self.stdout.write(f"User ready: {username}")
 
+        # Ensure TOS acceptance for dev personas
+        from apps.core.models import TermsOfServiceAcceptance
+        for u in users.values():
+            TermsOfServiceAcceptance.objects.get_or_create(
+                user=u,
+                version=TermsOfServiceAcceptance.CURRENT_VERSION,
+                defaults={
+                    "ip_address": "127.0.0.1",
+                    "user_agent": "Seeded Dev Persona",
+                    "screen_resolution": "1920x1080",
+                },
+            )
+
         # Ensure default store
         store = StoreLocation.objects.first()
 

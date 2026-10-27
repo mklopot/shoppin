@@ -193,3 +193,61 @@ def test_enforcement_middleware_permits_accepted_user(client: Client, normal_use
 
     response = client.get(reverse("recipes:list"))
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_enforcement_middleware_allows_core_terms_accept_without_redirect_loop(client: Client, normal_user, settings):
+    """
+    Unaccepted authenticated user requesting /core/terms/accept/ must get 200 OK
+    and NOT be redirected back into itself in an infinite loop.
+    """
+    settings.ENFORCE_TOS_IN_TESTS = True
+    client.force_login(normal_user)
+
+    response = client.get(reverse("core:terms_accept"))
+    assert response.status_code == 200
+    assert "Shoppin Universal Terms of Service & Surrender of Rights" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_switch_persona_does_not_redirect_loop(client: Client, db, settings):
+    """
+    Switching personas via dev user picker does not cause redirect loops
+    even when enforcement is active and previous referer was terms_accept.
+    """
+    settings.DEBUG = True
+    settings.ENFORCE_TOS_IN_TESTS = True
+
+    alice = User.objects.create_user(username="alice", password="password")
+
+    # Referer is the terms accept page (common trigger for the infinite loop)
+    response = client.get(
+        reverse("core:switch_persona", args=["alice"]),
+        HTTP_REFERER="http://testserver/core/terms/accept/?next=/",
+    )
+    # Must redirect to a clean app destination, NOT back to terms/accept
+    assert response.status_code == 302
+    assert response.url != "/core/terms/accept/"
+    assert not response.url.startswith("/core/terms/accept")
+    assert not response.url.startswith("/terms/accept")
+
+    # Follow redirect to destination and verify 200 OK
+    follow_resp = client.get(response.url)
+    assert follow_resp.status_code == 200
+
+    # User is authenticated as alice and has TOS accepted
+    assert int(client.session["_auth_user_id"]) == alice.id
+    assert has_user_accepted_latest_tos(alice, client.session)
+
+
+@pytest.mark.django_db
+def test_terms_accept_sanitizes_self_referential_next_url(client: Client, normal_user):
+    """If next URL is self-referential to terms accept, sanitize to safe default."""
+    client.force_login(normal_user)
+    response = client.post(
+        reverse("core:terms_accept"),
+        {"affirmative_surrender": "true", "next": reverse("core:terms_accept")},
+    )
+    assert response.status_code == 302
+    assert response.url == reverse("recipes:list")
+

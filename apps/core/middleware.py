@@ -82,8 +82,14 @@ class TermsOfServiceEnforcementMiddleware:
         if user and user.is_authenticated:
             exempt_prefixes = (
                 "/terms/",
+                "/core/terms/",
                 "/accounts/logout/",
                 "/logout/",
+                "/core/logout/",
+                "/accounts/login/",
+                "/login/",
+                "/core/login/",
+                "/core/dev/",
                 "/static/",
                 "/media/",
                 "/admin/",
@@ -98,6 +104,8 @@ class TermsOfServiceEnforcementMiddleware:
                 from apps.core.services.tos_service import has_user_accepted_latest_tos
 
                 if not has_user_accepted_latest_tos(user, getattr(request, "session", None)):
-                    return redirect(f"{reverse('core:terms_accept')}?next={quote(request.get_full_path())}")
+                    terms_accept_url = reverse("core:terms_accept")
+                    if not path.startswith(terms_accept_url) and not path.startswith("/terms/accept"):
+                        return redirect(f"{terms_accept_url}?next={quote(request.get_full_path())}")
 
         return self.get_response(request)

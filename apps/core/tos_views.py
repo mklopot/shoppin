@@ -60,7 +60,19 @@ def terms_accept_view(request: HttpRequest) -> HttpResponse:
     """
     user = request.user
     next_url = request.GET.get("next") or request.POST.get("next") or reverse("recipes:list")
-    if not next_url.startswith("/"):
+
+    disallowed_prefixes = (
+        "/terms",
+        "/core/terms",
+        "/login",
+        "/accounts/login",
+        "/core/login",
+        "/logout",
+        "/accounts/logout",
+        "/core/logout",
+        "/core/dev",
+    )
+    if not next_url.startswith("/") or any(next_url.startswith(p) for p in disallowed_prefixes):
         next_url = reverse("recipes:list")
 
     if has_user_accepted_latest_tos(user, request.session):

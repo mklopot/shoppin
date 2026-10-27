@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.core.models import Workspace, WorkspaceRole
@@ -205,24 +206,52 @@ def switch_persona(request: HttpRequest, username: str) -> HttpResponse:
     user = get_object_or_404(User, username=username)
     login(request, user)
 
+    # Automatically ensure TOS acceptance for dev personas to allow seamless local testing
+    from apps.core.models import TermsOfServiceAcceptance
+    from apps.core.services.tos_service import has_user_accepted_latest_tos, record_tos_acceptance
+
+    if not has_user_accepted_latest_tos(user, request.session):
+        record_tos_acceptance(user, request)
+    request.session["tos_accepted"] = TermsOfServiceAcceptance.CURRENT_VERSION
+
     # Reset active workspace session so it defaults to the newly logged-in user's workspace
     if "active_workspace_id" in request.session:
         del request.session["active_workspace_id"]
 
+    from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+
+    next_url = request.GET.get("next")
     referer = request.META.get("HTTP_REFERER")
-    if referer:
-        # Strip workspace_id query param so new user doesn't get 403 on previous user's private workspace
-        from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+
+    disallowed_prefixes = (
+        "/terms",
+        "/core/terms",
+        "/login",
+        "/accounts/login",
+        "/core/login",
+        "/logout",
+        "/accounts/logout",
+        "/core/logout",
+        "/core/dev/switch-persona",
+    )
+
+    if not next_url and referer:
         parsed = urlsplit(referer)
         query = parse_qs(parsed.query)
-        query.pop("workspace_id", None)
-        new_query = urlencode(query, doseq=True)
-        cleaned_url = urlunsplit((
-            parsed.scheme,
-            parsed.netloc,
-            parsed.path,
-            new_query,
-            parsed.fragment,
-        ))
-        return redirect(cleaned_url)
-    return redirect("shopping:list")
+        # If referer was e.g. login with ?next=/recipes/, use that next param
+        if "next" in query and query["next"]:
+            cand = query["next"][0]
+            if cand.startswith("/") and not any(cand.startswith(p) for p in disallowed_prefixes):
+                next_url = cand
+
+        if not next_url:
+            path = parsed.path
+            if path.startswith("/") and not any(path.startswith(p) for p in disallowed_prefixes):
+                query.pop("workspace_id", None)
+                new_query = urlencode(query, doseq=True)
+                next_url = urlunsplit(("", "", parsed.path, new_query, parsed.fragment))
+
+    if not next_url or not next_url.startswith("/") or any(next_url.startswith(p) for p in disallowed_prefixes):
+        next_url = reverse("shopping:list")
+
+    return redirect(next_url)

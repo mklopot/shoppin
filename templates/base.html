@@ -340,12 +340,12 @@
     </footer>
 
     <!-- Floating Toast Notifications Container (Screen Reader Live Region) -->
-    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none">
+    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed top-14 right-3 left-3 sm:left-auto sm:right-4 z-50 flex flex-col space-y-2 pointer-events-none sm:max-w-sm">
         {% if messages %}
             {% for message in messages %}
-            <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+            <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer" onclick="dismissToast(this)">
                 <span class="font-medium pr-2">{{ message }}</span>
-                <button type="button" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" onclick="dismissToast(this.closest('.toast-item'))">
+                <button type="button" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" onclick="event.stopPropagation(); dismissToast(this.closest('.toast-item'))">
                     <span class="sr-only">Dismiss</span>
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -498,22 +498,30 @@
             evt.detail.headers['X-Client-Id'] = window.CLIENT_ID;
         });
 
+        const MAX_TOASTS = 3;
+
         function showToast(message) {
             if (!message) return;
             const container = document.getElementById('toast-container');
             if (!container) return;
             const toast = document.createElement('div');
-            toast.className = 'toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none';
+            toast.className = 'toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer';
             const span = document.createElement('span');
             span.className = 'font-medium pr-2';
             span.textContent = message;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none';
+            btn.className = 'text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none';
             btn.innerHTML = '&times;';
-            btn.onclick = function() { dismissToast(toast); };
+            btn.onclick = function(e) {
+                e.stopPropagation();
+                dismissToast(toast);
+            };
             toast.appendChild(span);
             toast.appendChild(btn);
+            toast.onclick = function() {
+                dismissToast(toast);
+            };
             container.appendChild(toast);
             initToasts();
         }
@@ -523,18 +531,38 @@
             el.dataset.dismissing = "true";
             el.style.transition = "opacity 0.22s ease-out, transform 0.22s ease-out";
             el.style.opacity = "0";
-            el.style.transform = "translateY(10px) scale(0.97)";
+            el.style.transform = "translateY(-8px) scale(0.97)";
             setTimeout(() => {
                 el.remove();
             }, 220);
         }
 
         function initToasts() {
-            document.querySelectorAll('.toast-item:not([data-toast-initialized])').forEach(toast => {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            // Enforce maximum visible toasts queue (Option 3)
+            const activeToasts = Array.from(container.querySelectorAll('.toast-item')).filter(
+                t => !t.dataset.dismissing
+            );
+            if (activeToasts.length > MAX_TOASTS) {
+                const excess = activeToasts.length - MAX_TOASTS;
+                for (let i = 0; i < excess; i++) {
+                    dismissToast(activeToasts[i]);
+                }
+            }
+
+            container.querySelectorAll('.toast-item:not([data-toast-initialized])').forEach(toast => {
                 toast.dataset.toastInitialized = "true";
+                if (!toast.onclick) {
+                    toast.style.cursor = "pointer";
+                    toast.onclick = function() {
+                        dismissToast(toast);
+                    };
+                }
                 setTimeout(() => {
                     dismissToast(toast);
-                }, 6000);
+                }, 3500);
             });
         }
 
@@ -574,11 +602,11 @@
 
                         // If another tab, user, or background schedule made the change:
                         if (!isSender) {
-                            // 1. Show notification toast(s)
-                            if (data.toast_messages && Array.isArray(data.toast_messages) && data.toast_messages.length > 0) {
-                                data.toast_messages.forEach(msg => showToast(msg));
-                            } else if (data.toast_message) {
+                            // 1. Show notification toast (consolidated single toast)
+                            if (data.toast_message) {
                                 showToast(data.toast_message);
+                            } else if (data.toast_messages && Array.isArray(data.toast_messages) && data.toast_messages.length > 0) {
+                                showToast(data.toast_messages[0]);
                             }
 
                             // 2. Auto-update Shopping List content if present on page

@@ -151,15 +151,13 @@ def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
     if recipe:
         added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request, scale_factor=scale_factor)
         scale_tag = f" ({scale_factor.normalize():f}x)" if scale_factor != Decimal("1.00") else ""
-        toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name}")
-        if len(added_descriptions) <= 6:
-            for desc in added_descriptions:
-                toast_messages.append(f"🛒 Added {desc} to shopping list")
+        count = len(added_descriptions)
+        if count == 0:
+            toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name}")
+        elif count == 1:
+            toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name} (1 ingredient added to shopping list)")
         else:
-            for desc in added_descriptions[:5]:
-                toast_messages.append(f"🛒 Added {desc} to shopping list")
-            remaining = len(added_descriptions) - 5
-            toast_messages.append(f"🛒 ...and {remaining} more ingredients added to shopping list")
+            toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name} ({count} ingredients added to shopping list)")
 
     return meal_plan_view(request, toast_messages=toast_messages)
 

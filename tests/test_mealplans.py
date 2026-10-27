@@ -260,9 +260,7 @@ def test_mealplan_views_and_read_only_permissions(client, mealplan_setup):
     assert resp_dish.status_code == 200
     assert meal.recipes.filter(id=recipe.id).exists()
     assert b"Added &#x27;Fiesta Tacos&#x27; to Sunday Brunch" in resp_dish.content or b"Added 'Fiesta Tacos' to Sunday Brunch" in resp_dish.content
-    assert b"Tortillas to shopping list" in resp_dish.content
-    assert b"Ground Beef to shopping list" in resp_dish.content
-    assert b"Cilantro to shopping list" in resp_dish.content
+    assert b"3 ingredients added to shopping list" in resp_dish.content
 
     # 2. Viewer receives 403 Forbidden on mutations
     client.force_login(viewer)

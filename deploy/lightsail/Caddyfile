@@ -17,14 +17,14 @@
     }
 
     # Serve collected static files directly from local disk
-    handle /static/* {
+    handle_path /static/* {
         root * /app/staticfiles
         file_server
         header Cache-Control "public, max-age=31536000, immutable"
     }
 
     # Serve user recipe photos directly from local disk
-    handle /media/* {
+    handle_path /media/* {
         root * /app/media
         file_server
         header Cache-Control "public, max-age=86400"

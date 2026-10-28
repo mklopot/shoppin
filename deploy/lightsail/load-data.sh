@@ -68,7 +68,13 @@ case "$MODE" in
 
         echo "==> Syncing media uploads from S3 (recipe images)..."
         aws s3 sync "s3://${S3_BUCKET}/initial_seed/media/" "$APP_DIR/media/" || true
+        if [ -d "$APP_DIR/media/media" ]; then
+            echo "==> Normalizing nested media directory structure..."
+            cp -rn "$APP_DIR/media/media/"* "$APP_DIR/media/" || true
+            rm -rf "$APP_DIR/media/media"
+        fi
         chown -R ubuntu:ubuntu "$APP_DIR/media"
+        chmod -R 755 "$APP_DIR/media"
 
         echo "==> Applying any pending schema migrations..."
         "$VENV_PYTHON" "$APP_DIR/manage.py" migrate --noinput

@@ -28,7 +28,7 @@
             <span class="text-lg">⚖️</span>
             <div>
                 <span class="font-bold uppercase tracking-wider block">Binding Agreement Active & Recorded</span>
-                <span>You legally executed Version {{ acceptance_record.version }} on {{ acceptance_record.accepted_at|date:"F j, Y, P T" }} from IP <code class="font-mono bg-white px-1.5 py-0.5 border border-emerald-200">{{ acceptance_record.ip_address }}</code> (Audit Record #{{ acceptance_record.id }}).</span>
+                <span>You accepted Version {{ acceptance_record.version }} on {{ acceptance_record.accepted_at|date:"F j, Y, P T" }} from IP <code class="font-mono bg-white px-1.5 py-0.5 border border-emerald-200">{{ acceptance_record.ip_address }}</code> (Audit Record #{{ acceptance_record.id }}).</span>
             </div>
         </div>
         <a href="{{ next }}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm whitespace-nowrap">
@@ -266,7 +266,7 @@
             </p>
             <div>
                 <a href="{% url 'core:login' %}?next={% url 'core:terms_accept' %}" class="bg-gray-900 hover:bg-black text-white font-bold px-4 py-2 text-xs shadow-sm inline-block">
-                    Sign in to Execute Terms &rarr;
+                    Sign In to Accept Terms &rarr;
                 </a>
             </div>
         </div>

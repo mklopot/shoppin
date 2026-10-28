@@ -25,8 +25,14 @@ echo "==> Collecting static assets..."
 echo "==> Restarting Shoppin Daphne service..."
 sudo systemctl restart shoppin
 
-echo "==> Setting directory permissions..."
-sudo chmod 755 "$APP_DIR" "$APP_DIR/staticfiles" "$APP_DIR/media"
+echo "==> Setting directory and media permissions..."
+if [ -d "$APP_DIR/media/media" ]; then
+    echo "==> Normalizing nested media directory structure..."
+    cp -rn "$APP_DIR/media/media/"* "$APP_DIR/media/" || true
+    rm -rf "$APP_DIR/media/media"
+fi
+sudo chmod 755 "$APP_DIR"
+sudo chmod -R 755 "$APP_DIR/staticfiles" "$APP_DIR/media"
 
 echo "==> Configuring and restarting Caddy web server..."
 sudo cp "$APP_DIR/deploy/lightsail/Caddyfile" /etc/caddy/Caddyfile

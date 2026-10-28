@@ -14,28 +14,23 @@
 
 {% block extra_scripts %}
 <script>
-    // 1. Geolocation Helper
+    // 1. Store Locator & Map Picker Helper
+    function openStorePickerModal(options) {
+        const payload = Object.assign({
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+            group_by: '{{ group_by }}',
+            mode: '{{ mode }}'
+        }, options || {});
+
+        htmx.ajax('POST', '{% url "shopping:nearest_store" %}', {
+            target: '#modal-placeholder',
+            swap: 'innerHTML',
+            values: payload
+        });
+    }
+
     function locateNearestStore() {
-        if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser.");
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                htmx.ajax('POST', '{% url "shopping:nearest_store" %}', {
-                    target: '#modal-placeholder',
-                    swap: 'innerHTML',
-                    values: {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    }
-                });
-            },
-            function(error) {
-                alert("Could not retrieve GPS location: " + error.message);
-            }
-        );
+        openStorePickerModal();
     }
 
     // 2. SortableJS Drag-and-Drop Reordering Initialization

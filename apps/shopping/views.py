@@ -40,9 +40,9 @@ from apps.shopping.services.preset_service import check_and_apply_due_preset_sch
 from apps.shopping.services.store_service import (
     get_known_aisles,
     get_known_categories,
-    get_nearest_stores,
     kroger_client,
     resolve_store_aisle,
+    search_and_discover_stores,
 )
 
 logger = logging.getLogger(__name__)
@@ -869,40 +869,84 @@ def set_store(request: HttpRequest) -> HttpResponse:
     return render_list_response(request, context, toast_message=toast)
 
 
-@require_POST
 def find_nearest_store(request: HttpRequest) -> HttpResponse:
     """
-    Find the 5 closest physical supermarkets based on GPS coordinates
-    and render the selection modal dialog.
+    Find physical supermarkets based on search query, coordinates (GPS/map pin),
+    or default location, and render the interactive store finder modal dialog with Leaflet map.
 
     Args:
-        request: The POST request containing latitude and longitude.
+        request: The HTTP request containing optional query, latitude, or longitude.
 
     Returns:
         Rendered HTML partial of the nearest stores modal dialog.
     """
-    try:
-        latitude = float(request.POST.get("latitude", 0))
-        longitude = float(request.POST.get("longitude", 0))
-    except (ValueError, TypeError):
-        return JsonResponse({"error": "Invalid coordinates"}, status=400)
+    query = request.POST.get("query") or request.GET.get("query") or ""
+    lat_val = request.POST.get("latitude") or request.GET.get("latitude")
+    lon_val = request.POST.get("longitude") or request.GET.get("longitude")
 
-    nearest_matches = get_nearest_stores(latitude, longitude, limit=5)
+    latitude: float | None = None
+    longitude: float | None = None
+    if lat_val and lon_val:
+        try:
+            latitude = float(lat_val)
+            longitude = float(lon_val)
+        except (ValueError, TypeError):
+            pass
+
     shopping_list = get_active_list(request)
-    group_by = request.GET.get("group_by", GroupBy.AISLE)
-    mode = request.GET.get("mode", "shopping")
+    if latitude is None and longitude is None and not query:
+        if shopping_list and shopping_list.active_store and shopping_list.active_store.latitude:
+            latitude = shopping_list.active_store.latitude
+            longitude = shopping_list.active_store.longitude
+        else:
+            latitude = 39.7392
+            longitude = -104.9903
+
+    discovery = search_and_discover_stores(
+        query=query,
+        latitude=latitude,
+        longitude=longitude,
+        limit=12,
+    )
+    nearest_matches = discovery["stores"]
+    center_lat = discovery["center_lat"]
+    center_lon = discovery["center_lon"]
+    resolved_name = discovery["resolved_location_name"]
+
+    group_by = request.GET.get("group_by") or request.POST.get("group_by") or GroupBy.AISLE
+    mode = request.GET.get("mode") or request.POST.get("mode") or "shopping"
+
+    stores_json = json.dumps([
+        {
+            "id": m["store"].id,
+            "name": m["store"].name,
+            "chain": m["store"].chain,
+            "chain_display": m["store"].get_chain_display(),
+            "address": m["store"].address or "",
+            "city": m["store"].city or "",
+            "lat": m["store"].latitude,
+            "lon": m["store"].longitude,
+            "distance": m["distance_miles"],
+            "is_active": (shopping_list.active_store_id == m["store"].id) if shopping_list else False,
+        }
+        for m in nearest_matches
+        if m["store"].latitude is not None and m["store"].longitude is not None
+    ])
 
     return render(
         request,
         "shopping/partials/nearest_stores_modal.html",
         {
             "nearest_matches": nearest_matches,
-            "active_store": shopping_list.active_store,
+            "active_store": shopping_list.active_store if shopping_list else None,
             "shopping_list": shopping_list,
             "group_by": group_by,
             "mode": mode,
-            "latitude": latitude,
-            "longitude": longitude,
+            "center_lat": center_lat,
+            "center_lon": center_lon,
+            "query": query,
+            "resolved_name": resolved_name,
+            "stores_json": stores_json,
         },
     )
 

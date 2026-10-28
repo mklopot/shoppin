@@ -1,77 +1,284 @@
-<div id="modal-container" role="dialog" aria-modal="true" aria-labelledby="nearest-stores-modal-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div class="bg-white border border-gray-400 max-w-lg w-full p-4 space-y-3 shadow-xl text-xs">
+<div id="modal-container" role="dialog" aria-modal="true" aria-labelledby="nearest-stores-modal-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px] p-2 sm:p-4">
+    <div id="store-picker-modal-dialog" class="bg-white border border-gray-400 max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl text-xs rounded-none">
+        
         <!-- Modal Header -->
-        <div class="flex justify-between items-center border-b border-gray-300 pb-2">
+        <div class="flex justify-between items-center border-b border-gray-300 px-4 py-3 bg-gray-50">
             <div>
-                <h3 id="nearest-stores-modal-title" class="font-bold text-gray-900 text-sm uppercase flex items-center gap-1.5">
+                <h3 id="nearest-stores-modal-title" class="font-bold text-gray-900 text-sm uppercase flex items-center gap-1.5 tracking-tight">
                     <span>📍</span>
-                    <span>Stores Closest to You</span>
+                    <span>Store Selector & Map Picker</span>
                 </h3>
-                <p class="text-[11px] text-gray-500 mt-0.5">Showing the 5 nearest supermarkets to your current location.</p>
+                <p class="text-[11px] text-gray-600 mt-0.5">Type a city, ZIP, or address, or drag the map pin to select your store.</p>
             </div>
-            <button type="button" onclick="document.getElementById('modal-container').remove()" aria-label="Close dialog" class="text-gray-400 hover:text-black font-bold text-xl leading-none px-1">
+            <button type="button" onclick="closeStorePickerModal()" aria-label="Close dialog" class="text-gray-400 hover:text-black font-bold text-2xl leading-none px-1 focus:outline-none">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
 
+        <!-- Search Input Bar & Quick Actions -->
+        <div class="px-4 py-2.5 bg-gray-100 border-b border-gray-300 space-y-2">
+            <form id="store-search-form" onsubmit="event.preventDefault(); submitStoreSearchByText();" class="flex gap-1.5">
+                <input type="text"
+                       id="store-search-query-input"
+                       value="{{ query }}"
+                       placeholder="Type city, ZIP code, street address, or store name (e.g. 80120, Littleton, Cap Hill, Safeway)..."
+                       class="flex-1 px-3 py-1.5 border border-gray-400 text-xs text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:border-black rounded-none">
+                <button type="submit"
+                        class="px-3.5 py-1.5 bg-gray-900 hover:bg-black text-white font-semibold text-xs tracking-tight rounded-none cursor-pointer flex-shrink-0">
+                    Search
+                </button>
+                <button type="button"
+                        onclick="locateWithGPS()"
+                        title="Use device GPS / Wi-Fi location"
+                        class="px-2.5 py-1.5 border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 text-xs font-medium rounded-none flex items-center gap-1 flex-shrink-0 cursor-pointer">
+                    <span>📍</span>
+                    <span class="hidden sm:inline">Near Me</span>
+                </button>
+            </form>
+            {% if resolved_name %}
+            <div class="text-[11px] text-gray-600 flex items-center gap-1 truncate">
+                <span class="font-bold text-gray-800">Map Center:</span>
+                <span class="truncate">{{ resolved_name }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Interactive Map (Leaflet.js) -->
+        <div class="relative">
+            <div id="store-picker-map" style="height: 220px; width: 100%;" class="border-b border-gray-300 z-0 bg-gray-100"></div>
+            <!-- Floating Map Instructions Badge -->
+            <div class="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-sm border border-gray-400 px-2 py-1 text-[10px] text-gray-700 shadow-sm pointer-events-none select-none">
+                📍 Drag the <strong>pin</strong> or click map to search around that spot
+            </div>
+        </div>
+
+        <!-- Matching Stores Header -->
+        <div class="px-4 py-1.5 bg-gray-50 border-b border-gray-200 flex justify-between items-center text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+            <span>Nearby Stores ({{ nearest_matches|length }})</span>
+            <span class="text-gray-500 font-normal normal-case">Click a store to view on map</span>
+        </div>
+
         <!-- Store List -->
-        {% if nearest_matches %}
-        <div class="divide-y divide-gray-200 max-h-[60vh] overflow-y-auto pr-1">
-            {% for match in nearest_matches %}
-            <div class="py-2.5 px-2 flex items-center justify-between hover:bg-gray-50 transition-colors {% if active_store and active_store.id == match.store.id %}bg-blue-50/60 border-l-2 border-blue-600 pl-2{% endif %}">
-                <div class="min-w-0 flex-1 pr-3">
-                    <div class="flex items-center space-x-2">
-                        <span class="font-bold text-gray-900 text-sm truncate">{{ match.store.name }}</span>
-                        <span class="px-1.5 py-0.2 text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-200 select-none whitespace-nowrap">
-                            {{ match.distance_miles }} mi
-                        </span>
-                        {% if match.store.chain %}
-                        <span class="px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-300 select-none">
-                            {{ match.store.get_chain_display|default:match.store.chain }}
-                        </span>
+        <div class="flex-1 overflow-y-auto divide-y divide-gray-200 min-h-[140px] max-h-[260px] px-2">
+            {% if nearest_matches %}
+                {% for match in nearest_matches %}
+                <div class="py-2.5 px-2 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer {% if active_store and active_store.id == match.store.id %}bg-emerald-50/70 border-l-2 border-emerald-600 pl-2{% endif %}"
+                     onclick="panToStoreMarker({{ match.store.id }}, {{ match.store.latitude|default:'null' }}, {{ match.store.longitude|default:'null' }})">
+                    <div class="min-w-0 flex-1 pr-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-gray-900 text-xs sm:text-sm truncate">{{ match.store.name }}</span>
+                            <span class="px-1.5 py-0.2 text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-200 select-none whitespace-nowrap">
+                                {{ match.distance_miles }} mi
+                            </span>
+                            {% if match.store.chain %}
+                            <span class="px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-300 select-none">
+                                {{ match.store.get_chain_display|default:match.store.chain }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% if match.store.address %}
+                        <p class="text-gray-600 text-[11px] mt-0.5 truncate">
+                            {{ match.store.address }}{% if match.store.city %}, {{ match.store.city }}{% endif %}{% if match.store.zip_code %} {{ match.store.zip_code }}{% endif %}
+                        </p>
                         {% endif %}
                     </div>
-                    {% if match.store.address %}
-                    <p class="text-gray-600 text-[11px] mt-0.5 truncate">
-                        {{ match.store.address }}{% if match.store.city %}, {{ match.store.city }}{% endif %}{% if match.store.zip_code %} {{ match.store.zip_code }}{% endif %}
-                    </p>
-                    {% endif %}
-                </div>
 
-                <div class="flex-shrink-0">
-                    {% if active_store and active_store.id == match.store.id %}
-                    <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 select-none">
-                        ✓ Active
-                    </span>
-                    {% else %}
-                    <form hx-post="{% url 'shopping:set_store' %}?group_by=aisle&mode={{ mode }}"
-                          hx-target="#shopping-list-content"
-                          hx-swap="outerHTML transition:true"
-                          hx-on::after-request="document.getElementById('modal-container')?.remove()">
-                        {% csrf_token %}
-                        <input type="hidden" name="store_id" value="{{ match.store.id }}">
-                        <button type="submit"
-                                onclick="setTimeout(() => document.getElementById('modal-container')?.remove(), 100)"
-                                class="border border-gray-900 bg-gray-900 hover:bg-black text-white px-2.5 py-1 text-xs font-semibold select-none cursor-pointer">
-                            Select Store
-                        </button>
-                    </form>
-                    {% endif %}
+                    <div class="flex-shrink-0" onclick="event.stopPropagation()">
+                        {% if active_store and active_store.id == match.store.id %}
+                        <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 select-none">
+                            ✓ Active
+                        </span>
+                        {% else %}
+                        <form hx-post="{% url 'shopping:set_store' %}?group_by=aisle&mode={{ mode }}"
+                              hx-target="#shopping-list-content"
+                              hx-swap="outerHTML transition:true"
+                              hx-on::after-request="closeStorePickerModal()">
+                            {% csrf_token %}
+                            <input type="hidden" name="store_id" value="{{ match.store.id }}">
+                            <button type="submit"
+                                    onclick="closeStorePickerModal()"
+                                    class="border border-gray-900 bg-gray-900 hover:bg-black text-white px-3 py-1 text-xs font-semibold select-none cursor-pointer">
+                                Select Store
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div class="py-8 text-center text-gray-500">
+                    <p class="font-semibold text-gray-700">No stores found matching your query.</p>
+                    <p class="text-[11px] mt-1 text-gray-500">Try searching with a 5-digit ZIP code (e.g. 80120) or dragging the map pin.</p>
+                </div>
+            {% endif %}
         </div>
-        {% else %}
-        <div class="py-6 text-center text-gray-500">
-            <p>No stores could be identified near your coordinates.</p>
+
+        <!-- Informational Note about Desktop Geolocation -->
+        <div class="px-4 py-2 bg-amber-50/70 border-t border-amber-200 text-[11px] text-amber-900 flex items-start gap-1.5 select-none">
+            <span class="text-xs">ℹ️</span>
+            <span><strong>Desktop Geolocation:</strong> Browser location on PCs without GPS estimates your position via your ISP router, which can be miles away. Type your ZIP code or drag the red map pin to your neighborhood to find your closest store.</span>
         </div>
-        {% endif %}
 
         <!-- Modal Footer -->
-        <div class="flex justify-end pt-2 border-t border-gray-200">
-            <button type="button" onclick="document.getElementById('modal-container').remove()" class="px-3 py-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 font-medium">
+        <div class="flex justify-between items-center px-4 py-2.5 border-t border-gray-300 bg-gray-50">
+            <span class="text-[11px] text-gray-500">Stores saved are available for live aisle locations.</span>
+            <button type="button" onclick="closeStorePickerModal()" class="px-3.5 py-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 font-medium cursor-pointer">
                 Close
             </button>
         </div>
     </div>
 </div>
+
+<script>
+    function closeStorePickerModal() {
+        const modal = document.getElementById('modal-container');
+        if (modal) modal.remove();
+        if (window._storePickerMapInstance) {
+            try {
+                window._storePickerMapInstance.remove();
+            } catch (_) {}
+            window._storePickerMapInstance = null;
+        }
+    }
+
+    function submitStoreSearch(values) {
+        const payload = Object.assign({
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+            group_by: '{{ group_by }}',
+            mode: '{{ mode }}'
+        }, values);
+
+        htmx.ajax('POST', '{% url "shopping:nearest_store" %}', {
+            target: '#store-picker-modal-dialog',
+            swap: 'outerHTML',
+            values: payload
+        });
+    }
+
+    function submitStoreSearchByText() {
+        const input = document.getElementById('store-search-query-input');
+        const query = input ? input.value.trim() : '';
+        submitStoreSearch({ query: query });
+    }
+
+    function locateWithGPS() {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser. You can type your ZIP code or drag the map pin instead!");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                submitStoreSearch({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+            },
+            function(error) {
+                alert("Could not retrieve GPS coordinates: " + error.message + "\n\nTip: Type your ZIP code (e.g. 80120) or drag the red pin on the map.");
+            },
+            { enableHighAccuracy: true, timeout: 7000 }
+        );
+    }
+
+    function selectStoreDirectly(storeId) {
+        closeStorePickerModal();
+        htmx.ajax('POST', '{% url "shopping:set_store" %}?group_by={{ group_by }}&mode={{ mode }}', {
+            target: '#shopping-list-content',
+            swap: 'outerHTML transition:true',
+            values: {
+                store_id: storeId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            }
+        });
+    }
+
+    function panToStoreMarker(storeId, lat, lon) {
+        if (!window._storePickerMapInstance || !lat || !lon) return;
+        window._storePickerMapInstance.setView([lat, lon], 14, { animate: true });
+        if (window._storeMarkersMap && window._storeMarkersMap[storeId]) {
+            window._storeMarkersMap[storeId].openPopup();
+        }
+    }
+
+    // Initialize Leaflet Map
+    (function initStorePickerMap() {
+        if (window._storePickerMapInstance) {
+            try {
+                window._storePickerMapInstance.remove();
+            } catch (_) {}
+            window._storePickerMapInstance = null;
+        }
+
+        const mapEl = document.getElementById('store-picker-map');
+        if (!mapEl || typeof L === 'undefined') return;
+
+        const centerLat = {{ center_lat|default:39.7392 }};
+        const centerLon = {{ center_lon|default:-104.9903 }};
+
+        const map = L.map(mapEl, {
+            center: [centerLat, centerLon],
+            zoom: 12,
+            scrollWheelZoom: true
+        });
+        window._storePickerMapInstance = map;
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Draggable Search Center Marker
+        const searchPin = L.marker([centerLat, centerLon], {
+            draggable: true,
+            title: "Drag me to search near your location"
+        }).addTo(map);
+
+        searchPin.bindPopup("<b>📍 Search Location</b><br><span class='text-[10px] text-gray-600'>Drag me to your neighborhood or click the map to search!</span>");
+
+        searchPin.on('dragend', function() {
+            const pos = searchPin.getLatLng();
+            submitStoreSearch({ latitude: pos.lat, longitude: pos.lng });
+        });
+
+        map.on('click', function(e) {
+            searchPin.setLatLng(e.latlng);
+            submitStoreSearch({ latitude: e.latlng.lat, longitude: e.latlng.lng });
+        });
+
+        // Store Markers
+        const stores = {{ stores_json|safe }};
+        window._storeMarkersMap = {};
+
+        stores.forEach(function(store) {
+            if (store.lat && store.lon) {
+                const marker = L.circleMarker([store.lat, store.lon], {
+                    radius: 7,
+                    fillColor: store.is_active ? "#059669" : "#2563eb",
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.95
+                }).addTo(map);
+
+                window._storeMarkersMap[store.id] = marker;
+
+                const popupHtml = `
+                    <div class="text-xs p-1 min-w-[170px]">
+                        <div class="font-bold text-gray-900">${store.name}</div>
+                        <div class="text-[11px] text-gray-600">${store.distance} mi &bull; <span class="uppercase">${store.chain_display}</span></div>
+                        ${store.address ? `<div class="text-[10px] text-gray-500 mb-1.5">${store.address}</div>` : ''}
+                        ${store.is_active ?
+                            '<div class="text-emerald-700 font-bold text-[11px]">✓ Active Store</div>' :
+                            `<button type="button" onclick="selectStoreDirectly(${store.id})" class="mt-1 px-2.5 py-1 bg-black hover:bg-gray-800 text-white text-[11px] font-semibold w-full cursor-pointer">Select Store</button>`
+                        }
+                    </div>
+                `;
+                marker.bindPopup(popupHtml);
+            }
+        });
+
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 120);
+    })();
+</script>

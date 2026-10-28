@@ -16,6 +16,7 @@ import urllib.request
 from typing import Any
 
 import inflection
+from django.db.models import Q
 
 from apps.core.categorizer import categorizer
 from apps.shopping.models import StoreItemAisle, StoreLocation
@@ -242,9 +243,8 @@ def get_nearest_stores(latitude: float, longitude: float, limit: int = 5) -> lis
 
     # If all existing stores are far away (> 25 miles), attempt dynamic discovery
     if not store_results or store_results[0]["distance_miles"] > 25.0:
-        discovered = discover_nearby_stores_osm(latitude, longitude)
-        if discovered:
-            store_results = _collect_deduped_store_distances(latitude, longitude)
+        discovery = search_and_discover_stores(latitude=latitude, longitude=longitude, limit=limit, discover_remote=True)
+        return discovery["stores"]
 
     return store_results[:limit]
 
@@ -258,6 +258,7 @@ class KrogerAPIClient:
     """
     TOKEN_URL = "https://api.kroger.com/v1/connect/oauth2/token"
     PRODUCTS_URL = "https://api.kroger.com/v1/products"
+    LOCATIONS_URL = "https://api.kroger.com/v1/locations"
 
     def __init__(self) -> None:
         self._cached_token: str | None = None
@@ -322,6 +323,48 @@ class KrogerAPIClient:
         except Exception as error:
             logger.warning(f"Failed to fetch Kroger access token: {error}")
             return None
+
+    def find_locations(
+        self,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        zip_code: str | None = None,
+        term: str | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        Query Kroger API /v1/locations to discover physical Kroger/King Soopers stores.
+
+        Supports querying by lat/long, zip code, or search term.
+        """
+        token = self.get_access_token()
+        if not token:
+            return []
+
+        params: dict[str, Any] = {"filter.limit": limit}
+        if latitude is not None and longitude is not None:
+            params["filter.latLong.near"] = f"{latitude},{longitude}"
+        elif zip_code:
+            params["filter.zipCode.near"] = zip_code.strip()
+        elif term:
+            params["filter.term"] = term.strip()
+
+        query_str = urllib.parse.urlencode(params)
+        url = f"{self.LOCATIONS_URL}?{query_str}"
+        request = urllib.request.Request(
+            url,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=5) as response:
+                data = json.loads(response.read().decode())
+                return data.get("data", [])
+        except Exception as error:
+            logger.warning(f"Kroger locations lookup failed for params {params}: {error}")
+            return []
 
     def lookup_product_aisle(self, location_id: str, product_term: str) -> dict[str, Any] | None:
         """
@@ -551,6 +594,189 @@ def resolve_store_aisle(
 
     # 3. Cannot be determined from store chain API -> leave blank
     return None
+
+
+def ingest_kroger_location(loc_data: dict[str, Any]) -> StoreLocation | None:
+    """
+    Ingest or update a StoreLocation record from Kroger locations API response.
+    """
+    loc_id = loc_data.get("locationId")
+    if not loc_id:
+        return None
+    raw_name = loc_data.get("name", "")
+    addr = loc_data.get("address", {})
+    geo = loc_data.get("geolocation", {})
+    lat = geo.get("latitude")
+    lon = geo.get("longitude")
+    if lat is None or lon is None:
+        return None
+
+    clean_subname = (
+        raw_name.replace("King Soopers - ", "")
+        .replace("Kroger - ", "")
+        .replace("King Soopers", "")
+        .strip(" -")
+    )
+    street = addr.get("addressLine1", "").strip()
+    if clean_subname:
+        display_name = f"King Soopers #{loc_id} ({clean_subname})"
+    elif street:
+        display_name = f"King Soopers #{loc_id} ({street})"
+    else:
+        display_name = f"King Soopers #{loc_id}"
+
+    store, created = StoreLocation.objects.get_or_create(
+        external_store_id=loc_id,
+        defaults={
+            "name": display_name,
+            "chain": "kroger",
+            "address": street,
+            "city": addr.get("city", "").strip(),
+            "state": addr.get("state", "CO").strip(),
+            "zip_code": addr.get("zipCode", "").strip(),
+            "latitude": float(lat),
+            "longitude": float(lon),
+        },
+    )
+    if not created:
+        updated = False
+        if not store.latitude:
+            store.latitude = float(lat)
+            updated = True
+        if not store.longitude:
+            store.longitude = float(lon)
+            updated = True
+        if not store.address and street:
+            store.address = street
+            updated = True
+        if updated:
+            store.save(update_fields=["latitude", "longitude", "address"])
+    return store
+
+
+def geocode_address_or_city(query: str) -> tuple[float, float, str] | None:
+    """
+    Resolve an address, city, neighborhood, or ZIP code to (latitude, longitude, display_name)
+    using OpenStreetMap Nominatim.
+    """
+    clean_query = query.strip()
+    if not clean_query:
+        return None
+    try:
+        url = (
+            f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(clean_query)}"
+            f"&format=json&limit=1&addressdetails=1"
+        )
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "ShoppinApp-StoreLocator/2.0"},
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode())
+            if data and len(data) > 0:
+                return float(data[0]["lat"]), float(data[0]["lon"]), data[0].get("display_name", "")
+    except Exception as error:
+        logger.warning(f"Geocoding failed for '{query}': {error}")
+    return None
+
+
+def search_and_discover_stores(
+    query: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    limit: int = 15,
+    discover_remote: bool = True,
+) -> dict[str, Any]:
+    """
+    Search and dynamically discover physical supermarket locations by text query
+    (city, ZIP, address, or store name) or coordinates (GPS, interactive map pin).
+    """
+    clean_query = (query or "").strip()
+    target_lat = latitude
+    target_lon = longitude
+    resolved_name = ""
+
+    # 1. Handle text search query
+    if clean_query and discover_remote:
+        if clean_query.isdigit() and len(clean_query) == 5:
+            if kroger_client.is_configured:
+                kroger_stores = kroger_client.find_locations(zip_code=clean_query, limit=10)
+                for ks in kroger_stores:
+                    ingest_kroger_location(ks)
+            geo_res = geocode_address_or_city(f"{clean_query}, USA")
+            if geo_res:
+                target_lat, target_lon, resolved_name = geo_res
+        else:
+            geo_res = geocode_address_or_city(clean_query)
+            if geo_res:
+                target_lat, target_lon, resolved_name = geo_res
+                if kroger_client.is_configured:
+                    kroger_stores = kroger_client.find_locations(latitude=target_lat, longitude=target_lon, limit=10)
+                    for ks in kroger_stores:
+                        ingest_kroger_location(ks)
+            else:
+                if kroger_client.is_configured:
+                    kroger_stores = kroger_client.find_locations(term=clean_query, limit=5)
+                    for ks in kroger_stores:
+                        ingest_kroger_location(ks)
+
+    # 2. If coordinates are provided without query, query Kroger near coordinates
+    if target_lat is not None and target_lon is not None and not clean_query and discover_remote:
+        if kroger_client.is_configured:
+            kroger_stores = kroger_client.find_locations(latitude=target_lat, longitude=target_lon, limit=10)
+            for ks in kroger_stores:
+                ingest_kroger_location(ks)
+
+    center_lat = target_lat if target_lat is not None else 39.7392
+    center_lon = target_lon if target_lon is not None else -104.9903
+
+    # 3. Collect candidates from StoreLocation
+    candidates = StoreLocation.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+    if clean_query and not (target_lat and target_lon):
+        candidates = candidates.filter(
+            Q(name__icontains=clean_query)
+            | Q(address__icontains=clean_query)
+            | Q(city__icontains=clean_query)
+            | Q(zip_code__icontains=clean_query)
+            | Q(chain__icontains=clean_query)
+        )
+
+    # 4. Calculate distances from center_lat, center_lon
+    results = []
+    seen_identities: set[str] = set()
+    for store in candidates:
+        ident = f"{store.chain}:{store.external_store_id or store.address or store.name}"
+        if ident in seen_identities:
+            continue
+        seen_identities.add(ident)
+
+        dist = haversine_distance(center_lat, center_lon, store.latitude, store.longitude)
+        results.append({
+            "store": store,
+            "distance_miles": dist,
+        })
+
+    # If all stores are far (>25 mi), discover via OSM
+    if not results or (results and results[0]["distance_miles"] > 25.0):
+        discovered = discover_nearby_stores_osm(center_lat, center_lon)
+        if discovered:
+            for st in discovered:
+                ident = f"{st.chain}:{st.external_store_id or st.address or st.name}"
+                if ident not in seen_identities and st.latitude and st.longitude:
+                    seen_identities.add(ident)
+                    results.append({
+                        "store": st,
+                        "distance_miles": haversine_distance(center_lat, center_lon, st.latitude, st.longitude),
+                    })
+
+    results.sort(key=lambda r: r["distance_miles"])
+
+    return {
+        "stores": results[:limit],
+        "center_lat": round(center_lat, 5),
+        "center_lon": round(center_lon, 5),
+        "resolved_location_name": resolved_name,
+    }
 
 
 def get_known_categories() -> list[str]:

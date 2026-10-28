@@ -77,7 +77,7 @@ def test_get_nearest_five_stores(client):
     assert "Whole Foods Market (Union Station)" in store_names
     assert any("Chestnut / LoDo" in name for name in store_names)
 
-    # Test POST to find_nearest_store endpoint returns modal with 5 stores
+    # Test POST to find_nearest_store endpoint returns modal with stores and map
     response = client.post(
         reverse("shopping:nearest_store"),
         {
@@ -86,7 +86,8 @@ def test_get_nearest_five_stores(client):
         },
     )
     assert response.status_code == 200
-    assert b"Stores Closest to You" in response.content
+    assert b"Store Selector & Map Picker" in response.content
+    assert b"store-picker-map" in response.content
     assert b"Whole Foods Market (Union Station)" in response.content
     assert b"Select Store" in response.content
 
@@ -99,6 +100,23 @@ def test_get_nearest_five_stores(client):
     assert set_resp.status_code == 200
     s_list.refresh_from_db()
     assert s_list.active_store == first_store
+
+
+@pytest.mark.django_db
+def test_store_search_by_text_query(client):
+    """
+    Test typing a store name or city in find_nearest_store filters and matches stores.
+    """
+    from django.urls import reverse
+
+    resp = client.post(
+        reverse("shopping:nearest_store"),
+        {"query": "Safeway"},
+    )
+    assert resp.status_code == 200
+    assert b"Store Selector & Map Picker" in resp.content
+    assert b"Safeway" in resp.content
+    assert b"store-picker-map" in resp.content
 
 
 @pytest.mark.django_db

@@ -1,0 +1,26 @@
+[Unit]
+Description=Shoppin Daphne ASGI Server (Django 6 + Channels WebSockets)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/app
+EnvironmentFile=/app/.env
+ExecStart=/app/.venv/bin/daphne -b 127.0.0.1 -p 8000 config.asgi:application
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=shoppin
+
+# Security sandboxing
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

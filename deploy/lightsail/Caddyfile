@@ -1,0 +1,52 @@
+# ==============================================================================
+# Shoppin Lightsail Caddyfile ($5/month Ultra-Low-Cost Deployment)
+# Native Let's Encrypt SSL, Static/Media Delivery, & Daphne WebSockets
+# ==============================================================================
+
+{$DOMAIN_NAME:localhost} {
+    # Automatic TLS certificate provisioning and renewal via Let's Encrypt
+    encode gzip zstd
+
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+    }
+
+    # Serve collected static files directly from local disk
+    handle /static/* {
+        root * /app/staticfiles
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Serve user recipe photos directly from local disk
+    handle /media/* {
+        root * /app/media
+        file_server
+        header Cache-Control "public, max-age=86400"
+    }
+
+    # Reverse proxy dynamic requests and /ws/* WebSockets to Daphne ASGI server
+    handle {
+        reverse_proxy 127.0.0.1:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            # Extended buffer for WebSocket connections
+            transport http {
+                read_buffer 4096
+            }
+        }
+    }
+
+    # Health check passthrough
+    handle /health/ {
+        reverse_proxy 127.0.0.1:8000
+    }
+}

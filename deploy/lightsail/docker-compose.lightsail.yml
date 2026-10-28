@@ -1,0 +1,57 @@
+# ==============================================================================
+# Shoppin $5/mo Lightsail Docker Compose (SQLite + In-Memory Channels + Caddy)
+# Minimal 2-container architecture: Uses only ~180MB RAM total.
+# ==============================================================================
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: shoppin_lightsail_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - staticfiles_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - shoppin_lightsail_net
+
+  web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: shoppin_lightsail_web
+    restart: unless-stopped
+    env_file:
+      - ../../.env.prod
+    environment:
+      - DJANGO_DEBUG=False
+      - ALLOWED_HOSTS=${DOMAIN_NAME},localhost,127.0.0.1
+      - CSRF_TRUSTED_ORIGINS=https://${DOMAIN_NAME}
+      # Leaving DATABASE_URL and REDIS_URL unset activates SQLite WAL & In-Memory Channels
+    volumes:
+      - sqlite_data:/app/data
+      - staticfiles_volume:/app/staticfiles
+      - media_volume:/app/media
+    networks:
+      - shoppin_lightsail_net
+
+volumes:
+  caddy_data:
+  caddy_config:
+  sqlite_data:
+  staticfiles_volume:
+  media_volume:
+
+networks:
+  shoppin_lightsail_net:
+    driver: bridge

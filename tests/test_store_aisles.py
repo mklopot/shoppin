@@ -380,6 +380,20 @@ def test_perimeter_items_produce_and_meat_display_aisle_and_bay():
     assert beef.effective_location_display == "Meat Bay 14"
 
 
+def test_normalize_search_term_inverted_comma_names():
+    """
+    Test that inverted comma names (e.g. 'apples, green', 'beans, fresh')
+    are properly normalized into natural search terms ('green apple', 'fresh bean').
+    """
+    from apps.shopping.services.store_service import normalize_search_term
+
+    assert normalize_search_term("apples, green") == "green apple"
+    assert normalize_search_term("beans, fresh") == "fresh bean"
+    assert normalize_search_term("onions, red") == "red onion"
+    assert normalize_search_term("carrots") == "carrot"
+    assert normalize_search_term("green apple") == "green apple"
+
+
 @pytest.mark.django_db
 def test_kroger_api_client_finds_aisle_in_subsequent_products(monkeypatch):
     """

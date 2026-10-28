@@ -444,6 +444,22 @@ def _save_store_item_aisle(
     return None
 
 
+def normalize_search_term(raw_name: str) -> str:
+    """
+    Format item names for product search.
+    Converts inverted catalog styles like 'apples, green' to 'green apples'
+    and 'beans, fresh' to 'fresh beans'.
+    """
+    clean = raw_name.strip().lower()
+    if "," in clean:
+        parts = [p.strip() for p in clean.split(",") if p.strip()]
+        if len(parts) == 2:
+            clean = f"{parts[1]} {parts[0]}"
+        elif len(parts) > 2:
+            clean = " ".join(reversed(parts))
+    return inflection.singularize(clean)
+
+
 def resolve_store_aisle(
     store: StoreLocation,
     item_name: str,
@@ -466,13 +482,14 @@ def resolve_store_aisle(
         Dict with aisle_name, bay_number, sequence_order, and source ('api', 'manual') or None.
     """
     clean_name = inflection.singularize(item_name.strip().lower())
+    search_term = normalize_search_term(clean_name)
 
     # 1. Check local database cache for api or manual mapping
     cached = StoreItemAisle.objects.filter(
         store=store,
-        item_name_normalized=clean_name,
+        item_name_normalized__in=[clean_name, search_term],
         source__in=["api", "manual"],
-    ).first()
+    ).order_by("-aisle_name").first()
     if cached:
         if cached.aisle_name:
             return {
@@ -485,7 +502,11 @@ def resolve_store_aisle(
 
     # 2. Query Kroger API if applicable
     if store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
-        api_result = kroger_client.lookup_product_aisle(store.external_store_id, clean_name)
+        # Try search_term first (e.g. 'green apple'), then fall back to clean_name if needed
+        api_result = kroger_client.lookup_product_aisle(store.external_store_id, search_term)
+        if (not api_result or not api_result.get("aisle_name")) and search_term != clean_name:
+            api_result = kroger_client.lookup_product_aisle(store.external_store_id, clean_name)
+
         if api_result and api_result.get("aisle_name"):
             aisle_record = _save_store_item_aisle(
                 store=store,
@@ -495,6 +516,15 @@ def resolve_store_aisle(
                 sequence_order=api_result.get("sequence_order", 100),
                 source="api",
             )
+            if search_term != clean_name:
+                _save_store_item_aisle(
+                    store=store,
+                    item_name_normalized=search_term,
+                    aisle_name=api_result["aisle_name"],
+                    bay_number=api_result.get("bay_number", ""),
+                    sequence_order=api_result.get("sequence_order", 100),
+                    source="api",
+                )
             if aisle_record:
                 return {
                     "aisle_name": aisle_record.aisle_name,

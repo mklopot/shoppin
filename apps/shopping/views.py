@@ -933,9 +933,20 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
         if m["store"].latitude is not None and m["store"].longitude is not None
     ])
 
+    results_only = (
+        request.POST.get("results_only") == "true"
+        or request.GET.get("results_only") == "true"
+        or request.headers.get("HX-Target") == "store-picker-results"
+    )
+    template_name = (
+        "shopping/partials/store_search_results.html"
+        if results_only
+        else "shopping/partials/nearest_stores_modal.html"
+    )
+
     return render(
         request,
-        "shopping/partials/nearest_stores_modal.html",
+        template_name,
         {
             "nearest_matches": nearest_matches,
             "active_store": shopping_list.active_store if shopping_list else None,

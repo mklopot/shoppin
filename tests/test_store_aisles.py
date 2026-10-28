@@ -118,6 +118,16 @@ def test_store_search_by_text_query(client):
     assert b"Safeway" in resp.content
     assert b"store-picker-map" in resp.content
 
+    # Dynamic search with results_only=true returns partial without re-rendering map container
+    partial_resp = client.post(
+        reverse("shopping:nearest_store"),
+        {"query": "Safeway", "results_only": "true"},
+    )
+    assert partial_resp.status_code == 200
+    assert b"Safeway" in partial_resp.content
+    assert b"store-picker-map" not in partial_resp.content
+    assert b"store-picker-update-data" in partial_resp.content
+
 
 @pytest.mark.django_db
 def test_store_aisle_resolution_and_learning():

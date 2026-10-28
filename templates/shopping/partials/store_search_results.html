@@ -1,0 +1,69 @@
+{% if nearest_matches %}
+    {% for match in nearest_matches %}
+    <div class="py-2.5 px-2 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer {% if active_store and active_store.id == match.store.id %}bg-emerald-50/70 border-l-2 border-emerald-600 pl-2{% endif %}"
+         onclick="panToStoreMarker({{ match.store.id }}, {{ match.store.latitude|default:'null' }}, {{ match.store.longitude|default:'null' }})">
+        <div class="min-w-0 flex-1 pr-3">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-900 text-xs sm:text-sm truncate">{{ match.store.name }}</span>
+                <span class="px-1.5 py-0.2 text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-200 select-none whitespace-nowrap">
+                    {{ match.distance_miles }} mi
+                </span>
+                {% if match.store.chain %}
+                <span class="px-1.5 py-0.2 text-[9px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-300 select-none">
+                    {{ match.store.get_chain_display|default:match.store.chain }}
+                </span>
+                {% endif %}
+            </div>
+            {% if match.store.address %}
+            <p class="text-gray-600 text-[11px] mt-0.5 truncate">
+                {{ match.store.address }}{% if match.store.city %}, {{ match.store.city }}{% endif %}{% if match.store.zip_code %} {{ match.store.zip_code }}{% endif %}
+            </p>
+            {% endif %}
+        </div>
+
+        <div class="flex-shrink-0" onclick="event.stopPropagation()">
+            {% if active_store and active_store.id == match.store.id %}
+            <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 select-none">
+                ✓ Active
+            </span>
+            {% else %}
+            <form hx-post="{% url 'shopping:set_store' %}?group_by=aisle&mode={{ mode }}"
+                  hx-target="#shopping-list-content"
+                  hx-swap="outerHTML transition:true"
+                  hx-on::before-request="this.querySelector('button').disabled = true; this.querySelector('button').textContent = 'Setting...';"
+                  hx-on::after-request="closeStorePickerModal()">
+                {% csrf_token %}
+                <input type="hidden" name="store_id" value="{{ match.store.id }}">
+                <button type="submit"
+                        class="store-select-btn border border-gray-900 bg-gray-900 hover:bg-black text-white px-3 py-1 text-xs font-semibold select-none cursor-pointer">
+                    Select Store
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="py-8 text-center text-gray-500">
+        <p class="font-semibold text-gray-700">No stores found matching your query.</p>
+        <p class="text-[11px] mt-1 text-gray-500">Try searching with a 5-digit ZIP code (e.g. 80120) or dragging the red map pin.</p>
+    </div>
+{% endif %}
+
+<!-- Dynamic update script for existing Leaflet map instance -->
+<script id="store-picker-update-data" type="application/json">
+    {{ stores_json|safe }}
+</script>
+<script>
+    (function() {
+        const dataEl = document.getElementById('store-picker-update-data');
+        if (dataEl && typeof window.updateStorePickerMap === 'function') {
+            try {
+                const stores = JSON.parse(dataEl.textContent);
+                window.updateStorePickerMap(stores, {{ center_lat|default:39.7392 }}, {{ center_lon|default:-104.9903 }}, "{{ resolved_name|default:''|escapejs }}");
+            } catch (err) {
+                console.error("Error executing updateStorePickerMap:", err);
+            }
+        }
+    })();
+</script>

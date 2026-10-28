@@ -21,6 +21,7 @@ dependencies = [
     "psycopg[binary]>=3.2",
     "dj-database-url>=2.2",
     "channels-redis>=4.2",
+    "inflection>=0.5.1",
 ]
 
 [tool.setuptools.packages.find]

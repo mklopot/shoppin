@@ -399,6 +399,50 @@ class KrogerAPIClient:
 kroger_client = KrogerAPIClient()
 
 
+def _save_store_item_aisle(
+    store: StoreLocation,
+    item_name_normalized: str,
+    aisle_name: str,
+    bay_number: str = "",
+    sequence_order: int = 100,
+    source: str = "api",
+) -> StoreItemAisle | None:
+    """
+    Safely persist or update a StoreItemAisle record without using select_for_update,
+    handling SQLite concurrency gracefully with exponential backoff retries.
+    """
+    import time
+    for attempt in range(4):
+        try:
+            record = StoreItemAisle.objects.filter(
+                store=store,
+                item_name_normalized=item_name_normalized,
+            ).first()
+            if record:
+                record.aisle_name = aisle_name
+                record.bay_number = bay_number
+                record.sequence_order = sequence_order
+                record.source = source
+                record.save(update_fields=["aisle_name", "bay_number", "sequence_order", "source", "updated_at"])
+                return record
+            else:
+                return StoreItemAisle.objects.create(
+                    store=store,
+                    item_name_normalized=item_name_normalized,
+                    aisle_name=aisle_name,
+                    bay_number=bay_number,
+                    sequence_order=sequence_order,
+                    source=source,
+                )
+        except Exception as error:
+            if "locked" in str(error).lower() and attempt < 3:
+                time.sleep(0.1 * (2 ** attempt))
+                continue
+            logger.warning(f"Failed to persist StoreItemAisle for {item_name_normalized}: {error}")
+            return None
+    return None
+
+
 def resolve_store_aisle(
     store: StoreLocation,
     item_name: str,
@@ -442,33 +486,36 @@ def resolve_store_aisle(
     if store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
         api_result = kroger_client.lookup_product_aisle(store.external_store_id, clean_name)
         if api_result and api_result.get("aisle_name"):
-            aisle_record, _ = StoreItemAisle.objects.update_or_create(
+            aisle_record = _save_store_item_aisle(
                 store=store,
                 item_name_normalized=clean_name,
-                defaults={
-                    "aisle_name": api_result["aisle_name"],
-                    "bay_number": api_result.get("bay_number", ""),
-                    "sequence_order": api_result.get("sequence_order", 100),
-                    "source": "api",
-                },
+                aisle_name=api_result["aisle_name"],
+                bay_number=api_result.get("bay_number", ""),
+                sequence_order=api_result.get("sequence_order", 100),
+                source="api",
             )
+            if aisle_record:
+                return {
+                    "aisle_name": aisle_record.aisle_name,
+                    "bay_number": aisle_record.bay_number,
+                    "sequence_order": aisle_record.sequence_order,
+                    "source": "api",
+                }
             return {
-                "aisle_name": aisle_record.aisle_name,
-                "bay_number": aisle_record.bay_number,
-                "sequence_order": aisle_record.sequence_order,
+                "aisle_name": api_result["aisle_name"],
+                "bay_number": api_result.get("bay_number", ""),
+                "sequence_order": api_result.get("sequence_order", 100),
                 "source": "api",
             }
         else:
             # Negative cache: record that API returned no aisle location so we don't spam API
-            StoreItemAisle.objects.update_or_create(
+            _save_store_item_aisle(
                 store=store,
                 item_name_normalized=clean_name,
-                defaults={
-                    "aisle_name": "",
-                    "bay_number": "",
-                    "sequence_order": 999,
-                    "source": "api",
-                },
+                aisle_name="",
+                bay_number="",
+                sequence_order=999,
+                source="api",
             )
 
     # 3. Cannot be determined from store chain API -> leave blank

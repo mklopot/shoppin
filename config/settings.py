@@ -5,6 +5,7 @@ Django settings for Shoppin project.
 import os
 from pathlib import Path
 
+from django.db.backends.signals import connection_created
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -81,8 +82,21 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 30,  # 30 second busy timeout
+        },
     }
 }
+
+# Enable SQLite Write-Ahead Logging (WAL) and busy timeout on connection
+def _configure_sqlite_wal(sender, connection, **kwargs):
+    if connection.vendor == 'sqlite':
+        with connection.cursor() as cursor:
+            cursor.execute('PRAGMA journal_mode=WAL;')
+            cursor.execute('PRAGMA busy_timeout=30000;')
+            cursor.execute('PRAGMA synchronous=NORMAL;')
+
+connection_created.connect(_configure_sqlite_wal)
 
 AUTH_PASSWORD_VALIDATORS = [
     {

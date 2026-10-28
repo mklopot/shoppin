@@ -6,6 +6,8 @@ item and section drag-and-drop reordering, store selection, and Pantry Check mod
 """
 
 import json
+import logging
+import threading
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
@@ -42,6 +44,8 @@ from apps.shopping.services.store_service import (
     kroger_client,
     resolve_store_aisle,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
@@ -94,6 +98,61 @@ def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList) -
     return None
 
 
+def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) -> None:
+    """
+    Asynchronously resolve and cache missing store aisles in a background thread
+    so the HTTP response returns immediately without blocking on external API calls
+    or holding database locks. Once finished, broadcasts a Channels update so the UI
+    refreshes with the live aisles.
+    """
+    store = shopping_list.active_store
+    if not store or store.chain != "kroger" or not kroger_client.is_configured:
+        return
+
+    import inflection
+    need_items = list(shopping_list.items.filter(status=ItemStatus.NEED).values_list("name", flat=True))
+    if not need_items:
+        return
+
+    cached_names = set(
+        StoreItemAisle.objects.filter(store=store).values_list("item_name_normalized", flat=True)
+    )
+    unmapped_names = [
+        name for name in need_items
+        if inflection.singularize(name.strip().lower()) not in cached_names
+    ]
+    if not unmapped_names:
+        return
+
+    def _worker():
+        from django.db import connection
+        try:
+            resolved_any = False
+            for name in unmapped_names:
+                clean_name = inflection.singularize(name.strip().lower())
+                if not StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).exists():
+                    res = resolve_store_aisle(store, name)
+                    if res:
+                        resolved_any = True
+            if resolved_any:
+                broadcast_shopping_list_update(
+                    shopping_list=shopping_list,
+                    toast_message=f"📍 Aisles loaded for {store.name}",
+                    actor_name="system",
+                )
+        except Exception as error:
+            logger.warning(f"Async store aisle warming encountered error: {error}")
+        finally:
+            connection.close()
+
+    import sys
+    if sync or "pytest" in sys.modules:
+        _worker()
+    else:
+        thread = threading.Thread(target=_worker, daemon=True)
+        thread.start()
+
+
 def _build_list_context(
     request: HttpRequest | None,
     shopping_list: ShoppingList,
@@ -117,10 +176,9 @@ def _build_list_context(
     active_mode = ShoppingListOrganizer.resolve_view_mode(request, mode)
     items = shopping_list.items.all().order_by("order", "id")
 
-    # If active store is configured with Kroger API, auto-populate any missing aisles for list items
+    # Warm missing aisles asynchronously in background without blocking page render
     if shopping_list.active_store and shopping_list.active_store.chain == "kroger" and kroger_client.is_configured:
-        for item in items:
-            resolve_store_aisle(shopping_list.active_store, item.name, category=item.category)
+        _warm_store_aisles_async(shopping_list)
 
     need_items, got_items, pantry_items = ShoppingListOrganizer.partition_items(items)
     need_confirmed_count = sum(1 for item in need_items if item.locked)
@@ -768,9 +826,8 @@ def set_store(request: HttpRequest) -> HttpResponse:
         store = get_object_or_404(StoreLocation, id=store_id)
         shopping_list.active_store = store
         shopping_list.save(update_fields=["active_store"])
-        # Warm / resolve store aisles for items on list
-        for item in shopping_list.items.all():
-            resolve_store_aisle(store, item.name, category=item.category)
+        # Warm store aisles in background without blocking
+        _warm_store_aisles_async(shopping_list)
     else:
         shopping_list.active_store = None
         shopping_list.save(update_fields=["active_store"])

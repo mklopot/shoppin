@@ -39,6 +39,7 @@ from apps.shopping.services.store_service import (
     get_known_aisles,
     get_known_categories,
     get_nearest_stores,
+    kroger_client,
     resolve_store_aisle,
 )
 
@@ -115,6 +116,11 @@ def _build_list_context(
     """
     active_mode = ShoppingListOrganizer.resolve_view_mode(request, mode)
     items = shopping_list.items.all().order_by("order", "id")
+
+    # If active store is configured with Kroger API, auto-populate any missing aisles for list items
+    if shopping_list.active_store and shopping_list.active_store.chain == "kroger" and kroger_client.is_configured:
+        for item in items:
+            resolve_store_aisle(shopping_list.active_store, item.name, category=item.category)
 
     need_items, got_items, pantry_items = ShoppingListOrganizer.partition_items(items)
     need_confirmed_count = sum(1 for item in need_items if item.locked)
@@ -385,7 +391,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
         aisle = raw_aisle
     elif shopping_list.active_store:
         aisle_info = resolve_store_aisle(shopping_list.active_store, raw_name)
-        aisle = aisle_info.get("aisle_name", "")
+        aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
     else:
         aisle = ""
 
@@ -762,8 +768,8 @@ def set_store(request: HttpRequest) -> HttpResponse:
         store = get_object_or_404(StoreLocation, id=store_id)
         shopping_list.active_store = store
         shopping_list.save(update_fields=["active_store"])
-        # Warm / resolve store aisles for active need items
-        for item in shopping_list.items.filter(status=ItemStatus.NEED):
+        # Warm / resolve store aisles for items on list
+        for item in shopping_list.items.all():
             resolve_store_aisle(store, item.name, category=item.category)
     else:
         shopping_list.active_store = None

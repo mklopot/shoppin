@@ -110,19 +110,21 @@ def test_store_aisle_resolution_and_learning():
         longitude=-104.98,
     )
 
-    # 1. Unmapped item falls back to category department
+    # 1. Unmapped item without chain API returns None (leaves aisle blank)
     res = resolve_store_aisle(safeway, "avocados")
-    assert res["aisle_name"].lower() == "produce"
-    assert res["source"] == "default"
+    assert res is None
 
     # 2. User manually learns an aisle for this store
-    StoreItemAisle.objects.filter(store=safeway, item_name_normalized="avocado").update(
+    StoreItemAisle.objects.create(
+        store=safeway,
+        item_name_normalized="avocado",
         aisle_name="Aisle 1 - Front Endcap",
         source="manual",
     )
 
     # Re-resolving should now hit the learned aisle
     res2 = resolve_store_aisle(safeway, "avocado")
+    assert res2 is not None
     assert res2["aisle_name"] == "Aisle 1 - Front Endcap"
     assert res2["source"] == "manual"
 
@@ -140,8 +142,8 @@ def test_shopping_list_effective_aisle():
         status=ItemStatus.NEED,
     )
 
-    # Without store mapping, returns category
-    assert item.get_effective_aisle() == "Produce"
+    # Without store mapping or API, returns empty string (never category)
+    assert item.get_effective_aisle() == ""
 
     # With store mapping
     StoreItemAisle.objects.create(
@@ -239,5 +241,89 @@ def test_select_store_updates_dropdown_and_aisles(client):
     assert 'aria-pressed="true"' in content
     assert 'Active store set to' in content
     assert 'Leetsdale' in content
-    assert "Dairy" in content
-    assert "Bakery" in content
+    # Without Kroger API configured, items with unmapped aisles group under "Other"
+    assert "Other" in content
+
+
+@pytest.mark.django_db
+def test_kroger_api_aisle_resolution_and_list_population(client, monkeypatch):
+    """
+    Test that when Kroger API is configured, setting a Kroger store or viewing list
+    auto-resolves actual store aisles for existing list items, while unmapped items
+    remain blank (never displaying category names).
+    """
+    from unittest.mock import patch
+
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+
+    from apps.core.models import Workspace
+    from apps.shopping.services.store_service import kroger_client
+
+    User = get_user_model()
+    user = User.objects.create_user(username="api_aisle_user")
+    ws = Workspace.objects.create(name="API Aisle WS", owner=user)
+    s_list = ShoppingList.objects.create(name="API Aisle List", workspace=ws, owner=user)
+    client.force_login(user)
+
+    item1 = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Cheddar Cheese",
+        amount=Decimal("1.00"),
+        category="dairy",
+        status=ItemStatus.NEED,
+    )
+    item2 = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="French Baguette",
+        amount=Decimal("1.00"),
+        category="bakery",
+        status=ItemStatus.NEED,
+    )
+
+    kroger_store = StoreLocation.objects.create(
+        name="King Soopers Test Store",
+        chain="kroger",
+        external_store_id="01400018",
+        latitude=39.71,
+        longitude=-104.91,
+    )
+
+    def mock_lookup(location_id, term):
+        if "cheddar" in term.lower():
+            return {
+                "aisle_name": "Aisle 36",
+                "bay_number": "2",
+                "sequence_order": 136,
+            }
+        return None
+
+    with patch.object(type(kroger_client), "is_configured", True), \
+         patch.object(kroger_client, "lookup_product_aisle", side_effect=mock_lookup):
+
+        # 1. Select the store (POST /set-store)
+        resp = client.post(
+            reverse("shopping:set_store") + "?group_by=category",
+            {"store_id": str(kroger_store.id)},
+        )
+        assert resp.status_code == 200
+        s_list.refresh_from_db()
+        assert s_list.active_store == kroger_store
+
+        # 2. In Category view, Cheddar Cheese has actual aisle "Aisle 36", Baguette is blank (no location tag)
+        content = resp.content.decode("utf-8")
+        assert "📍 Aisle 36" in content
+        # Effective aisle for unmapped item must be blank, not "Bakery"
+        assert item1.get_effective_aisle() == "Aisle 36"
+        assert item2.get_effective_aisle() == ""
+
+        # 3. In Aisle view, Cheddar Cheese appears under "Aisle 36", Baguette appears under "Other"
+        aisle_resp = client.get(reverse("shopping:list") + "?group_by=aisle")
+        assert aisle_resp.status_code == 200
+        aisle_content = aisle_resp.content.decode("utf-8")
+        assert "Aisle 36" in aisle_content
+        assert "Other" in aisle_content
+        # Ensure categories are not shown as aisle section headers
+        assert '<h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">\n                                Dairy' not in aisle_content
+        assert '<h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">\n                                Bakery' not in aisle_content
+

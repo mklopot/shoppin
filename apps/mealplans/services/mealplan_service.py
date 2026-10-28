@@ -197,7 +197,7 @@ def add_recipe_to_meal(
             aisle = ""
             if shopping_list.active_store:
                 aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name)
-                aisle = aisle_info.get("aisle_name", "")
+                aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
             ShoppingListItem.objects.create(
                 shopping_list=shopping_list,

@@ -400,22 +400,42 @@ class ShoppingListItem(models.Model):
 
     def get_effective_aisle(self, store: StoreLocation | None = None) -> str:
         """
-        Determine the effective aisle name for sorting.
+        Determine the physical store aisle location for this item.
 
-        Checks store-specific mapped aisles first, then item's saved aisle,
-        falling back to title-cased category.
+        Checks the target store's mapped aisles (from store chain API or manual entry).
+        Leaves blank if the aisle cannot be determined from the store chain API.
+        Never returns category names as pseudo-aisles.
 
         Args:
             store: Specific store to check against, or active store on the list.
 
         Returns:
-            Aisle name string (e.g. 'Aisle 3', 'Produce').
+            Aisle name string (e.g. 'Aisle 3', 'Aisle 12 Bay 2') or empty string if not determined.
         """
-        target_store = store or self.shopping_list.active_store
+        target_store = store or (self.shopping_list.active_store if self.shopping_list else None)
         if target_store:
             import inflection
             normalized_name = inflection.singularize(self.name.strip().lower())
-            aisle_map = target_store.item_aisles.filter(item_name_normalized=normalized_name).first()
+            aisle_map = target_store.item_aisles.filter(
+                item_name_normalized=normalized_name,
+                source__in=["api", "manual"],
+            ).first()
             if aisle_map and aisle_map.aisle_name:
-                return aisle_map.aisle_name
-        return self.aisle or (self.category or "other").title()
+                clean_aisle = aisle_map.aisle_name.strip()
+                if clean_aisle.lower() != (self.category or "").strip().lower():
+                    return clean_aisle
+
+            # If not in store_item_aisles, check if item has an explicit manual aisle
+            if self.aisle:
+                clean_manual = self.aisle.strip()
+                if clean_manual.lower() != (self.category or "").strip().lower():
+                    return clean_manual
+
+            return ""
+
+        if self.aisle:
+            clean_manual = self.aisle.strip()
+            if clean_manual.lower() != (self.category or "").strip().lower():
+                return clean_manual
+
+        return ""

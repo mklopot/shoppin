@@ -239,7 +239,7 @@ def load_preset_items_to_shopping_list(
         aisle = item.aisle
         if not aisle and store:
             aisle_info = resolve_store_aisle(store, item.name)
-            aisle = aisle_info.get("aisle_name", "")
+            aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
         cat = item.category or categorizer.get_category(item.name)
 
@@ -350,7 +350,7 @@ def apply_preset_scheduled_refresh(
         aisle = item.aisle
         if not aisle and store:
             aisle_info = resolve_store_aisle(store, item.name)
-            aisle = aisle_info.get("aisle_name", "")
+            aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
         cat = item.category or categorizer.get_category(item.name)
 

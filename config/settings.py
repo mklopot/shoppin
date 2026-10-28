@@ -127,3 +127,9 @@ GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
 GOOGLE_OAUTH_REDIRECT_URI = os.getenv('GOOGLE_OAUTH_REDIRECT_URI', '')
 DEV_AUTO_LOGIN = os.getenv('DEV_AUTO_LOGIN', 'False').lower() in ('true', '1')
+
+# Kroger Developer API Configuration (for live supermarket aisle lookups)
+# Obtain from https://developer.kroger.com/
+KROGER_CLIENT_ID = os.getenv('KROGER_CLIENT_ID', '')
+KROGER_CLIENT_SECRET = os.getenv('KROGER_CLIENT_SECRET', '')
+

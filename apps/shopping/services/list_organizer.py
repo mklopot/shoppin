@@ -92,7 +92,7 @@ class ShoppingListOrganizer:
 
         if str(group_by) == GroupBy.AISLE and shopping_list.active_store:
             for item in need_items:
-                aisle = item.get_effective_aisle()
+                aisle = item.get_effective_aisle() or "Other"
                 grouped_need[aisle].append(item)
 
             def aisle_sort_key_fn(group_name: str) -> tuple[int, Any]:

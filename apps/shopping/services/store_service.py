@@ -260,14 +260,23 @@ class KrogerAPIClient:
     PRODUCTS_URL = "https://api.kroger.com/v1/products"
 
     def __init__(self) -> None:
-        """Initialize the Kroger API client from environment variables."""
-        self.client_id = os.getenv("KROGER_CLIENT_ID", "")
-        self.client_secret = os.getenv("KROGER_CLIENT_SECRET", "")
         self._cached_token: str | None = None
 
     @property
+    def client_id(self) -> str:
+        """Resolve client ID dynamically from environment or settings."""
+        from django.conf import settings
+        return (os.getenv("KROGER_CLIENT_ID", "") or getattr(settings, "KROGER_CLIENT_ID", "")).strip()
+
+    @property
+    def client_secret(self) -> str:
+        """Resolve client secret dynamically from environment or settings."""
+        from django.conf import settings
+        return (os.getenv("KROGER_CLIENT_SECRET", "") or getattr(settings, "KROGER_CLIENT_SECRET", "")).strip()
+
+    @property
     def is_configured(self) -> bool:
-        """Return True if API credentials are provided in the environment."""
+        """Return True if both client_id and client_secret are provided."""
         return bool(self.client_id and self.client_secret)
 
     def get_access_token(self) -> str | None:
@@ -345,10 +354,22 @@ class KrogerAPIClient:
                     return None
 
                 first_location = aisle_locations[0]
+                desc = (first_location.get("description") or "").strip()
+                num = (first_location.get("number") or "").strip()
+                aisle_name = desc or (f"Aisle {num}" if num else "")
+                if not aisle_name:
+                    return None
+
+                seq_val = first_location.get("sequenceNumber")
+                try:
+                    sequence_order = int(seq_val) if seq_val is not None else 100
+                except (ValueError, TypeError):
+                    sequence_order = 100
+
                 return {
-                    "aisle_name": first_location.get("description") or f"Aisle {first_location.get('number', '')}".strip(),
-                    "bay_number": first_location.get("bayNumber", ""),
-                    "sequence_order": int(first_location.get("sequenceNumber", 100)),
+                    "aisle_name": aisle_name,
+                    "bay_number": (first_location.get("bayNumber") or "").strip(),
+                    "sequence_order": sequence_order,
                 }
         except Exception as error:
             logger.warning(f"Kroger API lookup failed for '{product_term}' at location {location_id}: {error}")
@@ -362,79 +383,76 @@ def resolve_store_aisle(
     store: StoreLocation,
     item_name: str,
     category: str | None = None,
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     """
-    Resolve and cache the physical store aisle for a grocery item.
+    Resolve and cache the physical store aisle for a grocery item from the store chain API.
 
     Resolution strategy:
-    1. Check the local StoreItemAisle database cache.
+    1. Check the local StoreItemAisle database cache for existing API or manual entries.
     2. If missing and store is a Kroger location with API enabled, query live Kroger API and cache result.
-    3. Fallback to category-based walking order from the categorizer engine or provided category.
+    3. If it cannot be determined from the store chain API, return None (leave blank).
 
     Args:
         store: Target StoreLocation instance.
         item_name: The name of the grocery item.
-        category: Optional known grocery category for fallback department resolution.
+        category: Optional category string (retained for backward compatibility; ignored for pseudo-aisles).
 
     Returns:
-        Dict with aisle_name, bay_number, sequence_order, and source ('api', 'manual', 'default').
+        Dict with aisle_name, bay_number, sequence_order, and source ('api', 'manual') or None.
     """
     clean_name = inflection.singularize(item_name.strip().lower())
 
-    # 1. Check local database cache
-    cached = StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).first()
+    # 1. Check local database cache for api or manual mapping
+    cached = StoreItemAisle.objects.filter(
+        store=store,
+        item_name_normalized=clean_name,
+        source__in=["api", "manual"],
+    ).first()
     if cached:
-        return {
-            "aisle_name": cached.aisle_name,
-            "bay_number": cached.bay_number,
-            "sequence_order": cached.sequence_order,
-            "source": cached.source,
-        }
+        if cached.aisle_name:
+            return {
+                "aisle_name": cached.aisle_name,
+                "bay_number": cached.bay_number,
+                "sequence_order": cached.sequence_order,
+                "source": cached.source,
+            }
+        return None
 
     # 2. Query Kroger API if applicable
     if store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
         api_result = kroger_client.lookup_product_aisle(store.external_store_id, clean_name)
-        if api_result:
-            StoreItemAisle.objects.create(
+        if api_result and api_result.get("aisle_name"):
+            aisle_record, _ = StoreItemAisle.objects.update_or_create(
                 store=store,
                 item_name_normalized=clean_name,
-                aisle_name=api_result["aisle_name"],
-                bay_number=api_result.get("bay_number", ""),
-                sequence_order=api_result.get("sequence_order", 100),
-                source="api",
+                defaults={
+                    "aisle_name": api_result["aisle_name"],
+                    "bay_number": api_result.get("bay_number", ""),
+                    "sequence_order": api_result.get("sequence_order", 100),
+                    "source": "api",
+                },
             )
             return {
-                "aisle_name": api_result["aisle_name"],
-                "bay_number": api_result.get("bay_number", ""),
-                "sequence_order": api_result.get("sequence_order", 100),
+                "aisle_name": aisle_record.aisle_name,
+                "bay_number": aisle_record.bay_number,
+                "sequence_order": aisle_record.sequence_order,
                 "source": "api",
             }
+        else:
+            # Negative cache: record that API returned no aisle location so we don't spam API
+            StoreItemAisle.objects.update_or_create(
+                store=store,
+                item_name_normalized=clean_name,
+                defaults={
+                    "aisle_name": "",
+                    "bay_number": "",
+                    "sequence_order": 999,
+                    "source": "api",
+                },
+            )
 
-    # 3. Department / Category fallback
-    if category and category.lower() != "other":
-        dept = category
-    else:
-        dept = categorizer.get_category(clean_name) or "other"
-
-    sequence_order = DEPARTMENT_ORDER.get(dept.lower(), 200)
-    display_name = dept.title()
-
-    # Cache as default so future queries hit DB directly
-    StoreItemAisle.objects.create(
-        store=store,
-        item_name_normalized=clean_name,
-        aisle_name=display_name,
-        bay_number="",
-        sequence_order=sequence_order,
-        source="default",
-    )
-
-    return {
-        "aisle_name": display_name,
-        "bay_number": "",
-        "sequence_order": sequence_order,
-        "source": "default",
-    }
+    # 3. Cannot be determined from store chain API -> leave blank
+    return None
 
 
 def get_known_categories() -> list[str]:

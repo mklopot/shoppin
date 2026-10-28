@@ -30,7 +30,7 @@ def sample_shopping_list(db):
         name="Apples",
         amount=Decimal("3.00"),
         category="produce",
-        aisle="Produce",
+        aisle="Produce Stand",
         status=ItemStatus.NEED,
         order=1,
     )
@@ -113,9 +113,9 @@ def test_group_and_sort_by_aisle(sample_shopping_list):
         shopping_list=sample_shopping_list,
     )
 
-    # Produce department (perimeter entrance 10) sorts before Aisle 1 (numbered 100+1)
+    # Produce Stand (perimeter entrance 10) sorts before Aisle 1 (numbered 100+1)
     keys = list(grouped.keys())
-    assert keys == ["Produce", "Aisle 1"]
+    assert keys == ["Produce Stand", "Aisle 1"]
 
 
 def test_resolve_view_mode_defaults():

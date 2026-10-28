@@ -5,15 +5,15 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance size (t4g.small is ARM64 Graviton2, 2 vCPU, 2GB RAM for ~$12/mo)"
+  description = "EC2 instance size (t4g.nano is ARM64 Graviton2, 2 vCPU, 512MB RAM for ~$3.07/mo)"
   type        = string
-  default     = "t4g.small"
+  default     = "t4g.nano"
 }
 
 variable "root_volume_size_gb" {
   description = "Size of persistent gp3 root volume in GB"
   type        = number
-  default     = 20
+  default     = 10
 }
 
 variable "domain_name" {

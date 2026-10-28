@@ -100,7 +100,7 @@ class ShoppinStack(Stack):
         )
         backup_bucket.grant_read_write(instance_role)
 
-        # 5. EC2 Instance: t4g.small (ARM64 Graviton2)
+        # 5. EC2 Instance: t4g.nano (ARM64 Graviton2, 2 vCPU, 512MB RAM, ~$3.07/mo)
         # Ubuntu 24.04 LTS Noble Numbat AMI for ARM64
         machine_image = ec2.MachineImage.from_ssm_parameter(
             "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id",
@@ -116,7 +116,7 @@ class ShoppinStack(Stack):
             self,
             "ShoppinServer",
             vpc=vpc,
-            instance_type=ec2.InstanceType("t4g.small"),
+            instance_type=ec2.InstanceType("t4g.nano"),
             machine_image=machine_image,
             security_group=security_group,
             role=instance_role,
@@ -125,7 +125,7 @@ class ShoppinStack(Stack):
                 ec2.BlockDevice(
                     device_name="/dev/sda1",
                     volume=ec2.BlockDeviceVolume.ebs(
-                        volume_size=20,
+                        volume_size=10,
                         volume_type=ec2.EbsDeviceVolumeType.GP3,
                         encrypted=True,
                         delete_on_termination=False,

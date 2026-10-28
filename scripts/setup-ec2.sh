@@ -25,6 +25,16 @@ apt-get install -y --no-install-recommends \
     tar \
     cron
 
+# Configure 1GB swapfile to provide memory headroom on nano/micro instances
+if [ ! -f /swapfile ]; then
+    echo "==> Configuring 1GB swapfile..."
+    fallocate -l 1G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=1024
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
 # 2. Install Official Docker Engine & Docker Compose Plugin
 if ! command -v docker &> /dev/null; then
     echo "==> Installing Docker Engine..."

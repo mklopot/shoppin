@@ -136,3 +136,102 @@ All semantic colors are defined in the `tailwind.config` block in `templates/bas
   ```powershell
   .\.venv\Scripts\ruff check .
   ```
+
+---
+
+## 7. Cloud Deployment & Secrets Management (AWS)
+
+When deploying Shoppin to AWS, the recommended architecture utilizes **AWS ECS (Fargate)** or **AWS App Runner** with **native container environment variable injection** from **AWS Secrets Manager** or **SSM Parameter Store**.
+
+### 1. Where Secrets Are Stored
+
+* **AWS Secrets Manager** *(Recommended for production)*: Used for sensitive credentials such as database passwords, API client secrets, and Django secret keys. Supports automated credential rotation (e.g. for Amazon RDS).
+* **AWS Systems Manager Parameter Store (SecureString)** *(Cost-effective alternative)*: Free standard tier parameters encrypted with AWS KMS.
+
+Key secrets required:
+* `DJANGO_SECRET_KEY`
+* `DATABASE_URL` (PostgreSQL connection string pointing to Amazon RDS)
+* `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET` (Google OAuth 2.0)
+* `KROGER_CLIENT_ID` & `KROGER_CLIENT_SECRET` (Kroger Developer API)
+
+### 2. Native Container Injection Pattern
+
+Rather than having application code invoke the AWS SDK (`boto3`) to fetch secrets over the network on startup, the AWS container agent pulls secrets from Secrets Manager / Parameter Store and injects them as standard OS environment variables when the container starts.
+
+In your **ECS Task Definition** (`task-definition.json`):
+
+```json
+{
+  "containerDefinitions": [
+    {
+      "name": "shoppin-web",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/shoppin:latest",
+      "environment": [
+        { "name": "DJANGO_DEBUG", "value": "False" },
+        { "name": "DEV_AUTO_LOGIN", "value": "False" },
+        { "name": "ALLOWED_HOSTS", "value": "yourdomain.com,api.yourdomain.com" }
+      ],
+      "secrets": [
+        {
+          "name": "DJANGO_SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production:DJANGO_SECRET_KEY::"
+        },
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production:DATABASE_URL::"
+        },
+        {
+          "name": "GOOGLE_CLIENT_ID",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production:GOOGLE_CLIENT_ID::"
+        },
+        {
+          "name": "GOOGLE_CLIENT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production:GOOGLE_CLIENT_SECRET::"
+        },
+        {
+          "name": "KROGER_CLIENT_ID",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production:KROGER_CLIENT_ID::"
+        },
+        {
+          "name": "KROGER_CLIENT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production:KROGER_CLIENT_SECRET::"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Benefits:**
+* **Zero code changes**: `config/settings.py` and `apps/shopping/services/store_service.py` continue reading via `os.getenv(...)`.
+* **Zero startup latency**: No blocking SDK calls or external API dependencies inside Python.
+* **Security & Compliance**: Secrets are encrypted at rest with KMS, injected only in container memory, and audited via CloudTrail.
+
+### 3. IAM Execution Role
+
+The ECS task execution role (`ecsTaskExecutionRole`) requires permissions to read secrets and decrypt KMS keys:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "kms:Decrypt"
+      ],
+      "Resource": [
+        "arn:aws:secretsmanager:us-east-1:123456789012:secret:shoppin/production*"
+      ]
+    }
+  ]
+}
+```
+
+### 4. Supporting Infrastructure
+
+* **WebSockets / Daphne:** An **AWS Application Load Balancer (ALB)** terminates SSL and routes HTTP and WebSocket (`/ws/shopping/`) traffic. Set the ALB idle timeout to accommodate long-lived WebSocket connections (e.g. 300 seconds).
+* **Channel Layer Scaling:** When running multiple container tasks, configure `CHANNEL_LAYERS` in `config/settings.py` to use an **Amazon ElastiCache for Redis** cluster so broadcast updates synchronize across all tasks.
+* **Media & Static Files:** Store user uploads (recipe photos) in an **Amazon S3** bucket using `django-storages`, distributed globally via **Amazon CloudFront**.
+

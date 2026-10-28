@@ -8,9 +8,10 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
-from apps.core import auth_views, tos_views
+from apps.core import auth_views, tos_views, views
 
 urlpatterns = [
+    path('health/', views.health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
     # Terms of Service & Compliance

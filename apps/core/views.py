@@ -5,7 +5,7 @@ Core views for landing, workspace management, and development persona switching.
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -255,3 +255,18 @@ def switch_persona(request: HttpRequest, username: str) -> HttpResponse:
         next_url = reverse("shopping:list")
 
     return redirect(next_url)
+
+
+def health_check(request: HttpRequest) -> JsonResponse:
+    """
+    Lightweight healthcheck endpoint for monitoring and reverse proxy verification.
+    Verifies HTTP responsiveness and basic database connectivity.
+    """
+    try:
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1;")
+        return JsonResponse({"status": "healthy", "database": "connected"}, status=200)
+    except Exception as exc:
+        return JsonResponse({"status": "unhealthy", "error": str(exc)}, status=503)

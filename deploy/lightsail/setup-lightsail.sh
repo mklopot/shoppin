@@ -9,7 +9,7 @@
 set -euo pipefail
 
 echo "======================================================================"
-echo " Starting Shoppin $5/mo Lightsail Provisioning"
+echo " Starting Shoppin Lightsail Provisioning"
 echo "======================================================================"
 
 # 1. Update system packages

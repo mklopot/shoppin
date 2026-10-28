@@ -266,13 +266,23 @@ class KrogerAPIClient:
     def client_id(self) -> str:
         """Resolve client ID dynamically from environment or settings."""
         from django.conf import settings
-        return (os.getenv("KROGER_CLIENT_ID", "") or getattr(settings, "KROGER_CLIENT_ID", "")).strip()
+        val = (os.getenv("KROGER_CLIENT_ID", "") or getattr(settings, "KROGER_CLIENT_ID", "")).strip()
+        if not val:
+            from dotenv import load_dotenv
+            load_dotenv()
+            val = os.getenv("KROGER_CLIENT_ID", "").strip()
+        return val
 
     @property
     def client_secret(self) -> str:
         """Resolve client secret dynamically from environment or settings."""
         from django.conf import settings
-        return (os.getenv("KROGER_CLIENT_SECRET", "") or getattr(settings, "KROGER_CLIENT_SECRET", "")).strip()
+        val = (os.getenv("KROGER_CLIENT_SECRET", "") or getattr(settings, "KROGER_CLIENT_SECRET", "")).strip()
+        if not val:
+            from dotenv import load_dotenv
+            load_dotenv()
+            val = os.getenv("KROGER_CLIENT_SECRET", "").strip()
+        return val
 
     @property
     def is_configured(self) -> bool:
@@ -328,9 +338,19 @@ class KrogerAPIClient:
         if not token:
             return None
 
+        # Normalize legacy 014 division IDs to Colorado 620 division IDs
+        aliases = {
+            "01400018": "62000124",
+            "01400035": "62000001",
+            "01400012": "62000090",
+        }
+        clean_loc = aliases.get(location_id, location_id)
+        if clean_loc.startswith("014"):
+            clean_loc = "620" + clean_loc[3:]
+
         query_params = urllib.parse.urlencode({
             "filter.term": product_term,
-            "filter.locationId": location_id,
+            "filter.locationId": clean_loc,
             "filter.limit": 1,
         })
         url = f"{self.PRODUCTS_URL}?{query_params}"

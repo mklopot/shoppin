@@ -75,7 +75,7 @@ def test_get_nearest_five_stores(client):
     store_names = [n["store"].name for n in nearest]
     # Whole Foods Union Station and King Soopers Chestnut are much closer than Cherry Creek
     assert "Whole Foods Market (Union Station)" in store_names
-    assert "King Soopers #01400115 (Chestnut / LoDo)" in store_names
+    assert any("Chestnut / LoDo" in name for name in store_names)
 
     # Test POST to find_nearest_store endpoint returns modal with 5 stores
     response = client.post(

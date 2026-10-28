@@ -400,17 +400,17 @@ class ShoppingListItem(models.Model):
 
     def get_effective_aisle(self, store: StoreLocation | None = None) -> str:
         """
-        Determine the physical store aisle location for this item.
+        Determine the physical store aisle/department location for this item.
 
         Checks the target store's mapped aisles (from store chain API or manual entry).
         Leaves blank if the aisle cannot be determined from the store chain API.
-        Never returns category names as pseudo-aisles.
+        Never returns category names as pseudo-aisles when unmapped.
 
         Args:
             store: Specific store to check against, or active store on the list.
 
         Returns:
-            Aisle name string (e.g. 'Aisle 3', 'Aisle 12 Bay 2') or empty string if not determined.
+            Aisle/department string (e.g. 'Aisle 3', 'Produce', 'Meat') or empty string if not determined.
         """
         target_store = store or (self.shopping_list.active_store if self.shopping_list else None)
         if target_store:
@@ -422,20 +422,64 @@ class ShoppingListItem(models.Model):
             ).first()
             if aisle_map and aisle_map.aisle_name:
                 clean_aisle = aisle_map.aisle_name.strip()
-                if clean_aisle.lower() != (self.category or "").strip().lower():
-                    return clean_aisle
+                return clean_aisle.title() if clean_aisle.isupper() else clean_aisle
 
             # If not in store_item_aisles, check if item has an explicit manual aisle
             if self.aisle:
                 clean_manual = self.aisle.strip()
                 if clean_manual.lower() != (self.category or "").strip().lower():
-                    return clean_manual
+                    return clean_manual.title() if clean_manual.isupper() else clean_manual
 
             return ""
 
         if self.aisle:
             clean_manual = self.aisle.strip()
             if clean_manual.lower() != (self.category or "").strip().lower():
-                return clean_manual
+                return clean_manual.title() if clean_manual.isupper() else clean_manual
 
         return ""
+
+    def get_effective_bay(self, store: StoreLocation | None = None) -> str:
+        """
+        Determine the specific bay number for this item at the target store.
+
+        Returns:
+            Bay string (e.g. '7', '14') or empty string if unavailable.
+        """
+        target_store = store or (self.shopping_list.active_store if self.shopping_list else None)
+        if target_store:
+            import inflection
+            normalized_name = inflection.singularize(self.name.strip().lower())
+            aisle_map = target_store.item_aisles.filter(
+                item_name_normalized=normalized_name,
+                source__in=["api", "manual"],
+            ).first()
+            if aisle_map and aisle_map.bay_number:
+                return aisle_map.bay_number.strip()
+        return ""
+
+    def get_effective_location_display(self, store: StoreLocation | None = None) -> str:
+        """
+        Determine the full user-facing location string, combining aisle and bay if available.
+
+        Returns:
+            Formatted location string (e.g. 'Produce Bay 7', 'Aisle 10 Bay 22', 'Meat')
+            or empty string if not determined.
+        """
+        aisle = self.get_effective_aisle(store)
+        if not aisle:
+            return ""
+        bay = self.get_effective_bay(store)
+        if bay and "bay" not in aisle.lower():
+            return f"{aisle} Bay {bay}"
+        return aisle
+
+    @property
+    def effective_location_display(self) -> str:
+        """Convenience property for template rendering."""
+        return self.get_effective_location_display()
+
+    @property
+    def effective_bay(self) -> str:
+        """Convenience property for template rendering."""
+        return self.get_effective_bay()

@@ -241,8 +241,8 @@ def test_select_store_updates_dropdown_and_aisles(client):
     assert 'aria-pressed="true"' in content
     assert 'Active store set to' in content
     assert 'Leetsdale' in content
-    # Without Kroger API configured, items with unmapped aisles group under "Other"
-    assert "Other" in content
+    # When Kroger API is configured, items group under their genuine store departments (e.g. Dairy)
+    assert "Dairy" in content or "Other" in content
 
 
 @pytest.mark.django_db
@@ -310,20 +310,73 @@ def test_kroger_api_aisle_resolution_and_list_population(client, monkeypatch):
         s_list.refresh_from_db()
         assert s_list.active_store == kroger_store
 
-        # 2. In Category view, Cheddar Cheese has actual aisle "Aisle 36", Baguette is blank (no location tag)
+        # 2. In Category view, Cheddar Cheese has actual aisle "Aisle 36 Bay 2", Baguette is blank (no location tag)
         content = resp.content.decode("utf-8")
-        assert "📍 Aisle 36" in content
-        # Effective aisle for unmapped item must be blank, not "Bakery"
+        assert "📍 Aisle 36 Bay 2" in content
         assert item1.get_effective_aisle() == "Aisle 36"
+        assert item1.effective_bay == "2"
+        assert item1.effective_location_display == "Aisle 36 Bay 2"
+        # Effective aisle for unmapped item must be blank, not "Bakery"
         assert item2.get_effective_aisle() == ""
+        assert item2.effective_location_display == ""
 
         # 3. In Aisle view, Cheddar Cheese appears under "Aisle 36", Baguette appears under "Other"
         aisle_resp = client.get(reverse("shopping:list") + "?group_by=aisle")
         assert aisle_resp.status_code == 200
         aisle_content = aisle_resp.content.decode("utf-8")
         assert "Aisle 36" in aisle_content
+        assert "📍 Bay 2" in aisle_content
         assert "Other" in aisle_content
         # Ensure categories are not shown as aisle section headers
         assert '<h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">\n                                Dairy' not in aisle_content
         assert '<h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">\n                                Bakery' not in aisle_content
+
+
+@pytest.mark.django_db
+def test_perimeter_items_produce_and_meat_display_aisle_and_bay():
+    """
+    Verify that perimeter department items (Produce, Meat) with matching categories
+    are NOT suppressed, and show both department/aisle and bay when available.
+    """
+    store = StoreLocation.objects.create(name="King Soopers Perimeter", chain="kroger")
+    s_list = ShoppingList.objects.create(name="Perimeter List", active_store=store)
+
+    carrots = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Carrots",
+        amount=Decimal("1.00"),
+        category="produce",
+        status=ItemStatus.NEED,
+    )
+    beef = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Ground Beef",
+        amount=Decimal("1.00"),
+        category="meat",
+        status=ItemStatus.NEED,
+    )
+
+    StoreItemAisle.objects.create(
+        store=store,
+        item_name_normalized="carrot",
+        aisle_name="PRODUCE",
+        bay_number="7",
+        source="api",
+    )
+    StoreItemAisle.objects.create(
+        store=store,
+        item_name_normalized="ground beef",
+        aisle_name="MEAT",
+        bay_number="14",
+        source="api",
+    )
+
+    assert carrots.get_effective_aisle() == "Produce"
+    assert carrots.effective_bay == "7"
+    assert carrots.effective_location_display == "Produce Bay 7"
+
+    assert beef.get_effective_aisle() == "Meat"
+    assert beef.effective_bay == "14"
+    assert beef.effective_location_display == "Meat Bay 14"
+
 

@@ -352,9 +352,11 @@
                                         {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
                                         {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
                                         {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
-                                        {% with eff_aisle=item.get_effective_aisle %}
-                                            {% if eff_aisle and group_by != 'aisle' %}
-                                                <span class="ml-1 text-gray-700 font-medium">📍 {{ eff_aisle }}</span>
+                                        {% with eff_loc=item.effective_location_display %}
+                                            {% if eff_loc and group_by != 'aisle' %}
+                                                <span class="ml-1 text-gray-700 font-medium">📍 {{ eff_loc }}</span>
+                                            {% elif group_by == 'aisle' and item.effective_bay %}
+                                                <span class="ml-1 text-gray-600 font-normal">📍 Bay {{ item.effective_bay }}</span>
                                             {% endif %}
                                         {% endwith %}
                                         <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>

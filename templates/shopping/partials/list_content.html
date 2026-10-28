@@ -264,7 +264,7 @@
             </div>
             {% if mode == 'shopping' and need_unconfirmed_count > 0 %}
             <div class="flex items-center space-x-2 text-[11px]">
-                <span class="text-gray-500 font-normal select-none" title="Items not confirmed in Pantry Check">{{ need_unconfirmed_count }} not confirmed</span>
+                <span class="text-gray-500 font-normal select-none" title="Items needing Pantry Check">{{ need_unconfirmed_count }} pantry check needed</span>
             </div>
             {% endif %}
         </div>
@@ -332,15 +332,15 @@
                                         <span class="ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none">📋 Need</span>
                                         {% endif %}
                                     {% else %}
-                                        <!-- In Store Mode: Only show subtle tag for items not confirmed in pantry check -->
+                                        <!-- In Store Mode: Only show subtle tag for items needing pantry check -->
                                         {% if not item.locked %}
                                             {% if can_write %}
                                             <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
                                                 {% csrf_token %}
-                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 hover:bg-amber-100 text-amber-800 select-none inline-flex items-center cursor-pointer rounded-none" aria-label="Confirm need for {{ item.name }}" title="Not confirmed in Pantry Check (click to confirm)">not confirmed</button>
+                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 hover:bg-amber-100 text-amber-800 select-none inline-flex items-center cursor-pointer rounded-none" aria-label="Confirm need for {{ item.name }}" title="Pantry check needed (click to confirm)">pantry check needed</button>
                                             </form>
                                             {% else %}
-                                            <span class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 text-amber-800 select-none inline-flex items-center rounded-none" title="Not confirmed in Pantry Check">not confirmed</span>
+                                            <span class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 text-amber-800 select-none inline-flex items-center rounded-none" title="Pantry check needed">pantry check needed</span>
                                             {% endif %}
                                         {% endif %}
                                     {% endif %}

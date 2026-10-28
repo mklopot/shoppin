@@ -557,7 +557,7 @@ def test_in_store_location_not_shown_in_got_and_already_have(client, active_list
 
 @pytest.mark.django_db
 def test_in_store_view_shows_pantry_check_confirmation_status(client, active_list):
-    """Verify that in the In Store view, only unconfirmed items show a subtle 'not confirmed' tag."""
+    """Verify that in the In Store view, only unconfirmed items show a subtle 'pantry check needed' tag."""
     bananas = active_list.items.get(name="Bananas")
     milk = active_list.items.get(name="Almond Milk")
 
@@ -573,13 +573,13 @@ def test_in_store_view_shows_pantry_check_confirmation_status(client, active_lis
     content = res.content.decode("utf-8")
 
     # Summary in To Buy header shows unconfirmed count
-    assert "1 not confirmed" in content
+    assert "1 pantry check needed" in content
 
     # Confirmed item (Bananas) has NO confirmed tag
     assert "✓ Confirmed" not in content
 
-    # Unconfirmed item (Almond Milk) has subtle 'not confirmed' tag
-    assert ">not confirmed<" in content
+    # Unconfirmed item (Almond Milk) has subtle 'pantry check needed' tag
+    assert ">pantry check needed<" in content
 
     # 2. Toggle lock on Milk to confirm it
     res_toggle = client.post(reverse("shopping:toggle_lock", args=[milk.id]) + "?mode=shopping")
@@ -587,9 +587,9 @@ def test_in_store_view_shows_pantry_check_confirmation_status(client, active_lis
     milk.refresh_from_db()
     assert milk.locked is True
     toggle_content = res_toggle.content.decode("utf-8")
-    # Now both are confirmed, so no 'not confirmed' tags or header alerts remain
-    assert ">not confirmed<" not in toggle_content
-    assert "not confirmed</span>" not in toggle_content
+    # Now both are confirmed, so no 'pantry check needed' tags or header alerts remain
+    assert ">pantry check needed<" not in toggle_content
+    assert "pantry check needed</span>" not in toggle_content
 
 
 @pytest.mark.django_db
@@ -745,10 +745,10 @@ def test_need_button_from_got_or_pantry_confirms_item_status(client, active_list
     assert item_got.status == ItemStatus.NEED
     assert item_got.locked is True
 
-    # Ensure HTML response doesn't show "not confirmed" badge or count for Cart Item
+    # Ensure HTML response doesn't show "pantry check needed" badge or count for Cart Item
     content = res_need.content.decode("utf-8")
-    assert ">not confirmed<" not in content
-    assert "not confirmed</span>" not in content
+    assert ">pantry check needed<" not in content
+    assert "pantry check needed</span>" not in content
 
     # 2. Unconfirmed item in HAVE (Already Have / Pantry)
     item_have = ShoppingListItem.objects.create(
@@ -769,8 +769,8 @@ def test_need_button_from_got_or_pantry_confirms_item_status(client, active_list
     assert item_have.locked is True
 
     content_have = res_have_need.content.decode("utf-8")
-    assert ">not confirmed<" not in content_have
-    assert "not confirmed</span>" not in content_have
+    assert ">pantry check needed<" not in content_have
+    assert "pantry check needed</span>" not in content_have
 
     # 3. Unconfirmed item in DONT_NEED (Skipped)
     item_skip = ShoppingListItem.objects.create(
@@ -791,5 +791,5 @@ def test_need_button_from_got_or_pantry_confirms_item_status(client, active_list
     assert item_skip.locked is True
 
     content_skip = res_skip_need.content.decode("utf-8")
-    assert ">not confirmed<" not in content_skip
-    assert "not confirmed</span>" not in content_skip
+    assert ">pantry check needed<" not in content_skip
+    assert "pantry check needed</span>" not in content_skip

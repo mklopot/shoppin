@@ -96,12 +96,36 @@ sudo journalctl -u shoppin -f
 sudo journalctl -u caddy -f
 ```
 
-### Checking Backups
-Backups run automatically every night at 03:00 UTC and save to `/app/backups/`:
+### Checking & Verifying S3 Backups
+Backups run automatically every night at 03:00 UTC and save to `/app/backups/`, then stream to Amazon S3.
+
+To test your S3 backup immediately and verify the uploaded file in AWS:
 ```bash
-ls -lh /app/backups/
+sudo bash /app/deploy/lightsail/test-s3-backup.sh
 ```
-To trigger an immediate manual backup:
+
+---
+
+## Loading Data into Production
+
+You have two easy ways to populate production data:
+
+### Method 1: Clone Your Development Database via S3 (Fastest & Recommended)
+This transfers all users, recipes, store locations (King Soopers, Safeway), and learned store aisles from your local dev machine in 10 seconds:
+
+1. **On your dev machine (PowerShell):**
+   ```powershell
+   aws s3 cp db.sqlite3 s3://your-backup-bucket/initial_seed/db.sqlite3
+   aws s3 sync media/ s3://your-backup-bucket/initial_seed/media/
+   ```
+2. **On Lightsail:**
+   ```bash
+   sudo bash /app/deploy/lightsail/load-data.sh --from-s3
+   ```
+
+### Method 2: Import Fresh from Legacy YAML Files
+If you want to re-import directly from `legacy/recipe-database.yaml` and `legacy/lists/*.yaml`:
 ```bash
-bash /app/deploy/lightsail/backup-sqlite.sh
+sudo bash /app/deploy/lightsail/load-data.sh --from-legacy
 ```
+

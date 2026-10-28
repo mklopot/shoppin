@@ -26,9 +26,24 @@ apt-get install -y --no-install-recommends \
     python3 \
     python3-venv \
     python3-pip \
+    unzip \
     cron
 
-# 2. Install official Caddy Web Server (if not already installed)
+# 2. Install official AWS CLI v2 (for S3 database backups)
+if ! command -v aws &> /dev/null; then
+    echo "==> Installing AWS CLI v2 for S3 backups..."
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "aarch64" ]; then
+        curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+    else
+        curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    fi
+    unzip -q awscliv2.zip
+    ./aws/install
+    rm -rf aws awscliv2.zip
+fi
+
+# 3. Install official Caddy Web Server (if not already installed)
 if ! command -v caddy &> /dev/null; then
     echo "==> Installing Caddy Web Server..."
     apt-get install -y debian-keyring debian-archive-keyring apt-transport-https

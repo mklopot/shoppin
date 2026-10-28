@@ -1,0 +1,62 @@
+name: CI & Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - v2-django
+      - main
+  pull_request:
+    branches:
+      - v2-django
+      - main
+
+jobs:
+  test:
+    name: Lint & Pytest Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Run Ruff Lint Check
+        run: |
+          ruff check .
+
+      - name: Run Pytest Test Suite
+        run: |
+          pytest
+
+  deploy:
+    name: Deploy to Production EC2
+    needs: test
+    if: github.ref == 'refs/heads/v2-django' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH to EC2 Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ubuntu
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "==> Deploying Shoppin update..."
+            cd /app
+            git pull origin v2-django
+            docker compose -f docker-compose.prod.yml build web
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            echo "==> Verifying application health..."
+            sleep 5
+            docker compose -f docker-compose.prod.yml exec -T web curl -f http://127.0.0.1:8000/health/
+            echo "==> Deployment successfully verified!"

@@ -1,0 +1,88 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: shoppin_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - staticfiles_volume:/var/www/static:ro
+      - media_volume:/var/www/media:ro
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - shoppin_net
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shoppin_web
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    environment:
+      - DJANGO_DEBUG=False
+      - ALLOWED_HOSTS=${DOMAIN_NAME},localhost,127.0.0.1
+      - CSRF_TRUSTED_ORIGINS=https://${DOMAIN_NAME}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-shoppin_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-shoppin_db}
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - staticfiles_volume:/app/staticfiles
+      - media_volume:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - shoppin_net
+
+  db:
+    image: postgres:16-alpine
+    container_name: shoppin_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-shoppin_db}
+      POSTGRES_USER: ${POSTGRES_USER:-shoppin_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shoppin_user} -d ${POSTGRES_DB:-shoppin_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shoppin_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: shoppin_redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shoppin_net
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  staticfiles_volume:
+  media_volume:
+
+networks:
+  shoppin_net:
+    driver: bridge

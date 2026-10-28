@@ -1,0 +1,57 @@
+# ==============================================================================
+# Shoppin Production Caddyfile
+# Automatic Let's Encrypt TLS, HTTP/2 & HTTP/3, Static Files, & Daphne WebSockets
+# ==============================================================================
+
+{$DOMAIN_NAME:localhost} {
+    # Automatic HTTPS: Let's Encrypt / ZeroSSL certificate provisioning and auto-renewal
+    # For production, define DOMAIN_NAME in .env.prod (e.g. DOMAIN_NAME=shoppin.app)
+    # If DOMAIN_NAME is localhost, Caddy provisions a local self-signed certificate.
+
+    # Compression
+    encode gzip zstd
+
+    # Security Headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+    }
+
+    # Serve collected static files directly from shared volume
+    handle /static/* {
+        root * /var/www
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Serve uploaded user recipe media files directly from shared volume
+    handle /media/* {
+        root * /var/www
+        file_server
+        header Cache-Control "public, max-age=86400"
+    }
+
+    # Reverse proxy all dynamic HTTP traffic and /ws/* WebSockets to Daphne
+    handle {
+        reverse_proxy web:8000 {
+            # Daphne runs on port 8000 inside the Docker network
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            # Extended buffer and timeout settings for long-lived WebSocket sessions
+            transport http {
+                read_buffer 4096
+            }
+        }
+    }
+
+    # Health check passthrough
+    handle /health/ {
+        reverse_proxy web:8000
+    }
+}

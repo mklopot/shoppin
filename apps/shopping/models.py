@@ -475,11 +475,16 @@ class ShoppingListItem(models.Model):
         return aisle
 
     @property
-    def effective_location_display(self) -> str:
+    def effective_aisle(self) -> str:
         """Convenience property for template rendering."""
-        return self.get_effective_location_display()
+        return self.get_effective_aisle()
 
     @property
     def effective_bay(self) -> str:
         """Convenience property for template rendering."""
         return self.get_effective_bay()
+
+    @property
+    def effective_location_display(self) -> str:
+        """Convenience property for template rendering."""
+        return self.get_effective_location_display()

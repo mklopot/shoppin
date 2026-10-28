@@ -576,6 +576,53 @@
             let socket = null;
             let reconnectTimeout = null;
 
+            // Debounced & Queue-Safe Shopping List Auto-Refresh
+            let listRefreshTimer = null;
+            let listRefreshInFlight = false;
+            let listRefreshQueued = false;
+
+            function triggerShoppingListRefresh() {
+                const listContainer = document.getElementById('shopping-list-content');
+                if (!listContainer) return;
+
+                if (listRefreshInFlight) {
+                    listRefreshQueued = true;
+                    return;
+                }
+
+                if (listRefreshTimer) {
+                    clearTimeout(listRefreshTimer);
+                }
+
+                listRefreshTimer = setTimeout(() => {
+                    const currentContainer = document.getElementById('shopping-list-content');
+                    if (!currentContainer) return;
+
+                    // Defer if user is actively typing in an input inside shopping list
+                    const activeEl = document.activeElement;
+                    if (activeEl && currentContainer.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                        listRefreshTimer = setTimeout(triggerShoppingListRefresh, 1200);
+                        return;
+                    }
+
+                    const refreshUrl = currentContainer.getAttribute('data-refresh-url') || window.location.href;
+                    listRefreshInFlight = true;
+
+                    htmx.ajax('GET', refreshUrl, {
+                        target: '#shopping-list-content',
+                        swap: 'outerHTML transition:true'
+                    }).then(() => {
+                        listRefreshInFlight = false;
+                        if (listRefreshQueued) {
+                            listRefreshQueued = false;
+                            triggerShoppingListRefresh();
+                        }
+                    }).catch(() => {
+                        listRefreshInFlight = false;
+                    });
+                }, 180);
+            }
+
             function connect() {
                 if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
                     return;
@@ -600,24 +647,19 @@
                         const data = JSON.parse(event.data);
                         const isSender = data.sender_client_id && data.sender_client_id === window.CLIENT_ID;
 
-                        // If another tab, user, or background schedule made the change:
+                        // If another tab, user, or background worker/schedule made the change:
                         if (!isSender) {
-                            // 1. Show notification toast (consolidated single toast)
-                            if (data.toast_message) {
-                                showToast(data.toast_message);
-                            } else if (data.toast_messages && Array.isArray(data.toast_messages) && data.toast_messages.length > 0) {
-                                showToast(data.toast_messages[0]);
+                            // 1. Show notification toast (only when a non-empty toast message is provided)
+                            const primaryToast = (data.toast_message || "").trim();
+                            const multiToast = (Array.isArray(data.toast_messages) && data.toast_messages.length > 0 && typeof data.toast_messages[0] === 'string') ? data.toast_messages[0].trim() : "";
+                            if (primaryToast) {
+                                showToast(primaryToast);
+                            } else if (multiToast) {
+                                showToast(multiToast);
                             }
 
                             // 2. Auto-update Shopping List content if present on page
-                            const listContainer = document.getElementById('shopping-list-content');
-                            if (listContainer) {
-                                const refreshUrl = listContainer.getAttribute('data-refresh-url') || window.location.href;
-                                htmx.ajax('GET', refreshUrl, {
-                                    target: '#shopping-list-content',
-                                    swap: 'outerHTML transition:true'
-                                });
-                            }
+                            triggerShoppingListRefresh();
 
                             // 3. Auto-update Preset Detail view if present on page
                             const presetDetailContainer = document.getElementById('preset-detail-container');

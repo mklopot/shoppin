@@ -380,3 +380,123 @@ def test_perimeter_items_produce_and_meat_display_aisle_and_bay():
     assert beef.effective_location_display == "Meat Bay 14"
 
 
+@pytest.mark.django_db
+def test_kroger_api_client_finds_aisle_in_subsequent_products(monkeypatch):
+    """
+    Test that when the first returned product has empty aisleLocations (common with bulk produce),
+    lookup_product_aisle continues checking up to 5 products to find the aisle and bay.
+    """
+    import json
+    from unittest.mock import MagicMock, patch
+
+    from apps.shopping.services.store_service import kroger_client
+
+    mock_response_data = {
+        "data": [
+            {
+                "description": "Organic Bulk Kale",
+                "aisleLocations": [],  # First product has no planogram location
+            },
+            {
+                "description": "Kroger Chopped Kale Bagged Salad",
+                "aisleLocations": [
+                    {
+                        "description": "PRODUCE",
+                        "bayNumber": "11",
+                        "number": "105",
+                        "sequenceNumber": "15",
+                    }
+                ],
+            },
+        ]
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_response_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch.object(kroger_client, "get_access_token", return_value="fake_token"), \
+         patch("urllib.request.urlopen", return_value=mock_resp):
+        res = kroger_client.lookup_product_aisle("62000042", "kale")
+        assert res is not None
+        assert res["aisle_name"] == "PRODUCE"
+        assert res["bay_number"] == "11"
+        assert res["sequence_order"] == 15
+
+
+@pytest.mark.django_db
+def test_warm_store_aisles_streams_live_updates_per_item():
+    """
+    Verify that _warm_store_aisles_async streams live WebSocket broadcasts as each
+    item's aisle is resolved, allowing the browser to refresh items and sorting in real time.
+    """
+    from unittest.mock import patch
+
+    from apps.shopping.services.store_service import kroger_client
+    from apps.shopping.views import _warm_store_aisles_async
+
+    store = StoreLocation.objects.create(
+        name="King Soopers Streaming",
+        chain="kroger",
+        external_store_id="62000090",
+    )
+    s_list = ShoppingList.objects.create(name="Streaming List", active_store=store)
+
+    ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Organic Kale",
+        amount=Decimal("1.00"),
+        status=ItemStatus.NEED,
+    )
+    ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Ground Beef",
+        amount=Decimal("1.00"),
+        status=ItemStatus.NEED,
+    )
+
+    def mock_resolve(target_store, item_name, category=None):
+        if "kale" in item_name.lower():
+            StoreItemAisle.objects.create(
+                store=target_store,
+                item_name_normalized="organic kale",
+                aisle_name="Produce",
+                bay_number="11",
+                source="api",
+            )
+            return {"aisle_name": "Produce", "bay_number": "11"}
+        elif "beef" in item_name.lower():
+            StoreItemAisle.objects.create(
+                store=target_store,
+                item_name_normalized="ground beef",
+                aisle_name="Meat",
+                bay_number="1",
+                source="api",
+            )
+            return {"aisle_name": "Meat", "bay_number": "1"}
+        return None
+
+    broadcast_calls = []
+
+    def mock_broadcast(**kwargs):
+        broadcast_calls.append(kwargs)
+
+    with patch.object(type(kroger_client), "is_configured", True), \
+         patch("apps.shopping.views.resolve_store_aisle", side_effect=mock_resolve), \
+         patch("apps.shopping.views.broadcast_shopping_list_update", side_effect=mock_broadcast):
+        _warm_store_aisles_async(s_list, sync=True)
+
+    # Must have 2 per-item streaming broadcasts (toast_message="") + 1 final completion broadcast
+    assert len(broadcast_calls) == 3
+
+    # Per-item updates: silent toasts to prevent popup spam, empty sender_client_id so all tabs refresh
+    assert broadcast_calls[0]["toast_message"] == ""
+    assert broadcast_calls[0]["sender_client_id"] == ""
+    assert broadcast_calls[1]["toast_message"] == ""
+    assert broadcast_calls[1]["sender_client_id"] == ""
+
+    # Final completion update: summary toast
+    assert "Aisles updated for King Soopers Streaming" in broadcast_calls[2]["toast_message"]
+
+
+

@@ -351,7 +351,7 @@ class KrogerAPIClient:
         query_params = urllib.parse.urlencode({
             "filter.term": product_term,
             "filter.locationId": clean_loc,
-            "filter.limit": 1,
+            "filter.limit": 5,
         })
         url = f"{self.PRODUCTS_URL}?{query_params}"
         request = urllib.request.Request(
@@ -368,29 +368,30 @@ class KrogerAPIClient:
                 if not products:
                     return None
 
-                first_product = products[0]
-                aisle_locations = first_product.get("aisleLocations", [])
-                if not aisle_locations:
-                    return None
+                for product in products:
+                    aisle_locations = product.get("aisleLocations", [])
+                    if not aisle_locations:
+                        continue
 
-                first_location = aisle_locations[0]
-                desc = (first_location.get("description") or "").strip()
-                num = (first_location.get("number") or "").strip()
-                aisle_name = desc or (f"Aisle {num}" if num else "")
-                if not aisle_name:
-                    return None
+                    first_location = aisle_locations[0]
+                    desc = (first_location.get("description") or "").strip()
+                    num = (first_location.get("number") or "").strip()
+                    aisle_name = desc or (f"Aisle {num}" if num else "")
+                    if not aisle_name:
+                        continue
 
-                seq_val = first_location.get("sequenceNumber")
-                try:
-                    sequence_order = int(seq_val) if seq_val is not None else 100
-                except (ValueError, TypeError):
-                    sequence_order = 100
+                    seq_val = first_location.get("sequenceNumber")
+                    try:
+                        sequence_order = int(seq_val) if seq_val is not None else 100
+                    except (ValueError, TypeError):
+                        sequence_order = 100
 
-                return {
-                    "aisle_name": aisle_name,
-                    "bay_number": (first_location.get("bayNumber") or "").strip(),
-                    "sequence_order": sequence_order,
-                }
+                    return {
+                        "aisle_name": aisle_name,
+                        "bay_number": (first_location.get("bayNumber") or "").strip(),
+                        "sequence_order": sequence_order,
+                    }
+                return None
         except Exception as error:
             logger.warning(f"Kroger API lookup failed for '{product_term}' at location {location_id}: {error}")
             return None

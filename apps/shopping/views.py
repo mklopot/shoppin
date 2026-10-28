@@ -98,12 +98,16 @@ def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList) -
     return None
 
 
+_WARMING_LOCK = threading.Lock()
+_ACTIVE_WARMINGS: set[tuple[int, int]] = set()
+
+
 def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) -> None:
     """
     Asynchronously resolve and cache missing store aisles in a background thread
     so the HTTP response returns immediately without blocking on external API calls
-    or holding database locks. Once finished, broadcasts a Channels update so the UI
-    refreshes with the live aisles.
+    or holding database locks. Streams live Channels broadcasts as each item is resolved
+    so the UI updates dynamically in real time without requiring manual refreshes.
     """
     store = shopping_list.active_store
     if not store or store.chain != "kroger" or not kroger_client.is_configured:
@@ -124,25 +128,41 @@ def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) ->
     if not unmapped_names:
         return
 
+    task_key = (store.id, shopping_list.id)
+    with _WARMING_LOCK:
+        if task_key in _ACTIVE_WARMINGS:
+            return
+        _ACTIVE_WARMINGS.add(task_key)
+
     def _worker():
         from django.db import connection
         try:
-            resolved_any = False
+            resolved_count = 0
             for name in unmapped_names:
                 clean_name = inflection.singularize(name.strip().lower())
                 if not StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).exists():
                     res = resolve_store_aisle(store, name)
-                    if res:
-                        resolved_any = True
-            if resolved_any:
+                    if res and res.get("aisle_name"):
+                        resolved_count += 1
+                        # Broadcast update immediately so the item and list sorting refresh in real time!
+                        broadcast_shopping_list_update(
+                            shopping_list=shopping_list,
+                            sender_client_id="",
+                            toast_message="",
+                            actor_name="system",
+                        )
+            if resolved_count > 0:
                 broadcast_shopping_list_update(
                     shopping_list=shopping_list,
-                    toast_message=f"📍 Aisles loaded for {store.name}",
+                    sender_client_id="",
+                    toast_message=f"📍 Aisles updated for {store.name}",
                     actor_name="system",
                 )
         except Exception as error:
             logger.warning(f"Async store aisle warming encountered error: {error}")
         finally:
+            with _WARMING_LOCK:
+                _ACTIVE_WARMINGS.discard(task_key)
             connection.close()
 
     import sys

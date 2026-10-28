@@ -4,7 +4,7 @@
          onclick="panToStoreMarker({{ match.store.id }}, {{ match.store.latitude|default:'null' }}, {{ match.store.longitude|default:'null' }})">
         <div class="min-w-0 flex-1 pr-3">
             <div class="flex items-center space-x-2">
-                <span class="font-bold text-gray-900 text-xs sm:text-sm truncate">{{ match.store.name }}</span>
+                <span class="font-bold text-gray-900 text-xs sm:text-sm truncate">{{ match.store.display_name|default:match.store.name }}</span>
                 <span class="px-1.5 py-0.2 text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-200 select-none whitespace-nowrap">
                     {{ match.distance_miles }} mi
                 </span>
@@ -46,7 +46,7 @@
 {% else %}
     <div class="py-8 text-center text-gray-500">
         <p class="font-semibold text-gray-700">No stores found matching your query.</p>
-        <p class="text-[11px] mt-1 text-gray-500">Try searching with a 5-digit ZIP code (e.g. 80120) or dragging the red map pin.</p>
+        <p class="text-[11px] mt-1 text-gray-500">Try searching with a 5-digit ZIP code (e.g. 80120) or clicking anywhere on the map.</p>
     </div>
 {% endif %}
 

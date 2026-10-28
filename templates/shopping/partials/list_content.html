@@ -194,7 +194,7 @@
                     <option value="">No Store (Default Category Flow)</option>
                     {% for store in stores %}
                     <option value="{{ store.id }}" {% if active_store and active_store.id == store.id %}selected{% endif %}>
-                        {{ store.name }}
+                        {{ store.display_name|default:store.name }}
                     </option>
                     {% endfor %}
                 </select>

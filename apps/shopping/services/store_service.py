@@ -175,8 +175,25 @@ def discover_nearby_stores_osm(latitude: float, longitude: float) -> list[StoreL
                 else:
                     chain = "other"
 
+                clean_street = (
+                    street.replace("South ", "S ")
+                    .replace("North ", "N ")
+                    .replace("East ", "E ")
+                    .replace("West ", "W ")
+                    .replace("Street", "St")
+                    .replace("Avenue", "Ave")
+                    .replace("Boulevard", "Blvd")
+                    .replace("Drive", "Dr")
+                    .replace("Road", "Rd")
+                    .replace("Parkway", "Pkwy")
+                )
+                if clean_street and not any(sep in raw_name for sep in ["#", "(", " - ", "@", "/"]):
+                    distinct_name = f"{raw_name} ({clean_street})"
+                else:
+                    distinct_name = raw_name
+
                 store_obj, _ = StoreLocation.objects.get_or_create(
-                    name=raw_name,
+                    name=distinct_name,
                     latitude=lat,
                     longitude=lon,
                     defaults={

@@ -858,7 +858,7 @@ def set_store(request: HttpRequest) -> HttpResponse:
     )
     context = _build_list_context(request, shopping_list, group_by)
     actor_name = request.user.username if request.user.is_authenticated else "unknown"
-    store_name = shopping_list.active_store.name if shopping_list.active_store else "None"
+    store_name = shopping_list.active_store.display_name if shopping_list.active_store else "None"
     toast = f"📍 Active store set to '{store_name}'" if shopping_list.active_store else "Cleared active store"
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
@@ -919,7 +919,7 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
     stores_json = json.dumps([
         {
             "id": m["store"].id,
-            "name": m["store"].name,
+            "name": m["store"].display_name,
             "chain": m["store"].chain,
             "chain_display": m["store"].get_chain_display(),
             "address": m["store"].address or "",

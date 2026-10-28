@@ -83,9 +83,37 @@ class StoreLocation(models.Model):
     class Meta:
         ordering = ["chain", "name"]
 
+    @property
+    def display_name(self) -> str:
+        """
+        Return a distinct, human-readable name differentiating this store by branch or address.
+        e.g. 'Safeway (2150 S Downing St)' instead of just 'Safeway'.
+        """
+        raw_name = (self.name or "").strip()
+        if any(sep in raw_name for sep in ["#", "(", " - ", "@", "/"]):
+            return raw_name
+        if self.address:
+            clean_addr = (
+                self.address.split(",")[0].strip()
+                .replace("South ", "S ")
+                .replace("North ", "N ")
+                .replace("East ", "E ")
+                .replace("West ", "W ")
+                .replace("Street", "St")
+                .replace("Avenue", "Ave")
+                .replace("Boulevard", "Blvd")
+                .replace("Drive", "Dr")
+                .replace("Road", "Rd")
+                .replace("Parkway", "Pkwy")
+            )
+            return f"{raw_name} ({clean_addr})"
+        if self.city:
+            return f"{raw_name} ({self.city})"
+        return raw_name
+
     def __str__(self) -> str:
-        """Return human-readable store name and chain display."""
-        return f"{self.name} ({self.get_chain_display()})"
+        """Return human-readable store name."""
+        return self.display_name
 
 
 class StoreItemAisle(models.Model):

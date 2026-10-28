@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "shoppin"
 version = "2.0.0"
@@ -18,6 +22,9 @@ dependencies = [
     "dj-database-url>=2.2",
     "channels-redis>=4.2",
 ]
+
+[tool.setuptools.packages.find]
+include = ["apps*", "config*"]
 
 [project.optional-dependencies]
 dev = [

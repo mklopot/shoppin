@@ -25,16 +25,18 @@ echo "==> Collecting static assets..."
 echo "==> Restarting Shoppin Daphne service..."
 sudo systemctl restart shoppin
 
-echo "==> Reloading Caddy web server..."
-if [ ! -f /etc/systemd/system/caddy.service.d/override.conf ]; then
-    sudo mkdir -p /etc/systemd/system/caddy.service.d
-    sudo bash -c 'cat << "EOF" > /etc/systemd/system/caddy.service.d/override.conf
-[Service]
-EnvironmentFile=/app/.env
-EOF'
-    sudo systemctl daemon-reload
-fi
+echo "==> Setting directory permissions..."
+sudo chmod 755 "$APP_DIR" "$APP_DIR/staticfiles" "$APP_DIR/media"
+
+echo "==> Configuring and restarting Caddy web server..."
 sudo cp "$APP_DIR/deploy/lightsail/Caddyfile" /etc/caddy/Caddyfile
+if [ -f "$APP_DIR/.env" ]; then
+    DOMAIN=$(grep -E '^DOMAIN_NAME=' "$APP_DIR/.env" | cut -d '=' -f2- | tr -d '"' | tr -d "'" | tr -d ' ' || true)
+    if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost" ]; then
+        echo "==> Configuring Caddy for domain: $DOMAIN"
+        sudo sed -i "s/{\$DOMAIN_NAME:localhost}/$DOMAIN/g" /etc/caddy/Caddyfile
+    fi
+fi
 sudo systemctl restart caddy
 
 echo "==> Verifying application health..."

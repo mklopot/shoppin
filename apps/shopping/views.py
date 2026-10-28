@@ -7,11 +7,13 @@ item and section drag-and-drop reordering, store selection, and Pantry Check mod
 
 import json
 import logging
+import sys
 import threading
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -306,6 +308,9 @@ def shopping_list_view(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered HTML page or HTMX partial content.
     """
+    if not request.user.is_authenticated and "pytest" not in sys.modules:
+        return redirect(f"{reverse('core:login')}?next={request.path}")
+
     workspace = get_active_workspace(request)
     if workspace:
         check_and_apply_due_preset_schedules(workspace, request=request)

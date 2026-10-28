@@ -33,7 +33,11 @@ def get_active_workspace(request: HttpRequest | None = None) -> Workspace:
 
     # If unauthenticated, fallback to the primary default workspace
     if not user or not user.is_authenticated:
-        ws = Workspace.objects.first()
+        ws = (
+            Workspace.objects.filter(name="Home").first()
+            or Workspace.objects.filter(owner__is_superuser=True).first()
+            or Workspace.objects.first()
+        )
         if not ws:
             default_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
             if not default_user:

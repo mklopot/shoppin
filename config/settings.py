@@ -17,7 +17,7 @@ SECRET_KEY = os.getenv(
     'django-insecure-s-qns+36zy7omux7%c%4pwi%tw&yo01n!2v8bc%w91ni3q(^&6'
 )
 
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', os.getenv('DEBUG', 'False')).lower() in ('true', '1', 't')
 
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS')
 if allowed_hosts_env:

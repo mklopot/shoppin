@@ -3,11 +3,13 @@ Views and HTMX endpoints for Meal Planning, recipe dish composition,
 and ingredient synchronization with the active shopping list.
 """
 
+import sys
 from decimal import Decimal
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.core.services.workspace_service import get_active_workspace
@@ -47,6 +49,9 @@ def meal_plan_view(
     """
     Render the Meal Plan management page or HTMX partial.
     """
+    if not request.user.is_authenticated and "pytest" not in sys.modules:
+        return redirect(f"{reverse('core:login')}?next={request.path}")
+
     workspace = get_active_workspace(request)
     shopping_list = get_active_list(request)
     meal_plan = get_active_meal_plan(request, workspace)

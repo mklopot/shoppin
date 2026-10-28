@@ -96,6 +96,8 @@ def terms_accept_view(request: HttpRequest) -> HttpResponse:
 
     context: dict[str, Any] = {
         "version": TermsOfServiceAcceptance.CURRENT_VERSION,
+        "is_authenticated": True,
+        "has_accepted": False,
         "next": next_url,
         "client_ip": get_client_ip(request),
         "geo_hint": get_geolocation_hint(request),

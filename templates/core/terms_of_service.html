@@ -220,7 +220,7 @@
         </div>
 
         <!-- Acceptance Form for Authenticated Users Who Have Not Yet Accepted -->
-        {% if is_authenticated and not has_accepted %}
+        {% if request.user.is_authenticated and not has_accepted %}
         <form method="post" action="{% url 'core:terms_accept' %}" id="tos-acceptance-form" class="space-y-4 pt-4 border-t-2 border-red-500 bg-red-50/50 p-4">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
@@ -259,7 +259,7 @@
                 </button>
             </div>
         </form>
-        {% elif not is_authenticated %}
+        {% elif not request.user.is_authenticated %}
         <div class="pt-4 border-t border-gray-200 text-xs text-center space-y-2">
             <p class="text-gray-600">
                 You are currently viewing these terms as an unauthenticated visitor.

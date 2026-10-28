@@ -43,8 +43,19 @@ def test_guest_can_view_terms_of_service(client: Client):
     assert "Ancient Sumerian" in content
     assert "Comprehensive Real-Time Client Telemetry Ingestion" in content
 
-    # Guest should see prompt to sign in to execute terms
-    assert "Sign in to Execute Terms" in content
+    # Guest should see prompt to sign in to accept terms
+    assert "Sign In to Accept Terms" in content
+
+
+@pytest.mark.django_db
+def test_authenticated_user_at_terms_accept_sees_acceptance_form(client: Client, normal_user):
+    """Authenticated user at /terms/accept/ sees the form, NOT the sign-in button."""
+    client.force_login(normal_user)
+    response = client.get(reverse("core:terms_accept"))
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "affirmative_surrender" in content
+    assert "Sign In to Accept Terms" not in content
 
 
 @pytest.mark.django_db

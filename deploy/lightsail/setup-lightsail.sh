@@ -84,9 +84,15 @@ chmod 644 /etc/systemd/system/shoppin.service
 systemctl daemon-reload
 systemctl enable shoppin.service
 
-# 6. Configure Caddy
-echo "==> Configuring Caddyfile..."
+# 6. Configure Caddy with environment variables from /app/.env
+echo "==> Configuring Caddyfile and systemd environment..."
 cp /app/deploy/lightsail/Caddyfile /etc/caddy/Caddyfile
+mkdir -p /etc/systemd/system/caddy.service.d
+cat << 'EOF' > /etc/systemd/system/caddy.service.d/override.conf
+[Service]
+EnvironmentFile=/app/.env
+EOF
+systemctl daemon-reload
 systemctl enable caddy
 
 # 7. Configure SQLite Daily Backup Cron

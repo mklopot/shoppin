@@ -26,7 +26,16 @@ echo "==> Restarting Shoppin Daphne service..."
 sudo systemctl restart shoppin
 
 echo "==> Reloading Caddy web server..."
-sudo systemctl reload caddy || sudo systemctl restart caddy
+if [ ! -f /etc/systemd/system/caddy.service.d/override.conf ]; then
+    sudo mkdir -p /etc/systemd/system/caddy.service.d
+    sudo bash -c 'cat << "EOF" > /etc/systemd/system/caddy.service.d/override.conf
+[Service]
+EnvironmentFile=/app/.env
+EOF'
+    sudo systemctl daemon-reload
+fi
+sudo cp "$APP_DIR/deploy/lightsail/Caddyfile" /etc/caddy/Caddyfile
+sudo systemctl restart caddy
 
 echo "==> Verifying application health..."
 sleep 2

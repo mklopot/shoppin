@@ -38,10 +38,19 @@ def test_guest_can_view_terms_of_service(client: Client):
     # Check key draconian terms clauses
     assert "Shoppin Universal Terms of Service & Surrender of Rights" in content
     assert "PERPETUAL, UNIVERSE-WIDE ASSIGNMENT OF ALL CULINARY INTELLECTUAL PROPERTY" in content
+    assert "PROMPT & JOYFUL SUBSCRIPTION RESPONSIBILITY" in content
+    assert "PROHIBITION AGAINST ILLEGAL, TORTIOUS OR HARMFUL CONTENT" in content
+    assert "FITNESS FOR A PARTICULAR PURPOSE" in content
+    assert "NO WARRANTY IS EXPRESSED OR IMPLIED" in content
+    assert "ALL LIABILITY IS EXPLICITLY DISCLAIMED" in content
     assert "ONE UNITED STATES CENT ($0.01)" in content
     assert "Ushuaia, Tierra del Fuego" in content
     assert "Ancient Sumerian" in content
+    assert "REAL, BINDING CONTRACTUAL FORCE, SUBSTANCE OVER FORM & STYLISTIC LEVITY DISCLAIMER" in content
     assert "Comprehensive Real-Time Client Telemetry Ingestion" in content
+    assert "telemetry-local-time" in content
+    assert "telemetry-timezone" in content
+    assert "telemetry-locale" in content
 
     # Guest should see prompt to sign in to accept terms
     assert "Sign In to Accept Terms" in content

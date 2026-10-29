@@ -46,8 +46,16 @@ fi
 sudo systemctl restart caddy
 
 echo "==> Verifying application health..."
-sleep 2
-if curl -fsSL http://127.0.0.1:8000/health/ > /dev/null; then
+HEALTHY=false
+for i in {1..5}; do
+    if curl -fsS -H "X-Forwarded-Proto: https" http://127.0.0.1:8000/health/ > /dev/null 2>&1; then
+        HEALTHY=true
+        break
+    fi
+    sleep 1
+done
+
+if [ "$HEALTHY" = true ]; then
     echo "==> SUCCESS: Application is healthy and serving requests!"
 else
     echo "==> WARNING: Health check failed or timed out. Check journalctl -u shoppin -n 50"

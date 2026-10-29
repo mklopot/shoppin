@@ -230,6 +230,7 @@ def _build_list_context(
     known_aisles = get_known_aisles(shopping_list.active_store)
 
     workspace = shopping_list.workspace or get_active_workspace(request)
+    is_shared = shopping_list.is_shared if shopping_list else (workspace.is_shared if workspace else False)
     user = getattr(request, "user", None)
     if user and user.is_authenticated:
         can_write = workspace.can_write(user) if workspace else True
@@ -254,6 +255,7 @@ def _build_list_context(
     return {
         "shopping_list": shopping_list,
         "workspace": workspace,
+        "is_shared": is_shared,
         "planned_meals": planned_meals,
         "preset_lists": preset_lists,
         "preset_lists_open": preset_lists_open,
@@ -380,7 +382,8 @@ def _set_item_audit(item: ShoppingListItem, request: HttpRequest) -> None:
     Record user attribution and timestamp metadata on an item during state changes.
 
     Sets status_changed_by to the authenticated user or None, and status_changed_by_name
-    to the username or 'unknown' for anonymous interactions. Never sets 'You'.
+    to the user's first name (falling back to username) or 'unknown' for anonymous interactions.
+    Never sets 'You'.
 
     Args:
         item: The ShoppingListItem instance being updated.
@@ -389,7 +392,8 @@ def _set_item_audit(item: ShoppingListItem, request: HttpRequest) -> None:
     item.status_changed_at = timezone.now()
     if request.user.is_authenticated:
         item.status_changed_by = request.user
-        item.status_changed_by_name = request.user.username
+        first_name = (request.user.first_name or "").strip()
+        item.status_changed_by_name = first_name or request.user.username
     else:
         item.status_changed_by = None
         item.status_changed_by_name = "unknown"
@@ -448,16 +452,17 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
     }
     toast = status_messages.get(new_status, f"You updated '{item.name}'")
 
+    actor_name = item.status_actor_first_name or "Someone"
     other_status_messages = {
-        ItemStatus.GOT: f"🛒 {item.changed_by_display} moved '{item.name}' to Cart",
-        ItemStatus.HAVE: f"🏠 {item.changed_by_display} marked '{item.name}' as in Pantry",
-        ItemStatus.DONT_NEED: f"⏭ {item.changed_by_display} skipped '{item.name}'",
-        ItemStatus.NEED: f"📋 {item.changed_by_display} moved '{item.name}' back to To Buy",
+        ItemStatus.GOT: f"🛒 {actor_name} moved '{item.name}' to Cart",
+        ItemStatus.HAVE: f"🏠 {actor_name} marked '{item.name}' as in Pantry",
+        ItemStatus.DONT_NEED: f"⏭ {actor_name} skipped '{item.name}'",
+        ItemStatus.NEED: f"📋 {actor_name} moved '{item.name}' back to To Buy",
     }
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
-        toast_message=other_status_messages.get(new_status, f"{item.changed_by_display} updated '{item.name}'"),
-        actor_name=item.changed_by_display,
+        toast_message=other_status_messages.get(new_status, f"{actor_name} updated '{item.name}'"),
+        actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=toast)
@@ -572,7 +577,11 @@ def add_item(request: HttpRequest) -> HttpResponse:
     else:
         max_order = shopping_list.items.count()
         audit_user = request.user if request.user.is_authenticated else None
-        audit_user_name = request.user.username if request.user.is_authenticated else "unknown"
+        if request.user.is_authenticated:
+            first_name = (request.user.first_name or "").strip()
+            audit_user_name = first_name or request.user.username
+        else:
+            audit_user_name = "unknown"
         ShoppingListItem.objects.create(
             shopping_list=shopping_list,
             name=raw_name,
@@ -594,10 +603,11 @@ def add_item(request: HttpRequest) -> HttpResponse:
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
+    actor_name = existing.status_actor_first_name if existing else audit_user_name
     if existing:
         unit_str = f" {existing.unit_display}" if existing.unit_display else ""
         toast = f"You updated '{existing.name}' to {existing.amount_display}{unit_str}"
-        broadcast_toast = f"{existing.changed_by_display} updated '{existing.name}' to {existing.amount_display}{unit_str}"
+        broadcast_toast = f"{actor_name} updated '{existing.name}' to {existing.amount_display}{unit_str}"
     else:
         toast = f"You added '{raw_name}' to the shopping list"
         broadcast_toast = f"{audit_user_name} added '{raw_name}' to the shopping list"
@@ -605,7 +615,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
         toast_message=broadcast_toast,
-        actor_name=existing.changed_by_display if existing else audit_user_name,
+        actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=toast)
@@ -719,10 +729,11 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             context = _build_list_context(request, existing.shopping_list, group_by)
             unit_str = f" {existing.unit_display}" if existing.unit_display else ""
             toast = f"Combined into '{existing.name}' ({existing.amount_display}{unit_str})"
+            existing_actor = existing.status_actor_first_name or "Someone"
             broadcast_shopping_list_update(
                 shopping_list=existing.shopping_list,
-                toast_message=f"✏️ {existing.changed_by_display} combined '{existing.name}' into {existing.amount_display}{unit_str}",
-                actor_name=existing.changed_by_display,
+                toast_message=f"✏️ {existing_actor} combined '{existing.name}' into {existing.amount_display}{unit_str}",
+                actor_name=existing_actor,
                 sender_client_id=_get_client_id(request),
             )
             return render_list_response(request, context, toast_message=toast)
@@ -747,10 +758,11 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
         group_by = request.GET.get("group_by", GroupBy.CATEGORY)
         context = _build_list_context(request, item.shopping_list, group_by)
+        edit_actor = item.status_actor_first_name or "Someone"
         broadcast_shopping_list_update(
             shopping_list=item.shopping_list,
-            toast_message=f"✏️ {item.changed_by_display} edited '{item.name}'",
-            actor_name=item.changed_by_display,
+            toast_message=f"✏️ {edit_actor} edited '{item.name}'",
+            actor_name=edit_actor,
             sender_client_id=_get_client_id(request),
         )
         return render_list_response(request, context, toast_message=f"✏️ You updated '{item.name}'")
@@ -832,17 +844,18 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, item.shopping_list, group_by)
+    actor_name = item.status_actor_first_name or "Someone"
     if item.locked:
         toast = f'📋 You set \'{item.name}\' to "needed"'
-        broadcast_toast = f'📋 {item.changed_by_display} set \'{item.name}\' to "needed"'
+        broadcast_toast = f'📋 {actor_name} set \'{item.name}\' to "needed"'
     else:
         toast = f"You unchecked '{item.name}'"
-        broadcast_toast = f"{item.changed_by_display} unchecked '{item.name}'"
+        broadcast_toast = f"{actor_name} unchecked '{item.name}'"
 
     broadcast_shopping_list_update(
         shopping_list=item.shopping_list,
         toast_message=broadcast_toast,
-        actor_name=item.changed_by_display,
+        actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
     return render_list_response(request, context, toast_message=toast)
@@ -875,11 +888,12 @@ def toggle_priority(request: HttpRequest, item_id: int) -> HttpResponse:
 
     status_str = "marked as High Priority" if item.priority else "removed from Priority"
     toast = f"📌 '{item.name}' {status_str}"
+    actor_name = item.status_actor_first_name or "Someone"
 
     broadcast_shopping_list_update(
         shopping_list=item.shopping_list,
-        toast_message=f"📌 {item.changed_by_display} {status_str} '{item.name}'",
-        actor_name=item.changed_by_display,
+        toast_message=f"📌 {actor_name} {status_str} '{item.name}'",
+        actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
 

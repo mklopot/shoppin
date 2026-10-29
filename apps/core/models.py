@@ -80,6 +80,11 @@ class Workspace(models.Model):
         """Return True if user has at least read/view access."""
         return self.get_user_role(user) is not None
 
+    @property
+    def is_shared(self) -> bool:
+        """Return True if the workspace has any collaborators beyond the owner."""
+        return self.memberships.exists()
+
     def get_primary_list(self) -> "ShoppingList | None":
         """Retrieve the active primary household shopping list for this workspace."""
         return self.shopping_lists.filter(is_preset=False).first()

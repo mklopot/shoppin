@@ -234,6 +234,13 @@ class ShoppingList(models.Model):
     class Meta:
         ordering = ["is_preset", "name"]
 
+    @property
+    def is_shared(self) -> bool:
+        """Return True if this shopping list belongs to a shared workspace or has shared users."""
+        if self.workspace:
+            return self.workspace.is_shared
+        return self.shared_with.exists()
+
     def __str__(self) -> str:
         """Return the list name with preset flag if applicable."""
         return f"{self.name}{' (Preset)' if self.is_preset else ''}"
@@ -390,16 +397,43 @@ class ShoppingListItem(models.Model):
         return pluralize_unit(self.amount_unit)
 
     @property
-    def changed_by_display(self) -> str:
+    def is_shared(self) -> bool:
+        """Return True if this item belongs to a shared shopping list or shared workspace."""
+        if self.shopping_list:
+            return self.shopping_list.is_shared
+        return False
+
+    @property
+    def status_actor_first_name(self) -> str:
         """
-        Return the username of who changed status, falling back to 'unknown' if anonymous.
-        Never returns 'You'.
+        Return the first name of the user who put the item into its current state.
+        Falls back to username if first_name is blank, or empty string if anonymous.
+        Never returns 'You' or 'unknown'.
         """
         if self.status_changed_by:
-            return self.status_changed_by.username
-        if self.status_changed_by_name and self.status_changed_by_name.lower() != "you":
-            return self.status_changed_by_name
-        return "unknown"
+            first_name = (self.status_changed_by.first_name or "").strip()
+            if first_name:
+                return first_name
+            username = (self.status_changed_by.username or "").strip()
+            return username
+
+        if self.status_changed_by_name:
+            raw_name = self.status_changed_by_name.strip()
+            if raw_name.lower() not in ("you", "unknown"):
+                return raw_name.split()[0]
+        return ""
+
+    @property
+    def changed_by_display(self) -> str:
+        """
+        Return the first name of who put the item into its current state,
+        provided the workspace is shared with other collaborators.
+        If the workspace is not shared, returns an empty string so nothing is shown in that field.
+        Never returns 'You'.
+        """
+        if not self.is_shared:
+            return ""
+        return self.status_actor_first_name
 
     @property
     def purpose_display(self) -> str:

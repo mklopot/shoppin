@@ -481,18 +481,19 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
         order=20,
     )
 
-    # 1. Page load displays user attribution ("unknown" default for unauthenticated) and mm/dd format
+    # 1. Page load displays mm/dd format without user attribution when workspace is not shared
     res = client.get(reverse("shopping:list"))
     assert res.status_code == 200
     expected_past_date_str = timezone.localtime(past_date).strftime("%m/%d")
     content = res.content.decode("utf-8")
     assert expected_past_date_str in content
-    assert f"unknown {expected_past_date_str}" in content
+    # When workspace is not shared, attribution field must be empty
+    assert f"unknown {expected_past_date_str}" not in content
     assert f"You {expected_past_date_str}" not in content
     # Verify non-fixed-width and italics styling
     assert 'class="ml-1.5 text-gray-400 italic text-xs select-none"' in content
 
-    # 2. Changing status as authenticated admin user updates to "<admin> <today>" in Got section
+    # 2. Changing status as authenticated admin user in unshared workspace shows only date
     res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res_got.status_code == 200
     item.refresh_from_db()
@@ -501,11 +502,11 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
     got_content = res_got.content.decode("utf-8")
     got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
     assert today_str in got_section
-    assert f"{item.status_changed_by_name} {today_str}" in got_section
+    assert f"{item.status_changed_by_name} {today_str}" not in got_section
     assert f"You {today_str}" not in got_section
     assert "Granola" in got_section
 
-    # 3. Changing status as authenticated user (Alice) records Alice and displays "Alice <today>"
+    # 3. Sharing workspace with another user (Alice) activates user attribution using first name
     if active_list.workspace:
         from apps.core.models import WorkspaceMember, WorkspaceRole
         WorkspaceMember.objects.update_or_create(
@@ -519,6 +520,8 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
     item.refresh_from_db()
     assert item.status_changed_by == alice
     assert item.status_changed_by_name == "Alice"
+    assert item.is_shared is True
+    assert item.changed_by_display == "Alice"
     have_content = res_have.content.decode("utf-8")
     have_section = have_content.split("Already Have / Skipped")[1]
     assert f"Alice {today_str}" in have_section
@@ -796,3 +799,73 @@ def test_need_button_from_got_or_pantry_confirms_item_status(client, active_list
     content_skip = res_skip_need.content.decode("utf-8")
     assert ">pantry check needed<" not in content_skip
     assert "pantry check needed</span>" not in content_skip
+
+
+@pytest.mark.django_db
+def test_attribution_shows_first_name_and_omitted_when_unshared(client):
+    """
+    Test user attribution:
+    1. Should list the first name of the user, not the full username.
+    2. If the workspace is not shared, it should not show anything in that field.
+    """
+    from django.contrib.auth import get_user_model
+    from django.utils import timezone
+    from apps.core.models import Workspace, WorkspaceMember, WorkspaceRole
+
+    User = get_user_model()
+    owner = User.objects.create_user(username="michael.klopot", first_name="Mike", last_name="Klopot")
+    collaborator = User.objects.create_user(username="carol.danvers", first_name="Carol", last_name="Danvers")
+
+    ws = Workspace.objects.create(name="Mike's Kitchen", owner=owner)
+    s_list = ShoppingList.objects.create(name="Grocery List", workspace=ws, owner=owner)
+
+    client.force_login(owner)
+
+    item = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Sourdough Loaf",
+        amount=Decimal("1.00"),
+        status=ItemStatus.NEED,
+        status_changed_by=owner,
+        status_changed_by_name="Mike",
+    )
+
+    # Workspace is unshared initially:
+    assert ws.is_shared is False
+    assert s_list.is_shared is False
+    assert item.is_shared is False
+    assert item.status_actor_first_name == "Mike"
+    # When unshared, changed_by_display must be empty:
+    assert item.changed_by_display == ""
+
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    html = res.content.decode("utf-8")
+    today_str = timezone.localtime(timezone.now()).strftime("%m/%d")
+    # Date is shown, but neither username ("michael.klopot") nor first name ("Mike") appears in attribution
+    assert today_str in html
+    assert f"michael.klopot {today_str}" not in html
+    assert f"Mike {today_str}" not in html
+    assert 'title="Date placed or updated"' in html
+    assert 'title="Date placed or updated by' not in html
+
+    # Now share the workspace with collaborator:
+    WorkspaceMember.objects.create(workspace=ws, user=collaborator, role=WorkspaceRole.EDITOR)
+    ws.refresh_from_db()
+    s_list.refresh_from_db()
+    item.refresh_from_db()
+
+    assert ws.is_shared is True
+    assert s_list.is_shared is True
+    assert item.is_shared is True
+    # When shared, changed_by_display shows the first name "Mike", not username "michael.klopot"
+    assert item.changed_by_display == "Mike"
+
+    res_shared = client.get(reverse("shopping:list"))
+    assert res_shared.status_code == 200
+    shared_html = res_shared.content.decode("utf-8")
+    # First name appears in attribution, full username does not
+    assert f"Mike {today_str}" in shared_html
+    assert f"michael.klopot {today_str}" not in shared_html
+    assert 'title="Date placed or updated by Mike"' in shared_html
+

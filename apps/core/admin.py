@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from apps.core.models import TermsOfServiceAcceptance, Workspace, WorkspaceMembership
+from apps.core.models import TermsOfServiceAcceptance, Workspace, WorkspaceMember
 
 
-class WorkspaceMembershipInline(admin.TabularInline):
+class WorkspaceMemberInline(admin.TabularInline):
     """Inline membership manager inside workspace change form."""
-    model = WorkspaceMembership
+    model = WorkspaceMember
     extra = 1
 
 
@@ -14,7 +14,7 @@ class WorkspaceAdmin(admin.ModelAdmin):
     """Admin interface for managing workspaces."""
     list_display = ("name", "owner", "created_at", "updated_at")
     search_fields = ("name", "owner__username", "owner__email")
-    inlines = [WorkspaceMembershipInline]
+    inlines = [WorkspaceMemberInline]
 
 
 @admin.register(TermsOfServiceAcceptance)

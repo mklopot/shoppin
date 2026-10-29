@@ -1,3 +1,26 @@
-"""
-Django Admin configuration for the core application.
-"""
+from django.contrib import admin
+
+from apps.core.models import TermsOfServiceAcceptance, Workspace, WorkspaceMembership
+
+
+class WorkspaceMembershipInline(admin.TabularInline):
+    """Inline membership manager inside workspace change form."""
+    model = WorkspaceMembership
+    extra = 1
+
+
+@admin.register(Workspace)
+class WorkspaceAdmin(admin.ModelAdmin):
+    """Admin interface for managing workspaces."""
+    list_display = ("name", "owner", "created_at", "updated_at")
+    search_fields = ("name", "owner__username", "owner__email")
+    inlines = [WorkspaceMembershipInline]
+
+
+@admin.register(TermsOfServiceAcceptance)
+class TermsOfServiceAcceptanceAdmin(admin.ModelAdmin):
+    """Admin interface and audit log for Terms of Service acceptances."""
+    list_display = ("user", "version", "accepted_at", "ip_address", "platform", "timezone")
+    list_filter = ("version", "accepted_at", "platform")
+    search_fields = ("user__username", "user__email", "ip_address", "user_agent")
+    readonly_fields = ("accepted_at",)

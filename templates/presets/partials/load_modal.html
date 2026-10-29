@@ -63,7 +63,7 @@
                             <span class="font-medium flex-1">
                                 {{ item.name }}
                                 {% if item.amount_display %}
-                                <span class="text-gray-500">({{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %})</span>
+                                <span class="text-gray-500 whitespace-nowrap">({{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %})</span>
                                 {% endif %}
                                 {% if item.optional %}
                                 <span class="text-gray-400 italic">(optional)</span>

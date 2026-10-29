@@ -1,21 +1,22 @@
+{% if toast_messages %}
+<div id="toast-container" hx-swap-oob="beforeend">
+    {% for msg in toast_messages %}
+    <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+        <span class="font-medium pr-2">{{ msg }}</span>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
+    </div>
+    {% endfor %}
+</div>
+{% elif toast_message %}
+<div id="toast-container" hx-swap-oob="beforeend">
+    <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+        <span class="font-medium pr-2">{{ toast_message }}</span>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
+    </div>
+</div>
+{% endif %}
+
 <div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}">
-    {% if toast_messages %}
-    <div id="toast-container" hx-swap-oob="beforeend">
-        {% for msg in toast_messages %}
-        <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
-            <span class="font-medium pr-2">{{ msg }}</span>
-            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% elif toast_message %}
-    <div id="toast-container" hx-swap-oob="beforeend">
-        <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
-            <span class="font-medium pr-2">{{ toast_message }}</span>
-            <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
-        </div>
-    </div>
-    {% endif %}
 
     {% if not can_write %}
     <!-- Read-Only / Static View Banner -->
@@ -185,23 +186,28 @@
     {% if can_write %}
     <!-- Secondary Controls Bar: Store Selector, Sort Order -->
     <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">
-        <!-- Store Selector -->
-        <div class="flex items-center space-x-1.5">
-            <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex items-center space-x-1">
+        <!-- Store Selector with Integrated Map Action -->
+        <div class="flex items-center">
+            <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline-flex items-center">
                 {% csrf_token %}
-                <label for="store-selector-select" class="font-bold text-gray-700">Store:</label>
-                <select id="store-selector-select" name="store_id" aria-label="Select active grocery store" onchange="this.form.requestSubmit()" class="border border-gray-400 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-600">
-                    <option value="">No Store (Default Category Flow)</option>
-                    {% for store in stores %}
-                    <option value="{{ store.id }}" {% if active_store and active_store.id == store.id %}selected{% endif %}>
-                        {{ store.display_name|default:store.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+                <label for="store-selector-select" class="font-bold text-gray-700 mr-1.5">Store:</label>
+                <div class="inline-flex border border-gray-400 items-stretch bg-white">
+                    <select id="store-selector-select" name="store_id" aria-label="Select active grocery store" onchange="this.form.requestSubmit()"
+                            class="border-0 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:ring-0 text-xs">
+                        <option value="">No Store (Default Category Flow)</option>
+                        {% for store in stores %}
+                        <option value="{{ store.id }}" {% if active_store and active_store.id == store.id %}selected{% endif %}>
+                            {{ store.display_name|default:store.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" onclick="openStorePickerModal()" aria-label="Locate nearest store using GPS or map" title="Find nearest store / View map"
+                            class="border-l border-gray-400 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 text-gray-700 font-medium rounded-none inline-flex items-center gap-1 text-xs">
+                        <span aria-hidden="true">📍</span>
+                        <span class="hidden sm:inline">Near Me / </span><span>Map</span>
+                    </button>
+                </div>
             </form>
-            <button type="button" onclick="openStorePickerModal()" aria-label="Locate nearest store using GPS" title="Find nearest store" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-1 text-gray-700 font-medium rounded-none">
-                📍 Near Me / Map
-            </button>
         </div>
 
         <div class="flex items-center space-x-2">
@@ -231,23 +237,23 @@
         <form hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
             <input type="text" name="name" id="add-item-name" aria-label="Item name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
-                   class="flex-1 min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none">
-            <input type="text" name="amount" id="add-item-amount" aria-label="Item amount" value="1" placeholder="Amount" style="width: 65px;"
-                   class="border border-gray-400 px-2 py-1 bg-white text-center rounded-none focus:outline-none">
-            <input type="text" name="brand" id="add-item-brand" aria-label="Item brand (optional)" placeholder="Brand (opt)" style="width: 110px;"
-                   class="hidden sm:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
-            <input type="text" name="vendor" id="add-item-vendor" aria-label="Item vendor (optional)" placeholder="Vendor (opt)" style="width: 110px;"
-                   class="hidden md:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
-            <input type="text" name="purpose" id="add-item-purpose" aria-label="Item purpose (optional)" placeholder="Purpose (opt)" style="width: 115px;"
-                   class="hidden lg:block border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none">
-            <label class="inline-flex items-center space-x-1.5 cursor-pointer select-none px-2 py-1 border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] h-[26px]" title="Flag as High Priority">
+                   class="flex-1 min-w-[140px] sm:min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none text-xs">
+            <input type="text" name="amount" id="add-item-amount" aria-label="Item amount" value="1" placeholder="Amount" style="width: 55px;"
+                   class="border border-gray-400 px-2 py-1 bg-white text-center rounded-none focus:outline-none text-xs">
+            <input type="text" name="brand" id="add-item-brand" aria-label="Item brand (optional)" placeholder="Brand (opt)"
+                   class="flex-1 min-w-[85px] sm:w-[110px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none text-xs">
+            <input type="text" name="vendor" id="add-item-vendor" aria-label="Item vendor (optional)" placeholder="Vendor (opt)"
+                   class="flex-1 min-w-[85px] sm:w-[110px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none text-xs">
+            <input type="text" name="purpose" id="add-item-purpose" aria-label="Item purpose (optional)" placeholder="Purpose (opt)"
+                   class="flex-1 min-w-[95px] sm:w-[115px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none text-xs">
+            <label class="inline-flex items-center space-x-1 cursor-pointer select-none px-2 py-1 border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] h-[26px]" title="Flag as High Priority">
                 <input type="checkbox" name="priority" value="true" class="h-3.5 w-3.5 text-[#800020] border-[#800020]/40 rounded-none cursor-pointer focus:ring-0">
                 <span class="text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 leading-none">
                     <span aria-hidden="true">🚩</span>
-                    <span class="hidden sm:inline">Priority</span>
+                    <span class="inline">Priority</span>
                 </span>
             </label>
-            <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none">
+            <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none text-xs h-[26px] flex items-center justify-center">
                 + Add Item
             </button>
         </form>
@@ -344,19 +350,19 @@
                                             {% endif %}
                                         {% endif %}
                                     {% endif %}
-                                    <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+                                    <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                                     <!-- Secondary details -->
                                     <span class="text-gray-600 ml-2">
-                                        {% if item.purpose_display %}<span class="italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
-                                        {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
-                                        {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
-                                        {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
+                                        {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                                        {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                                        {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                                        {% if item.vendor %}<span class="inline-block ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
                                         {% with eff_loc=item.effective_location_display %}
                                             {% if eff_loc and group_by != 'aisle' %}
-                                                <span class="ml-1 text-gray-700 font-medium">📍 {{ eff_loc }}</span>
+                                                <span class="inline-block ml-1 text-gray-700 font-medium">📍 {{ eff_loc }}</span>
                                             {% elif group_by == 'aisle' and item.effective_bay %}
-                                                <span class="ml-1 text-gray-600 font-normal">📍 Bay {{ item.effective_bay }}</span>
+                                                <span class="inline-block ml-1 text-gray-600 font-normal">📍 Bay {{ item.effective_bay }}</span>
                                             {% endif %}
                                         {% endwith %}
                                         <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
@@ -466,14 +472,14 @@
                                         </span>
                                         {% endif %}
                                     {% endif %}
-                        <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+                        <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                         <!-- Secondary details -->
                         <span class="text-gray-600 ml-2">
-                            {% if item.purpose_display %}<span class="italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
-                            {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
-                            {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
-                            {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
+                            {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                            {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                            {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                            {% if item.vendor %}<span class="inline-block ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
                             <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>
@@ -543,14 +549,14 @@
                                         </span>
                                         {% endif %}
                                     {% endif %}
-                        <span class="font-normal text-gray-700 ml-1.5">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+                        <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                         <!-- Secondary details -->
                         <span class="text-gray-600 ml-2">
-                            {% if item.purpose_display %}<span class="italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
-                            {% if item.optional %}<span class="italic text-gray-600 ml-1">[optional]</span>{% endif %}
-                            {% if item.brand %}<span class="ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
-                            {% if item.vendor %}<span class="ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
+                            {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                            {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                            {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                            {% if item.vendor %}<span class="inline-block ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
                             <span class="ml-1.5 text-gray-400 italic text-xs select-none" title="Date placed or updated by {{ item.changed_by_display }}">{{ item.changed_by_display }} {{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
                         </span>
                     </div>

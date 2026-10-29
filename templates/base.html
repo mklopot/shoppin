@@ -142,42 +142,43 @@
     <header role="banner" class="bg-white border-b border-gray-300 sticky top-0 z-30">
         <div class="max-w-5xl mx-auto px-3 sm:px-4">
             <div class="flex justify-between h-11 items-center">
-                <div class="flex items-center space-x-6">
-                    <a href="/" aria-label="Shoppin Home" class="flex items-center space-x-1.5 font-bold text-base text-gray-900">
+                <div class="flex items-center space-x-4 sm:space-x-6 h-11">
+                    <a href="/" aria-label="Shoppin Home" class="flex items-center space-x-1.5 font-bold text-base text-gray-900 flex-shrink-0">
                         <span aria-hidden="true">🛒</span>
                         <span>Shoppin</span>
                     </a>
-                    <nav aria-label="Primary Navigation" class="flex space-x-1 text-xs">
+                    <!-- Desktop Primary Navigation Tabs -->
+                    <nav aria-label="Primary Navigation" class="hidden sm:flex space-x-1 text-xs h-11 items-stretch">
                         <a href="{% url 'shopping:list' %}?mode=shopping"
                            {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}aria-current="page"{% endif %}
-                           class="px-2.5 py-1 {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
+                           class="inline-flex items-center px-2.5 text-xs {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Shopping List
                         </a>
                         <a href="{% url 'shopping:pantry_check' %}"
                            {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}aria-current="page"{% endif %}
-                           class="px-2.5 py-1 {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
+                           class="inline-flex items-center px-2.5 text-xs {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Pantry Check
                         </a>
                         <a href="/mealplans/"
                            {% if 'mealplans' in request.path %}aria-current="page"{% endif %}
-                           class="px-2.5 py-1 {% if 'mealplans' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
+                           class="inline-flex items-center px-2.5 text-xs {% if 'mealplans' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Meal Plan
                         </a>
                         <a href="{% url 'recipes:list' %}"
                            {% if 'recipes' in request.path %}aria-current="page"{% endif %}
-                           class="px-2.5 py-1 {% if 'recipes' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
+                           class="inline-flex items-center px-2.5 text-xs {% if 'recipes' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Recipes
                         </a>
                         <a href="/preset-lists/"
                            {% if 'preset' in request.path %}aria-current="page"{% endif %}
-                           class="px-2.5 py-1 {% if 'preset' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800{% else %}font-medium text-gray-600 hover:text-gray-900{% endif %}">
+                           class="inline-flex items-center px-2.5 text-xs {% if 'preset' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Preset Lists
                         </a>
                     </nav>
                 </div>
 
                 <!-- Right: Workspace Selector, User / Login, & Persona Switcher -->
-                <div class="flex items-center space-x-2 text-xs">
+                <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs flex-shrink-0">
                     {% if request.user.is_authenticated %}
                     <!-- Workspace Dropdown (Authenticated) -->
                     <div class="relative" id="workspace-dropdown-container">
@@ -187,10 +188,10 @@
                                 aria-expanded="false"
                                 aria-controls="workspace-dropdown-menu"
                                 onclick="toggleWorkspaceDropdown()"
-                                class="flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2.5 py-1 rounded-none text-gray-800 font-medium">
+                                class="h-8 inline-flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none">
                             <span class="text-xs" aria-hidden="true">🏢</span>
-                            <span class="font-semibold">{{ active_workspace.name }}</span>
-                            <span class="text-[10px] uppercase font-bold tracking-wider px-1 py-0.2 {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
+                            <span class="font-semibold max-w-[80px] sm:max-w-[120px] truncate">{{ active_workspace.name }}</span>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 leading-none {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
                                 {{ workspace_role|title }}
                             </span>
                             <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
@@ -246,9 +247,9 @@
                                 aria-expanded="false"
                                 aria-controls="user-dropdown-menu"
                                 onclick="toggleUserDropdown()"
-                                class="flex items-center space-x-1.5 border border-gray-300 bg-white hover:bg-gray-50 px-2 py-1 rounded-none text-gray-800 font-medium text-xs">
+                                class="h-8 inline-flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none">
                             <span aria-hidden="true">👤</span>
-                            <span class="font-semibold">{{ request.user.first_name|default:request.user.username }}</span>
+                            <span class="font-semibold max-w-[75px] sm:max-w-[100px] truncate">{{ request.user.first_name|default:request.user.username }}</span>
                             <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
                         </button>
                         <div id="user-dropdown-menu"
@@ -280,7 +281,7 @@
                     <!-- Guest State: Sign In Button -->
                     <a href="{% url 'core:login' %}?next={{ request.path }}"
                        aria-label="Sign in to Shoppin"
-                       class="inline-flex items-center space-x-1.5 border border-gray-300 bg-white hover:bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-800 shadow-sm transition-colors">
+                       class="h-8 inline-flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 sm:px-2.5 text-xs font-semibold text-gray-800 shadow-sm transition-colors">
                         <svg class="w-3.5 h-3.5" aria-hidden="true" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -300,10 +301,10 @@
                                 aria-expanded="false"
                                 aria-controls="persona-dropdown-menu"
                                 onclick="togglePersonaDropdown()"
-                                class="flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-none text-gray-700 font-medium text-xs"
+                                class="h-8 inline-flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 rounded-none text-gray-700 font-medium text-xs focus:outline-none"
                                 title="Switch developer test persona">
                             <span aria-hidden="true">🛠</span>
-                            <span>{% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}</span>
+                            <span class="max-w-[65px] sm:max-w-[80px] truncate">{% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}</span>
                             <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
                         </button>
                         <div id="persona-dropdown-menu"
@@ -331,6 +332,30 @@
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Mobile Navigation Tabs (Scrollable Horizontal Strip) -->
+            <nav aria-label="Mobile Navigation" class="sm:hidden flex items-stretch space-x-1 text-xs overflow-x-auto border-t border-gray-200 py-0 scrollbar-none -mx-3 px-3">
+                <a href="{% url 'shopping:list' %}?mode=shopping"
+                   class="inline-flex items-center px-2.5 py-2 text-xs whitespace-nowrap {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent -mb-[1px]{% endif %}">
+                    Shopping List
+                </a>
+                <a href="{% url 'shopping:pantry_check' %}"
+                   class="inline-flex items-center px-2.5 py-2 text-xs whitespace-nowrap {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent -mb-[1px]{% endif %}">
+                    Pantry Check
+                </a>
+                <a href="/mealplans/"
+                   class="inline-flex items-center px-2.5 py-2 text-xs whitespace-nowrap {% if 'mealplans' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent -mb-[1px]{% endif %}">
+                    Meal Plan
+                </a>
+                <a href="{% url 'recipes:list' %}"
+                   class="inline-flex items-center px-2.5 py-2 text-xs whitespace-nowrap {% if 'recipes' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent -mb-[1px]{% endif %}">
+                    Recipes
+                </a>
+                <a href="/preset-lists/"
+                   class="inline-flex items-center px-2.5 py-2 text-xs whitespace-nowrap {% if 'preset' in request.path %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent -mb-[1px]{% endif %}">
+                    Preset Lists
+                </a>
+            </nav>
         </div>
     </header>
 
@@ -354,7 +379,7 @@
     </footer>
 
     <!-- Floating Toast Notifications Container (Screen Reader Live Region) -->
-    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed top-14 right-3 left-3 sm:left-auto sm:right-4 z-50 flex flex-col space-y-2 pointer-events-none sm:max-w-sm">
+    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed bottom-4 left-3 right-3 sm:bottom-auto sm:top-14 sm:right-4 sm:left-auto z-[9999] flex flex-col-reverse sm:flex-col space-y-reverse space-y-2 sm:space-y-2 pointer-events-none sm:max-w-sm items-center sm:items-end">
         {% if messages %}
             {% for message in messages %}
             <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer" onclick="dismissToast(this)">

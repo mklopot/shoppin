@@ -3,7 +3,7 @@
     <div>
         {% if recipe.primary_photo_url %}
         <div class="relative h-44 bg-gray-100 overflow-hidden border-b border-gray-200">
-            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy">
+            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" decoding="async">
             <div class="absolute top-2 left-2 flex flex-wrap gap-1">
                 {% if recipe.cuisine %}
                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-white/90 text-gray-900 border border-gray-300 shadow-sm">{{ recipe.cuisine }}</span>

@@ -294,7 +294,7 @@ def test_recipe_photo_upload_and_clear(auth_user):
     recipe = create_or_update_recipe(data, files={"photo_file": uploaded}, user=user)
     assert bool(recipe.photo_file) is True
     assert "homemade_pizza" in recipe.photo_file.name
-    assert recipe.primary_photo_url == recipe.photo_file.url
+    assert recipe.primary_photo_url.startswith(recipe.photo_file.url)
 
     # 2. Clear photo on edit
     clear_data = {
@@ -623,8 +623,10 @@ def test_recipe_import_url_view_direct(client: Client, auth_user, monkeypatch):
 
     mock_resp = MagicMock()
     mock_resp.text = MOCK_RECIPE_HTML
+    mock_resp.is_redirect = False
+    mock_resp.status_code = 200
     mock_resp.raise_for_status = MagicMock()
-    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_resp)
+    monkeypatch.setattr(requests.Session, "get", lambda *args, **kwargs: mock_resp)
 
     resp = client.post(
         reverse("recipes:import_url"),
@@ -654,8 +656,10 @@ def test_recipe_create_view_with_import_url_prefill(client: Client, auth_user, m
 
     mock_resp = MagicMock()
     mock_resp.text = MOCK_RECIPE_HTML
+    mock_resp.is_redirect = False
+    mock_resp.status_code = 200
     mock_resp.raise_for_status = MagicMock()
-    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_resp)
+    monkeypatch.setattr(requests.Session, "get", lambda *args, **kwargs: mock_resp)
 
     url = "https://www.allrecipes.com/recipe/158968/classic-guacamole/"
     resp = client.get(reverse("recipes:create") + f"?import_url={url}")
@@ -690,8 +694,10 @@ def test_recipe_import_url_view_errors(client: Client, auth_user, monkeypatch):
     # 2. Page without recipe data
     mock_empty = MagicMock()
     mock_empty.text = "<html><body><h1>Just a blog post</h1><p>No food here.</p></body></html>"
+    mock_empty.is_redirect = False
+    mock_empty.status_code = 200
     mock_empty.raise_for_status = MagicMock()
-    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: mock_empty)
+    monkeypatch.setattr(requests.Session, "get", lambda *args, **kwargs: mock_empty)
 
     resp2 = client.post(reverse("recipes:import_url"), {"url": "https://example.com/no-recipe"})
     assert resp2.status_code == 302

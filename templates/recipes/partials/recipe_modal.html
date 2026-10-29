@@ -28,7 +28,7 @@
 
         {% if recipe.primary_photo_url %}
         <div class="w-full h-48 bg-gray-100 overflow-hidden border border-gray-300">
-            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover">
+            <img src="{{ recipe.primary_photo_url }}" alt="{{ recipe.name }}" class="w-full h-full object-cover" decoding="async">
         </div>
         {% endif %}
 

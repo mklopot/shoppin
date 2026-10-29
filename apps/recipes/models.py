@@ -208,11 +208,17 @@ class Recipe(models.Model):
         """Return the primary photo URL (uploaded file or external URL) if available, else empty string."""
         if self.photo_file:
             try:
-                return self.photo_file.url
+                url = self.photo_file.url
+                if self.updated_at:
+                    return f"{url}?v={int(self.updated_at.timestamp())}"
+                return url
             except ValueError:
                 pass
         if self.photo_urls and len(self.photo_urls) > 0:
-            return self.photo_urls[0]
+            url = self.photo_urls[0]
+            if url.startswith("/media/") and self.updated_at:
+                return f"{url}?v={int(self.updated_at.timestamp())}"
+            return url
         return ""
 
     @property

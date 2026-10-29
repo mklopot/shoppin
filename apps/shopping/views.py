@@ -18,6 +18,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.core.categorizer import categorizer
+from apps.core.services.moderation_service import contains_obscene_language
 from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
@@ -448,10 +449,11 @@ def add_item(request: HttpRequest) -> HttpResponse:
     if forbidden:
         return forbidden
 
-    raw_name = request.POST.get("name", "").strip()
-    if not raw_name:
+    submitted_name = request.POST.get("name", "").strip()
+    if not submitted_name:
         return redirect("shopping:list")
 
+    raw_name = submitted_name
     priority_flag = request.POST.get("priority") in ("true", "1", "on", True)
     for trigger in ("🚩", "!", "^"):
         if trigger in raw_name:
@@ -463,6 +465,17 @@ def add_item(request: HttpRequest) -> HttpResponse:
     brand = request.POST.get("brand", "").strip()
     vendor = request.POST.get("vendor", "").strip()
     purpose = clean_purpose(request.POST.get("purpose", "").strip()) or "one-time purchase"
+
+    # Moderation: Disallow expletives, obscene or hurtful language
+    is_obscene, _ = contains_obscene_language(f"{submitted_name} {raw_name} {brand} {vendor} {purpose}")
+    if is_obscene:
+        group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+        context = _build_list_context(request, shopping_list, group_by)
+        return render_list_response(
+            request,
+            context,
+            toast_message="Cannot add item: Obscene or hurtful language is not permitted.",
+        )
 
     # Category: use user-provided value or infer via categorizer
     raw_category = request.POST.get("category", "").strip()
@@ -603,6 +616,17 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         item.aisle = request.POST.get("aisle", item.aisle).strip()
         item.purpose = clean_purpose(request.POST.get("purpose", item.purpose).strip()) or "one-time purchase"
         item.priority = request.POST.get("priority") in ("true", "1", "on", True)
+
+        # Moderation: Disallow expletives, obscene or hurtful language
+        is_obscene, _ = contains_obscene_language(f"{item.name} {item.brand} {item.vendor} {item.purpose} {item.aisle}")
+        if is_obscene:
+            group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+            context = _build_list_context(request, item.shopping_list, group_by)
+            return render_list_response(
+                request,
+                context,
+                toast_message="Cannot save item: Obscene or hurtful language is not permitted.",
+            )
 
         # Check if editing this item allows it to combine with another item on the list
         normalized_name = singularize(item.name.lower())

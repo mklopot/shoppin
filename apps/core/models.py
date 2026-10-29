@@ -44,6 +44,12 @@ class Workspace(models.Model):
     class Meta:
         ordering = ["name"]
 
+    def clean(self) -> None:
+        """Validate that workspace name is free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
+
     def __str__(self) -> str:
         """Return the workspace name."""
         return self.name

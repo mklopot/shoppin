@@ -37,6 +37,12 @@ class MealPlan(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+    def clean(self) -> None:
+        """Validate that meal plan name is free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
+
     def __str__(self) -> str:
         """Return the meal plan name."""
         return self.name
@@ -57,6 +63,12 @@ class MealPlanRule(models.Model):
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self) -> None:
+        """Validate that rule text is free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
 
     def __str__(self) -> str:
         """Return the rule description text."""
@@ -90,6 +102,12 @@ class Meal(models.Model):
             from apps.mealplans.services.emojifier import get_meal_emoji
             self.emoji = get_meal_emoji(self.name)
         super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        """Validate that meal plan name is free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
 
     def __str__(self) -> str:
         """Return formatted meal name with emoji prefix."""

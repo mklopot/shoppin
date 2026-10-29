@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -167,9 +168,13 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
     if request.method == "POST":
-        recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user)
-        messages.success(request, f"Recipe '{recipe.name}' created successfully!")
-        return redirect(recipe.get_absolute_url())
+        try:
+            recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user)
+            messages.success(request, f"Recipe '{recipe.name}' created successfully!")
+            return redirect(recipe.get_absolute_url())
+        except ValidationError as ve:
+            err_msg = getattr(ve, "message", None) or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
+            messages.error(request, err_msg)
 
     filter_options = get_filter_options()
     all_recipes = Recipe.objects.all().order_by("name")
@@ -273,9 +278,13 @@ def recipe_edit_view(
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
     if request.method == "POST":
-        create_or_update_recipe(request.POST, files=request.FILES, recipe_id=recipe.id, user=user)
-        messages.success(request, f"Recipe '{recipe.name}' updated successfully!")
-        return redirect(recipe.get_absolute_url())
+        try:
+            create_or_update_recipe(request.POST, files=request.FILES, recipe_id=recipe.id, user=user)
+            messages.success(request, f"Recipe '{recipe.name}' updated successfully!")
+            return redirect(recipe.get_absolute_url())
+        except ValidationError as ve:
+            err_msg = getattr(ve, "message", None) or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
+            messages.error(request, err_msg)
 
     filter_options = get_filter_options()
     all_recipes = Recipe.objects.exclude(id=recipe.id).order_by("name")

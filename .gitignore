@@ -173,6 +173,12 @@ cython_debug/
 .pypirc
 
 # Uploaded user media
+# Django static files
+staticfiles/
 media/*
-!media/.gitkeep
-!media/recipes/
+!# Django static files
+staticfiles/
+media/.gitkeep
+!# Django static files
+staticfiles/
+media/recipes/

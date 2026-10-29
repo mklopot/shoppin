@@ -173,6 +173,12 @@ class Recipe(models.Model):
     class Meta:
         ordering = ["name"]
 
+    def clean(self) -> None:
+        """Validate that all recipe fields are free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
+
     def save(self, *args, **kwargs) -> None:
         """Auto-populate URL slug from name if not specified."""
         if not self.slug:
@@ -322,6 +328,12 @@ class Ingredient(models.Model):
 
     class Meta:
         ordering = ["order", "id"]
+
+    def clean(self) -> None:
+        """Validate that ingredient fields are free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
 
     def __str__(self) -> str:
         """Format ingredient quantity and name."""

@@ -362,6 +362,12 @@ class ShoppingListItem(models.Model):
     class Meta:
         ordering = ["order", "id"]
 
+    def clean(self) -> None:
+        """Validate that shopping item fields are free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
+
     def __str__(self) -> str:
         """Return formatted item quantity, name, and current status."""
         unit_str = f" {self.unit_display}" if self.unit_display else ""

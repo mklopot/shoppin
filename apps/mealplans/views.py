@@ -7,11 +7,13 @@ import sys
 from decimal import Decimal
 from typing import Any
 
+from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from apps.core.services.moderation_service import contains_obscene_language
 from apps.core.services.workspace_service import get_active_workspace
 from apps.mealplans.models import Meal, MealPlanRule
 from apps.mealplans.services.mealplan_service import (
@@ -100,6 +102,12 @@ def add_meal(request: HttpRequest) -> HttpResponse:
     meal_name = request.POST.get("meal", "").strip()
     toast_messages: list[str] = []
     if meal_name:
+        is_obscene, _ = contains_obscene_language(meal_name)
+        if is_obscene:
+            msg = "Cannot add meal: Obscene or hurtful language is not permitted."
+            messages.error(request, msg)
+            toast_messages.append(f"❌ {msg}")
+            return meal_plan_view(request, toast_messages=toast_messages)
         meal = add_meal_to_plan(meal_plan, meal_name)
         toast_messages.append(f"➕ Added '{meal.name}' to meal plan")
 
@@ -122,6 +130,10 @@ def edit_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
         new_name = request.POST.get("name", "").strip()
         toast_messages: list[str] = []
         if new_name and new_name != meal.name:
+            is_obscene, _ = contains_obscene_language(new_name)
+            if is_obscene:
+                toast_messages.append("❌ Cannot rename meal: Obscene or hurtful language is not permitted.")
+                return meal_plan_view(request, toast_messages=toast_messages)
             old_name = meal.name
             update_meal_name(meal, new_name)
             toast_messages.append(f"✏️ Renamed '{old_name}' to '{meal.name}'")
@@ -463,6 +475,12 @@ def add_meal_rule(request: HttpRequest) -> HttpResponse:
 
     toast_messages: list[str] = []
     if rule_text:
+        is_obscene, _ = contains_obscene_language(rule_text)
+        if is_obscene:
+            msg = "Cannot add guideline: Obscene or hurtful language is not permitted."
+            messages.error(request, msg)
+            toast_messages.append(f"❌ {msg}")
+            return meal_plan_view(request, toast_messages=toast_messages)
         MealPlanRule.objects.create(meal_plan=meal_plan, rule_text=rule_text, is_active=True)
         toast_messages.append(f"📋 Added guideline: '{rule_text}'")
 

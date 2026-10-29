@@ -8,6 +8,7 @@ from django.db.models import Avg, F, Q, QuerySet
 from django.http import HttpRequest
 
 from apps.core.categorizer import categorizer
+from apps.core.services.moderation_service import validate_content_clean
 from apps.core.utils import (
     can_combine_units,
     clean_purpose,
@@ -296,6 +297,31 @@ def create_or_update_recipe(
     photo_url = str(data.get("photo_url", "")).strip()
     photo_urls = [photo_url] if photo_url else parse_tag_list(data.getlist("photo_urls") if hasattr(data, "getlist") else data.get("photo_urls"))
 
+    # Content Moderation: Prohibit expletives, obscenities, slurs, and hurtful language
+    validate_content_clean(name, field_label="Recipe name")
+    validate_content_clean(description, field_label="Recipe description")
+    validate_content_clean(directions, field_label="Recipe directions")
+    validate_content_clean(cuisine, field_label="Recipe cuisine")
+    validate_content_clean(dish_type, field_label="Recipe dish type")
+    validate_content_clean(storage_instructions, field_label="Storage instructions")
+    validate_content_clean(reheating_instructions, field_label="Reheating instructions")
+
+    # Pre-validate ingredient inputs
+    ingredient_names = data.getlist("ingredient_name[]") if hasattr(data, "getlist") else data.get("ingredient_name[]", [])
+    ingredient_amounts = data.getlist("ingredient_amount[]") if hasattr(data, "getlist") else data.get("ingredient_amount[]", [])
+    ingredient_units = data.getlist("ingredient_unit[]") if hasattr(data, "getlist") else data.get("ingredient_unit[]", [])
+    ingredient_optionals = data.getlist("ingredient_optional[]") if hasattr(data, "getlist") else data.get("ingredient_optional[]", [])
+    ingredient_brands = data.getlist("ingredient_brand[]") if hasattr(data, "getlist") else data.get("ingredient_brand[]", [])
+    ingredient_vendors = data.getlist("ingredient_vendor[]") if hasattr(data, "getlist") else data.get("ingredient_vendor[]", [])
+
+    if ingredient_names:
+        for raw_ing in ingredient_names:
+            validate_content_clean(str(raw_ing), field_label="Ingredient name")
+        for raw_brand in ingredient_brands:
+            validate_content_clean(str(raw_brand), field_label="Ingredient brand")
+        for raw_vendor in ingredient_vendors:
+            validate_content_clean(str(raw_vendor), field_label="Ingredient vendor")
+
     if recipe_id:
         recipe = Recipe.objects.get(id=recipe_id)
         recipe.name = name
@@ -346,13 +372,6 @@ def create_or_update_recipe(
         )
 
     # Process ingredients if provided in data
-    ingredient_names = data.getlist("ingredient_name[]") if hasattr(data, "getlist") else data.get("ingredient_name[]", [])
-    ingredient_amounts = data.getlist("ingredient_amount[]") if hasattr(data, "getlist") else data.get("ingredient_amount[]", [])
-    ingredient_units = data.getlist("ingredient_unit[]") if hasattr(data, "getlist") else data.get("ingredient_unit[]", [])
-    ingredient_optionals = data.getlist("ingredient_optional[]") if hasattr(data, "getlist") else data.get("ingredient_optional[]", [])
-    ingredient_brands = data.getlist("ingredient_brand[]") if hasattr(data, "getlist") else data.get("ingredient_brand[]", [])
-    ingredient_vendors = data.getlist("ingredient_vendor[]") if hasattr(data, "getlist") else data.get("ingredient_vendor[]", [])
-
     if ingredient_names:
         recipe.ingredients.all().delete()
         for i, raw_ing_name in enumerate(ingredient_names):

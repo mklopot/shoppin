@@ -85,7 +85,7 @@
         @keyframes toastSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(12px) scale(0.97);
+                transform: translateY(-8px) scale(0.97);
             }
             to {
                 opacity: 1;
@@ -380,7 +380,7 @@
     </footer>
 
     <!-- Floating Toast Notifications Container (Screen Reader Live Region) -->
-    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed bottom-4 left-3 right-3 sm:bottom-auto sm:top-14 sm:right-4 sm:left-auto z-[9999] flex flex-col-reverse sm:flex-col space-y-reverse space-y-2 sm:space-y-2 pointer-events-none sm:max-w-sm items-center sm:items-end">
+    <div id="toast-container" role="region" aria-label="Notifications" aria-live="polite" class="fixed top-[84px] left-3 right-3 sm:top-14 sm:right-4 sm:left-auto z-[9999] flex flex-col space-y-2 pointer-events-none sm:max-w-sm items-center sm:items-end">
         {% if messages %}
             {% for message in messages %}
             <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer" onclick="dismissToast(this)">

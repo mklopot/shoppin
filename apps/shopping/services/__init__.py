@@ -12,6 +12,7 @@ from apps.shopping.services.scheduler import (
 from apps.shopping.services.store_service import (
     KrogerAPIClient,
     get_aisle_sort_key,
+    get_ingredient_search_candidates,
     get_known_aisles,
     get_known_categories,
     get_nearest_stores,
@@ -27,6 +28,7 @@ __all__ = [
     "stop_preset_scheduler",
     "KrogerAPIClient",
     "get_aisle_sort_key",
+    "get_ingredient_search_candidates",
     "get_known_aisles",
     "get_known_categories",
     "get_nearest_stores",

@@ -53,6 +53,43 @@ DEPARTMENT_ORDER = {
     "other": 200,
 }
 
+# Modifiers and culinary prefixes/suffixes to strip when generating candidate search terms
+COMMON_PREP_MODIFIERS: set[str] = {
+    "freshly ground", "freshly", "fresh", "ground", "diced", "minced", "chopped",
+    "crushed", "sliced", "grated", "shredded", "peeled", "cooked", "roasted",
+    "toasted", "dried", "dry", "frozen", "raw", "organic", "boneless skinless",
+    "boneless", "skinless", "wild", "lean", "extra-virgin", "extra virgin", "pure",
+    "whole", "powder", "seeds", "seed", "flakes", "flake", "leaves", "leaf", "leafe",
+    "halves", "half", "pieces", "piece", "cubes", "cube", "cloves of", "clove of",
+    "cloves", "clove", "stalks of", "stalk of", "stalks", "stalk", "sprigs of",
+    "sprig of", "sprigs", "sprig", "leaves of", "leaf of", "heads of", "head of",
+    "heads", "head", "bunches of", "bunch of", "bunches", "bunch", "cans of", "can of",
+    "cans", "can", "packages of", "package of", "packs of", "pack of", "packages",
+    "package", "packs", "pack", "of", "and", "or", "with",
+}
+
+PREP_STOP_WORDS: set[str] = {
+    "powder", "cloves", "clove", "stalks", "stalk", "sprigs", "sprig", "leaves",
+    "leaf", "leafe", "heads", "head", "bunches", "bunch", "cans", "can", "packs",
+    "pack", "packages", "package", "pieces", "piece", "cubes", "cube", "halves",
+    "half", "seeds", "seed", "flakes", "flake", "of", "and", "or", "with", "fresh",
+    "ground", "diced", "minced", "chopped", "sliced", "raw", "frozen", "dried", "dry",
+}
+
+BARE_ADJECTIVES: set[str] = {
+    "black", "white", "yellow", "red", "green", "olive", "extra", "virgin",
+    "hot", "sweet", "sour", "mild", "spicy", "dark", "light", "large", "small", "medium",
+}
+
+# Standard department names that are consistent across Kroger/King Soopers locations
+UNIVERSAL_DEPARTMENTS: set[str] = {
+    "produce", "meat", "seafood", "deli", "bakery", "dairy", "eggs and dairy", "frozen",
+}
+
+# In-memory negative lookup cache: (store_id, candidate_term) -> timestamp (TTL: 1 hour)
+_NEGATIVE_LOOKUP_CACHE: dict[tuple[int, str], float] = {}
+_NEGATIVE_CACHE_TTL_SECONDS = 3600.0
+
 
 def get_aisle_sort_key(aisle_name: str) -> tuple[int, int, str]:
     """
@@ -333,7 +370,7 @@ class KrogerAPIClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:  # nosec: B310
+            with urllib.request.urlopen(request, timeout=10) as response:  # nosec: B310
                 response_data = json.loads(response.read().decode())
                 self._cached_token = response_data.get("access_token")
                 return self._cached_token
@@ -376,7 +413,7 @@ class KrogerAPIClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:  # nosec: B310
+            with urllib.request.urlopen(request, timeout=10) as response:  # nosec: B310
                 data = json.loads(response.read().decode())
                 return data.get("data", [])
         except Exception as error:
@@ -422,7 +459,7 @@ class KrogerAPIClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:  # nosec: B310
+            with urllib.request.urlopen(request, timeout=12) as response:  # nosec: B310
                 data = json.loads(response.read().decode())
                 products = data.get("data", [])
                 if not products:
@@ -471,7 +508,12 @@ def _save_store_item_aisle(
     """
     Safely persist or update a StoreItemAisle record without using select_for_update,
     handling SQLite concurrency gracefully with exponential backoff retries.
+    Guarantees that empty aisle records are never persisted to the database.
     """
+    clean_aisle = (aisle_name or "").strip()
+    if not clean_aisle:
+        return None
+
     import time
     for attempt in range(4):
         try:
@@ -480,17 +522,17 @@ def _save_store_item_aisle(
                 item_name_normalized=item_name_normalized,
             ).first()
             if record:
-                record.aisle_name = aisle_name
+                record.aisle_name = clean_aisle
                 record.bay_number = bay_number
                 record.sequence_order = sequence_order
                 record.source = source
-                record.save(update_fields=["aisle_name", "bay_number", "sequence_order", "source", "updated_at"])
+                record.save(update_fields=["aisle_name", "bay_number", "sequence_order", "source", "last_updated"])
                 return record
             else:
                 return StoreItemAisle.objects.create(
                     store=store,
                     item_name_normalized=item_name_normalized,
-                    aisle_name=aisle_name,
+                    aisle_name=clean_aisle,
                     bay_number=bay_number,
                     sequence_order=sequence_order,
                     source=source,
@@ -520,6 +562,123 @@ def normalize_search_term(raw_name: str) -> str:
     return inflection.singularize(clean)
 
 
+def get_ingredient_search_candidates(raw_name: str) -> list[str]:
+    """
+    Generate prioritized search candidate terms for an ingredient name by stripping
+    culinary descriptors, preparation techniques, parenthetical notes, and quantities.
+
+    Examples:
+        'freshly ground black pepper' -> ['freshly ground black pepper', 'black pepper', 'pepper']
+        'cloves garlic, minced'       -> ['cloves garlic', 'garlic']
+        'diced yellow onion'          -> ['diced yellow onion', 'yellow onion', 'onion']
+        'fresh cilantro leafe'        -> ['fresh cilantro leafe', 'cilantro']
+        'coriander powder'            -> ['coriander powder', 'coriander', 'ground coriander']
+        'apples, green'               -> ['green apples', 'green apple', 'apples', 'apple']
+    """
+    candidates: list[str] = []
+
+    def _add(cand: str) -> None:
+        cand = cand.strip().lower()
+        cand = re.sub(r"\s+", " ", cand)
+        if (
+            cand
+            and cand not in candidates
+            and len(cand) >= 2
+            and cand not in PREP_STOP_WORDS
+            and cand not in BARE_ADJECTIVES
+        ):
+            candidates.append(cand)
+        try:
+            sing = inflection.singularize(cand)
+            if (
+                sing
+                and sing not in candidates
+                and len(sing) >= 2
+                and sing not in PREP_STOP_WORDS
+                and sing not in BARE_ADJECTIVES
+            ):
+                candidates.append(sing)
+        except Exception:
+            pass
+
+    raw_clean = raw_name.strip().lower()
+    _add(raw_clean)
+
+    clean = raw_clean
+    clean = re.sub(r"\(.*?\)", "", clean).strip()
+
+    # Comma-separated prep: 'garlic, minced' or catalog style 'apples, green'
+    if "," in clean:
+        parts = [p.strip() for p in clean.split(",") if p.strip()]
+        if len(parts) >= 2:
+            second_part = parts[1]
+            if any(p in second_part for p in ["mince", "dice", "chop", "slice", "drain", "thaw", "divide", "taste", "fresh"]):
+                clean = parts[0]
+            else:
+                clean = f"{parts[1]} {parts[0]}"
+
+    # Strip leading quantities or fractions: e.g. '1/2', '2', '3.5', '1-2'
+    clean = re.sub(r"^[\d/\.\s\-]+\s*", "", clean).strip()
+    _add(clean)
+
+    # Iteratively strip leading/trailing modifiers
+    current = clean
+    changed = True
+    while changed:
+        changed = False
+        words = current.split()
+        if not words:
+            break
+        # Check prefix matches of length 3, 2, 1
+        for length in (3, 2, 1):
+            if len(words) >= length:
+                prefix = " ".join(words[:length])
+                if prefix in COMMON_PREP_MODIFIERS:
+                    current = " ".join(words[length:])
+                    _add(current)
+                    changed = True
+                    break
+        if changed:
+            continue
+        # Check suffix matches of length 2, 1
+        for length in (2, 1):
+            if len(words) >= length:
+                suffix = " ".join(words[-length:])
+                if suffix in COMMON_PREP_MODIFIERS:
+                    current = " ".join(words[:-length])
+                    _add(current)
+                    changed = True
+                    break
+
+    # Culinary special-case expansions
+    if "coriander" in clean:
+        _add("ground coriander")
+        _add("coriander")
+    if "black pepper" in clean:
+        _add("black pepper")
+        _add("pepper")
+    if "garlic" in clean:
+        _add("garlic")
+    if "onion" in clean:
+        if "yellow" in clean:
+            _add("yellow onion")
+        elif "white" in clean:
+            _add("white onion")
+        elif "red" in clean:
+            _add("red onion")
+        elif "green" in clean:
+            _add("green onion")
+        _add("onion")
+
+    # Decompose multi-word remaining tokens into nouns
+    words = [w for w in current.split() if w not in PREP_STOP_WORDS and w not in BARE_ADJECTIVES]
+    if len(words) >= 2:
+        _add(words[0])
+        _add(words[-1])
+
+    return candidates
+
+
 def resolve_store_aisle(
     store: StoreLocation,
     item_name: str,
@@ -529,9 +688,10 @@ def resolve_store_aisle(
     Resolve and cache the physical store aisle for a grocery item from the store chain API.
 
     Resolution strategy:
-    1. Check the local StoreItemAisle database cache for existing API or manual entries.
-    2. If missing and store is a Kroger location with API enabled, query live Kroger API and cache result.
-    3. If it cannot be determined from the store chain API, return None (leave blank).
+    1. Check local StoreItemAisle cache for existing API or manual entries matching candidate terms.
+    2. If missing and store is a Kroger location with API enabled, query Kroger API across candidates.
+    3. If store-specific API has no match, check for universal perimeter departments from other Kroger stores.
+    4. If it cannot be determined, return None (leave blank). Does NOT persist empty negative records.
 
     Args:
         store: Target StoreLocation instance.
@@ -541,75 +701,112 @@ def resolve_store_aisle(
     Returns:
         Dict with aisle_name, bay_number, sequence_order, and source ('api', 'manual') or None.
     """
-    clean_name = inflection.singularize(item_name.strip().lower())
-    search_term = normalize_search_term(clean_name)
+    import time
+    clean_original = inflection.singularize(item_name.strip().lower())
+    candidates = get_ingredient_search_candidates(item_name)
+    if clean_original not in candidates:
+        candidates.insert(0, clean_original)
 
     # 1. Check local database cache for api or manual mapping
-    cached = StoreItemAisle.objects.filter(
-        store=store,
-        item_name_normalized__in=[clean_name, search_term],
-        source__in=["api", "manual"],
-    ).order_by("-aisle_name").first()
-    if cached:
-        if cached.aisle_name:
-            return {
-                "aisle_name": cached.aisle_name,
-                "bay_number": cached.bay_number,
-                "sequence_order": cached.sequence_order,
-                "source": cached.source,
-            }
-        return None
-
-    # 2. Query Kroger API if applicable
-    if store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
-        # Try search_term first (e.g. 'green apple'), then fall back to clean_name if needed
-        api_result = kroger_client.lookup_product_aisle(store.external_store_id, search_term)
-        if (not api_result or not api_result.get("aisle_name")) and search_term != clean_name:
-            api_result = kroger_client.lookup_product_aisle(store.external_store_id, clean_name)
-
-        if api_result and api_result.get("aisle_name"):
-            aisle_record = _save_store_item_aisle(
+    cached = (
+        StoreItemAisle.objects.filter(
+            store=store,
+            item_name_normalized__in=candidates,
+            source__in=["api", "manual"],
+        )
+        .exclude(aisle_name="")
+        .order_by("-source", "-last_updated")
+        .first()
+    )
+    if cached and cached.aisle_name:
+        # If original item name isn't stored yet, record the alias mapping
+        if cached.item_name_normalized != clean_original:
+            _save_store_item_aisle(
                 store=store,
-                item_name_normalized=clean_name,
-                aisle_name=api_result["aisle_name"],
-                bay_number=api_result.get("bay_number", ""),
-                sequence_order=api_result.get("sequence_order", 100),
-                source="api",
+                item_name_normalized=clean_original,
+                aisle_name=cached.aisle_name,
+                bay_number=cached.bay_number,
+                sequence_order=cached.sequence_order,
+                source=cached.source,
             )
-            if search_term != clean_name:
+        return {
+            "aisle_name": cached.aisle_name,
+            "bay_number": cached.bay_number,
+            "sequence_order": cached.sequence_order,
+            "source": cached.source,
+        }
+
+    # 2. Query Kroger API across candidates if applicable
+    now = time.time()
+    if store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
+        for candidate in candidates:
+            # Check in-memory negative cache to prevent spamming
+            cache_key = (store.id, candidate)
+            cached_time = _NEGATIVE_LOOKUP_CACHE.get(cache_key)
+            if cached_time and (now - cached_time < _NEGATIVE_CACHE_TTL_SECONDS):
+                continue
+
+            api_result = kroger_client.lookup_product_aisle(store.external_store_id, candidate)
+            if api_result and api_result.get("aisle_name"):
+                # Persist for original requested name AND matched candidate
                 _save_store_item_aisle(
                     store=store,
-                    item_name_normalized=search_term,
+                    item_name_normalized=clean_original,
                     aisle_name=api_result["aisle_name"],
                     bay_number=api_result.get("bay_number", ""),
                     sequence_order=api_result.get("sequence_order", 100),
                     source="api",
                 )
-            if aisle_record:
+                if candidate != clean_original:
+                    _save_store_item_aisle(
+                        store=store,
+                        item_name_normalized=candidate,
+                        aisle_name=api_result["aisle_name"],
+                        bay_number=api_result.get("bay_number", ""),
+                        sequence_order=api_result.get("sequence_order", 100),
+                        source="api",
+                    )
                 return {
-                    "aisle_name": aisle_record.aisle_name,
-                    "bay_number": aisle_record.bay_number,
-                    "sequence_order": aisle_record.sequence_order,
+                    "aisle_name": api_result["aisle_name"],
+                    "bay_number": api_result.get("bay_number", ""),
+                    "sequence_order": api_result.get("sequence_order", 100),
                     "source": "api",
                 }
-            return {
-                "aisle_name": api_result["aisle_name"],
-                "bay_number": api_result.get("bay_number", ""),
-                "sequence_order": api_result.get("sequence_order", 100),
-                "source": "api",
-            }
-        else:
-            # Negative cache: record that API returned no aisle location so we don't spam API
-            _save_store_item_aisle(
-                store=store,
-                item_name_normalized=clean_name,
-                aisle_name="",
-                bay_number="",
-                sequence_order=999,
-                source="api",
-            )
+            else:
+                # Add candidate to in-memory negative cache (never store empty DB records)
+                _NEGATIVE_LOOKUP_CACHE[cache_key] = now
 
-    # 3. Cannot be determined from store chain API -> leave blank
+    # 3. Fallback: Universal perimeter department from other Kroger stores
+    if store.chain == "kroger":
+        other_kroger_match = (
+            StoreItemAisle.objects.filter(
+                store__chain="kroger",
+                item_name_normalized__in=candidates,
+            )
+            .exclude(aisle_name="")
+            .order_by("-last_updated")
+            .first()
+        )
+        if other_kroger_match and other_kroger_match.aisle_name:
+            matched_aisle_lower = other_kroger_match.aisle_name.strip().lower()
+            if any(dept in matched_aisle_lower for dept in UNIVERSAL_DEPARTMENTS):
+                dept_name = other_kroger_match.aisle_name.strip()
+                _save_store_item_aisle(
+                    store=store,
+                    item_name_normalized=clean_original,
+                    aisle_name=dept_name,
+                    bay_number="",
+                    sequence_order=other_kroger_match.sequence_order,
+                    source="api",
+                )
+                return {
+                    "aisle_name": dept_name,
+                    "bay_number": "",
+                    "sequence_order": other_kroger_match.sequence_order,
+                    "source": "api",
+                }
+
+    # 4. Cannot be determined from store chain API -> leave blank (never write empty DB records)
     return None
 
 

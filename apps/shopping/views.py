@@ -134,7 +134,9 @@ def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) ->
         return
 
     cached_names = set(
-        StoreItemAisle.objects.filter(store=store).values_list("item_name_normalized", flat=True)
+        StoreItemAisle.objects.filter(store=store)
+        .exclude(aisle_name="")
+        .values_list("item_name_normalized", flat=True)
     )
     unmapped_names = [
         name for name in need_items
@@ -155,7 +157,7 @@ def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) ->
             resolved_count = 0
             for name in unmapped_names:
                 clean_name = inflection.singularize(name.strip().lower())
-                if not StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).exists():
+                if not StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).exclude(aisle_name="").exists():
                     res = resolve_store_aisle(store, name)
                     if res and res.get("aisle_name"):
                         resolved_count += 1

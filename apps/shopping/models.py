@@ -448,12 +448,17 @@ class ShoppingListItem(models.Model):
         """
         target_store = store or (self.shopping_list.active_store if self.shopping_list else None)
         if target_store:
-            import inflection
-            normalized_name = inflection.singularize(self.name.strip().lower())
-            aisle_map = target_store.item_aisles.filter(
-                item_name_normalized=normalized_name,
-                source__in=["api", "manual"],
-            ).first()
+            from apps.shopping.services.store_service import get_ingredient_search_candidates
+            candidates = get_ingredient_search_candidates(self.name)
+            aisle_map = (
+                target_store.item_aisles.filter(
+                    item_name_normalized__in=candidates,
+                    source__in=["api", "manual"],
+                )
+                .exclude(aisle_name="")
+                .order_by("-source", "-last_updated")
+                .first()
+            )
             if aisle_map and aisle_map.aisle_name:
                 clean_aisle = aisle_map.aisle_name.strip()
                 return clean_aisle.title() if clean_aisle.isupper() else clean_aisle
@@ -482,12 +487,17 @@ class ShoppingListItem(models.Model):
         """
         target_store = store or (self.shopping_list.active_store if self.shopping_list else None)
         if target_store:
-            import inflection
-            normalized_name = inflection.singularize(self.name.strip().lower())
-            aisle_map = target_store.item_aisles.filter(
-                item_name_normalized=normalized_name,
-                source__in=["api", "manual"],
-            ).first()
+            from apps.shopping.services.store_service import get_ingredient_search_candidates
+            candidates = get_ingredient_search_candidates(self.name)
+            aisle_map = (
+                target_store.item_aisles.filter(
+                    item_name_normalized__in=candidates,
+                    source__in=["api", "manual"],
+                )
+                .exclude(aisle_name="")
+                .order_by("-source", "-last_updated")
+                .first()
+            )
             if aisle_map and aisle_map.bay_number:
                 return aisle_map.bay_number.strip()
         return ""

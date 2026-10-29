@@ -107,7 +107,16 @@ def test_store_search_by_text_query(client):
     """
     Test typing a store name or city in find_nearest_store filters and matches stores.
     """
+    from django.contrib.auth import get_user_model
     from django.urls import reverse
+
+    from apps.core.models import Workspace
+
+    User = get_user_model()
+    user = User.objects.create_user(username="search_tester")
+    ws = Workspace.objects.create(name="Search WS", owner=user)
+    ShoppingList.objects.create(name="Search List", workspace=ws, owner=user)
+    client.force_login(user)
 
     resp = client.post(
         reverse("shopping:nearest_store"),
@@ -539,6 +548,203 @@ def test_warm_store_aisles_streams_live_updates_per_item():
 
     # Final completion update: summary toast
     assert "Aisles updated for King Soopers Streaming" in broadcast_calls[2]["toast_message"]
+
+
+def test_get_ingredient_search_candidates():
+    """
+    Test that culinary modifiers, parentheticals, comma clauses, and quantities
+    are stripped down to specific and general candidate terms.
+    """
+    from apps.shopping.services.store_service import get_ingredient_search_candidates
+
+    pepper_cands = get_ingredient_search_candidates("freshly ground black pepper")
+    assert "black pepper" in pepper_cands
+    assert "pepper" in pepper_cands
+
+    garlic_cands1 = get_ingredient_search_candidates("cloves garlic, minced")
+    assert "garlic" in garlic_cands1
+
+    garlic_cands2 = get_ingredient_search_candidates("garlic cloves (minced)")
+    assert "garlic" in garlic_cands2
+
+    onion_cands = get_ingredient_search_candidates("diced yellow onion")
+    assert "yellow onion" in onion_cands
+    assert "onion" in onion_cands
+
+    cilantro_cands = get_ingredient_search_candidates("fresh cilantro leafe")
+    assert "cilantro" in cilantro_cands
+
+    coriander_cands = get_ingredient_search_candidates("coriander powder")
+    assert "coriander" in coriander_cands
+
+    apple_cands = get_ingredient_search_candidates("apples, green")
+    assert "green apple" in apple_cands
+
+    bean_cands = get_ingredient_search_candidates("2 cans black beans")
+    assert "black bean" in bean_cands
+
+    chicken_cands = get_ingredient_search_candidates("boneless skinless chicken breast")
+    assert "chicken breast" in chicken_cands
+
+    oil_cands = get_ingredient_search_candidates("extra virgin olive oil")
+    assert "olive oil" in oil_cands
+
+
+@pytest.mark.django_db
+def test_resolve_store_aisle_cleans_culinary_terms_and_prevents_negative_db_cache():
+    """
+    Verify that resolve_store_aisle tries candidate terms when raw culinary term yields no results,
+    persists resolved aisles for both candidate and raw term, and NEVER saves empty aisle strings.
+    """
+    from unittest.mock import patch
+    from apps.shopping.services.store_service import kroger_client
+
+    store = StoreLocation.objects.create(
+        name="King Soopers #62000111 (Fresh Fare)",
+        chain="kroger",
+        external_store_id="62000111",
+    )
+
+    def mock_lookup(loc_id, term):
+        if term == "black pepper":
+            return {"aisle_name": "AISLE 3", "bay_number": "24", "sequence_order": 100}
+        # Raw term returns None
+        return None
+
+    with patch.object(type(kroger_client), "is_configured", True), \
+         patch.object(kroger_client, "lookup_product_aisle", side_effect=mock_lookup):
+
+        result = resolve_store_aisle(store, "freshly ground black pepper")
+        assert result is not None
+        assert result["aisle_name"] == "AISLE 3"
+        assert result["bay_number"] == "24"
+
+        # Check DB mappings
+        orig_rec = StoreItemAisle.objects.filter(store=store, item_name_normalized="freshly ground black pepper").first()
+        cand_rec = StoreItemAisle.objects.filter(store=store, item_name_normalized="black pepper").first()
+        assert orig_rec is not None and orig_rec.aisle_name == "AISLE 3"
+        assert cand_rec is not None and cand_rec.aisle_name == "AISLE 3"
+
+        # Now test an item that is truly unfindable
+        unfound = resolve_store_aisle(store, "completely nonexistent ingredient xyz")
+        assert unfound is None
+
+        # Verify NO empty string records were created in StoreItemAisle
+        empty_records = StoreItemAisle.objects.filter(store=store, aisle_name="")
+        assert empty_records.count() == 0
+
+
+@pytest.mark.django_db
+def test_resolve_store_aisle_cross_store_universal_department_fallback():
+    """
+    Verify that if a specific store cannot resolve a perimeter item via live API,
+    it falls back to universal perimeter departments (Produce, Meat, Dairy, etc.)
+    learned from other Kroger stores.
+    """
+    from unittest.mock import patch
+    from apps.shopping.services.store_service import kroger_client
+
+    store1 = StoreLocation.objects.create(
+        name="King Soopers #62000001",
+        chain="kroger",
+        external_store_id="62000001",
+    )
+    store2 = StoreLocation.objects.create(
+        name="King Soopers #62000111",
+        chain="kroger",
+        external_store_id="62000111",
+    )
+
+    # Store 1 has cilantro mapped to PRODUCE
+    StoreItemAisle.objects.create(
+        store=store1,
+        item_name_normalized="cilantro",
+        aisle_name="PRODUCE",
+        sequence_order=10,
+        source="api",
+    )
+
+    with patch.object(type(kroger_client), "is_configured", True), \
+         patch.object(kroger_client, "lookup_product_aisle", return_value=None):
+
+        # Store 2 has no API match, but should fall back to universal PRODUCE department
+        result = resolve_store_aisle(store2, "fresh cilantro leafe")
+        assert result is not None
+        assert result["aisle_name"] == "PRODUCE"
+
+        # Verify Store 2 now has the mapping cached
+        s2_rec = StoreItemAisle.objects.filter(store=store2, item_name_normalized="fresh cilantro leafe").first()
+        assert s2_rec is not None and s2_rec.aisle_name == "PRODUCE"
+
+
+@pytest.mark.django_db
+def test_store_switching_aisle_resolution_flow(client):
+    """
+    Test the complete user scenario:
+    1. Select store #62000111 and add an ingredient.
+    2. Switch to another store (#62000001) -> aisles populate.
+    3. Switch back to #62000111 -> aisles remain populated and never locked out.
+    """
+    from unittest.mock import patch
+    from django.contrib.auth import get_user_model
+    from django.urls import reverse
+    from apps.core.models import Workspace
+    from apps.shopping.services.store_service import kroger_client
+
+    User = get_user_model()
+    user = User.objects.create_user(username="switch_tester")
+    ws = Workspace.objects.create(name="Switch WS", owner=user)
+    s_list = ShoppingList.objects.create(name="Switch List", workspace=ws, owner=user)
+    client.force_login(user)
+
+    store_111 = StoreLocation.objects.create(
+        name="King Soopers #62000111",
+        chain="kroger",
+        external_store_id="62000111",
+    )
+    store_001 = StoreLocation.objects.create(
+        name="King Soopers #62000001",
+        chain="kroger",
+        external_store_id="62000001",
+    )
+
+    def mock_lookup(loc_id, term):
+        if loc_id == "62000111" and "garlic" in term:
+            return {"aisle_name": "Produce Table 3", "bay_number": "2", "sequence_order": 10}
+        elif loc_id == "62000001" and "garlic" in term:
+            return {"aisle_name": "Produce", "bay_number": "5", "sequence_order": 10}
+        return None
+
+    with patch.object(type(kroger_client), "is_configured", True), \
+         patch.object(kroger_client, "lookup_product_aisle", side_effect=mock_lookup):
+
+        # Step 1: Select store #62000111
+        resp = client.post(reverse("shopping:set_store"), {"store_id": str(store_111.id)})
+        assert resp.status_code == 200
+
+        # Add ingredient with culinary descriptor
+        add_resp = client.post(
+            reverse("shopping:add_item"),
+            {"name": "cloves garlic, minced", "amount": "2", "amount_unit": "cloves"},
+        )
+        assert add_resp.status_code == 200
+
+        item = ShoppingListItem.objects.filter(shopping_list=s_list, name="cloves garlic, minced").first()
+        assert item is not None
+        assert item.get_effective_aisle(store_111) == "Produce Table 3"
+        assert item.get_effective_bay(store_111) == "2"
+
+        # Step 2: Switch to store #62000001
+        switch1 = client.post(reverse("shopping:set_store"), {"store_id": str(store_001.id)})
+        assert switch1.status_code == 200
+        assert item.get_effective_aisle(store_001) == "Produce"
+
+        # Step 3: Switch back to store #62000111
+        switch2 = client.post(reverse("shopping:set_store"), {"store_id": str(store_111.id)})
+        assert switch2.status_code == 200
+        assert item.get_effective_aisle(store_111) == "Produce Table 3"
+        assert item.get_effective_bay(store_111) == "2"
+
 
 
 

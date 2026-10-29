@@ -361,12 +361,19 @@
             submitStoreSearch({ latitude: e.latlng.lat, longitude: e.latlng.lng });
         });
 
-        // Populate initial store markers
-        const stores = {{ stores_json|safe }};
+        // Populate initial store markers safely without inline script interpolation
+        let stores = [];
+        try {
+            const dataEl = document.getElementById('store-picker-initial-data');
+            stores = dataEl ? JSON.parse(dataEl.textContent) : [];
+        } catch (_) {}
         window.updateStorePickerMap(stores, centerLat, centerLon, "{{ resolved_name|default:''|escapejs }}");
 
         setTimeout(function() {
             map.invalidateSize();
         }, 150);
     })();
+</script>
+<script id="store-picker-initial-data" type="application/json">
+    {{ stores_json|safe }}
 </script>

@@ -16,6 +16,7 @@ from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_http_methods, require_POST
@@ -95,12 +96,30 @@ def _parse_form_datetime(
         return None
 
 
+def _require_preset_write(request: HttpRequest, workspace: Any) -> HttpResponseForbidden | None:
+    """Verify user is authenticated and has write/edit permissions for the workspace."""
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+    if not workspace or not workspace.can_write(user):
+        return HttpResponseForbidden("You do not have write access to this workspace.")
+    return None
+
+
 def preset_list_index(request: HttpRequest) -> HttpResponse:
     """
     Display all preset lists belonging to the current workspace.
 
     Automatically checks and applies any due schedules for this workspace before rendering.
     """
+    if not (request.user and request.user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
+
     workspace = get_active_workspace(request)
     if not workspace:
         return redirect("shopping:list")
@@ -118,9 +137,9 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
             p.loaded_items_count = 0
             p.is_loaded = False
 
-    user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated) else True
-    user_role = workspace.get_user_role(user) if (user and user.is_authenticated) else "owner"
+    user = request.user
+    can_write = workspace.can_write(user)
+    user_role = workspace.get_user_role(user) or "viewer"
 
     default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
     default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
@@ -142,12 +161,9 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
 def preset_create(request: HttpRequest) -> HttpResponse:
     """Create a new preset list in the active workspace."""
     workspace = get_active_workspace(request)
-    if not workspace:
-        return redirect("shopping:list")
-
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and not workspace.can_write(user):
-        return HttpResponseForbidden("You do not have write access to this workspace.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     name = request.POST.get("name", "").strip() or "New Preset List"
     interval_raw = request.POST.get("interval_days", "7")
@@ -177,18 +193,29 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
     """
     Display and manage a preset list template, its items, and its schedule.
     """
+    if not (request.user and request.user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
+
     preset_list = get_object_or_404(
         ShoppingList.objects.prefetch_related("items"),
         id=preset_id,
         is_preset=True,
     )
     workspace = preset_list.workspace or get_active_workspace(request)
+    user = request.user
+    if workspace and not workspace.can_read(user):
+        return HttpResponseForbidden("You do not have access to this preset list.")
+
     if workspace:
         check_and_apply_due_preset_schedules(workspace, request=request)
         preset_list.refresh_from_db()
 
-    user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
+    can_write = workspace.can_write(user) if workspace else False
 
     items = preset_list.items.all().order_by("order", "id")
     known_categories = get_known_categories()
@@ -224,9 +251,9 @@ def preset_edit_name(request: HttpRequest, preset_id: int) -> HttpResponse:
     """Update a preset list's title."""
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     new_name = request.POST.get("name", "").strip()
     if new_name:
@@ -243,9 +270,9 @@ def preset_delete(request: HttpRequest, preset_id: int) -> HttpResponse:
     """Delete an entire preset list template."""
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     preset_name = preset_list.name
     preset_list.delete()
@@ -258,9 +285,9 @@ def preset_add_item(request: HttpRequest, preset_id: int) -> HttpResponse:
     """Add a new item to the preset list."""
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     name = request.POST.get("name", "").strip()
     if not name:
@@ -301,9 +328,13 @@ def preset_edit_item(request: HttpRequest, preset_id: int, item_id: int) -> Http
     item = get_object_or_404(preset_list.items, id=item_id)
     workspace = preset_list.workspace or get_active_workspace(request)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+    can_write = workspace.can_write(user) if workspace else False
 
     if request.method == "GET":
+        if workspace and not workspace.can_read(user):
+            return HttpResponseForbidden("Read-only access.")
         known_categories = get_known_categories()
         return render(
             request,
@@ -349,9 +380,9 @@ def preset_item_toggle_active(request: HttpRequest, preset_id: int, item_id: int
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     item = get_object_or_404(preset_list.items, id=item_id)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     if "is_active" in request.POST:
         item.is_active = request.POST.get("is_active") in ("on", "true", "1")
@@ -383,9 +414,9 @@ def preset_delete_item(request: HttpRequest, preset_id: int, item_id: int) -> Ht
     """Delete an item from the preset list."""
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     delete_preset_item(preset_list, item_id)
 
@@ -411,9 +442,9 @@ def preset_update_schedule(request: HttpRequest, preset_id: int) -> HttpResponse
     """
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     is_schedule_enabled = request.POST.get("is_schedule_enabled") in ("on", "true", "1")
     interval_raw = request.POST.get("interval_days", "7")
@@ -485,9 +516,9 @@ def preset_run_schedule_now(request: HttpRequest, preset_id: int) -> HttpRespons
     """
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
 
     res = apply_preset_scheduled_refresh(preset_list, request=request)
     msg = (
@@ -540,7 +571,12 @@ def preset_schedule_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (workspace and user and user.is_authenticated) else True
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+    if workspace and not workspace.can_read(user):
+        return HttpResponseForbidden("Access denied.")
+
+    can_write = workspace.can_write(user) if workspace else False
 
     default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
     default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
@@ -571,6 +607,13 @@ def preset_load_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
         id=preset_id,
         is_preset=True,
     )
+    workspace = preset_list.workspace or get_active_workspace(request)
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+    if workspace and not workspace.can_read(user):
+        return HttpResponseForbidden("Access denied.")
+
     items = preset_list.items.all().order_by("order", "id")
     return render(
         request,
@@ -592,14 +635,14 @@ def preset_load_items(request: HttpRequest, preset_id: int) -> HttpResponse:
     """
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
+
     primary_list = workspace.get_primary_list() if workspace else None
     if not primary_list:
         from apps.shopping.views import get_active_list
         primary_list = get_active_list(request)
-
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
 
     selected_ids_raw = request.POST.getlist("item_ids")
     selected_ids = [int(i) for i in selected_ids_raw if i.isdigit()] if selected_ids_raw else None
@@ -645,14 +688,14 @@ def preset_unload(request: HttpRequest, preset_id: int) -> HttpResponse:
     """
     preset_list = get_object_or_404(ShoppingList, id=preset_id, is_preset=True)
     workspace = preset_list.workspace or get_active_workspace(request)
+    forbidden = _require_preset_write(request, workspace)
+    if forbidden:
+        return forbidden
+
     primary_list = workspace.get_primary_list() if workspace else None
     if not primary_list:
         from apps.shopping.views import get_active_list
         primary_list = get_active_list(request)
-
-    user = getattr(request, "user", None)
-    if user and user.is_authenticated and workspace and not workspace.can_write(user):
-        return HttpResponseForbidden("Read-only access.")
 
     removed_count = unload_preset_from_shopping_list(preset_list, primary_list, request=request)
     msg = f"Removed {removed_count} items from preset '{preset_list.name}'"

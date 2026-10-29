@@ -19,7 +19,7 @@ from apps.shopping.services.list_organizer import ShoppingListOrganizer
 
 
 @pytest.fixture
-def priority_fixture():
+def priority_fixture(client):
     from django.contrib.auth import get_user_model
 
     from apps.core.models import Workspace
@@ -29,6 +29,10 @@ def priority_fixture():
     if not admin:
         admin = User.objects.create(username="priority_admin")
     ws = Workspace.objects.first() or Workspace.objects.create(name="Priority WS", owner=admin)
+    client.force_login(admin)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
     store = StoreLocation.objects.create(name="Safeway Test", chain="safeway")
     s_list = ShoppingList.objects.create(
         name="Priority Test List",

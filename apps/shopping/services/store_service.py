@@ -139,7 +139,7 @@ def discover_nearby_stores_osm(latitude: float, longitude: float) -> list[StoreL
     )
     created_stores = []
     try:
-        with urllib.request.urlopen(req, timeout=3.5) as resp:
+        with urllib.request.urlopen(req, timeout=3.5) as resp:  # nosec: B310
             data = json.loads(resp.read().decode())
             for item in data:
                 addr = item.get("address", {})
@@ -333,7 +333,7 @@ class KrogerAPIClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:
+            with urllib.request.urlopen(request, timeout=5) as response:  # nosec: B310
                 response_data = json.loads(response.read().decode())
                 self._cached_token = response_data.get("access_token")
                 return self._cached_token
@@ -376,7 +376,7 @@ class KrogerAPIClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:
+            with urllib.request.urlopen(request, timeout=5) as response:  # nosec: B310
                 data = json.loads(response.read().decode())
                 return data.get("data", [])
         except Exception as error:
@@ -422,7 +422,7 @@ class KrogerAPIClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=5) as response:
+            with urllib.request.urlopen(request, timeout=5) as response:  # nosec: B310
                 data = json.loads(response.read().decode())
                 products = data.get("data", [])
                 if not products:
@@ -688,7 +688,7 @@ def geocode_address_or_city(query: str) -> tuple[float, float, str] | None:
             url,
             headers={"User-Agent": "ShoppinApp-StoreLocator/2.0"},
         )
-        with urllib.request.urlopen(req, timeout=3.5) as resp:
+        with urllib.request.urlopen(req, timeout=3.5) as resp:  # nosec: B310
             data = json.loads(resp.read().decode())
             if data and len(data) > 0:
                 return float(data[0]["lat"]), float(data[0]["lon"]), data[0].get("display_name", "")

@@ -3,7 +3,6 @@ Views and HTMX endpoints for Meal Planning, recipe dish composition,
 and ingredient synchronization with the active shopping list.
 """
 
-import sys
 from decimal import Decimal
 from typing import Any
 
@@ -37,10 +36,11 @@ from apps.shopping.views import get_active_list
 def _check_mealplan_write(request: HttpRequest) -> HttpResponseForbidden | None:
     """Verify the user has edit/write permissions for the active workspace."""
     user = getattr(request, "user", None)
-    if user and user.is_authenticated:
-        workspace = get_active_workspace(request)
-        if workspace and not workspace.can_write(user):
-            return HttpResponseForbidden("You have read-only access to this workspace.")
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+    workspace = get_active_workspace(request)
+    if not workspace or not workspace.can_write(user):
+        return HttpResponseForbidden("You have read-only access to this workspace.")
     return None
 
 
@@ -51,8 +51,13 @@ def meal_plan_view(
     """
     Render the Meal Plan management page or HTMX partial.
     """
-    if not request.user.is_authenticated and "pytest" not in sys.modules:
-        return redirect(f"{reverse('core:login')}?next={request.path}")
+    if not (request.user and request.user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
 
     workspace = get_active_workspace(request)
     shopping_list = get_active_list(request)
@@ -62,7 +67,7 @@ def meal_plan_view(
     available_recipes = Recipe.objects.all().order_by("name")
 
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
 
     meals = meal_plan.meals.prefetch_related("recipes").all()
     rules = meal_plan.rules.all() if meal_plan else []
@@ -258,7 +263,7 @@ def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRe
     # 4. Context for meal plan content re-render
     status_info = compute_cooking_status(meal_plan, shopping_list)
     available_recipes = Recipe.objects.all().order_by("name")
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.prefetch_related("recipes").all()
 
     # Check for existing user rating
@@ -321,7 +326,7 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     # 3. Context for meal plan content re-render
     status_info = compute_cooking_status(meal_plan, shopping_list)
     available_recipes = Recipe.objects.all().order_by("name")
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.prefetch_related("recipes").all()
 
     # Check for existing user ratings
@@ -413,7 +418,7 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     shopping_list = get_active_list(request)
 
     # Check ingredient statuses on shopping list
-    items_by_name = {it.name.lower(): it for it in shopping_list.items.all()}
+    items_by_name = {it.name.lower(): it for it in shopping_list.items.all()} if shopping_list else {}
     ingredients_with_status = []
     for ing in recipe.ingredients.all():
         item = items_by_name.get(ing.name.lower())
@@ -427,8 +432,8 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
-    meals = meal_plan.meals.all()
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    meals = meal_plan.meals.all() if meal_plan else []
 
     context = {
         "recipe": recipe,
@@ -444,9 +449,12 @@ def meal_suggestions(request: HttpRequest, meal_id: int) -> HttpResponse:
     Render dish suggestions partial for a planned meal.
     """
     meal = get_object_or_404(Meal, id=meal_id)
-    workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else True
+    if not (user and user.is_authenticated) or not meal.meal_plan.workspace.can_read(user):
+        return HttpResponseForbidden("Access denied.")
+
+    workspace = get_active_workspace(request)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
 
     suggestions = get_dish_suggestions(meal, limit=5)
     current_nutrition = calculate_current_meal_nutrition(meal)

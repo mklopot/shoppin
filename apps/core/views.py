@@ -77,7 +77,7 @@ def create_workspace_view(request: HttpRequest) -> HttpResponse:
         Redirect back to shopping list with the new workspace active.
     """
     creator = request.user
-    if not creator.is_authenticated:
+    if not creator or not creator.is_authenticated:
         if settings.DEBUG:
             dev_user = (
                 User.objects.filter(username="admin").first()

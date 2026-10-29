@@ -51,7 +51,7 @@ from apps.shopping.services.store_service import (
 logger = logging.getLogger(__name__)
 
 
-def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
+def get_active_list(request: HttpRequest | None = None) -> ShoppingList | None:
     """
     Retrieve or initialize the active shopping list for the current request's workspace.
 
@@ -59,9 +59,16 @@ def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
         request: Optional Django HttpRequest.
 
     Returns:
-        The active primary ShoppingList instance for the workspace.
+        The active primary ShoppingList instance for the workspace, or None if unauthenticated.
     """
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
+        return None
+
     workspace = get_active_workspace(request)
+    if not workspace:
+        return None
+
     shopping_list = workspace.get_primary_list()
     if not shopping_list:
         # Check if an unassigned primary list exists (e.g. from fixtures or migrations)
@@ -82,7 +89,7 @@ def get_active_list(request: HttpRequest | None = None) -> ShoppingList:
     return shopping_list
 
 
-def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList) -> HttpResponseForbidden | None:
+def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList | None) -> HttpResponseForbidden | None:
     """
     Verify the user has edit/write permissions on the workspace.
 
@@ -91,13 +98,18 @@ def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList) -
         shopping_list: ShoppingList target.
 
     Returns:
-        HttpResponseForbidden if read-only, otherwise None.
+        HttpResponseForbidden if unauthenticated or read-only, otherwise None.
     """
     user = getattr(request, "user", None)
-    if user and user.is_authenticated:
-        workspace = shopping_list.workspace or get_active_workspace(request)
-        if workspace and not workspace.can_write(user):
-            return HttpResponseForbidden("You have read-only access to this workspace.")
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+
+    if not shopping_list:
+        return HttpResponseForbidden("Shopping list not found.")
+
+    workspace = shopping_list.workspace or get_active_workspace(request)
+    if workspace and not workspace.can_write(user):
+        return HttpResponseForbidden("You have read-only access to this workspace.")
     return None
 
 
@@ -168,7 +180,6 @@ def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) ->
                 _ACTIVE_WARMINGS.discard(task_key)
             connection.close()
 
-    import sys
     if sync or "pytest" in sys.modules:
         _worker()
     else:
@@ -222,8 +233,8 @@ def _build_list_context(
         can_write = workspace.can_write(user) if workspace else True
         user_role = workspace.get_user_role(user) if workspace else "owner"
     else:
-        can_write = True
-        user_role = "owner"
+        can_write = False
+        user_role = "guest"
 
     meal_plan = workspace.get_meal_plan() if workspace else None
     planned_meals = list(meal_plan.meals.prefetch_related("recipes").all()) if meal_plan else []
@@ -309,14 +320,22 @@ def shopping_list_view(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered HTML page or HTMX partial content.
     """
-    if not request.user.is_authenticated and "pytest" not in sys.modules:
-        return redirect(f"{reverse('core:login')}?next={request.path}")
+    if not (request.user and request.user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
 
     workspace = get_active_workspace(request)
     if workspace:
         check_and_apply_due_preset_schedules(workspace, request=request)
 
     shopping_list = get_active_list(request)
+    if not shopping_list:
+        return redirect(f"{reverse('core:login')}?next={request.path}")
+
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     mode = request.GET.get("mode")
     context = _build_list_context(request, shopping_list, group_by, mode=mode)
@@ -333,11 +352,22 @@ def pantry_check_view(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered HTML page or HTMX partial content in Pantry Check mode.
     """
+    if not (request.user and request.user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
+
     workspace = get_active_workspace(request)
     if workspace:
         check_and_apply_due_preset_schedules(workspace, request=request)
 
     shopping_list = get_active_list(request)
+    if not shopping_list:
+        return redirect(f"{reverse('core:login')}?next={request.path}")
+
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by, mode=ListMode.PANTRY)
     return render_list_response(request, context, force_partial=False)
@@ -909,6 +939,9 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
     Returns:
         Rendered HTML partial of the nearest stores modal dialog.
     """
+    if not (request.user and request.user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+
     query = request.POST.get("query") or request.GET.get("query") or ""
     lat_val = request.POST.get("latitude") or request.GET.get("latitude")
     lon_val = request.POST.get("longitude") or request.GET.get("longitude")
@@ -960,7 +993,7 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
         }
         for m in nearest_matches
         if m["store"].latitude is not None and m["store"].longitude is not None
-    ])
+    ]).replace("</", r"\u003c/")
 
     results_only = (
         request.POST.get("results_only") == "true"

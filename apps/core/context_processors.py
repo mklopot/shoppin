@@ -23,17 +23,18 @@ def workspace_context(request: HttpRequest) -> dict[str, Any]:
     Returns:
         Dictionary of template context variables.
     """
-    ws = get_active_workspace(request)
     user = getattr(request, "user", None)
     if user and user.is_authenticated:
+        ws = get_active_workspace(request)
         role = ws.get_user_role(user) if ws else "owner"
         can_write = ws.can_write(user) if ws else True
+        user_workspaces = get_user_workspaces(user)
     else:
+        ws = None
         role = "guest"
         can_write = False
+        user_workspaces = []
     is_owner = (role == "owner")
-
-    user_workspaces = get_user_workspaces(user) if user else []
 
     personas = [
         {"username": "admin", "label": "Admin", "role": "Owner of Home"},

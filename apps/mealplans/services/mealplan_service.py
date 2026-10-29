@@ -24,7 +24,7 @@ from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle
 
 
-def get_active_meal_plan(request: HttpRequest | None = None, workspace: Any = None) -> MealPlan:
+def get_active_meal_plan(request: HttpRequest | None = None, workspace: Any = None) -> MealPlan | None:
     """
     Retrieve or initialize the primary MealPlan for the active workspace.
 
@@ -33,10 +33,13 @@ def get_active_meal_plan(request: HttpRequest | None = None, workspace: Any = No
         workspace: Optional explicit Workspace instance.
 
     Returns:
-        The active MealPlan instance.
+        The active MealPlan instance, or None if unauthenticated/no workspace.
     """
     if not workspace:
         workspace = get_active_workspace(request)
+
+    if not workspace:
+        return None
 
     meal_plan = workspace.get_meal_plan()
     if not meal_plan:

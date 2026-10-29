@@ -15,35 +15,25 @@ from apps.shopping.models import ShoppingList, StoreLocation
 User = get_user_model()
 
 
-def get_active_workspace(request: HttpRequest | None = None) -> Workspace:
+def get_active_workspace(request: HttpRequest | None = None) -> Workspace | None:
     """
     Resolve the currently active Workspace for the request.
 
     Checks explicit query params (?workspace_id=X), session state,
     and falls back to user's first available workspace. If none exist,
-    a personal workspace is automatically initialized.
+    a personal workspace is automatically initialized for authenticated users.
 
     Args:
         request: Django HttpRequest or None.
 
     Returns:
-        The active Workspace instance.
+        The active Workspace instance or None if unauthenticated.
     """
     user = getattr(request, "user", None)
 
-    # If unauthenticated, fallback to the primary default workspace
+    # Strictly enforce authentication: anonymous visitors never have an active workspace
     if not user or not user.is_authenticated:
-        ws = (
-            Workspace.objects.filter(name="Home").first()
-            or Workspace.objects.filter(owner__is_superuser=True).first()
-            or Workspace.objects.first()
-        )
-        if not ws:
-            default_user = User.objects.filter(is_superuser=True).first() or User.objects.first()
-            if not default_user:
-                default_user = User.objects.create(username="default_user")
-            ws = create_workspace("Main Workspace", default_user)
-        return ws
+        return None
 
     # 1. Check explicit parameter in request
     target_id = None
@@ -98,8 +88,7 @@ def get_user_workspaces(user: Any) -> list[dict[str, Any]]:
         List of dictionaries with workspace metadata and user role.
     """
     if not user or not user.is_authenticated:
-        ws = Workspace.objects.first()
-        return [{"id": ws.id, "name": ws.name, "role": "owner", "is_owner": True}] if ws else []
+        return []
 
     results = []
 

@@ -6,13 +6,15 @@ to extract recipe title, description, timings, yield, photo, instructions,
 and structured ingredients with amounts, units, and categories.
 """
 
+import ipaddress
 import json
 import logging
 import re
+import socket
 from decimal import Decimal
 from fractions import Fraction
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -195,6 +197,62 @@ def _safe_call(func, default=None):
         return default
 
 
+PROHIBITED_HOSTS = {
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",  # nosec: B104
+    "::1",
+    "metadata.google.internal",
+    "169.254.169.254",
+}
+
+
+def validate_safe_url(url: str) -> None:
+    """
+    Validate that an outbound URL is safe to retrieve, preventing SSRF (Server-Side Request Forgery).
+
+    Blocks requests resolving to loopback, private RFC 1918 networks, link-local / cloud metadata
+    services (AWS Lightsail/EC2, GCP, Azure), multicast, broadcast, and reserved IP addresses.
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Prohibited protocol scheme '{parsed.scheme}'. Only http and https are allowed.")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("Invalid URL: missing hostname.")
+
+    hostname_clean = hostname.strip().lower()
+    if (
+        hostname_clean in PROHIBITED_HOSTS
+        or hostname_clean.endswith(".internal")
+        or hostname_clean.endswith(".local")
+    ):
+        raise ValueError(f"Access to host '{hostname}' is prohibited for security reasons.")
+
+    try:
+        addr_info = socket.getaddrinfo(hostname_clean, None)
+    except socket.gaierror as exc:
+        raise ValueError(f"Could not resolve host '{hostname}': {exc}") from exc
+
+    for entry in addr_info:
+        ip_str = entry[4][0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+
+        if (
+            ip.is_loopback
+            or ip.is_private
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            raise ValueError(f"Access to internal, private, or metadata IP address ({ip_str}) is prohibited.")
+
+
 def normalize_url(url: str) -> str:
     """Ensure URL has a valid scheme (defaults to https://)."""
     cleaned = url.strip()
@@ -219,16 +277,33 @@ def scrape_recipe_data(url: str, html: str | None = None) -> dict[str, Any]:
         cook_time, photo_url, cuisine, dish_type, and parsed ingredients.
 
     Raises:
-        ValueError: If no recipe information could be detected on the page.
+        ValueError: If no recipe information could be detected on the page or if the URL is prohibited.
     """
     url = normalize_url(url)
     domain = urlparse(url).netloc.lower()
 
     if html is None:
         try:
-            resp = requests.get(url, headers=DEFAULT_HEADERS, timeout=15)
+            current_url = url
+            session = requests.Session()
+            # Follow redirects manually up to 5 hops to validate each target against SSRF
+            resp = None
+            for _ in range(5):
+                validate_safe_url(current_url)
+                resp = session.get(current_url, headers=DEFAULT_HEADERS, timeout=15, allow_redirects=False)
+                if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
+                    target = resp.headers.get("Location")
+                    if not target:
+                        break
+                    current_url = urljoin(current_url, target)
+                else:
+                    break
+            if resp is None:
+                raise ValueError("No response received from remote server.")
             resp.raise_for_status()
             html = resp.text
+        except ValueError:
+            raise
         except Exception as exc:
             logger.error("Failed to fetch recipe webpage '%s': %s", url, exc)
             raise ValueError(f"Could not connect to or retrieve webpage: {exc}") from exc

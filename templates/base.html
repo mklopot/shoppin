@@ -344,9 +344,11 @@
         <div class="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2 text-[11px]">
             <span>&copy; Shoppin by Waldorf Wellington. All Rights Reserved</span>
             <div class="space-x-3">
+                {% block footer_terms_link %}
                 <a href="{% url 'core:terms' %}" class="text-gray-600 hover:text-black underline font-semibold">
                     Terms of Service & Telemetry
                 </a>
+                {% endblock %}
             </div>
         </div>
     </footer>

@@ -3,6 +3,10 @@ Shopping services package for external integrations, aisle resolution, and list 
 """
 
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
+from apps.shopping.services.cleanup_service import (
+    purge_all_expired_completed_items,
+    purge_expired_completed_items,
+)
 from apps.shopping.services.list_organizer import ShoppingListOrganizer
 from apps.shopping.services.scheduler import (
     process_due_schedules,
@@ -22,6 +26,8 @@ from apps.shopping.services.store_service import (
 
 __all__ = [
     "broadcast_shopping_list_update",
+    "purge_expired_completed_items",
+    "purge_all_expired_completed_items",
     "ShoppingListOrganizer",
     "process_due_schedules",
     "start_preset_scheduler",

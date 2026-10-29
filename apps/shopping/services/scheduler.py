@@ -59,6 +59,13 @@ def process_due_schedules(force: bool = False) -> list[dict[str, Any]]:
                 results.append(res)
             except Exception as err:
                 logger.exception("Failed to execute scheduled refresh for preset '%s': %s", preset.name, err)
+
+        # Purge expired completed items for workspaces with active retention policies
+        try:
+            from apps.shopping.services.cleanup_service import purge_all_expired_completed_items
+            purge_all_expired_completed_items()
+        except Exception as cleanup_err:
+            logger.exception("Error during periodic purge of expired completed items: %s", cleanup_err)
     except Exception as exc:
         logger.exception("Error checking due preset schedules: %s", exc)
     finally:

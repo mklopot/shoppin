@@ -40,6 +40,15 @@ class Workspace(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    completed_items_retention_days = models.PositiveIntegerField(
+        default=7,
+        null=True,
+        blank=True,
+        help_text=(
+            "Days to retain items in 'Got' and 'Already Have' sections not associated "
+            "with recipes or preset lists before automatic removal (0 or null disables auto-removal)."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]

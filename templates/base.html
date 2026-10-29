@@ -228,6 +228,15 @@
                                 {% if is_workspace_owner %}
                                 <button type="button"
                                         role="menuitem"
+                                        hx-get="{% url 'core:workspace_settings' active_workspace.id %}"
+                                        hx-target="#modal-placeholder"
+                                        onclick="closeWorkspaceDropdown()"
+                                        class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                                    <span aria-hidden="true">⚙️</span>
+                                    <span>Workspace Settings...</span>
+                                </button>
+                                <button type="button"
+                                        role="menuitem"
                                         hx-get="{% url 'core:workspace_members' active_workspace.id %}"
                                         hx-target="#modal-placeholder"
                                         onclick="closeWorkspaceDropdown()"

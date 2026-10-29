@@ -38,6 +38,7 @@ from apps.shopping.models import (
     StoreLocation,
 )
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
+from apps.shopping.services.cleanup_service import purge_expired_completed_items
 from apps.shopping.services.list_organizer import ShoppingListOrganizer
 from apps.shopping.services.preset_service import check_and_apply_due_preset_schedules
 from apps.shopping.services.store_service import (
@@ -210,6 +211,9 @@ def _build_list_context(
         Context dictionary for HTML rendering.
     """
     active_mode = ShoppingListOrganizer.resolve_view_mode(request, mode)
+    workspace = shopping_list.workspace or get_active_workspace(request)
+    if workspace:
+        purge_expired_completed_items(workspace)
     items = shopping_list.items.all().order_by("order", "id")
 
     # Warm missing aisles asynchronously in background without blocking page render

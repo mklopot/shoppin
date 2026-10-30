@@ -736,3 +736,72 @@ def test_edit_meal_name_endpoints(client, mealplan_setup):
     assert resp_v_post.status_code == 403
     meal.refresh_from_db()
     assert meal.name == "Pizza Party Friday"
+
+
+def test_view_endpoints_add_dish_twice_scale_and_delete_separately(client, mealplan_setup):
+    """Verify adding dish twice via HTTP creates two separate entries, allows separate scaling and deletion."""
+    user = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    meal_plan = mealplan_setup["meal_plan"]
+    meal = add_meal_to_plan(meal_plan, "Tuesday Tacos")
+    recipe = mealplan_setup["recipe"]
+    sl = mealplan_setup["shopping_list"]
+
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # 1. Add recipe first time (scale 1)
+    resp1 = client.post(
+        reverse("mealplans:add_dish", args=[meal.id]),
+        {"recipe_id": recipe.id, "scale_factor": "1"},
+    )
+    assert resp1.status_code == 200
+
+    # 2. Add recipe second time (scale 2)
+    resp2 = client.post(
+        reverse("mealplans:add_dish", args=[meal.id]),
+        {"recipe_id": recipe.id, "scale_factor": "2"},
+    )
+    assert resp2.status_code == 200
+
+    # Verify both dishes show up in the HTML
+    html = resp2.content.decode("utf-8")
+    assert html.count(recipe.name) >= 2
+
+    dishes = list(meal.dishes.all())
+    assert len(dishes) == 2
+    d1, d2 = dishes[0], dishes[1]
+    assert d1.scale_factor == Decimal("1.00")
+    assert d2.scale_factor == Decimal("2.00")
+
+    # Shopping list has 1 + 2 = 3x tortillas (8 * 3 = 24)
+    tortillas = sl.items.get(name__iexact="tortillas")
+    assert tortillas.amount == Decimal("24.00")
+
+    # 3. Scale dish 1 to 3x via POST scale_dish endpoint
+    resp_scale = client.post(
+        reverse("mealplans:scale_dish", args=[meal.id, d1.id]),
+        {"scale_factor": "3"},
+    )
+    assert resp_scale.status_code == 200
+    d1.refresh_from_db()
+    assert d1.scale_factor == Decimal("3.00")
+    # Tortillas now 3 + 2 = 5x (8 * 5 = 40)
+    tortillas.refresh_from_db()
+    assert tortillas.amount == Decimal("40.00")
+
+    # 4. Delete dish 2 via POST delete_dish endpoint
+    resp_del = client.post(
+        reverse("mealplans:delete_dish", args=[meal.id, d2.id]),
+    )
+    assert resp_del.status_code == 200
+
+    # Only dish 1 remains
+    assert meal.dishes.count() == 1
+    remaining_dish = meal.dishes.first()
+    assert remaining_dish.id == d1.id
+    # Tortillas now 3x (8 * 3 = 24)
+    tortillas.refresh_from_db()
+    assert tortillas.amount == Decimal("24.00")

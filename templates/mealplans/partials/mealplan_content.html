@@ -180,7 +180,7 @@
                                     class="font-medium text-gray-900 hover:text-blue-700 hover:underline text-left">
                                 {{ recipe.name }}
                             </button>
-                            {% if dish.scale_display %}
+                            {% if not can_write and dish.scale_display %}
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-none"
                                   title="Scaled {{ dish.scale_display }} ({{ dish.scaled_portions }} servings)">
                                 {{ dish.scale_display }}
@@ -191,19 +191,31 @@
 
                     {% if can_write %}
                     <div class="flex items-center space-x-1.5 flex-shrink-0">
-                        <form hx-post="{% url 'mealplans:mark_dish_made' meal.id recipe.id %}" hx-target="#modal-placeholder" class="inline">
+                        <!-- Per-occurrence Scale Control -->
+                        <form hx-post="{% url 'mealplans:scale_dish' meal.id dish.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline-flex items-center" title="Portion scale factor ({{ dish.scaled_portions }} servings). Change and press Enter or defocus to apply.">
+                            {% csrf_token %}
+                            <label for="scale-dish-{{ dish.id }}" class="sr-only">Scale {{ recipe.name }}</label>
+                            <div class="inline-flex items-center border {% if dish.scale_factor != 1.00 %}border-amber-400 bg-amber-50 text-amber-900{% else %}border-gray-300 bg-white text-gray-700{% endif %} hover:border-gray-400 px-1 py-0.5 text-[11px]">
+                                <input type="number" id="scale-dish-{{ dish.id }}" name="scale_factor" value="{{ dish.scale_factor_display_val }}" min="0.1" max="50" step="any"
+                                       hx-trigger="change"
+                                       aria-label="Scale factor for {{ recipe.name }}"
+                                       class="w-7 text-center font-bold bg-transparent focus:outline-none p-0 text-[11px]">
+                                <span class="font-bold select-none text-[10px] text-gray-400">x</span>
+                            </div>
+                        </form>
+                        <form hx-post="{% url 'mealplans:mark_dish_made' meal.id dish.id %}" hx-target="#modal-placeholder" class="inline">
                             {% csrf_token %}
                             <button type="submit"
                                     class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 flex items-center space-x-1"
-                                    aria-label="Mark {{ recipe.name }} as made"
-                                    title="Mark '{{ recipe.name }}' as made">
+                                    aria-label="Mark this {{ recipe.name }} as made"
+                                    title="Mark this occurrence of '{{ recipe.name }}' as made">
                                 <span aria-hidden="true">✓</span>
                                 <span>Made</span>
                             </button>
                         </form>
-                        <form hx-post="{% url 'mealplans:delete_dish' meal.id recipe.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
+                        <form hx-post="{% url 'mealplans:delete_dish' meal.id dish.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="text-gray-500 hover:text-red-600 font-bold text-xs px-1 leading-none" aria-label="Remove {{ recipe.name }} from {{ meal.name }}" title="Remove recipe from meal">
+                            <button type="submit" class="text-gray-500 hover:text-red-600 font-bold text-xs px-1 leading-none" aria-label="Remove this {{ recipe.name }} from {{ meal.name }}" title="Remove this dish occurrence from meal">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </form>

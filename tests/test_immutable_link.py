@@ -290,3 +290,70 @@ def test_delete_meal_from_plan_removes_all_dish_sources(workspace_with_recipes):
 
     assert sl.items.count() == 0
 
+
+def test_add_dish_multiple_times_to_same_meal_shows_twice_and_separate_scaling(workspace_with_recipes):
+    """Adding a dish multiple times to the same meal creates distinct occurrences that can be scaled and removed separately."""
+    from apps.mealplans.services.mealplan_service import scale_meal_dish, remove_dish_from_meal
+
+    data = workspace_with_recipes
+    sl = data["sl"]
+    mp = data["mp"]
+    r1 = data["r1"]  # Tacos: 1 lb ground beef, 1 onion, 2 garlic cloves, 1 tub sour cream
+
+    m = Meal.objects.create(meal_plan=mp, name="Fiesta Night")
+
+    # Add Tacos first time at scale 1.0
+    add_recipe_to_meal(m, r1, sl, scale_factor=Decimal("1.00"))
+
+    # Add Tacos second time at scale 2.0
+    add_recipe_to_meal(m, r1, sl, scale_factor=Decimal("2.00"))
+
+    # Assert meal shows 2 dishes
+    dishes = m.dishes_list
+    assert len(dishes) == 2, f"Expected 2 dishes, got {len(dishes)}"
+    dish1, dish2 = dishes[0], dishes[1]
+    assert dish1.id != dish2.id
+    assert dish1.scale_factor == Decimal("1.00")
+    assert dish2.scale_factor == Decimal("2.00")
+    assert dish1.recipe == r1
+    assert dish2.recipe == r1
+
+    # Ingredients on shopping list should reflect 1 + 2 = 3x
+    beef = sl.items.get(name="ground beef")
+    assert beef.amount == Decimal("3.00")
+    sour_cream = sl.items.get(name="sour cream")
+    assert sour_cream.amount == Decimal("3.00")
+
+    # Scale dish 1 from 1.0 to 1.5
+    scale_meal_dish(dish1, Decimal("1.50"), sl)
+    dish1.refresh_from_db()
+    assert dish1.scale_factor == Decimal("1.50")
+
+    # Now ingredients should reflect 1.5 + 2 = 3.5x
+    beef.refresh_from_db()
+    assert beef.amount == Decimal("3.50")
+
+    # Remove dish 2 (the 2.0x occurrence)
+    remove_dish_from_meal(dish2, sl)
+
+    # Dish 1 should still be present in the meal
+    remaining_dishes = m.dishes_list
+    assert len(remaining_dishes) == 1
+    assert remaining_dishes[0].id == dish1.id
+    assert m.recipes.filter(id=r1.id).exists()
+
+    # Shopping list should now reflect only dish 1 (1.5x)
+    beef.refresh_from_db()
+    assert beef.amount == Decimal("1.50")
+    sour_cream.refresh_from_db()
+    assert sour_cream.amount == Decimal("1.50")
+
+    # Now remove dish 1
+    remove_dish_from_meal(dish1, sl)
+
+    # Meal is now empty and recipe is disassociated
+    assert len(m.dishes_list) == 0
+    assert not m.recipes.filter(id=r1.id).exists()
+    assert sl.items.count() == 0
+
+

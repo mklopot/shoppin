@@ -119,13 +119,12 @@ class Meal(models.Model):
         Return list of MealDish objects, preserving order and falling back gracefully
         if a recipe is attached in M2M without an explicit MealDish record.
         """
-        existing = {d.recipe_id: d for d in self.dishes.select_related("recipe").all()}
+        dishes = list(self.dishes.select_related("recipe").all())
+        if dishes:
+            return dishes
         results = []
         for recipe in self.recipes.all():
-            if recipe.id in existing:
-                results.append(existing[recipe.id])
-            else:
-                results.append(MealDish(meal=self, recipe=recipe, scale_factor=Decimal("1.00")))
+            results.append(MealDish(meal=self, recipe=recipe, scale_factor=Decimal("1.00")))
         return results
 
 
@@ -154,12 +153,19 @@ class MealDish(models.Model):
 
     class Meta:
         ordering = ["order", "created_at", "id"]
-        unique_together = [("meal", "recipe")]
 
     def __str__(self) -> str:
         """Return formatted dish name with scale factor if scaled."""
         factor_str = f"{self.scale_factor.normalize():f}x" if self.scale_factor != Decimal("1.00") else ""
         return f"{self.recipe.name}{f' ({factor_str})' if factor_str else ''}"
+
+    @property
+    def scale_factor_display_val(self) -> str:
+        """Return formatted scale number like '1' or '1.5' or '2' for inputs."""
+        normalized = self.scale_factor.normalize()
+        if normalized == normalized.to_integral():
+            return str(int(normalized))
+        return f"{normalized:f}"
 
     @property
     def scale_display(self) -> str:

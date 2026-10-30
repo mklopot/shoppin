@@ -97,17 +97,26 @@ def delete_meal_from_plan(
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for attribution / WebSocket sender client ID.
     """
+    if not shopping_list:
+        shopping_list = meal.meal_plan.workspace.get_primary_list() if (meal.meal_plan and meal.meal_plan.workspace) else None
+
+    # Remove each individual dish occurrence
+    for dish in list(meal.dishes.select_related("recipe").all()):
+        remove_dish_from_meal(dish, shopping_list, request)
+
+    # Fallback for any legacy recipes not linked via MealDish
     for recipe in list(meal.recipes.all()):
         remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
     # Clean up any residual sources tied to this meal and recalculate items
-    meal_sources = ShoppingListItemSource.objects.filter(meal=meal, item__shopping_list=shopping_list)
-    affected_item_ids = list(meal_sources.values_list("item_id", flat=True).distinct())
-    meal_sources.delete()
-    for item_id in affected_item_ids:
-        item = ShoppingListItem.objects.filter(id=item_id).first()
-        if item:
-            item.recalculate_from_attributions()
+    if shopping_list:
+        meal_sources = ShoppingListItemSource.objects.filter(meal=meal, item__shopping_list=shopping_list)
+        affected_item_ids = list(meal_sources.values_list("item_id", flat=True).distinct())
+        meal_sources.delete()
+        for item_id in affected_item_ids:
+            item = ShoppingListItem.objects.filter(id=item_id).first()
+            if item:
+                item.recalculate_from_attributions()
 
     meal.delete()
 
@@ -141,10 +150,13 @@ def add_recipe_to_meal(
         factor = Decimal("1.00")
 
     meal.recipes.add(recipe)
-    dish, _ = MealDish.objects.update_or_create(
+    max_order = meal.dishes.aggregate(models.Max("order"))["order__max"]
+    next_order = (max_order + 1) if max_order is not None else 0
+    dish = MealDish.objects.create(
         meal=meal,
         recipe=recipe,
-        defaults={"scale_factor": factor},
+        scale_factor=factor,
+        order=next_order,
     )
 
     # Re-evaluate emoji if current meal emoji is empty
@@ -268,31 +280,120 @@ def add_recipe_to_meal(
     return added_descriptions
 
 
+def remove_dish_from_meal(
+    dish: MealDish,
+    shopping_list: ShoppingList | None = None,
+    request: HttpRequest | None = None,
+) -> None:
+    """
+    Remove an individual MealDish occurrence from a meal and deduct its contributed ingredients.
+
+    Args:
+        dish: Target MealDish instance.
+        shopping_list: Workspace active ShoppingList.
+        request: Optional HttpRequest for WebSocket attribution.
+    """
+    meal = dish.meal
+    recipe = dish.recipe
+    factor = dish.scale_factor or Decimal("1.00")
+
+    if not shopping_list:
+        shopping_list = meal.meal_plan.workspace.get_primary_list() if (meal.meal_plan and meal.meal_plan.workspace) else None
+
+    # 1. Query and remove immutable source attributions for this dish occurrence
+    if shopping_list:
+        sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
+        dish_sources = sources_qs.filter(meal_dish=dish)
+        affected_item_ids = list(dish_sources.values_list("item_id", flat=True).distinct())
+        dish_sources.delete()
+
+        for item_id in affected_item_ids:
+            item = ShoppingListItem.objects.filter(id=item_id).first()
+            if item:
+                item.recalculate_from_attributions()
+
+        # 2. Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
+        if not affected_item_ids:
+            recipe_purpose_name = clean_purpose(recipe.name)
+            for ingredient in recipe.ingredients.all():
+                scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
+                normalized_name = singularize(ingredient.name.lower())
+                items = shopping_list.items.filter(name__iexact=ingredient.name)
+                if not items.exists():
+                    items = [
+                        it for it in shopping_list.items.all()
+                        if singularize(it.name.lower()) == normalized_name
+                    ]
+
+                for item in items:
+                    if item.attributions.exists():
+                        continue
+                    if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe_purpose_name in item.purpose or recipe.name in item.purpose:
+                        try:
+                            new_amount = item.amount - scaled_amount
+                        except Exception:
+                            new_amount = Decimal("0.00")
+
+                        if new_amount <= Decimal("0.00"):
+                            item.delete()
+                        else:
+                            item.amount = new_amount
+                            clean_existing = clean_purpose(item.purpose)
+                            purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe_purpose_name not in p and recipe.name not in p]
+                            if purposes:
+                                item.purpose = ", ".join(purposes)
+                                item.save()
+                            else:
+                                item.delete()
+
+    # 3. Delete the MealDish instance
+    dish_id = dish.id
+    dish.delete()
+
+    # 4. Only disassociate recipe from meal M2M if no other MealDish for this recipe remains
+    if not meal.dishes.filter(recipe=recipe).exists():
+        meal.recipes.remove(recipe)
+
+    # Broadcast WebSocket update
+    actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
+    sender_id = request.headers.get("X-Client-Id") if request else ""
+    if shopping_list:
+        broadcast_shopping_list_update(
+            shopping_list=shopping_list,
+            toast_message=f"Removed '{recipe.name}' from {meal.name}",
+            actor_name=actor_name,
+            sender_client_id=sender_id,
+        )
+
+
 def remove_recipe_from_meal(
     meal: Meal,
     recipe: Recipe,
     shopping_list: ShoppingList,
     request: HttpRequest | None = None,
+    dish: MealDish | None = None,
 ) -> None:
     """
     Remove a recipe dish from a meal and deduct its scaled ingredients from the shopping list.
+    Supports targeting a specific MealDish instance, or defaults to the last planned occurrence.
 
     Args:
         meal: Target Meal.
         recipe: Target Recipe.
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for WebSocket attribution.
+        dish: Optional specific MealDish to remove.
     """
-    dish = MealDish.objects.filter(meal=meal, recipe=recipe).first()
-    factor = dish.scale_factor if dish else Decimal("1.00")
+    if dish is None:
+        dish = meal.dishes.filter(recipe=recipe).last()
 
-    # 1. Query and remove immutable source attributions for this dish/meal
-    sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
     if dish:
-        dish_sources = sources_qs.filter(models.Q(meal_dish=dish) | models.Q(meal=meal, recipe=recipe))
-    else:
-        dish_sources = sources_qs.filter(meal=meal, recipe=recipe)
+        remove_dish_from_meal(dish, shopping_list, request)
+        return
 
+    # Fallback if no MealDish instance exists (e.g. legacy data)
+    sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
+    dish_sources = sources_qs.filter(meal=meal, recipe=recipe)
     affected_item_ids = list(dish_sources.values_list("item_id", flat=True).distinct())
     dish_sources.delete()
 
@@ -301,46 +402,8 @@ def remove_recipe_from_meal(
         if item:
             item.recalculate_from_attributions()
 
-    # 2. Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
-    recipe_purpose_name = clean_purpose(recipe.name)
-    for ingredient in recipe.ingredients.all():
-        scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
-        normalized_name = singularize(ingredient.name.lower())
-        items = shopping_list.items.filter(name__iexact=ingredient.name)
-        if not items.exists():
-            items = [
-                it for it in shopping_list.items.all()
-                if singularize(it.name.lower()) == normalized_name
-            ]
-
-        for item in items:
-            # Skip items that are managed by attributions
-            if item.attributions.exists():
-                continue
-            if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe_purpose_name in item.purpose or recipe.name in item.purpose:
-                try:
-                    new_amount = item.amount - scaled_amount
-                except Exception:
-                    new_amount = Decimal("0.00")
-
-                if new_amount <= Decimal("0.00"):
-                    item.delete()
-                else:
-                    item.amount = new_amount
-                    clean_existing = clean_purpose(item.purpose)
-                    purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe_purpose_name not in p and recipe.name not in p]
-                    if purposes:
-                        item.purpose = ", ".join(purposes)
-                        item.save()
-                    else:
-                        item.delete()
-
-    # 3. Disassociate dish from meal
     meal.recipes.remove(recipe)
-    if dish:
-        dish.delete()
 
-    # Broadcast WebSocket update
     actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id") if request else ""
     broadcast_shopping_list_update(
@@ -349,6 +412,80 @@ def remove_recipe_from_meal(
         actor_name=actor_name,
         sender_client_id=sender_id,
     )
+
+
+def scale_meal_dish(
+    dish: MealDish,
+    new_scale: Decimal | float | str,
+    shopping_list: ShoppingList | None = None,
+    request: HttpRequest | None = None,
+) -> None:
+    """
+    Scale an existing planned dish to a new portion multiplier,
+    updating its ShoppingListItemSource attributions and recalculating affected shopping list items.
+    """
+    try:
+        factor = Decimal(str(new_scale)).quantize(Decimal("0.01"))
+        if factor <= Decimal("0"):
+            factor = Decimal("1.00")
+    except Exception:
+        factor = Decimal("1.00")
+
+    if factor == dish.scale_factor:
+        return
+
+    dish.scale_factor = factor
+    dish.save(update_fields=["scale_factor"])
+
+    if not shopping_list:
+        shopping_list = dish.meal.meal_plan.workspace.get_primary_list() if (dish.meal.meal_plan and dish.meal.meal_plan.workspace) else None
+
+    if shopping_list:
+        recipe_purpose_name = clean_purpose(dish.recipe.name)
+        affected_items = set()
+        for ingredient in dish.recipe.ingredients.all():
+            scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
+            source = ShoppingListItemSource.objects.filter(meal_dish=dish, ingredient=ingredient).first()
+            if source:
+                source.amount = scaled_amount
+                source.save(update_fields=["amount"])
+                affected_items.add(source.item)
+            else:
+                # If source didn't exist yet, link to or create shopping list item
+                item = shopping_list.items.filter(name__iexact=ingredient.name).first()
+                if not item:
+                    item = ShoppingListItem.objects.create(
+                        shopping_list=shopping_list,
+                        name=ingredient.name,
+                        amount=scaled_amount,
+                        amount_unit=ingredient.amount_unit,
+                        purpose=recipe_purpose_name,
+                        category=ingredient.category or "Produce",
+                        status=ItemStatus.NEED,
+                    )
+                ShoppingListItemSource.objects.create(
+                    item=item,
+                    meal=dish.meal,
+                    meal_dish=dish,
+                    recipe=dish.recipe,
+                    ingredient=ingredient,
+                    amount=scaled_amount,
+                    amount_unit=ingredient.amount_unit,
+                    purpose=recipe_purpose_name,
+                )
+                affected_items.add(item)
+
+        for item in affected_items:
+            item.recalculate_from_attributions()
+
+        actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
+        sender_id = request.headers.get("X-Client-Id") if request else ""
+        broadcast_shopping_list_update(
+            shopping_list=shopping_list,
+            toast_message=f"Scaled '{dish.recipe.name}' to {factor.normalize():f}x",
+            actor_name=actor_name,
+            sender_client_id=sender_id,
+        )
 
 
 def broadcast_mealplan_update(

@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 
 from apps.core.services.moderation_service import contains_obscene_language
 from apps.core.services.workspace_service import get_active_workspace
-from apps.mealplans.models import Meal, MealPlanRule
+from apps.mealplans.models import Meal, MealDish, MealPlanRule
 from apps.mealplans.services.mealplan_service import (
     add_meal_to_plan,
     add_recipe_to_meal,
@@ -22,7 +22,9 @@ from apps.mealplans.services.mealplan_service import (
     compute_cooking_status,
     delete_meal_from_plan,
     get_active_meal_plan,
+    remove_dish_from_meal,
     remove_recipe_from_meal,
+    scale_meal_dish,
     update_meal_name,
 )
 from apps.mealplans.services.suggestion_service import (
@@ -231,29 +233,84 @@ def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
 
 
 @require_POST
-def delete_dish(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpResponse:
+def scale_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
     """
-    Handle POST request to remove a recipe dish from a meal.
+    Update portion scaling factor for an individual planned dish.
+    Recalculates contributed ingredient amounts on the shopping list.
     """
     forbidden = _check_mealplan_write(request)
     if forbidden:
         return forbidden
 
     meal = get_object_or_404(Meal, id=meal_id)
-    recipe = get_object_or_404(Recipe, id=recipe_id)
+    dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
+    if not dish:
+        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+    if not dish:
+        return HttpResponseForbidden("Dish not found.")
+
     shopping_list = get_active_list(request)
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        new_scale = Decimal(scale_raw)
+        if new_scale <= Decimal("0"):
+            new_scale = Decimal("1.00")
+    except Exception:
+        new_scale = Decimal("1.00")
 
-    remove_recipe_from_meal(meal, recipe, shopping_list, request)
+    scale_meal_dish(dish, new_scale, shopping_list, request)
 
-    toast_messages = [f"🗑 Removed '{recipe.name}' from {meal.name} (ingredients updated on shopping list)"]
+    scale_tag = f"{new_scale.normalize():f}x"
+    toast_messages = [f"⚖️ Scaled '{dish.recipe.name}' to {scale_tag}"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"⚖️ {actor} scaled '{dish.recipe.name}' to {scale_tag}",
+        shopping_list=shopping_list,
+    )
     return meal_plan_view(request, toast_messages=toast_messages)
 
 
 @require_POST
-def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpResponse:
+def delete_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
     """
-    Mark an individual recipe dish in a meal as made.
-    Increments recipe times_made counter, logs cooking event, removes dish
+    Handle POST request to remove a recipe dish from a meal.
+    Accepts dish_id (targeting a specific occurrence) or recipe_id for backward compatibility.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+
+    dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
+    if not dish:
+        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+
+    if dish:
+        recipe_name = dish.recipe.name
+        remove_dish_from_meal(dish, shopping_list, request)
+    else:
+        recipe = get_object_or_404(Recipe, id=dish_id)
+        recipe_name = recipe.name
+        remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    toast_messages = [f"🗑 Removed '{recipe_name}' from {meal.name} (ingredients updated on shopping list)"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} removed '{recipe_name}' from {meal.name}",
+        shopping_list=shopping_list,
+    )
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
+    """
+    Mark an individual recipe dish occurrence in a meal as made.
+    Increments recipe times_made counter, logs cooking event, removes that specific dish
     from the meal plan (updating shopping list ingredients), and prompts for recipe rating.
     """
     forbidden = _check_mealplan_write(request)
@@ -261,7 +318,15 @@ def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRe
         return forbidden
 
     meal = get_object_or_404(Meal, id=meal_id)
-    recipe = get_object_or_404(Recipe, id=recipe_id)
+    dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
+    if not dish:
+        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+
+    if dish:
+        recipe = dish.recipe
+    else:
+        recipe = get_object_or_404(Recipe, id=dish_id)
+
     shopping_list = get_active_list(request)
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
@@ -271,7 +336,10 @@ def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRe
     record_recipe_made(recipe, user=user)
 
     # 2. Remove dish from meal and synchronize shopping list
-    remove_recipe_from_meal(meal, recipe, shopping_list, request)
+    if dish:
+        remove_dish_from_meal(dish, shopping_list, request)
+    else:
+        remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
     # 3. Toast message & WebSocket broadcast
     toast_messages = [
@@ -334,13 +402,22 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     user = getattr(request, "user", None)
     meal_name = meal.name
 
-    recipes = list(meal.recipes.all())
+    dishes = list(meal.dishes.select_related("recipe").all())
+    recipes = []
     toast_messages = []
 
-    # 1. Record made & remove ingredients for all recipes in the meal
-    for recipe in recipes:
-        record_recipe_made(recipe, user=user)
-        remove_recipe_from_meal(meal, recipe, shopping_list, request)
+    # 1. Record made & remove ingredients for all dish occurrences in the meal
+    for dish in dishes:
+        recipes.append(dish.recipe)
+        record_recipe_made(dish.recipe, user=user)
+        remove_dish_from_meal(dish, shopping_list, request)
+
+    # Fallback for any legacy recipes in M2M without MealDish
+    for recipe in list(meal.recipes.all()):
+        if recipe not in recipes:
+            recipes.append(recipe)
+            record_recipe_made(recipe, user=user)
+            remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
     # 2. Delete the meal itself
     meal.delete()

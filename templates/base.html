@@ -672,6 +672,53 @@
                 }, 180);
             }
 
+            // Debounced & Queue-Safe Meal Plan Auto-Refresh
+            let mealplanRefreshTimer = null;
+            let mealplanRefreshInFlight = false;
+            let mealplanRefreshQueued = false;
+
+            function triggerMealPlanRefresh() {
+                const container = document.getElementById('mealplan-content');
+                if (!container) return;
+
+                if (mealplanRefreshInFlight) {
+                    mealplanRefreshQueued = true;
+                    return;
+                }
+
+                if (mealplanRefreshTimer) {
+                    clearTimeout(mealplanRefreshTimer);
+                }
+
+                mealplanRefreshTimer = setTimeout(() => {
+                    const currentContainer = document.getElementById('mealplan-content');
+                    if (!currentContainer) return;
+
+                    // Defer if user is actively typing in an input inside meal plan
+                    const activeEl = document.activeElement;
+                    if (activeEl && currentContainer.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                        mealplanRefreshTimer = setTimeout(triggerMealPlanRefresh, 1200);
+                        return;
+                    }
+
+                    const refreshUrl = currentContainer.getAttribute('data-refresh-url') || window.location.href;
+                    mealplanRefreshInFlight = true;
+
+                    htmx.ajax('GET', refreshUrl, {
+                        target: '#mealplan-content',
+                        swap: 'innerHTML transition:true'
+                    }).then(() => {
+                        mealplanRefreshInFlight = false;
+                        if (mealplanRefreshQueued) {
+                            mealplanRefreshQueued = false;
+                            triggerMealPlanRefresh();
+                        }
+                    }).catch(() => {
+                        mealplanRefreshInFlight = false;
+                    });
+                }, 180);
+            }
+
             function connect() {
                 if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
                     return;
@@ -733,14 +780,7 @@
                             }
 
                             // 5. Auto-update Mealplan content if present on page
-                            const mealplanContainer = document.getElementById('mealplan-content');
-                            if (mealplanContainer) {
-                                htmx.ajax('GET', window.location.href, {
-                                    target: '#mealplan-content',
-                                    select: '#mealplan-content',
-                                    swap: 'innerHTML transition:true'
-                                });
-                            }
+                            triggerMealPlanRefresh();
                         }
                     } catch (err) {
                         console.error("[Shoppin Sync] Error parsing WebSocket message:", err);

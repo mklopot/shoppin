@@ -221,7 +221,7 @@ def add_recipe_to_meal(
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}".strip())
 
     # Broadcast WebSocket update
-    actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
+    actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id") if request else ""
     summary_preview = ", ".join(added_descriptions[:3])
     if len(added_descriptions) > 3:
@@ -299,11 +299,46 @@ def remove_recipe_from_meal(
                     item.save()
 
     # Broadcast WebSocket update
-    actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
+    actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id") if request else ""
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
-        toast_message=f"Removed '{recipe.name}' ingredients from shopping list",
+        toast_message=f"Removed '{recipe.name}' from {meal.name}",
+        actor_name=actor_name,
+        sender_client_id=sender_id,
+    )
+
+
+def broadcast_mealplan_update(
+    request: HttpRequest | None = None,
+    toast_message: str | None = None,
+    toast_messages: list[str] | None = None,
+    shopping_list: ShoppingList | None = None,
+    workspace: Any = None,
+) -> None:
+    """
+    Broadcast real-time meal plan updates across all open tabs and collaborators via WebSockets.
+    """
+    actor_name = ""
+    if request and getattr(request, "user", None) and request.user.is_authenticated:
+        actor_name = (request.user.first_name or "").strip() or request.user.username
+    if not actor_name:
+        actor_name = "Someone"
+
+    sender_id = ""
+    if request:
+        sender_id = request.headers.get("X-Client-Id") or request.META.get("HTTP_X_CLIENT_ID") or ""
+
+    if not shopping_list:
+        if not workspace and request:
+            workspace = get_active_workspace(request)
+        if workspace:
+            shopping_list = workspace.get_primary_list()
+
+    broadcast_shopping_list_update(
+        shopping_list=shopping_list,
+        toast_message=toast_message,
+        toast_messages=toast_messages,
         actor_name=actor_name,
         sender_client_id=sender_id,
     )

@@ -18,6 +18,7 @@ from apps.mealplans.models import Meal, MealPlanRule
 from apps.mealplans.services.mealplan_service import (
     add_meal_to_plan,
     add_recipe_to_meal,
+    broadcast_mealplan_update,
     compute_cooking_status,
     delete_meal_from_plan,
     get_active_meal_plan,
@@ -115,6 +116,12 @@ def add_meal(request: HttpRequest) -> HttpResponse:
             return meal_plan_view(request, toast_messages=toast_messages)
         meal = add_meal_to_plan(meal_plan, meal_name)
         toast_messages.append(f"➕ Added '{meal.name}' to meal plan")
+        actor = (request.user.first_name or "").strip() or request.user.username if request.user.is_authenticated else "Someone"
+        broadcast_mealplan_update(
+            request,
+            toast_message=f"➕ {actor} added '{meal.name}' to meal plan",
+            shopping_list=get_active_list(request),
+        )
 
     return meal_plan_view(request, toast_messages=toast_messages)
 
@@ -142,6 +149,12 @@ def edit_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
             old_name = meal.name
             update_meal_name(meal, new_name)
             toast_messages.append(f"✏️ Renamed '{old_name}' to '{meal.name}'")
+            actor = (request.user.first_name or "").strip() or request.user.username if request.user.is_authenticated else "Someone"
+            broadcast_mealplan_update(
+                request,
+                toast_message=f"✏️ {actor} renamed '{old_name}' to '{meal.name}'",
+                shopping_list=get_active_list(request),
+            )
         return meal_plan_view(request, toast_messages=toast_messages)
 
     if request.GET.get("cancel"):
@@ -165,10 +178,15 @@ def delete_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
     delete_meal_from_plan(meal, shopping_list, request)
 
     toast_messages = [f"🗑 Deleted '{meal_name}' from meal plan"]
+    actor = (request.user.first_name or "").strip() or request.user.username if request.user.is_authenticated else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} deleted '{meal_name}' from meal plan",
+        shopping_list=shopping_list,
+    )
     return meal_plan_view(request, toast_messages=toast_messages)
 
 
-@require_POST
 @require_POST
 def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
     """
@@ -255,10 +273,16 @@ def mark_dish_made(request: HttpRequest, meal_id: int, recipe_id: int) -> HttpRe
     # 2. Remove dish from meal and synchronize shopping list
     remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
-    # 3. Toast message
+    # 3. Toast message & WebSocket broadcast
     toast_messages = [
         f"✓ Marked '{recipe.name}' as made! (Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''})"
     ]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"✓ {actor} marked '{recipe.name}' as made",
+        shopping_list=shopping_list,
+    )
 
     # 4. Context for meal plan content re-render
     status_info = compute_cooking_status(meal_plan, shopping_list)
@@ -322,6 +346,12 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     meal.delete()
 
     toast_messages.append(f"🍽 Marked entire meal '{meal_name}' as made and removed from plan.")
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🍽 {actor} marked entire meal '{meal_name}' as made",
+        shopping_list=shopping_list,
+    )
 
     # 3. Context for meal plan content re-render
     status_info = compute_cooking_status(meal_plan, shopping_list)
@@ -407,6 +437,13 @@ def clear_meal_plan(request: HttpRequest) -> HttpResponse:
     for meal in meal_plan.meals.all():
         delete_meal_from_plan(meal, shopping_list, request)
 
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} cleared the meal plan",
+        shopping_list=shopping_list,
+    )
+
     return redirect("mealplans:detail")
 
 
@@ -491,6 +528,12 @@ def add_meal_rule(request: HttpRequest) -> HttpResponse:
             return meal_plan_view(request, toast_messages=toast_messages)
         MealPlanRule.objects.create(meal_plan=meal_plan, rule_text=rule_text, is_active=True)
         toast_messages.append(f"📋 Added guideline: '{rule_text}'")
+        actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+        broadcast_mealplan_update(
+            request,
+            toast_message=f"📋 {actor} added guideline: '{rule_text}'",
+            shopping_list=get_active_list(request),
+        )
 
     return meal_plan_view(request, toast_messages=toast_messages)
 
@@ -510,6 +553,12 @@ def toggle_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
 
     status_str = "Enabled" if rule.is_active else "Paused"
     toast_messages = [f"📋 {status_str} guideline: '{rule.rule_text}'"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"📋 {actor} {status_str.lower()} guideline: '{rule.rule_text}'",
+        shopping_list=get_active_list(request),
+    )
     return meal_plan_view(request, toast_messages=toast_messages)
 
 
@@ -527,4 +576,10 @@ def delete_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
     rule.delete()
 
     toast_messages = [f"🗑 Removed guideline: '{text}'"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} removed guideline: '{text}'",
+        shopping_list=get_active_list(request),
+    )
     return meal_plan_view(request, toast_messages=toast_messages)

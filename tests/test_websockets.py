@@ -175,6 +175,133 @@ def test_add_dish_in_mealplan_triggers_websocket_broadcast(client, websocket_sho
 
 
 @pytest.mark.django_db(transaction=True)
+def test_add_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
+    """Test that adding a meal in meal plan triggers real-time WebSocket broadcast."""
+    from asgiref.sync import sync_to_async
+    from apps.mealplans.models import MealPlan
+
+    user = websocket_shopping_list.owner
+    client.force_login(user)
+
+    ws = websocket_shopping_list.workspace
+    meal_plan = MealPlan.objects.create(name="Weekly Plan", workspace=ws)
+
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    async def run_test():
+        communicator = WebsocketCommunicator(
+            ShoppingListConsumer.as_asgi(),
+            "/ws/shopping/",
+        )
+        connected, _ = await communicator.connect()
+        assert connected
+
+        post_fn = sync_to_async(client.post)
+        response = await post_fn(
+            reverse("mealplans:add_meal"),
+            {"meal": "Sunday Roast"},
+            HTTP_X_CLIENT_ID="mealplan_tab_1",
+        )
+        assert response.status_code == 200
+
+        ws_msg = await communicator.receive_json_from()
+        assert ws_msg["type"] == "shopping_update"
+        assert "Sunday Roast" in ws_msg["toast_message"]
+        assert ws_msg["sender_client_id"] == "mealplan_tab_1"
+
+        await communicator.disconnect()
+
+    async_to_sync(run_test)()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_edit_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
+    """Test that editing a meal name triggers real-time WebSocket broadcast."""
+    from asgiref.sync import sync_to_async
+    from apps.mealplans.models import Meal, MealPlan
+
+    user = websocket_shopping_list.owner
+    client.force_login(user)
+
+    ws = websocket_shopping_list.workspace
+    meal_plan = MealPlan.objects.create(name="Weekly Plan", workspace=ws)
+    meal = Meal.objects.create(meal_plan=meal_plan, name="Friday Dinner")
+
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    async def run_test():
+        communicator = WebsocketCommunicator(
+            ShoppingListConsumer.as_asgi(),
+            "/ws/shopping/",
+        )
+        connected, _ = await communicator.connect()
+        assert connected
+
+        post_fn = sync_to_async(client.post)
+        response = await post_fn(
+            reverse("mealplans:edit_meal", args=[meal.id]),
+            {"name": "Friday Pizza Night"},
+            HTTP_X_CLIENT_ID="mealplan_tab_1",
+        )
+        assert response.status_code == 200
+
+        ws_msg = await communicator.receive_json_from()
+        assert ws_msg["type"] == "shopping_update"
+        assert "Friday Pizza Night" in ws_msg["toast_message"]
+        assert ws_msg["sender_client_id"] == "mealplan_tab_1"
+
+        await communicator.disconnect()
+
+    async_to_sync(run_test)()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_delete_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
+    """Test that deleting a meal triggers real-time WebSocket broadcast."""
+    from asgiref.sync import sync_to_async
+    from apps.mealplans.models import Meal, MealPlan
+
+    user = websocket_shopping_list.owner
+    client.force_login(user)
+
+    ws = websocket_shopping_list.workspace
+    meal_plan = MealPlan.objects.create(name="Weekly Plan", workspace=ws)
+    meal = Meal.objects.create(meal_plan=meal_plan, name="Saturday Brunch")
+
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    async def run_test():
+        communicator = WebsocketCommunicator(
+            ShoppingListConsumer.as_asgi(),
+            "/ws/shopping/",
+        )
+        connected, _ = await communicator.connect()
+        assert connected
+
+        post_fn = sync_to_async(client.post)
+        response = await post_fn(
+            reverse("mealplans:delete_meal", args=[meal.id]),
+            HTTP_X_CLIENT_ID="mealplan_tab_1",
+        )
+        assert response.status_code == 200
+
+        ws_msg = await communicator.receive_json_from()
+        assert ws_msg["type"] == "shopping_update"
+        assert "Saturday Brunch" in ws_msg["toast_message"]
+        assert ws_msg["sender_client_id"] == "mealplan_tab_1"
+
+        await communicator.disconnect()
+
+    async_to_sync(run_test)()
+
+
+@pytest.mark.django_db(transaction=True)
 def test_preset_schedule_triggers_websocket_broadcast_and_toasts(client, websocket_shopping_list):
     """Test that preset schedule updates and refreshes trigger real-time WebSocket broadcasts and toasts to other tabs."""
     from asgiref.sync import sync_to_async

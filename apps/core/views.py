@@ -4,6 +4,7 @@ Core views for landing, workspace management, and development persona switching.
 
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,12 +13,10 @@ from django.views.decorators.http import require_POST
 
 from apps.core.models import Workspace, WorkspaceRole
 from apps.core.services.workspace_service import (
+    clear_workspace_data,
     create_workspace as create_workspace_record,
-)
-from apps.core.services.workspace_service import (
+    get_user_workspaces,
     remove_workspace_member,
-)
-from apps.core.services.workspace_service import (
     share_workspace as share_workspace_record,
 )
 
@@ -106,9 +105,12 @@ def _render_workspace_modal(
     active_tab: str = "settings",
     settings_saved: bool = False,
     purged_count: int = 0,
+    workspace_cleared: bool = False,
+    cleared_stats: dict[str, int] | None = None,
 ) -> HttpResponse:
     """Helper to render the unified workspace settings and members modal."""
     is_owner = (workspace.owner_id == request.user.id) or getattr(request.user, "is_superuser", False)
+    role = workspace.get_user_role(request.user) if (request.user and request.user.is_authenticated) else "guest"
     memberships = workspace.memberships.select_related("user").all()
 
     existing_user_ids = {workspace.owner_id} | set(memberships.values_list("user_id", flat=True))
@@ -125,6 +127,10 @@ def _render_workspace_modal(
 
     context = {
         "workspace": workspace,
+        "active_workspace": workspace,
+        "is_workspace_owner": is_owner,
+        "workspace_role": role,
+        "user_workspaces": get_user_workspaces(request.user),
         "is_owner": is_owner,
         "memberships": memberships,
         "available_users": available_users,
@@ -133,6 +139,8 @@ def _render_workspace_modal(
         "retention_choices": retention_choices,
         "settings_saved": settings_saved,
         "purged_count": purged_count,
+        "workspace_cleared": workspace_cleared,
+        "cleared_stats": cleared_stats or {},
     }
     return render(request, "core/partials/workspace_members_modal.html", context)
 
@@ -222,6 +230,42 @@ def update_workspace_settings_view(request: HttpRequest, workspace_id: int) -> H
         settings_saved=True,
         purged_count=purged_count,
     )
+
+
+@require_POST
+def clear_workspace_view(request: HttpRequest, workspace_id: int) -> HttpResponse:
+    """
+    Clear all shopping list items, unload all preset lists, and clear out the meal plan
+    for the specified workspace. Requires owner permissions.
+
+    Args:
+        request: HttpRequest instance.
+        workspace_id: Target workspace primary key.
+
+    Returns:
+        Rendered modal with summary of cleared items or redirect.
+    """
+    workspace = get_object_or_404(Workspace, id=workspace_id)
+    if workspace.get_user_role(request.user) != "owner":
+        return HttpResponseForbidden("Only the workspace owner can clear workspace data.")
+
+    stats = clear_workspace_data(workspace, request=request)
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return _render_workspace_modal(
+            request,
+            workspace,
+            active_tab="settings",
+            workspace_cleared=True,
+            cleared_stats=stats,
+        )
+
+    messages.success(
+        request,
+        f"Workspace cleared: removed {stats['items_cleared']} shopping items, "
+        f"unloaded {stats['presets_unloaded']} presets, and cleared {stats['meals_cleared']} meals.",
+    )
+    return redirect("shopping:list")
 
 
 @require_POST

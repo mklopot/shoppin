@@ -825,6 +825,147 @@ def test_add_recipe_to_meal_fast_db_only_and_async_warming(client):
         mock_warm.assert_called_once_with(s_list)
 
 
+@pytest.mark.django_db
+def test_is_valid_store_aisle_filters_checklane_and_authorization():
+    """Verify that is_valid_store_aisle filters out checklane, authorization, and register strings."""
+    from apps.shopping.services.store_service import is_valid_store_aisle
+
+    # Invalid / administrative / POS strings must be rejected
+    assert is_valid_store_aisle("CHECKLANE AUTHORIZATION ONLY") is False
+    assert is_valid_store_aisle("checklane authorization") is False
+    assert is_valid_store_aisle("Checklane 5") is False
+    assert is_valid_store_aisle("Checkout Register 3") is False
+    assert is_valid_store_aisle("Front End") is False
+    assert is_valid_store_aisle("Customer Service") is False
+    assert is_valid_store_aisle("Self Checkout 2") is False
+    assert is_valid_store_aisle("Aisle 300") is False
+    assert is_valid_store_aisle("Aisle 350") is False
+    assert is_valid_store_aisle(None) is False
+    assert is_valid_store_aisle("") is False
+
+    # Valid physical aisles and perimeter departments must be accepted
+    assert is_valid_store_aisle("AISLE 8") is True
+    assert is_valid_store_aisle("Aisle 14") is True
+    assert is_valid_store_aisle("Produce") is True
+    assert is_valid_store_aisle("Snacks") is True
+    assert is_valid_store_aisle("Snack Foods") is True
+    assert is_valid_store_aisle("Bakery") is True
+    assert is_valid_store_aisle("Deli") is True
+
+
+@pytest.mark.django_db
+def test_kroger_api_client_filters_checklane_and_prioritizes_floor_aisle():
+    """
+    Test that lookup_product_aisle filters out 'CHECKLANE AUTHORIZATION ONLY'
+    and picks real floor aisles like 'Aisle 8' (Snacks).
+    """
+    import json
+    from unittest.mock import MagicMock, patch
+    from apps.shopping.services.store_service import kroger_client
+
+    mock_kroger_response = {
+        "data": [
+            {
+                "productId": "0001111015974",
+                "description": "Kroger Freeze Dried Strawberries",
+                "categories": ["Snacks"],
+                "aisleLocations": [
+                    {
+                        "description": "CHECKLANE AUTHORIZATION ONLY",
+                        "number": "300",
+                        "bayNumber": "1",
+                    }
+                ],
+            },
+            {
+                "productId": "0001111090351",
+                "description": "Simple Truth No Sugar Added Freeze-Dried Strawberries",
+                "categories": ["Snacks"],
+                "aisleLocations": [
+                    {
+                        "description": "AISLE 8",
+                        "number": "8",
+                        "bayNumber": "5",
+                        "sequenceNumber": "108",
+                    }
+                ],
+            },
+        ]
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_kroger_response).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch.object(kroger_client, "get_access_token", return_value="fake_token"), \
+         patch("urllib.request.urlopen", return_value=mock_resp):
+        res = kroger_client.lookup_product_aisle("62000111", "freeze-dried strawberries")
+
+        assert res is not None
+        # Must be Aisle 8, NOT CHECKLANE AUTHORIZATION ONLY
+        assert res["aisle_name"] == "Aisle 8"
+        assert res["bay_number"] == "5"
+
+
+@pytest.mark.django_db
+def test_kroger_api_client_falls_back_to_category_when_all_are_checklane():
+    """
+    Verify that when all returned Kroger locations are checklane/register,
+    it falls back to the product's department category ('Snacks').
+    """
+    import json
+    from unittest.mock import MagicMock, patch
+    from apps.shopping.services.store_service import kroger_client
+
+    mock_kroger_response = {
+        "data": [
+            {
+                "productId": "0001111015974",
+                "description": "Kroger Freeze Dried Strawberries",
+                "categories": ["Snacks"],
+                "aisleLocations": [
+                    {
+                        "description": "CHECKLANE AUTHORIZATION ONLY",
+                        "number": "300",
+                        "bayNumber": "1",
+                    }
+                ],
+            }
+        ]
+    }
+
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_kroger_response).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch.object(kroger_client, "get_access_token", return_value="fake_token"), \
+         patch("urllib.request.urlopen", return_value=mock_resp):
+        res = kroger_client.lookup_product_aisle("62000111", "freeze-dried strawberries")
+
+        assert res is not None
+        # Must fall back to Snacks department instead of checklane authorization
+        assert res["aisle_name"] == "Snacks"
+        assert res["sequence_order"] == 80
+
+
+@pytest.mark.django_db
+def test_resolve_store_aisle_purges_and_ignores_cached_checklane():
+    """Verify resolve_store_aisle purges any corrupted checklane cache entries."""
+    store = StoreLocation.objects.create(name="King Soopers #111", chain="kroger", external_store_id="62000111")
+    StoreItemAisle.objects.create(
+        store=store,
+        item_name_normalized="freeze-dried strawberries",
+        aisle_name="CHECKLANE AUTHORIZATION ONLY",
+        source="api",
+    )
+
+    res = resolve_store_aisle(store, "freeze-dried strawberries", db_only=True)
+    assert res is None
+    # Verify the corrupted record was purged
+    assert not StoreItemAisle.objects.filter(store=store, item_name_normalized="freeze-dried strawberries").exists()
+
+
+
 
 
 

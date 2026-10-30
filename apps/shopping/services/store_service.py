@@ -89,6 +89,52 @@ UNIVERSAL_DEPARTMENTS: set[str] = {
     "produce", "meat", "seafood", "deli", "bakery", "dairy", "eggs and dairy", "frozen",
 }
 
+# Substrings identifying point-of-sale register prompts, cashier authorization tags, or non-floor locations
+INVALID_AISLE_PATTERNS: list[str] = [
+    "authorization",
+    "checklane",
+    "checkout",
+    "register",
+    "customer service",
+    "self checkout",
+    "self-checkout",
+    "fuel",
+    "kiosk",
+    "online only",
+    "pickup only",
+    "curbside",
+    "dock",
+    "warehouse",
+    "backroom",
+    "receiving",
+]
+
+
+def is_valid_store_aisle(aisle_name: str | None) -> bool:
+    """
+    Validate that an aisle string represents a genuine customer-accessible grocery floor aisle
+    or physical department, and not an administrative register tag, checklane restriction,
+    or internal cashier authorization code.
+    """
+    if not aisle_name:
+        return False
+    clean = aisle_name.strip().lower()
+    if not clean or clean in ["none", "null", "undefined", "unknown", "n/a"]:
+        return False
+    if any(pat in clean for pat in INVALID_AISLE_PATTERNS):
+        return False
+
+    # Reject front-end registers / checkouts, but allow valid aisle displays like "Aisle 1 - Front Endcap"
+    if re.search(r"\bfront[- ]?end\b(?!\s*cap)", clean):
+        return False
+
+    # Check for aisle numbers 300+ (Kroger front checkout impulse racks and non-floor codes)
+    match = re.search(r"aisle\s+(\d+)", clean)
+    if match and int(match.group(1)) >= 300:
+        return False
+    return True
+
+
 # In-memory negative lookup cache: (store_id, candidate_term) -> timestamp (TTL: 1 hour)
 _NEGATIVE_LOOKUP_CACHE: dict[tuple[int, str], float] = {}
 _NEGATIVE_CACHE_TTL_SECONDS = 3600.0
@@ -451,7 +497,7 @@ class KrogerAPIClient:
         query_params = urllib.parse.urlencode({
             "filter.term": product_term,
             "filter.locationId": clean_loc,
-            "filter.limit": 5,
+            "filter.limit": 10,
         })
         url = f"{self.PRODUCTS_URL}?{query_params}"
         request = urllib.request.Request(
@@ -468,29 +514,75 @@ class KrogerAPIClient:
                 if not products:
                     return None
 
+                best_candidate: dict[str, Any] | None = None
+                category_fallback: str | None = None
+
                 for product in products:
+                    # Check product categories for valid department fallback
+                    cats = product.get("categories", [])
+                    for c in cats:
+                        if c and not category_fallback:
+                            c_clean = str(c).strip()
+                            if c_clean.lower() in DEPARTMENT_ORDER:
+                                category_fallback = c_clean.title()
+
                     aisle_locations = product.get("aisleLocations", [])
-                    if not aisle_locations:
-                        continue
+                    for loc in aisle_locations:
+                        desc = (loc.get("description") or "").strip()
+                        num = (loc.get("number") or "").strip()
 
-                    first_location = aisle_locations[0]
-                    desc = (first_location.get("description") or "").strip()
-                    num = (first_location.get("number") or "").strip()
-                    aisle_name = desc or (f"Aisle {num}" if num else "")
-                    if not aisle_name:
-                        continue
+                        # Verify numeric value is not checklane / register (e.g. 300)
+                        num_int = None
+                        if num:
+                            try:
+                                num_int = int(num)
+                            except (ValueError, TypeError):
+                                pass
 
-                    seq_val = first_location.get("sequenceNumber")
-                    try:
-                        sequence_order = int(seq_val) if seq_val is not None else 100
-                    except (ValueError, TypeError):
-                        sequence_order = 100
+                        if num_int and num_int >= 300:
+                            continue
 
+                        # Check description validity against checklane/register keywords
+                        if desc and not is_valid_store_aisle(desc):
+                            continue
+
+                        raw_aisle = desc or (f"Aisle {num}" if num else "")
+                        if not is_valid_store_aisle(raw_aisle):
+                            continue
+
+                        # Normalize "AISLE 8" to "Aisle 8"
+                        aisle_name = re.sub(r"(?i)^aisle\s+(\d+)$", r"Aisle \1", raw_aisle)
+
+                        seq_val = loc.get("sequenceNumber")
+                        try:
+                            sequence_order = int(seq_val) if seq_val is not None else 100
+                        except (ValueError, TypeError):
+                            sequence_order = 100
+
+                        candidate_info = {
+                            "aisle_name": aisle_name,
+                            "bay_number": (loc.get("bayNumber") or "").strip(),
+                            "sequence_order": sequence_order,
+                        }
+
+                        # Numbered aisles (Aisle 1..99) or major floor departments get immediate top priority
+                        if re.match(r"(?i)^aisle\s+\d+$", aisle_name) or (num_int and 1 <= num_int < 100):
+                            return candidate_info
+
+                        if not best_candidate:
+                            best_candidate = candidate_info
+
+                if best_candidate:
+                    return best_candidate
+
+                # Fallback to category department if only checklane/register placements existed
+                if category_fallback:
                     return {
-                        "aisle_name": aisle_name,
-                        "bay_number": (first_location.get("bayNumber") or "").strip(),
-                        "sequence_order": sequence_order,
+                        "aisle_name": category_fallback,
+                        "bay_number": "",
+                        "sequence_order": DEPARTMENT_ORDER.get(category_fallback.lower(), 80),
                     }
+
                 return None
         except Exception as error:
             logger.warning(f"Kroger API lookup failed for '{product_term}' at location {location_id}: {error}")
@@ -511,10 +603,10 @@ def _save_store_item_aisle(
     """
     Safely persist or update a StoreItemAisle record without using select_for_update,
     handling SQLite concurrency gracefully with exponential backoff retries.
-    Guarantees that empty aisle records are never persisted to the database.
+    Guarantees that empty or invalid aisle records (e.g. checklane tags) are never persisted.
     """
     clean_aisle = (aisle_name or "").strip()
-    if not clean_aisle:
+    if not clean_aisle or not is_valid_store_aisle(clean_aisle):
         return None
 
     import time
@@ -724,22 +816,29 @@ def resolve_store_aisle(
         .first()
     )
     if cached and cached.aisle_name:
-        # If original item name isn't stored yet, record the alias mapping
-        if cached.item_name_normalized != clean_original:
-            _save_store_item_aisle(
-                store=store,
-                item_name_normalized=clean_original,
-                aisle_name=cached.aisle_name,
-                bay_number=cached.bay_number,
-                sequence_order=cached.sequence_order,
-                source=cached.source,
-            )
-        return {
-            "aisle_name": cached.aisle_name,
-            "bay_number": cached.bay_number,
-            "sequence_order": cached.sequence_order,
-            "source": cached.source,
-        }
+        if not is_valid_store_aisle(cached.aisle_name):
+            try:
+                cached.delete()
+            except Exception:
+                pass
+            cached = None
+        else:
+            # If original item name isn't stored yet, record the alias mapping
+            if cached.item_name_normalized != clean_original:
+                _save_store_item_aisle(
+                    store=store,
+                    item_name_normalized=clean_original,
+                    aisle_name=cached.aisle_name,
+                    bay_number=cached.bay_number,
+                    sequence_order=cached.sequence_order,
+                    source=cached.source,
+                )
+            return {
+                "aisle_name": cached.aisle_name,
+                "bay_number": cached.bay_number,
+                "sequence_order": cached.sequence_order,
+                "source": cached.source,
+            }
 
     # 2. Query Kroger API across candidates if applicable and network calls are permitted
     now = time.time()

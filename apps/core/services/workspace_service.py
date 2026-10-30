@@ -186,3 +186,83 @@ def remove_workspace_member(workspace: Workspace, user: Any) -> bool:
     """
     count, _ = WorkspaceMember.objects.filter(workspace=workspace, user=user).delete()
     return count > 0
+
+
+def clear_workspace_data(
+    workspace: Workspace,
+    request: HttpRequest | None = None,
+) -> dict[str, int]:
+    """
+    Clear all shopping list items on active shopping lists,
+    unload all preset lists, and clear out all meals from meal plans in the workspace.
+
+    Args:
+        workspace: Target Workspace instance.
+        request: Optional HttpRequest for audit attribution and WebSocket broadcasts.
+
+    Returns:
+        Dictionary with counts of cleared items:
+        {"items_cleared": int, "presets_unloaded": int, "meals_cleared": int}
+    """
+    from apps.mealplans.services.mealplan_service import broadcast_mealplan_update, delete_meal_from_plan
+    from apps.shopping.models import ShoppingListItem, ShoppingListItemSource
+    from apps.shopping.services.broadcaster import broadcast_shopping_list_update
+    from apps.shopping.services.preset_service import unload_preset_from_shopping_list
+
+    primary_list = workspace.get_primary_list()
+
+    # 1. Clear out all meal plans in the workspace
+    meals_cleared = 0
+    for mp in workspace.meal_plans.all():
+        for meal in list(mp.meals.all()):
+            delete_meal_from_plan(meal, shopping_list=primary_list, request=request)
+            meals_cleared += 1
+
+    # 2. Unload all preset lists from the workspace's shopping list(s)
+    presets_unloaded = 0
+    preset_lists = workspace.shopping_lists.filter(is_preset=True)
+    for preset in preset_lists:
+        if primary_list:
+            unload_preset_from_shopping_list(preset, primary_list, request=request)
+            presets_unloaded += 1
+
+    # 3. Clear all items from all non-preset shopping lists in this workspace
+    items_cleared = 0
+    active_lists = workspace.shopping_lists.filter(is_preset=False)
+    for sl in active_lists:
+        items_count = sl.items.count()
+        items_cleared += items_count
+        ShoppingListItemSource.objects.filter(item__shopping_list=sl).delete()
+        sl.items.all().delete()
+
+    # 4. Broadcast real-time updates across open tabs and collaborating users
+    actor_name = ""
+    if request and getattr(request, "user", None) and request.user.is_authenticated:
+        actor_name = (request.user.first_name or "").strip() or request.user.username
+    if not actor_name:
+        actor_name = "Someone"
+
+    sender_id = ""
+    if request:
+        sender_id = request.headers.get("X-Client-Id") or request.META.get("HTTP_X_CLIENT_ID") or ""
+
+    if primary_list:
+        broadcast_shopping_list_update(
+            shopping_list=primary_list,
+            toast_message=f"🗑 {actor_name} cleared the workspace shopping list",
+            actor_name=actor_name,
+            sender_client_id=sender_id,
+        )
+
+    broadcast_mealplan_update(
+        request=request,
+        toast_message=f"🗑 {actor_name} cleared the workspace meal plan",
+        shopping_list=primary_list,
+        workspace=workspace,
+    )
+
+    return {
+        "items_cleared": items_cleared,
+        "presets_unloaded": presets_unloaded,
+        "meals_cleared": meals_cleared,
+    }

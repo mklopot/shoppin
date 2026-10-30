@@ -289,3 +289,152 @@ def test_websocket_scoping_between_workspaces(workspace_users):
         await communicator_a.disconnect()
 
     async_to_sync(run_test)()
+
+
+def test_workspace_dropdown_shows_extended_width_and_title(client, workspace_setup, workspace_users):
+    """Test that the workspace pulldown renders with extended max-width and tooltip title."""
+    ws = workspace_setup["workspace"]
+    ws.name = "My Very Long And Elaborate Kitchen Workspace 2026"
+    ws.save()
+
+    client.force_login(workspace_users["owner"])
+    response = client.get(reverse("shopping:list"))
+    assert response.status_code == 200
+
+    content = response.content.decode()
+    # Verify the dropdown button has the full name as a title tooltip
+    assert f'title="{ws.name}"' in content
+    # Verify the dropdown button text container uses widened max-width classes
+    assert "max-w-[190px]" in content or "max-w-[240px]" in content or "max-w-[110px]" in content
+    # Verify the dropdown menu uses widened container
+    assert "w-64" in content or "w-72" in content
+
+
+def test_update_workspace_name_oob_updates_dropdown(client, workspace_setup, workspace_users):
+    """Test that updating the workspace name immediately re-renders the navbar dropdown out-of-band."""
+    ws = workspace_setup["workspace"]
+    owner = workspace_users["owner"]
+    client.force_login(owner)
+
+    new_name = "Sunny Meadows Homestead"
+    update_url = reverse("core:update_workspace_settings", args=[ws.id])
+    response = client.post(
+        update_url,
+        {"name": new_name, "completed_items_retention_days": "7"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+
+    ws.refresh_from_db()
+    assert ws.name == new_name
+
+    content = response.content.decode()
+    # Verify out-of-band swap updates the navbar dropdown immediately without reload
+    assert 'id="workspace-dropdown-container"' in content
+    assert 'hx-swap-oob="outerHTML"' in content
+    assert new_name in content
+    # Verify client-side script update is present
+    assert f'"{new_name}"' in content
+
+
+def test_clear_workspace_removes_items_unloads_presets_clears_mealplan(client, workspace_setup, workspace_users):
+    """
+    Test clearing workspace: removes all shopping list items,
+    unloads all presets from shopping list, and clears all meals from the meal plan,
+    while preserving preset list templates and recipes.
+    """
+    from apps.core.services.workspace_service import clear_workspace_data
+    from apps.mealplans.models import Meal, MealDish, MealPlan
+    from apps.recipes.models import Ingredient, Recipe
+    from apps.shopping.models import ShoppingListItemSource
+    from apps.shopping.services.preset_service import create_preset_list, add_preset_item, load_preset_items_to_shopping_list
+
+    ws = workspace_setup["workspace"]
+    owner = workspace_users["owner"]
+    primary_list = workspace_setup["shopping_list"]
+
+    # 1. Add recipe and meal with dish to meal plan
+    meal_plan = ws.get_meal_plan()
+    recipe = Recipe.objects.create(name="Chicken Quesadillas", created_by=owner)
+    Ingredient.objects.create(recipe=recipe, name="Tortillas", amount=Decimal("4.00"), amount_unit="pieces")
+    Ingredient.objects.create(recipe=recipe, name="Cheddar Cheese", amount=Decimal("200.00"), amount_unit="g")
+
+    meal = Meal.objects.create(meal_plan=meal_plan, name="Friday Dinner")
+    dish = MealDish.objects.create(meal=meal, recipe=recipe, scale_factor=Decimal("1.00"))
+    # Add dish ingredient to shopping list
+    item_ques = primary_list.items.create(name="Tortillas", amount=Decimal("4.00"), purpose="Dish: Chicken Quesadillas")
+    ShoppingListItemSource.objects.create(item=item_ques, meal=meal, meal_dish=dish, recipe=recipe, amount=Decimal("4.00"))
+
+    # 2. Add preset list and load it to shopping list
+    preset = create_preset_list(workspace=ws, name="Baking Supplies")
+    add_preset_item(preset, name="Vanilla Extract", amount=Decimal("1.00"))
+    add_preset_item(preset, name="Baking Powder", amount=Decimal("1.00"))
+    load_preset_items_to_shopping_list(preset, primary_list)
+
+    # 3. Add manual standalone item
+    primary_list.items.create(name="Sponge", amount=Decimal("1.00"), purpose="One-time purchase")
+
+    # Verify initial populated state
+    assert primary_list.items.count() >= 4
+    assert meal_plan.meals.count() == 1
+    assert ws.shopping_lists.filter(is_preset=True).count() == 1
+
+    # Call clear workspace via HTMX POST
+    client.force_login(owner)
+    clear_url = reverse("core:clear_workspace", args=[ws.id])
+    response = client.post(clear_url, HTTP_HX_REQUEST="true")
+    assert response.status_code == 200
+
+    content = response.content.decode()
+    assert "Workspace cleared successfully" in content
+
+    # Verify state after clearing:
+    # 1. Shopping list items are all cleared
+    assert primary_list.items.count() == 0
+    # 2. Meal plan meals are cleared out
+    assert meal_plan.meals.count() == 0
+    # 3. Preset template STILL exists
+    assert ws.shopping_lists.filter(is_preset=True, name="Baking Supplies").exists()
+    preset.refresh_from_db()
+    assert preset.items.count() == 2
+    # 4. Recipe STILL exists
+    assert Recipe.objects.filter(id=recipe.id).exists()
+
+
+def test_clear_workspace_permission_denied_for_non_owner(client, workspace_setup, workspace_users):
+    """Test that editors and viewers cannot clear workspace data."""
+    ws = workspace_setup["workspace"]
+    editor = workspace_users["editor"]
+    viewer = workspace_users["viewer"]
+    primary_list = workspace_setup["shopping_list"]
+
+    clear_url = reverse("core:clear_workspace", args=[ws.id])
+
+    # Editor attempts clear
+    client.force_login(editor)
+    resp_editor = client.post(clear_url, HTTP_HX_REQUEST="true")
+    assert resp_editor.status_code == 403
+    assert primary_list.items.count() > 0
+
+    # Viewer attempts clear
+    client.force_login(viewer)
+    resp_viewer = client.post(clear_url, HTTP_HX_REQUEST="true")
+    assert resp_viewer.status_code == 403
+    assert primary_list.items.count() > 0
+
+
+def test_clear_workspace_modal_contains_confirmation(client, workspace_setup, workspace_users):
+    """Test that the workspace settings modal includes the clear button and confirmation prompt."""
+    ws = workspace_setup["workspace"]
+    owner = workspace_users["owner"]
+    client.force_login(owner)
+
+    modal_url = reverse("core:workspace_settings", args=[ws.id])
+    response = client.get(modal_url)
+    assert response.status_code == 200
+
+    content = response.content.decode()
+    assert "Clear Workspace" in content
+    assert "hx-confirm=" in content
+    assert "Remove all items now on the shopping list" in content
+    assert reverse("core:clear_workspace", args=[ws.id]) in content

@@ -20,6 +20,7 @@ urlpatterns = [
     path("workspace/create/", views.create_workspace_view, name="create_workspace"),
     path("workspace/<int:workspace_id>/settings/", views.workspace_settings_modal, name="workspace_settings"),
     path("workspace/<int:workspace_id>/settings/update/", views.update_workspace_settings_view, name="update_workspace_settings"),
+    path("workspace/<int:workspace_id>/clear/", views.clear_workspace_view, name="clear_workspace"),
     path("workspace/<int:workspace_id>/members/", views.workspace_members_modal, name="workspace_members"),
     path("workspace/<int:workspace_id>/share/", views.share_workspace_view, name="share_workspace"),
     path("workspace/<int:workspace_id>/members/<int:user_id>/remove/", views.remove_member_view, name="remove_member"),

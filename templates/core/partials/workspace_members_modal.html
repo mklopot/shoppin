@@ -36,6 +36,12 @@
             </div>
             {% endif %}
 
+            {% if workspace_cleared %}
+            <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs px-3 py-2 flex items-center justify-between">
+                <span>✓ Workspace cleared successfully: {{ cleared_stats.items_cleared }} shopping list item{{ cleared_stats.items_cleared|pluralize }} removed, {{ cleared_stats.presets_unloaded }} preset list{{ cleared_stats.presets_unloaded|pluralize }} unloaded, and {{ cleared_stats.meals_cleared }} meal{{ cleared_stats.meals_cleared|pluralize }} cleared from the meal plan.</span>
+            </div>
+            {% endif %}
+
             {% if is_owner %}
             <form hx-post="{% url 'core:update_workspace_settings' workspace.id %}"
                   hx-target="#modal-placeholder"
@@ -81,6 +87,28 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Danger Zone: Clear Workspace -->
+            <div class="border-t-2 border-red-200 pt-4 mt-4 space-y-2">
+                <div class="flex items-center space-x-1.5 text-red-900 font-bold text-xs uppercase tracking-wider">
+                    <span aria-hidden="true">⚠️</span>
+                    <span>Clear Workspace</span>
+                </div>
+                <p class="text-[11px] text-gray-600 leading-relaxed">
+                    Clear all shopping list items now on the list, unload all preset lists, and clear out the meal plan.
+                    Preset templates and saved recipes will remain safely preserved.
+                </p>
+                <form hx-post="{% url 'core:clear_workspace' workspace.id %}"
+                      hx-target="#modal-placeholder"
+                      hx-confirm="Are you sure you want to clear this workspace?&#10;&#10;This will:&#10;• Remove all items now on the shopping list&#10;• Unload all preset lists from the shopping list&#10;• Clear out all meals from the meal plan&#10;&#10;Your saved recipes and preset list templates will NOT be deleted. This cannot be undone.">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="border border-red-700 bg-red-700 hover:bg-red-800 text-white font-semibold px-3 py-1.5 text-xs rounded-none shadow-sm flex items-center space-x-1.5">
+                        <span aria-hidden="true">🗑️</span>
+                        <span>Clear Workspace (Shopping List, Presets & Meal Plan)</span>
+                    </button>
+                </form>
+            </div>
             {% else %}
             <div class="space-y-3 text-xs text-gray-700">
                 <div>
@@ -228,5 +256,41 @@
                 targetBtn.classList.remove('border-transparent', 'text-gray-500', 'bg-gray-50');
             }
         }
+
+        {% if settings_saved %}
+        (function syncWorkspaceDropdown() {
+            var newName = "{{ workspace.name|escapejs }}";
+            var nameEl = document.getElementById('workspace-dropdown-name');
+            if (nameEl) {
+                nameEl.textContent = newName;
+                nameEl.setAttribute('title', newName);
+            }
+            var btnEl = document.getElementById('workspace-dropdown-btn');
+            if (btnEl) {
+                btnEl.setAttribute('title', newName);
+            }
+        })();
+        {% endif %}
+
+        {% if workspace_cleared %}
+        (function syncClearedWorkspaceUI() {
+            var listEl = document.getElementById('shopping-list-content');
+            if (listEl && window.htmx) {
+                var refreshUrl = listEl.getAttribute('data-refresh-url') || window.location.href;
+                htmx.ajax('GET', refreshUrl, { target: '#shopping-list-content', swap: 'outerHTML' });
+            }
+            var mpEl = document.getElementById('mealplan-content');
+            if (mpEl && window.htmx) {
+                var mpRefreshUrl = mpEl.getAttribute('data-refresh-url') || window.location.href;
+                htmx.ajax('GET', mpRefreshUrl, { target: '#mealplan-content', swap: 'outerHTML' });
+            }
+        })();
+        {% endif %}
     </script>
+
+    {% if settings_saved %}
+    <div id="workspace-dropdown-container" hx-swap-oob="outerHTML">
+        {% include "core/partials/workspace_dropdown.html" %}
+    </div>
+    {% endif %}
 </div>

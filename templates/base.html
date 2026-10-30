@@ -244,72 +244,7 @@
                 <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs flex-shrink-0">
                     {% if request.user.is_authenticated %}
                     <!-- Workspace Dropdown (Authenticated) -->
-                    <div class="relative" id="workspace-dropdown-container">
-                        <button type="button"
-                                id="workspace-dropdown-btn"
-                                aria-haspopup="true"
-                                aria-expanded="false"
-                                aria-controls="workspace-dropdown-menu"
-                                onclick="toggleWorkspaceDropdown()"
-                                class="h-8 inline-flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none">
-                            <span class="text-xs" aria-hidden="true">🏢</span>
-                            <span class="font-semibold max-w-[80px] sm:max-w-[120px] truncate">{{ active_workspace.name }}</span>
-                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 leading-none {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
-                                {{ workspace_role|title }}
-                            </span>
-                            <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
-                        </button>
-
-                        <!-- Dropdown Menu -->
-                        <div id="workspace-dropdown-menu"
-                             role="menu"
-                             aria-labelledby="workspace-dropdown-btn"
-                             class="hidden absolute right-0 mt-1 w-56 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
-                            <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500" role="presentation">
-                                Switch Workspace
-                            </div>
-                            <div class="py-1 max-h-48 overflow-y-auto" role="none">
-                                {% for ws in user_workspaces %}
-                                <a href="{% url 'core:switch_workspace' ws.id %}"
-                                   role="menuitem"
-                                   class="flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-xs {% if active_workspace.id == ws.id %}bg-blue-50/60 font-semibold text-blue-900{% else %}text-gray-700{% endif %}">
-                                    <span class="truncate">{{ ws.name }}</span>
-                                    <span class="text-[10px] text-gray-500 font-normal">({{ ws.role_display }})</span>
-                                </a>
-                                {% endfor %}
-                            </div>
-
-                            <div class="py-1" role="none">
-                                <button type="button"
-                                        role="menuitem"
-                                        onclick="openNewWorkspaceModal()"
-                                        class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
-                                    <span aria-hidden="true">➕</span>
-                                    <span>New Workspace...</span>
-                                </button>
-                                {% if is_workspace_owner %}
-                                <button type="button"
-                                        role="menuitem"
-                                        hx-get="{% url 'core:workspace_settings' active_workspace.id %}"
-                                        hx-target="#modal-placeholder"
-                                        onclick="closeWorkspaceDropdown()"
-                                        class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
-                                    <span aria-hidden="true">⚙️</span>
-                                    <span>Workspace Settings...</span>
-                                </button>
-                                <button type="button"
-                                        role="menuitem"
-                                        hx-get="{% url 'core:workspace_members' active_workspace.id %}"
-                                        hx-target="#modal-placeholder"
-                                        onclick="closeWorkspaceDropdown()"
-                                        class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
-                                    <span aria-hidden="true">👥</span>
-                                    <span>Share & Members...</span>
-                                </button>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                    {% include "core/partials/workspace_dropdown.html" %}
 
                     <!-- User Account / Logout Menu -->
                     <div class="relative" id="user-dropdown-container">

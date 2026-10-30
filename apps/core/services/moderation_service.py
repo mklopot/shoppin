@@ -104,9 +104,17 @@ LEET_TABLE = str.maketrans({
 def normalize_text_for_moderation(text: str) -> str:
     """
     Normalize text by stripping unicode diacritics and translating leetspeak.
+    Protects standalone numbers, decimals, currencies, times, and percentages from leetspeak
+    translation to prevent innocent numerical ratings (e.g. '4.55') from being falsely flagged.
     """
-    normalized = unicodedata.normalize("NFKD", text)
-    return normalized.translate(LEET_TABLE)
+    tokens = []
+    for token in text.split(" "):
+        if re.match(r"^[\$€£]?\d+([.,:\/\-]\d+)*[%]?$", token):
+            tokens.append(token)
+        else:
+            normalized = unicodedata.normalize("NFKD", token)
+            tokens.append(normalized.translate(LEET_TABLE))
+    return " ".join(tokens)
 
 
 def contains_obscene_language(text: str | None) -> tuple[bool, str | None]:

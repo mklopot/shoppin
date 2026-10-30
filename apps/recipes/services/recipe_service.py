@@ -2,6 +2,7 @@
 Service layer for recipe search, multi-faceted filtering, creation, and synchronization.
 """
 
+from decimal import Decimal
 from typing import Any
 
 from django.db.models import Avg, F, Q, QuerySet

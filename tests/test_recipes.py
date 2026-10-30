@@ -702,3 +702,58 @@ def test_recipe_import_url_view_errors(client: Client, auth_user, monkeypatch):
     resp2 = client.post(reverse("recipes:import_url"), {"url": "https://example.com/no-recipe"})
     assert resp2.status_code == 302
     assert not Recipe.objects.filter(name="Just a blog post").exists()
+
+
+@pytest.mark.django_db
+def test_import_recipes_management_command(tmp_path):
+    """Test the safe, idempotent import_recipes management command."""
+    import yaml
+    from django.core.management import call_command
+    from apps.recipes.models import Ingredient, Recipe
+
+    # Setup initial recipe
+    orig = Recipe.objects.create(name="Existing Dish", description="Original description")
+    orig_ing = Ingredient.objects.create(recipe=orig, name="Garlic", amount=2, amount_unit="cloves", order=0)
+    orig_ing_id = orig_ing.id
+
+    # Create YAML containing the existing dish (with new text) and a brand new dish
+    yaml_content = {
+        "Existing Dish": {
+            "description": "Updated description",
+            "ingredients": ["Garlic", "Salt"],
+        },
+        "Brand New Dish": {
+            "description": "Delicious new creation",
+            "directions": "Cook thoroughly and enjoy.",
+            "ingredients": [
+                {"Olive Oil": {"amount": "2 tbsp"}},
+                "Onion",
+            ],
+        },
+    }
+    yaml_file = tmp_path / "test_recipes.yaml"
+    with open(yaml_file, "w", encoding="utf-8") as f:
+        yaml.safe_dump(yaml_content, f)
+
+    # 1. Dry run should not create anything
+    call_command("import_recipes", file=str(yaml_file), dry_run=True)
+    assert not Recipe.objects.filter(name="Brand New Dish").exists()
+    assert Recipe.objects.get(name="Existing Dish").description == "Original description"
+    assert Ingredient.objects.filter(id=orig_ing_id).exists()
+
+    # 2. Real import should create only the new dish, leaving existing dish and its ingredient ID intact
+    call_command("import_recipes", file=str(yaml_file))
+    assert Recipe.objects.filter(name="Brand New Dish").exists()
+    new_recipe = Recipe.objects.get(name="Brand New Dish")
+    assert new_recipe.ingredients.count() == 2
+    assert new_recipe.ingredients.filter(name="Olive Oil", amount=2, amount_unit="tbsp").exists()
+
+    # Existing recipe was skipped by default; its ingredient ID is completely unchanged
+    assert Recipe.objects.get(name="Existing Dish").description == "Original description"
+    assert Ingredient.objects.filter(id=orig_ing_id).exists()
+
+    # 3. Running with --update-existing updates description without deleting existing ingredients
+    call_command("import_recipes", file=str(yaml_file), update_existing=True)
+    assert Recipe.objects.get(name="Existing Dish").description == "Updated description"
+    assert Ingredient.objects.filter(id=orig_ing_id).exists()
+

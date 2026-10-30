@@ -38,6 +38,8 @@
 
     - 'Rice'
 
+    - 'Corn tortillas '
+
 
 'take-out':
   directions: |
@@ -211,9 +213,12 @@
     
     Bake at 350F in an oiled loaf pan for 30 min, or until internal temp reaches 140F. 
     
-    Optionally, glaze with BBQ sauce 5 minutes before removing from the oven.
+    Optionally, glaze with BBQ sauce or ketchup 5 minutes before removing from the oven.
     
     Allow to cool just a few minutes, and serve.
+    
+    
+    Or https://natashaskitchen.com/meatloaf-recipe/
     
   ingredients:
     - 'ground beef':
@@ -222,17 +227,28 @@
     - 'onion':
         amount: '0.25'
 
-    - 'eggs':
-        amount: '2'
-
-    - 'bread crumbs, italian':
-        amount: '0.75 cup'
-
-    - 'milk':
-        amount: '6 oz'
-
     - 'garlic':
         amount: '3 cloves'
+        optional: True
+
+    - 'Ketchup':
+        optional: True
+
+    - 'Eggs'
+
+    - 'Barbecue sauce':
+        optional: True
+
+    - 'Milk':
+        amount: '.25 cup'
+
+    - 'Italian bread crumbs':
+        amount: '.5 cup'
+
+    - 'Chopped parsley':
+        optional: True
+
+    - 'Parmesano cheese':
         optional: True
 
 
@@ -881,6 +897,8 @@
         amount: '0.33 cups'
         optional: True
 
+    - 'Veggie sausages'
+
 
 'mac-and-cheese casserole':
   description: |
@@ -1036,6 +1054,8 @@
 
     - 'ranch dressing':
         amount: '6 oz'
+
+    - 'Barbecue sauce'
 
 
 'schnitzel':
@@ -1238,7 +1258,7 @@
         amount: '20 grams'
 
     - 'walnuts':
-        amount: '1e+02 grams'
+        amount: '1 e+02 grams'
 
     - 'can crushed tomatoes':
         amount: '16 oz'
@@ -1628,7 +1648,10 @@
     
     Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
     
-    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. 
+    
+    Optionally finish with half a cup of cream.
+    Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
     
   ingredients:
     - 'tortellini':
@@ -1670,6 +1693,10 @@
 
     - 'black pepper':
         amount: '1 pinch'
+
+    - 'cream':
+        amount: '0.5 cup'
+        optional: True
 
 
 'Eggplant Parmesan':
@@ -2554,6 +2581,9 @@
         amount: '1 cup'
         optional: True
 
+    - 'butter':
+        amount: '2 tbsp'
+
 
 'mayo egg':
   description: |
@@ -2951,7 +2981,7 @@
     
     Heat oil, chop the onion and fry in the oil until aromatic, do not burn. Add chopped garlic into the oil for 1 min. Strain the onion and garlic and pour the hot oil over the spices into a heat-proof ramekin.
     
-    Allow the spices to bloom in the to oil for 30 seconds, then add to the carrots. Mix and store in the fridge for 2 hrs to allow the flavors to permeate.
+    Allow the spices to bloom in the hot oil for 30 seconds, then add to the carrots. Mix and store in the fridge for 2 hrs to allow the flavors to permeate.
     
   ingredients:
     - 'avocado oil':
@@ -2985,5 +3015,856 @@
         amount: '0.5 tsp'
 
     - 'onion'
+
+
+'Bellringer''s Reward (Roast Roots and Baked Spuds)':
+  description: |
+    An assortment of baked, seasoned vegetables from the "Redwall Cookbook" 
+    
+  directions: |
+    1. Preheat oven to 375 F. Bring a large pot of water to a boil and salt it well. 
+    
+    2. Peel and cut rutabaga, parsnip, and carrot into one by two inch pieces. Finely chop the parsley.
+    
+    3. Add the vegetables to the boiling water, and cook for 3 minute, then drain.
+    
+    4. Brush a rimmed baking sheet with some of the vegetable oil, add the vegetables, then drizzle the remaining oil over the vegetables and season with salt and and pepper.
+    
+    5. Bake until the vegetables are golden, about 30 minutes. Sprinkle with the parsley and serve.
+    
+    
+    Baked Spuds:
+    
+    1. Preheat the oven to 400 F. Prick the potatoes all over with a fork. Place them in a roasting pan and drizzle with olive oil. Sprinkle with salt, then shake the pan to coat the potatoes.
+    
+    2. Bake for 90 minutes 
+    
+  ingredients:
+    - 'Vegetable oil':
+        amount: '2 tbsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+    - 'potato, Russet':
+        amount: '4'
+
+    - 'parsley':
+        amount: '1 tbsp'
+
+    - 'olive oil':
+        amount: '2 tbsp'
+
+    - 'carrots':
+        amount: '4'
+
+    - 'parsnips':
+        amount: '4'
+
+    - 'rutabaga'
+
+
+'Chile Rellenos':
+  description: |
+    Authentic Mexican Chile Rellenos
+    
+  directions: |
+    Preheat the oven broiler; set the oven rack about 6 inches below the heat source. Line a baking sheet with aluminum foil.
+    
+    Place peppers onto the prepared baking sheet and broil until skins are blackened and blistered, about 10 minutes. Use tongs to rotate peppers often to char all sides. Place blackened peppers into a bowl and tightly seal with plastic wrap. Allow peppers to steam as they cool, about 15 minutes.
+    
+    Remove skin from peppers, then cut a slit down the long side of each one to remove seeds and core.
+    
+    Rinse peppers inside and our and pat dry with paper towels. Cut cheese into 3/4# thick strips. Stuff peppers with strips of cheese.
+    
+    Separate the eggs. Whisk egg yolks and baking powder in a bowl until combined.
+    
+    Beat egg whites with an electric mixer in a separate bowl until stiff peaks form.
+    
+    Gently fold beaten whites into the yolk mixture. Place flour into a separate shallow bowl.
+    
+    Heat the frying oil (the original recipe has vegetable shortening) in a skillet over medium heat. Roll each stuffed pepper in flour, tap off excess flour, and dip into the egg mixture to coat both sides. Gently lay coated peppers into the hot oil. Fry peppers until lightly golden brown and cheese has melted, about 5 minutes per side.
+    
+  ingredients:
+    - 'Anaheim chiles':
+        amount: '6'
+
+    - 'queso asadero':
+        amount: '8 oz'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'baking powder':
+        amount: '1 tsp'
+
+    - 'flour':
+        amount: '0.75 cups'
+
+    - 'oil':
+        amount: '1 cup'
+
+
+'Lomo Saltado':
+  description: |
+    Peruvian stir-fried beef with fries, serve with  rice
+    
+  directions: |
+    https://www.littlespicejar.com/lomo-saltado/
+    
+    Marinate the beef: Mince the garlic finely.
+    
+    Add a splash of soy sauce and roughly half of the minced garlic to the thinly sliced beef.
+    
+    Allow for it to marinate for 5-7 minutes while you prepare the remaining ingredients.
+    This is where you’d add in a pinch of baking soda if you used a particularly tough cut of meat.
+    
+    Slice the onion into 1/2" wedges.
+    
+    
+    Make the sauce: The sauce is as simple as combining a few ingredients in a mason jar and giving it a quick shake to help everything mix. All you need is soy sauce, red wine vinegar, oyster sauce, aji Amarillo paste, and cornstarch. 
+    
+    Stir fry and put it all together: Add oil to a cast iron skillet or a cast iron braiser. Let it heat all the way through. When the oil is shimmering, add the beef slices in batches and sear them on both sides. Then, remove the beef to a plate and continue browning the remaining beef. Add another splash of oil to the pan then salt the onions until they soften a bit before adding the garlic and the tomatoes. Continue to saute for 1 minute. Then add the beef back into the pan. Drizzle everything with the prepared sauce and toss to combine.
+    
+    You’d also add the French fries here if you wanted them to soften in the sauce. 
+    
+    Top with sliced scallions or chopped cilantro if desired. Serve warm over rice!
+    
+  ingredients:
+    - 'Frozen french fries'
+
+    - 'beef tenderloin or another cut of beef':
+        amount: '1 lb'
+
+    - 'soy sauce, low sodium':
+        amount: '5 tbsp'
+
+    - 'garlic':
+        amount: '5 cloves'
+
+    - 'red wine vinegar':
+        amount: '1 tbsp'
+
+    - 'Aji Amarillo paste':
+        amount: '1 tbsp'
+
+    - 'cornstrach':
+        amount: '1 tsp'
+
+    - 'onion, red'
+
+    - 'tomatoes, roma':
+        amount: '3'
+
+    - 'scallions':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'cilantro':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'cooking oil':
+        amount: '3 tbsp'
+
+
+'Peruvian garlic rice':
+  description: |
+    To serve with Lomo Saltado
+    
+  directions: |
+    From https://cookingformysoul.com/peruvian-rice/#recipe
+    
+    Rinse the rice through a colander over cold water until the water runs mostly clear, about 2 to 3 times. This step removes excess starch, which ensures the grains are perfectly separated later.
+    
+    In a medium pot, heat 1-2 tablespoons of oil over medium heat, and sauté the garlic for a few seconds, being careful not to burn the garlic.
+    
+    Then, add the rice and toast for another 2-3 minutes until fragrant. Add the water and salt. Stir to combine. 
+    
+    Bring to a boil, then reduce to a low simmer. Cover and cook for 15 to 18 minutes, until the rice is tender and the liquid is fully absorbed.
+    
+    Fluff with a fork and let it rest for 5 minutes before serving. Enjoy!
+    
+  ingredients:
+    - 'rice, jasmine':
+        amount: '1 cup'
+
+    - 'water':
+        amount: '1.5 cups'
+
+    - 'garlic':
+        amount: '4 cloves'
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'olive oil':
+        amount: '2 tbsp'
+
+
+'Spinach Lasagna':
+  description: |
+    A healthy spinach-enriched variation on a hearty Italian dish
+    
+  directions: |
+    Cook frozen spinach according to package directions, and drain. Mix with the ingredients below for the spinach filling.
+    
+    Place some spinach filling on the bottom of a casserole dish. Add 4 boiled lasagna noodles (or use no-boil or fresh noodles). Spread 1/3 of the ricotta cheese mixture on top. Add 1.5 cups of meat sauce.
+    
+    Repeat the same layers two more times.
+    
+    Adding layers of noodles, ricotta cheese, and spinach to make Lasagna.
+    
+    Top with grated mozzarella cheese. Cover and bake at 375° for 30 minutes. Remove cover and bake for 15 more minutes. Broil at the end if desired. Let it rest for 15 minutes prior to serving 
+    
+    Cheese Filling
+    15 oz. ricotta cheese, 2 cups
+    1 large egg
+    2 cups mozzarella cheese
+    ¾ cup Parmesan cheese, freshly grated
+    2 teaspoons Italian seasoning
+    ½ teaspoon salt
+    ¼ tsp pepper
+    
+    Spinach Filling
+    3 cloves garlic, minced
+    40 oz. marinara sauce, see notes
+    1 tablespoon tomato paste
+    1 teaspoon hot sauce
+    1 teaspoon Worcestershire sauce
+    
+    Lasagna Noodles/ Cheese Topping
+    12 lasagna noodles, plus extra in case of breakage
+    2.5 cups mozzarella cheese
+    
+    
+    Equipment
+    1 9 x 13-inch casserole dish
+    
+    Instructions
+    Prep Work
+    Combine the cheese filling ingredients (ricotta, egg, 2 cups of the shredded mozzarella, parmesan, Italian seasoning, salt, pepper) in a medium bowl and set aside. Measure out remaining ingredients.
+    
+    Make the Spinach Filling.
+    
+    Preheat Oven and Cook the Lasagna Noodles
+    Preheat oven to 375°.
+    Begin boiling a large pot of salted pasta water for the lasagna noodles. Once a rapid boil is reached, cook the noodles to al dente according to package instructions. (Set a timer to ensure you don’t overcook them.) Gently stir with a wooden spoon throughout cooking to prevent the noodles from sticking. Drain and rinse with cold water until noodles are completely cool.
+    Lay the cooled noodles flat on wax or parchment paper while you begin assembling the lasagna.
+    
+    Assemble
+    Spread 1 heaping cup of spinach filling on the bottom of a 9 x 13-inch casserole dish. Next, add 4 lasagna noodles, overlapping them if needed.
+    Spread 1/3 of the ricotta cheese mixture over the noodles, followed by about 1 ½ cups of spinach filling.
+    Top with 4 more lasagna noodles, 1/3 of the ricotta cheese mixture, 1 ½ spinach filling.
+    Finish with 4 more lasagna noodles, the rest of the ricotta mixture, and the rest of the spinach filling.
+    Top with 2 ½ cups of Mozzarella cheese.
+    Spray foil with nonstick cooking spray and place it spray-side-down on top of the baking dish to prevent the cheese from sticking to it.
+    
+    Bake
+    Bake for 35 minutes. Remove cover and bake for 10 more minutes.
+    Remove and garnish with fresh parsley. Let it sit for 15 minutes prior to serving to allow the layers to set. 
+     
+    Pro Tips:
+    Flavor Enhancers: The hot sauce and Worcestershire sauce are flavor enhancers and can’t be tasted outright. The hot sauce won’t make it hot/spicy. I use Frank's Hot Sauce.
+    
+    Cheese: Shred and grate the cheese from a block, avoid using packaged shredded/grated cheese for this recipe. Low moisture, whole milk mozzarella cheese melts the best.
+    Lasagna Noodles: No-boil lasagna noodles or fresh lasagna noodles can also be used for this recipe, neither of which need to be cooked first. Fresh lasagna noodles can be found in the deli section of the grocery store.
+    Casserole Dish: If your lasagna is very close to the top of your casserole dish, place a baking sheet underneath the casserole dish to catch any splatters of sauce, as it gets hot and bubbly toward the end. A Deep Casserole Dish is helpful.
+    
+    Storage:
+    Store in an airtight container and refrigerate for up to 3 days or freeze for up to 3 months. Leftovers do freeze well. 
+    
+    Reheating Leftovers:
+    To reheat leftover lasagna, place it in a lightly greased, covered casserole dish. Bake at 350° for 25-30 minutes.
+    
+  ingredients:
+    - 'ricotta cheese':
+        amount: '15 oz'
+
+    - 'egg'
+
+    - 'mozzarella cheese':
+        amount: '10 oz'
+
+    - 'Italian seasoning':
+        amount: '2 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+    - 'onion, yellow'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'Parmesan Cheese, grated':
+        amount: '0.75 cups'
+
+    - 'marinara sauce':
+        amount: '40 oz'
+
+    - 'tomato paste':
+        amount: '1 tbsp'
+
+    - 'hot sauce':
+        amount: '1 tsp'
+        optional: True
+
+    - 'Worcestershire sauce':
+        amount: '1 tsp'
+        optional: True
+
+    - 'lasagna noodles':
+        amount: '12 noodles'
+
+    - 'mozarella cheese':
+        amount: '2.5 cups'
+
+    - 'frozen spinach':
+        amount: '1 package'
+
+
+'Matzo ball soup':
+  description: |
+    Matzo ball soup from scratch 
+    
+  directions: |
+    Matzo Balls from scratch (may use boxed mix)
+    ▢3 large eggs ($0.75)
+    ▢3 Tbsp vegetable or canola oil*** ($0.12)
+    ▢3/4 cup matzo meal**** ($1.02)
+    ▢1 tsp salt ($0.05)
+    ▢1/2 tsp baking powder ($0.04)
+    ▢Freshly cracked pepper ($0.01)
+    ▢3 Tbsp water ($0.00)
+    
+    Mince the garlic and dice the onion, celery, and carrots. Sauté the garlic, onion, celery, and carrots with the vegetable oil in a large pot over medium heat until the onions are soft and transparent (about five minutes).
+    
+    inach Mushroom and Feta Crustless Quiche
+    Ads end in 27
+    
+    
+    “So delicious! An absolute comfort food but in a flash! Definitely going on permanent rotation!”
+    
+    ALLISYN
+    
+    
+    Ditch Toast. Get Square.
+    Tired of Toast’s fees and friction? Square gives you clear pricing, no long-term contracts, intuitive tools, and a scalable ecosystem.
+    Sponsored By Square
+    Learn more
+    COZY Matzo Ball Soup
+    Matzo or Matzah Ball Soup is a traditional Ashkenazi Jewish dish that is often served during Passover and is commonly known as ‘Jewish penicillin.’ It’s a chicken soup filled with delicious dumplings made out of matzo meal (crushed unleavened bread), eggs, chicken fat (or another fat or oil), and broth. This recipe is a simplified, short-cut version that I’ve developed based on different recipes I’ve come across, tutorials I’ve watched, and myth-busters I’ve read. It’s certainly not authentic, but it’s delicious and perfect for anyone looking for a comforting, easy-to-make recipe, even if it’s your first time making it!
+    
+    However, I highly recommend checking out some authentic recipes before you give my one a go to see what it’s really all about. The Jewish Food Society and Chabad both have great options. This soup is absolutely delicious and soul-warming, and there’s just nothing in the world like it.
+    
+    Budget-Saving Tips!
+    Add more or less chicken: When I first made this recipe all those years ago, I only used one boneless, skinless chicken breast. I’ve since upped the amount to two to make this recipe even heartier, but to save some money, you can definitely stick with just one. The soup will still have plenty of flavor; it’ll just be more brothy with fewer chicken pieces!
+    Let the dough rest before adding to the soup. As you can see from the process photos below, there’s a big difference in the texture of the dough immediately after mixing and then after letting it rest. I let the dough rest in the fridge for 30 minutes to firm up and rehydrate, which makes it easier to form into balls and stops them from falling apart in the soup.
+    Make the dough ahead of time! You can make the matzo ball dough ahead of time and store it in the fridge overnight before forming into balls and cooking.
+    
+    Share this recipe
+    Matzo Ball Soup Recipe
+    Cost $11.83 recipe / $2.37 serving
+    4.55 from 75 votes
+    This is an easy, short-cut version of Matzo Ball Soup, a warm and comforting Jewish Soup served during Passover.  
+    Step-by-step photos can be seen below the recipe card.
+    Author: Beth Moncel
+    Side view of matzo ball soup in a bowl.
+    Servings
+    5
+     (2 cups soup, 3 matzo balls each)
+    Prep
+    10minutes mins
+    Cook
+    1hour hr 30minutes mins
+    Total
+    1hour hr 40minutes mins
+    Save Recipe
+    Print Recipe
+    Read the reviews
+    
+    Ingredients
+    Soup
+    ▢1 Tbsp vegetable or canola oil ($0.04)
+    ▢2 cloves garlic ($0.16)
+    ▢1 yellow onion ($0.40)
+    ▢3 carrots ($0.75)
+    ▢3 stalks celery ($0.56)
+    ▢2 boneless, skinless chicken breasts (about 1.25 lb.)* ($6.25)
+    ▢6 cups chicken broth** ($1.02)
+    ▢2 cups water ($0.00)
+    ▢Freshly cracked pepper ($0.01)
+    ▢Few sprigs fresh dill ($0.65)
+    
+    Matzo Balls
+    ▢3 large eggs ($0.75)
+    ▢3 Tbsp vegetable or canola oil*** ($0.12)
+    ▢3/4 cup matzo meal**** ($1.02)
+    ▢1 tsp salt ($0.05)
+    ▢1/2 tsp baking powder ($0.04)
+    ▢Freshly cracked pepper ($0.01)
+    ▢3 Tbsp water ($0.00)
+    Video
+    
+    Instructions 
+    Mince the garlic and dice the onion, celery, and carrots. Sauté the garlic, onion, celery, and carrots with the vegetable oil in a large pot over medium heat until the onions are soft and transparent (about five minutes).
+    
+    Add the chicken breast, chicken broth, 2 cups water, some freshly cracked pepper, and one or two sprigs of dill to the pot. Place a lid on the pot and let it come up to a boil. Once it reaches a boil, turn the heat down to low and let it simmer for 30 minutes.
+    While the soup is simmering, mix the matzo ball dough. In a medium bowl, whisk together the eggs and vegetable oil. Add the matzo meal, salt, baking powder, and a little freshly cracked pepper to the eggs and oil. Stir until well combined. Finally, add 3 Tbsp water and stir until smooth again. Refrigerate the mixture for 30 minutes to allow the matzo meal time to absorb the moisture.
+    
+    After the chicken soup has simmered, carefully remove the chicken breast and shred it with a fork. Return the shredded chicken to the soup. Taste the broth and adjust the salt if needed.
+    Once the dumpling mix has refrigerated and stiffened up, begin to form it into ping pong sized balls. Drop the balls into the simmering soup as they are formed, returning the lid to the pot after each one. If the dough is a little sticky, I recommend wetting your hands to help form the dough into balls. This will prevent it from sticking to your hands and make it easier to work with.Once all the dumplings are in the soup, let them simmer for 20 minutes without removing the lid. Make sure the soup is gently simmering the entire time.
+    
+    Add a couple sprigs of fresh dill just before serving.
+    See how we calculate recipe costs here.
+    
+    Notes
+    *You can use boneless, skinless or bone-in and skin on. Bone-in gives the best flavor, but be sure to remove the skin before adding it to the soup. The bones can be removed when you shred the chicken.
+    **I use Better Than Bouillon to make inexpensive broth in the exact quantity that I need.
+    ***Traditional matzo ball soup recipes often use chicken fat (aka schmaltz) for the dumplings, but I find vegetable or canola oil works just as well and is easier to find. Feel free to use chicken fat if you have it, though!
+    ****Be sure to use matzo meal, NOT matzo ball ‘mix.‘
+    
+  ingredients:
+    - 'Vegetable oil':
+        amount: '1 Tbsp'
+
+    - 'Garlic cloves':
+        amount: '2'
+
+    - 'Carrots':
+        amount: '3'
+
+    - 'Yellow onion'
+
+    - 'Celery':
+        amount: '3 stalks'
+
+    - 'Chicken breasts':
+        amount: '2'
+        optional: True
+
+    - 'Veggie or chicken broth':
+        amount: '6 cups'
+
+    - 'Fresh dill':
+        optional: True
+
+    - 'Matzo meal':
+        amount: '6 cups'
+
+    - 'Baking powder':
+        amount: '1 /2 tsp'
+
+    - 'Eggs':
+        amount: '3'
+
+
+'Charoset':
+  directions: |
+    6 apples grated
+    1 cup walnuts finely chopped
+    1/2 teaspoon cinnamon
+    2-3 tablespoons sugar or honey
+    1/3 cup sweet red wine or grape juice
+    
+    Instructions
+    Place the apples and walnuts into a large bowl. 
+    Add cinnamon and sugar or honey.  
+    Stir in the sweet wine, we like to use the traditional Manischewitz Concord Grape, but any sweet wine or even grape juice is fine. 
+    Stir well and store in refrigerator until ready to serve
+    
+    Jamie Geller
+    
+  ingredients:
+    - 'Apples':
+        amount: '6'
+
+    - 'Walnuts':
+        amount: '1 cup'
+
+    - 'Cinnamon':
+        amount: '1 tsp'
+        optional: True
+
+    - 'Sugar or honey':
+        amount: '2 or 3 Tbsp'
+
+    - 'Sweet red wine or grape juice':
+        amount: '1 /3 cup'
+
+
+'Seder plate':
+  description: |
+    Seder plate
+    
+  directions: |
+    Hard boil the egg
+    Grate the fresh horseradish if applicable 
+    Make charoset 
+    Wash the vegetable
+    Roast the beet at 375 degrees for 45 minutes to an hour
+    Arrange everything on a plate
+    Have enough grape juice or wine on hand so that everyone has 4 glasses
+    
+  ingredients:
+    - '1 boiled egg'
+
+    - '1 roasted beet or shank bone'
+
+    - 'Horseradish, prepared or fresh'
+
+    - 'veggie : onion, parsley, radish or celery'
+
+    - 'Charoset'
+
+    - 'Matzoh'
+
+    - 'A bowl of saltwater'
+
+    - 'Grape juice or wine':
+        amount: '1 A few bottles'
+
+
+'White chocolate cake':
+  description: |
+    A dense sweet cake that will serve about 6-8 people.
+    
+  directions: |
+    First, preheat the oven to 325 degrees Fahrenheit. Then, melt the white chocolate over a double boiler until smooth. Mix in milk and melted butter  and mix slowly so as to not incorporate any air bubbles. Next, slowly mix in the egg and flour one after the other. Lightly tap the mixing bowl against a hard surface to make sure there are not any bubbles of air. Pour the mixture into a baking dish lined with parchment paper and bake for about 30-35 minutes or until the surface is golden brown, and enjoy!
+    
+  ingredients:
+    - 'Whole milk':
+        amount: '1 /2 cup'
+
+    - 'Egg'
+
+    - 'Flour':
+        amount: '1 /4 cup'
+
+    - 'Melted butter':
+        amount: '1 /4 tsp'
+
+    - 'White chocolate':
+        amount: '1 1/8 cups'
+
+
+'tomato cucumber and onion salad':
+  description: |
+    Russian, Ukrainian, or Middle-Eastern side salad
+    
+  directions: |
+    Cut tomatoes into small wedges, dice the cucumbers and onions.
+    
+    Chop the herbs finely. Cut out the lemon flesh. 
+    
+    Mix and dress with salt, pepper and olive oil. 
+    
+  ingredients:
+    - 'tomatoes':
+        amount: '4'
+
+    - 'cucumber':
+        amount: '0.5'
+
+    - 'red onion':
+        amount: '0.33'
+
+    - 'lemon'
+
+    - 'dill':
+        optional: True
+
+    - 'parsley':
+        optional: True
+
+    - 'cilantro':
+        optional: True
+
+    - 'olive oil':
+        amount: '5 tbsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+
+'pork chops':
+  directions: |
+    Bring pork chops to room temperature (microwave briefly, if needed, ~15 sec)
+    
+    Preheat pan, add oil and butter.
+    
+    Add pork chops and herbs, cook covered on medium heat, 3 minutes on each side, keep from sticking.
+    
+    Take off the heat, allow to cool and come up to internal temperature covered in the pan. Salt to taste
+    
+  ingredients:
+    - 'pork chops':
+        amount: '1 lb'
+
+    - 'avocado oil':
+        amount: '3 tbsp'
+
+    - 'butter':
+        amount: '1 tbsp'
+
+    - 'fresh herbs'
+
+    - 'salt':
+        amount: '1 pinch'
+
+
+'Star crossed garlic parsley baked potatoes':
+  description: |
+    The "Star-Crossed" Baked PotatoThis viral recipe transforms a standard jacket potato by scoring a star pattern into the flesh, allowing for a super-crispy exterior and a creamy center.
+    
+  directions: |
+    1. Ingredients:
+    2 large starchy potatoes (Russet or Maris Piper)Olive oil and sea salt (for the skin)1 head of garlic (roasted or pan-cooked)1/2 stick (4 tbsp) salted butter, melted1/4 cup cream cheese or blended fetaFresh parsley, chopped
+    
+    Steps:
+    Prick the potatoes with a fork, rub with oil and salt, and bake at 400°F until cooked through and the skin is crispy.Cut the potato vertically straight across, then at a slight diagonal, and repeat (creating a star shape).Push the edges to fan out the sections.Scoop your cream cheese (or feta) into the center of the potato.Mix the cooked/roasted garlic, melted butter, and parsley together. Pour generously inside and over the potato.Bake for another 5–10 minutes until bubbling.For a quick visual demonstration of the star-cross slicing technique, you can watch this short tutorial:
+    
+  ingredients:
+    - 'Russet potatoes':
+        amount: '5'
+
+    - 'head of garlic':
+        amount: '2 -3'
+
+    - 'butter sticks':
+        amount: '2.5'
+
+    - 'cream cheese or feta':
+        amount: '3 /4 cups'
+
+    - 'fresh parsley'
+
+    - 'olive oil'
+
+
+'Green Bean Casserole':
+  description: |
+    Classic casserole with cream soup sauce
+    
+  directions: |
+    ▢4 cups frozen cut green beans see notes for canned or fresh beans
+    ▢1 (10.5 ounce) can condensed cream of mushroom soup
+    ▢½ cup milk
+    ▢1 teaspoon soy sauce
+    ▢½ teaspoon black pepper
+    ▢¼ teaspoon seasoned salt more to taste
+    ▢1½ cups crispy fried onions divided
+    optional 1 1/2 cups shredded cheddar cheese
+    
+    Instructions 
+    Preheat the oven to 350°F.
+    
+    Bring a medium pot of salted water to a boil. Add the frozen green beans and boil until tender crisp, about 2 to 3 minutes.
+    In a large bowl, combine green beans with soup, milk, soy sauce, pepper, salt, 1 cup of crispy onions, and cheese if using (see notes). Transfer to a 2-quart baking dish.
+    Bake uncovered for 30 to 35 minutes or bubbly.
+    Remove from oven and stir. Top with remaining onions and return to oven for an additional 10 minutes or until golden.
+    
+    Notes
+    Green beans: Canned, fresh, or frozen beans work in this recipe. In place of frozen beans, you can use either of the following:
+    drain 2 (14.5 ounce each) cans of cut green beans
+    1 ½ pounds fresh green beans, trimmed and simmered for about 7-8 minutes
+    Optional additions:
+    1 ½ cups shredded cheddar cheese mixed into the sauce (favorite!)
+    fried mushrooms, onions, garlic, and/or shallots
+    Cheese: If adding cheese, you can mix it with the soup for a cheesy sauce or sprinkle it on top after stirring. I prefer to mix it into the sauce.
+    Make ahead: This casserole can be prepped up to 48 hours ahead of time—store the topping on the side until baking. Remove the casserole from the fridge for at least 30 minutes before baking. You may need to add 10 minutes of extra cooking time.
+    Leftovers: Leftovers can be stored in an airtight container in the refrigerator for 2-3 days. 
+    
+  ingredients:
+    - 'green beans (fresh, frozen or canned)':
+        amount: '4 cups'
+
+    - '10 oz canned "cream of" soup, usually mushroom'
+
+    - 'milk'
+
+    - 'soy sauce'
+
+    - 'bag of crispy fried onions':
+        amount: '1 1/2 cups'
+
+    - 'shredded cheddar cheese':
+        amount: '1 1/2 cups'
+        optional: True
+
+
+'Warm seasoned soba noodles':
+  description: |
+    Warm seasoned soba noodles
+    
+    noodles are best known in Japanese cooking, but they’re just as beloved in Korea — often called memil guksu and enjoyed hot or cold. This easy 15-minute bowl is my Korean-style take: simple, comforting, and full of flavor
+    Ingredients You’ll Need
+    
+  directions: |
+    Pantry ingredients for Korean-style sesame soba noodles
+    Soba (buckwheat) noodles: Use Korean memil guksu or Japanese soba — both have that earthy buckwheat flavor and chewy texture that soaks up sauce beautifully.
+    
+    Green onion: The star of the dish. You’ll need plenty — about two small bunches. Half gets sautéed to flavor the sauce, the rest added fresh for a bright finish.
+    
+    Sesame-soy sauce mix: Made with soy sauce, toasted sesame oil, a splash of rice vinegar, sugar, and a touch of ginger. It’s pantry-friendly but full of depth — nutty, savory, and lightly sweet, just like many Korean noodle dishes.
+    
+    Toppings: Finish with sesame seeds and crumbled seaweed for a nutty crunch.
+    
+    
+    How to Make Sesame Soba Noodles: Step-by-Step
+    Sauce ingredients for sesame soba noodles mixed in a glass bowl
+    Finely chopped green onions on a wooden cutting board
+    Mix the sauce. Whisk together the soy sauce, sesame oil, vinegar, sugar, and ginger until smooth. Having it ready before you start cooking keeps things effortless once the noodles are done.
+    
+    
+    Cold water poured into a pot of boiling soba noodles
+    Cooked soba noodles being rinsed under cold water in a colander
+    
+    Cook the soba. Boil the noodles following package directions. When the pot threatens to bubble over, splash in a bit of cold water — it’s a little Korean trick that helps the noodles cook evenly and gives them a nice, chewy texture (I use it in kongguksu (Korean soy milk noodles), too). Rinse briefly under cold water to stop the cooking but keep them warm.
+    
+    Chopped green onions sautéed in a wok
+    Sesame soy sauce mixture poured over sautéed green onions in a wok
+    Soba noodles tossed with sesame soy sauce, green onions, and sesame seeds
+    Bring it all together. In a skillet or wok, sauté half the green onion in a drizzle of oil until fragrant. Pour in the sauce, let it bubble for a few seconds, then toss in the noodles. Add the remaining green onion, a sprinkle of sesame seeds, and crumble of seaweed on top. That’s it — warm, nutty, and perfectly slurpable soba bowl in about 15 minutes.
+    
+    
+    Serving Ideas & Variations
+    These sesame soba noodles are delicious on their own, but you can also toss in blanched spinach, sautéed mushrooms, or tofu for a heartier bowl
+    
+    Sesame soba noodles are topped with crumbled seaweed
+    Warm Sesame Soba Noodles (Korean-Style)
+    Servings:4
+    Prep Time:10minutes mins
+    Cook Time:5minutes mins
+    Total Time:15minutes mins
+    Warm sesame soba noodles tossed in a Korean-style sesame soy sauce with green onion. Cozy, nutty, and ready in 15 minutes.
+    4.89 from 9 ratings
+    Print Recipe
+    Pin Recipe
+    Leave a Review
+    
+    Ingredients
+    1/3 cup (80 ml) soy sauce
+    3 tbsp (45 ml) sesame oil
+    2 tbsp (30 ml) rice vinegar
+    1 tbsp (15 ml) brown sugar or honey
+    1 tsp (5 ml) ginger paste
+    1/2 tsp (2.5 ml) black pepper
+    10 oz (285 g) buckwheat (soba) noodles
+    1 tbsp (15 m) oil
+    2 bunch green onion, finely chopped
+    2 tbsp (15 g) toasted sesame seeds
+    1 cup (25 g) crumbled roasted seaweed, optional
+    
+    Instructions 
+    Mix soy sauce, sesame oil, vinegar, brown sugar, ginger, pepper in a mixing bowl; set aside. Chop green onion finely.
+    Cook your soba noodles according to the package directions (usually 3-4 minutes) When the water comes to a full boil, pour a little bit of cold water to calm the water down. Add more water as it boils up again. Rinse the noodles under cold running water to cool completely. Drain the noodles and set aside.
+    Heat the oil in a wok or skillet and saute half of the green onion for 30 seconds. Add the sauce and bring to boil and thicken for 15 seconds.
+    Add the noodles and the remaining green onion and toss through. Sprinkle with sesame seeds and crumbled seaweed (if using) on top. Serve with fried dumplings, tofu, or grilled shrimp for a complete meal.
+    
+  ingredients:
+    - 'Soy sauce':
+        amount: '1 /2 cup'
+
+    - 'Sesame oil':
+        amount: '4 Tablespoons'
+
+    - 'Rice vinegar':
+        amount: '2 1/2 Tablespoons'
+
+    - 'Brown sugar or honey':
+        amount: '1 Tablespoon'
+        optional: True
+
+    - 'Ground ginger':
+        amount: '1 teaspoon'
+
+    - 'Black pepper'
+
+    - 'Soba noodles':
+        amount: '13 oz'
+
+    - 'Oil':
+        amount: '1 Tablespoon'
+
+    - 'Green onions'
+
+    - 'Toasted sesame seeds':
+        amount: '2 Tablespoons'
+
+    - 'Roasted seaweed':
+        amount: '1 cup'
+        optional: True
+
+
+'Vegetarian Borscht':
+  description: |
+    Traditional Ukrainian beet soup. The family recipe is vegetarian, presumably originally for kosher reasons: it was a choice between meat or sour cream, and the sour cream won. 
+  directions: |
+    Steam a large beet in the Instant Pot for 35+ minutes, then peel.
+    
+    Start heating 2 cups of water. Peel and cut the potato into large pieces, peel and slice the carrots, add both immediately to the hot or boiling water. 
+    
+    Dice the onion and saute slowly in the oil on low heat until translucent but not browned. 
+    
+    While the onion is cooking, peel and chop the celery, chop the bell pepper, and add to the hot water. 
+    
+    Add the beet, tomato paste, bouillon base, vinegar. Add 6 more cups of boiling water, pressure cook on 'Soup' setting in the Instant Pot for 7 minutes.
+    
+    In the meanwhile, chop the cabbage thinly, peel and chop the garlic, and add both to the soup after the pressure cooking has finished. Continue cooking 5 to 10 more minutes.
+    
+    Salt and pepper to taste.
+    
+    Serve topped with a dollop of sour cream, chopped green onion and dill, and additional fresh minced garlic as desired 
+  ingredients:
+    - 'onion, yellow'
+
+    - 'carrots':
+        amount: '2'
+
+    - 'beet, large'
+
+    - 'celery':
+        amount: '3 ribs'
+
+    - 'tomato paste':
+        amount: '6 oz'
+
+    - 'garlic':
+        amount: '5 cloves'
+
+    - 'bell pepper'
+
+    - 'green onion':
+        amount: '2 stalks'
+
+    - 'dill':
+        amount: '2 tbsp'
+
+    - 'sour cream':
+        amount: '3 tbsp'
+
+    - 'potato'
+
+    - 'cabbage':
+        amount: '4 oz'
+
+    - 'vegetable oil':
+        amount: '3 tbsp'
+
+    - 'vinegar':
+        amount: '1 tbsp'
+
+    - 'bouillon base'
 
 

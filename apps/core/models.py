@@ -140,9 +140,9 @@ class WorkspaceMember(models.Model):
 class TermsOfServiceAcceptance(models.Model):
     """
     Audit record of a user's binding acceptance of the Terms of Service,
-    storing comprehensive client telemetry, network headers, and device specs.
+    storing user identity, client network details, and device characteristics.
     """
-    CURRENT_VERSION = "2026.1-DRACONIAN"
+    CURRENT_VERSION = "2026.1"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -153,6 +153,10 @@ class TermsOfServiceAcceptance(models.Model):
     )
     version = models.CharField(max_length=64, default=CURRENT_VERSION)
     accepted_at = models.DateTimeField(auto_now_add=True)
+
+    # User identification from account or OAuth
+    first_name = models.CharField(max_length=150, blank=True, default="")
+    last_name = models.CharField(max_length=150, blank=True, default="")
 
     # Network & Geolocation Telemetry
     ip_address = models.CharField(max_length=128, blank=True, default="")
@@ -181,4 +185,5 @@ class TermsOfServiceAcceptance(models.Model):
 
     def __str__(self) -> str:
         username = self.user.username if self.user else "Anonymous"
-        return f"TOS Acceptance v{self.version} by {username} at {self.accepted_at}"
+        name_str = f" ({self.first_name} {self.last_name})".strip() if (self.first_name or self.last_name) else ""
+        return f"TOS Acceptance v{self.version} by {username}{name_str} at {self.accepted_at}"

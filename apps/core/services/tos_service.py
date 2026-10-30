@@ -84,13 +84,34 @@ def record_tos_acceptance(
     request: HttpRequest,
 ) -> TermsOfServiceAcceptance:
     """
-    Record an irrevocable, legally binding acceptance of the Terms of Service
-    along with comprehensive device, network, screen, and header telemetry.
+    Record legally binding acceptance of the Terms of Service
+    along with user identity (including first and last name from account / OAuth)
+    and client network and device details.
     """
     post = request.POST
     ip_address = get_client_ip(request)
     user_agent = request.META.get("HTTP_USER_AGENT", "")
     geolocation = post.get("client_geolocation", "").strip() or get_geolocation_hint(request)
+
+    actual_user = user if (user and getattr(user, "is_authenticated", False)) else None
+
+    # Resolve first and last name from authenticated user (e.g. populated via Google OAuth) or session/request
+    first_name = ""
+    last_name = ""
+    if actual_user:
+        first_name = (getattr(actual_user, "first_name", "") or "").strip()
+        last_name = (getattr(actual_user, "last_name", "") or "").strip()
+
+    if hasattr(request, "session"):
+        if not first_name:
+            first_name = (request.session.get("oauth_first_name", "") or "").strip()
+        if not last_name:
+            last_name = (request.session.get("oauth_last_name", "") or "").strip()
+
+    if not first_name:
+        first_name = post.get("first_name", "").strip()
+    if not last_name:
+        last_name = post.get("last_name", "").strip()
 
     screen_res = post.get("screen_resolution", "").strip()
     viewport = post.get("viewport_size", "").strip()
@@ -120,6 +141,11 @@ def record_tos_acceptance(
     }
 
     full_telemetry = {
+        "user_id": actual_user.id if actual_user else None,
+        "username": getattr(actual_user, "username", ""),
+        "email": getattr(actual_user, "email", ""),
+        "first_name": first_name,
+        "last_name": last_name,
         "headers": headers_dump,
         "client_js": client_extra,
         "remote_addr": request.META.get("REMOTE_ADDR"),
@@ -128,11 +154,11 @@ def record_tos_acceptance(
         "is_secure": request.is_secure(),
     }
 
-    actual_user = user if (user and getattr(user, "is_authenticated", False)) else None
-
     record = TermsOfServiceAcceptance.objects.create(
         user=actual_user,
         version=TermsOfServiceAcceptance.CURRENT_VERSION,
+        first_name=first_name,
+        last_name=last_name,
         ip_address=ip_address,
         user_agent=user_agent,
         geolocation=geolocation,

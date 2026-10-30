@@ -47,6 +47,8 @@ class Command(BaseCommand):
                 user=u,
                 version=TermsOfServiceAcceptance.CURRENT_VERSION,
                 defaults={
+                    "first_name": u.first_name,
+                    "last_name": u.last_name,
                     "ip_address": "127.0.0.1",
                     "user_agent": "Seeded Dev Persona",
                     "screen_resolution": "1920x1080",

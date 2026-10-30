@@ -79,18 +79,22 @@ def terms_accept_view(request: HttpRequest) -> HttpResponse:
         return redirect(next_url)
 
     if request.method == "POST":
-        agreed = request.POST.get("affirmative_surrender") in ("true", "1", "on", True)
+        agreed = (
+            request.POST.get("agree_to_terms") in ("true", "1", "on", True)
+            or request.POST.get("affirmative_surrender") in ("true", "1", "on", True)
+            or request.POST.get("agree") in ("true", "1", "on", True)
+        )
         if not agreed:
             messages.error(
                 request,
-                "You must unconditionally check the box confirming your total surrender of rights to proceed.",
+                "You must agree to the Terms of Service to continue.",
             )
             return redirect(f"{reverse('core:terms_accept')}?next={next_url}")
 
         record = record_tos_acceptance(user, request)
         messages.success(
             request,
-            f"Terms of Service executed successfully. Recorded under Audit ID #{record.id} from IP {record.ip_address}.",
+            "Terms of Service accepted.",
         )
         return redirect(next_url)
 

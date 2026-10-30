@@ -193,6 +193,11 @@ def handle_google_callback(request: HttpRequest) -> tuple[Any | None, str, str |
         ws_name = f"{user.first_name or user.username}'s Kitchen"
         create_workspace(ws_name, user)
 
+    # Store Google OAuth profile data in session for ToS acceptance audit record
+    request.session["oauth_first_name"] = first_name
+    request.session["oauth_last_name"] = last_name
+    request.session["oauth_email"] = email
+
     # Clean up session state
     request.session.pop("oauth_state", None)
     request.session.pop("oauth_next", None)

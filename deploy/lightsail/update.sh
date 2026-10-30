@@ -19,6 +19,9 @@ echo "==> Updating Python dependencies..."
 echo "==> Applying database migrations..."
 "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" migrate --noinput
 
+echo "==> Checking for new recipe database additions..."
+"$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" import_recipes
+
 echo "==> Collecting static assets..."
 "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" collectstatic --noinput
 

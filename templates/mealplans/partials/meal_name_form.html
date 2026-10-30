@@ -1,6 +1,7 @@
 <form id="meal-header-{{ meal.id }}"
       hx-post="{% url 'mealplans:edit_meal' meal.id %}"
       hx-target="#mealplan-content"
+      hx-swap="outerHTML"
       class="flex items-center space-x-1.5 text-xs">
     {% csrf_token %}
     <label for="meal-name-input-{{ meal.id }}" class="sr-only">Meal Name</label>

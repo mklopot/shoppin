@@ -99,15 +99,12 @@
                             const scaleVal = this.form.querySelector('input[name=scale_factor]')?.value || '1';
                             htmx.ajax('POST', '/mealplans/meal/' + mealId + '/add-dish/', {
                                 target: '#mealplan-content',
-                                swap: 'innerHTML transition:true',
+                                swap: 'outerHTML',
                                 values: { recipe_id: '{{ recipe.id }}', scale_factor: scaleVal, csrfmiddlewaretoken: '{{ csrf_token }}' }
                             });
                             if (modal) modal.remove();
                         "
                         class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none cursor-pointer">
-                    + Add Dish
-                </button>
-            </form>
                     + Add Dish
                 </button>
             </form>

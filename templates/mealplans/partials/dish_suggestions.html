@@ -102,7 +102,7 @@
             <!-- Right: 1-Click Add Action -->
             {% if can_write %}
             <div class="flex items-center space-x-1.5 flex-shrink-0 self-end sm:self-center">
-                <form hx-post="{% url 'mealplans:add_dish' meal.id %}" hx-target="#mealplan-content" class="flex items-center space-x-1.5">
+                <form hx-post="{% url 'mealplans:add_dish' meal.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="flex items-center space-x-1.5">
                     {% csrf_token %}
                     <input type="hidden" name="recipe_id" value="{{ s.recipe.id }}">
                     <label for="scale-sugg-{{ meal.id }}-{{ s.recipe.id }}" class="sr-only">Scale for {{ s.recipe.name }}</label>

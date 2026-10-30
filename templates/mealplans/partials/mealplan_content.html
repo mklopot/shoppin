@@ -16,7 +16,7 @@
 </div>
 {% endif %}
 
-<div class="space-y-4">
+<div id="mealplan-content" class="max-w-4xl mx-auto space-y-4" data-refresh-url="{% url 'mealplans:detail' %}"{% if is_oob %} hx-swap-oob="outerHTML"{% endif %}>
     <!-- Header Bar -->
     <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
         <div>
@@ -25,7 +25,7 @@
 
         {% if can_write and meals %}
         <div class="flex items-center space-x-2 text-xs">
-            <form hx-post="{% url 'mealplans:clear' %}" hx-confirm="Are you sure you want to clear the entire meal plan and remove its ingredients from the shopping list?">
+            <form hx-post="{% url 'mealplans:clear' %}" hx-target="#mealplan-content" hx-swap="outerHTML" hx-confirm="Are you sure you want to clear the entire meal plan and remove its ingredients from the shopping list?">
                 {% csrf_token %}
                 <button type="submit" class="border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 font-medium px-2.5 py-1">
                     Clear Plan
@@ -79,13 +79,13 @@
                     </div>
                     {% if can_write %}
                     <div class="flex items-center space-x-1.5">
-                        <form hx-post="{% url 'mealplans:toggle_rule' rule.id %}" hx-target="#mealplan-content" class="inline">
+                        <form hx-post="{% url 'mealplans:toggle_rule' rule.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-[11px] px-2 py-0.5 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium">
                                 {% if rule.is_active %}Pause{% else %}Enable{% endif %}
                             </button>
                         </form>
-                        <form hx-post="{% url 'mealplans:delete_rule' rule.id %}" hx-target="#mealplan-content" class="inline">
+                        <form hx-post="{% url 'mealplans:delete_rule' rule.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-gray-400 hover:text-red-600 font-bold px-1.5 leading-none" aria-label="Delete rule" title="Delete rule">
                                 <span aria-hidden="true">&times;</span>
@@ -104,7 +104,7 @@
 
             <!-- Add Rule Form -->
             {% if can_write %}
-            <form hx-post="{% url 'mealplans:add_rule' %}" hx-target="#mealplan-content" class="flex flex-wrap items-center gap-1.5 pt-1">
+            <form hx-post="{% url 'mealplans:add_rule' %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-1.5 pt-1">
                 {% csrf_token %}
                 <input type="text" name="rule_text" placeholder="e.g. 'each dinner should have a vegetarian protein' or 'low carb'..." required
                        class="border border-gray-300 px-2 py-1 bg-white text-gray-900 text-xs rounded-none focus:outline-none focus:border-indigo-600 flex-1 min-w-[240px]">
@@ -150,7 +150,7 @@
                             <span>Meal Made</span>
                         </button>
                     </form>
-                    <form hx-post="{% url 'mealplans:delete_meal' meal.id %}" hx-target="#mealplan-content" hx-confirm="Delete '{{ meal.name }}' and remove its ingredients from the shopping list?" class="inline">
+                    <form hx-post="{% url 'mealplans:delete_meal' meal.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" hx-confirm="Delete '{{ meal.name }}' and remove its ingredients from the shopping list?" class="inline">
                         {% csrf_token %}
                         <button type="submit" class="text-gray-500 hover:text-red-700 font-bold text-sm px-1.5 leading-none" aria-label="Delete meal {{ meal.name }}" title="Delete meal">
                             <span aria-hidden="true">&times;</span>
@@ -201,7 +201,7 @@
                                 <span>Made</span>
                             </button>
                         </form>
-                        <form hx-post="{% url 'mealplans:delete_dish' meal.id recipe.id %}" hx-target="#mealplan-content" class="inline">
+                        <form hx-post="{% url 'mealplans:delete_dish' meal.id recipe.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-gray-500 hover:text-red-600 font-bold text-xs px-1 leading-none" aria-label="Remove {{ recipe.name }} from {{ meal.name }}" title="Remove recipe from meal">
                                 <span aria-hidden="true">&times;</span>
@@ -221,7 +221,7 @@
                 <div class="pt-1.5 space-y-2">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         {% if can_write %}
-                        <form hx-post="{% url 'mealplans:add_dish' meal.id %}" hx-target="#mealplan-content" class="flex flex-wrap items-center gap-1.5 text-xs flex-1">
+                        <form hx-post="{% url 'mealplans:add_dish' meal.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-1.5 text-xs flex-1">
                             {% csrf_token %}
                             <input list="recipelist-{{ meal.id }}" name="recipe" aria-label="Add dish to {{ meal.name }}" placeholder="+ Add dish (e.g. Tacos, Salad)..." required autocomplete="off"
                                    class="border border-gray-300 px-2 py-1 bg-white text-gray-900 text-xs rounded-none focus:outline-none focus:border-gray-600 flex-1 min-w-[150px] max-w-xs">
@@ -270,7 +270,7 @@
     {% if can_write %}
     <!-- Add New Meal Form -->
     <div class="border border-gray-300 bg-gray-50 p-3">
-        <form hx-post="{% url 'mealplans:add_meal' %}" hx-target="#mealplan-content" class="flex flex-wrap items-center gap-2 text-xs">
+        <form hx-post="{% url 'mealplans:add_meal' %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-2 text-xs">
             {% csrf_token %}
             <label for="new-meal-plan-name" class="font-bold text-gray-700">Add Meal:</label>
             <input type="text" id="new-meal-plan-name" name="meal" aria-label="New meal name" placeholder="Meal name, like 'Monday Dinner' or 'Tacos Tuesday'..." required autocomplete="off"

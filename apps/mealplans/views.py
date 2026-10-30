@@ -444,6 +444,8 @@ def clear_meal_plan(request: HttpRequest) -> HttpResponse:
         shopping_list=shopping_list,
     )
 
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return meal_plan_view(request, toast_messages=["🗑 Cleared the entire meal plan"])
     return redirect("mealplans:detail")
 
 

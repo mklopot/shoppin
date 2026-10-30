@@ -10,9 +10,7 @@
 {% endif %}
 
 <!-- Out-of-band swap to update the mealplan content on the page immediately -->
-<div id="mealplan-content" hx-swap-oob="innerHTML">
-    {% include "mealplans/partials/mealplan_content.html" with toast_messages=None toast_message=None %}
-</div>
+{% include "mealplans/partials/mealplan_content.html" with toast_messages=None toast_message=None is_oob=True %}
 
 {% if recipes %}
 <!-- Rating Prompt Modal Dialog -->

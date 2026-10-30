@@ -657,16 +657,21 @@
                     const refreshUrl = currentContainer.getAttribute('data-refresh-url') || window.location.href;
                     listRefreshInFlight = true;
 
+                    // Failsafe timeout to prevent in-flight lock from getting stuck
+                    const failsafe = setTimeout(() => { listRefreshInFlight = false; }, 4000);
+
                     htmx.ajax('GET', refreshUrl, {
                         target: '#shopping-list-content',
-                        swap: 'outerHTML transition:true'
+                        swap: 'outerHTML'
                     }).then(() => {
+                        clearTimeout(failsafe);
                         listRefreshInFlight = false;
                         if (listRefreshQueued) {
                             listRefreshQueued = false;
                             triggerShoppingListRefresh();
                         }
                     }).catch(() => {
+                        clearTimeout(failsafe);
                         listRefreshInFlight = false;
                     });
                 }, 180);
@@ -704,16 +709,21 @@
                     const refreshUrl = currentContainer.getAttribute('data-refresh-url') || window.location.href;
                     mealplanRefreshInFlight = true;
 
+                    // Failsafe timeout to prevent in-flight lock from getting stuck
+                    const failsafe = setTimeout(() => { mealplanRefreshInFlight = false; }, 4000);
+
                     htmx.ajax('GET', refreshUrl, {
                         target: '#mealplan-content',
-                        swap: 'innerHTML transition:true'
+                        swap: 'outerHTML'
                     }).then(() => {
+                        clearTimeout(failsafe);
                         mealplanRefreshInFlight = false;
                         if (mealplanRefreshQueued) {
                             mealplanRefreshQueued = false;
                             triggerMealPlanRefresh();
                         }
                     }).catch(() => {
+                        clearTimeout(failsafe);
                         mealplanRefreshInFlight = false;
                     });
                 }, 180);
@@ -764,7 +774,7 @@
                                 htmx.ajax('GET', refreshUrl, {
                                     target: '#preset-detail-container',
                                     select: '#preset-detail-container',
-                                    swap: 'outerHTML transition:true'
+                                    swap: 'outerHTML'
                                 });
                             }
 
@@ -775,7 +785,7 @@
                                 htmx.ajax('GET', refreshUrl, {
                                     target: '#preset-index-grid-container',
                                     select: '#preset-index-grid-container',
-                                    swap: 'outerHTML transition:true'
+                                    swap: 'outerHTML'
                                 });
                             }
 
@@ -819,7 +829,33 @@
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     try { socket.send(JSON.stringify({ type: 'check_schedules' })); } catch (_) {}
                 }
+                if (document.getElementById('shopping-list-content')) {
+                    triggerShoppingListRefresh();
+                }
+                if (document.getElementById('mealplan-content')) {
+                    triggerMealPlanRefresh();
+                }
             });
+
+            // Dynamically manage HTMX view transitions & re-sync tabs when visibility changes
+            document.addEventListener('visibilitychange', function() {
+                if (window.htmx && window.htmx.config) {
+                    window.htmx.config.globalViewTransitions = !document.hidden;
+                }
+                if (!document.hidden) {
+                    if (listRefreshQueued || document.getElementById('shopping-list-content')) {
+                        listRefreshQueued = false;
+                        triggerShoppingListRefresh();
+                    }
+                    if (mealplanRefreshQueued || document.getElementById('mealplan-content')) {
+                        mealplanRefreshQueued = false;
+                        triggerMealPlanRefresh();
+                    }
+                }
+            });
+            if (document.hidden && window.htmx && window.htmx.config) {
+                window.htmx.config.globalViewTransitions = false;
+            }
         })();
     </script>
 

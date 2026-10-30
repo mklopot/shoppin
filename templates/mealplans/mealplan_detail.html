@@ -3,9 +3,7 @@
 {% block title %}Meal Plan - Shoppin{% endblock %}
 
 {% block content %}
-<div id="mealplan-content" class="max-w-4xl mx-auto space-y-4" data-refresh-url="{% url 'mealplans:detail' %}">
-    {% include "mealplans/partials/mealplan_content.html" %}
-</div>
+{% include "mealplans/partials/mealplan_content.html" %}
 
 <!-- Modal Dialog Placeholder -->
 <div id="modal-placeholder"></div>

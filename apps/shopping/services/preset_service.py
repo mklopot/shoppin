@@ -20,7 +20,7 @@ from django.utils import timezone
 from apps.core.categorizer import categorizer
 from apps.core.models import Workspace
 from apps.core.utils import parse_amount_and_unit
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
+from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
@@ -258,6 +258,13 @@ def load_preset_items_to_shopping_list(
             locked=True,
             source_preset=preset_list,
         )
+        ShoppingListItemSource.objects.create(
+            item=new_item,
+            preset_list=preset_list,
+            amount=item.amount,
+            amount_unit=item.amount_unit,
+            purpose=f"Preset: {preset_list.name}",
+        )
         created_items.append(new_item)
 
     # Warm missing aisles in background so user request returns immediately
@@ -291,6 +298,16 @@ def unload_preset_from_shopping_list(
     Returns:
         Number of items removed.
     """
+    # 1. Remove immutable attributions and recalculate affected items
+    sources = ShoppingListItemSource.objects.filter(preset_list=preset_list, item__shopping_list=target_list)
+    affected_item_ids = list(sources.values_list("item_id", flat=True).distinct())
+    sources.delete()
+    for item_id in affected_item_ids:
+        it = ShoppingListItem.objects.filter(id=item_id).first()
+        if it:
+            it.recalculate_from_attributions()
+
+    # 2. Also remove any legacy unlinked items
     removed_count, _ = target_list.items.filter(source_preset=preset_list).delete()
     actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id") if request else ""

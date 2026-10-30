@@ -288,8 +288,8 @@ class ShoppingListItem(models.Model):
     purpose = models.CharField(
         max_length=255,
         blank=True,
-        default="one-time purchase",
-        help_text="Human-readable purpose (defaults to 'one-time purchase' for one-offs)",
+        default="",
+        help_text="Human-readable purpose (e.g. recipe name or 'one-time purchase')",
     )
     optional = models.BooleanField(default=False)
     status = models.CharField(
@@ -448,6 +448,77 @@ class ShoppingListItem(models.Model):
             self.purpose = clean_purpose(self.purpose)
         super().save(*args, **kwargs)
 
+    def recalculate_from_attributions(self, save: bool = True) -> bool:
+        """
+        Recalculate total amount and purpose string based on active immutable attributions.
+
+        If no active attributions remain (and this was not a standalone one-time item):
+            Deletes this item and returns False (indicating deletion).
+        If attributions remain:
+            Recalculates amount, amount_unit, purpose, and saves (if save=True).
+            Returns True (item remains).
+        """
+        from apps.core.utils import clean_purpose, combine_amounts_and_units
+
+        attributions = list(self.attributions.all())
+        if not attributions:
+            self.delete()
+            return False
+
+        total_amount = Decimal("0.00")
+        current_unit = None
+        for attr in attributions:
+            if current_unit is None:
+                total_amount = attr.amount
+                current_unit = attr.amount_unit
+            else:
+                total_amount, current_unit = combine_amounts_and_units(
+                    total_amount,
+                    current_unit,
+                    attr.amount,
+                    attr.amount_unit,
+                )
+
+        unique_purposes: list[str] = []
+        for attr in attributions:
+            p = clean_purpose(attr.purpose)
+            if p and p not in unique_purposes:
+                unique_purposes.append(p)
+
+        self.amount = total_amount
+        self.amount_unit = current_unit or ""
+        self.purpose = ", ".join(unique_purposes) if unique_purposes else ""
+
+        # Update backward-compatibility foreign keys
+        last_dish_attr = next((a for a in reversed(attributions) if a.recipe_id), None)
+        if last_dish_attr:
+            self.source_recipe = last_dish_attr.recipe
+            self.source_meal = last_dish_attr.meal
+            self.source_ingredient = last_dish_attr.ingredient
+        else:
+            last_preset_attr = next((a for a in reversed(attributions) if a.preset_list_id), None)
+            if last_preset_attr:
+                self.source_preset = last_preset_attr.preset_list
+            else:
+                self.source_recipe = None
+                self.source_meal = None
+                self.source_ingredient = None
+                self.source_preset = None
+
+        if save:
+            self.save(update_fields=[
+                "amount",
+                "amount_unit",
+                "purpose",
+                "locked",
+                "source_recipe",
+                "source_meal",
+                "source_ingredient",
+                "source_preset",
+                "updated_at",
+            ])
+        return True
+
     def reduce_or_delete(self, amount_to_subtract: Decimal) -> "ShoppingListItem | None":
         """
         Subtract amount from this item. If amount reaches zero or less, deletes the item.
@@ -566,3 +637,84 @@ class ShoppingListItem(models.Model):
     def effective_location_display(self) -> str:
         """Convenience property for template rendering."""
         return self.get_effective_location_display()
+
+
+class ShoppingListItemSource(models.Model):
+    """
+    Immutable source attribution link connecting a ShoppingListItem to the recipe dish,
+    meal, preset list, or manual entry that contributed its quantity onto the shopping list.
+    """
+    item = models.ForeignKey(
+        ShoppingListItem,
+        on_delete=models.CASCADE,
+        related_name="attributions",
+        help_text="The shopping list item receiving this quantity",
+    )
+    meal = models.ForeignKey(
+        "mealplans.Meal",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="shopping_attributions",
+        help_text="Meal entry that placed this ingredient",
+    )
+    meal_dish = models.ForeignKey(
+        "mealplans.MealDish",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="shopping_attributions",
+        help_text="Specific planned meal dish",
+    )
+    recipe = models.ForeignKey(
+        "recipes.Recipe",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="shopping_attributions",
+        help_text="Recipe this ingredient belongs to",
+    )
+    ingredient = models.ForeignKey(
+        "recipes.Ingredient",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_attributions",
+        help_text="Recipe ingredient definition",
+    )
+    preset_list = models.ForeignKey(
+        ShoppingList,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="applied_attributions",
+        help_text="Preset list if loaded from preset template",
+    )
+    is_one_time = models.BooleanField(
+        default=False,
+        help_text="True if this is an explicit manual one-time user addition",
+    )
+    amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("1.00"),
+        help_text="Quantity contributed by this source",
+    )
+    amount_unit = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Unit of measurement contributed by this source",
+    )
+    purpose = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Human-readable purpose description for this contribution",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def __str__(self) -> str:
+        return f"{self.amount} {self.amount_unit} for {self.purpose or 'unknown'} -> {self.item.name}"
+

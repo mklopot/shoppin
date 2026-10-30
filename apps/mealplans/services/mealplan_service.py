@@ -6,6 +6,7 @@ ingredient loading onto the shopping list, and cooking readiness calculation.
 from decimal import Decimal
 from typing import Any
 
+from django.db import models
 from django.http import HttpRequest
 
 from apps.core.categorizer import categorizer
@@ -19,7 +20,7 @@ from apps.core.utils import (
 from apps.mealplans.models import Meal, MealDish, MealPlan
 from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.recipes.models import Recipe
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
+from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
@@ -99,6 +100,15 @@ def delete_meal_from_plan(
     for recipe in list(meal.recipes.all()):
         remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
+    # Clean up any residual sources tied to this meal and recalculate items
+    meal_sources = ShoppingListItemSource.objects.filter(meal=meal, item__shopping_list=shopping_list)
+    affected_item_ids = list(meal_sources.values_list("item_id", flat=True).distinct())
+    meal_sources.delete()
+    for item_id in affected_item_ids:
+        item = ShoppingListItem.objects.filter(id=item_id).first()
+        if item:
+            item.recalculate_from_attributions()
+
     meal.delete()
 
 
@@ -131,7 +141,7 @@ def add_recipe_to_meal(
         factor = Decimal("1.00")
 
     meal.recipes.add(recipe)
-    MealDish.objects.update_or_create(
+    dish, _ = MealDish.objects.update_or_create(
         meal=meal,
         recipe=recipe,
         defaults={"scale_factor": factor},
@@ -172,25 +182,18 @@ def add_recipe_to_meal(
                 break
 
         if existing:
-            # Combine amounts
-            combined_amount, combined_unit = combine_amounts_and_units(
-                existing.amount,
-                existing.amount_unit,
-                scaled_amount,
-                unit,
-            )
-            existing.amount = combined_amount
-            existing.amount_unit = combined_unit
-            existing_clean_purpose = clean_purpose(existing.purpose)
-            if recipe_purpose_name not in existing_clean_purpose:
-                existing.purpose = f"{existing_clean_purpose}, {recipe_purpose_name}" if existing_clean_purpose else recipe_purpose_name
-            else:
-                existing.purpose = existing_clean_purpose
-            existing.source_meal = meal
-            existing.source_recipe = recipe
-            # Combined with additional amount -> reset to not confirmed status
-            existing.locked = False
-            existing.save()
+            target_item = existing
+            target_item.locked = False
+            # If the existing item had an amount but no attributions yet (e.g. pre-existing manual addition),
+            # preserve its initial quantity as an authentic manual attribution so it is never lost when recipes change.
+            if not target_item.attributions.exists() and target_item.amount > Decimal("0.00"):
+                ShoppingListItemSource.objects.create(
+                    item=target_item,
+                    is_one_time=True,
+                    amount=target_item.amount,
+                    amount_unit=target_item.amount_unit,
+                    purpose=clean_purpose(target_item.purpose) or "one-time purchase",
+                )
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name} (combined)")
         else:
             # Infer category
@@ -202,23 +205,36 @@ def add_recipe_to_meal(
                 aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name, db_only=True)
                 aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
-            ShoppingListItem.objects.create(
+            target_item = ShoppingListItem.objects.create(
                 shopping_list=shopping_list,
                 name=ingredient.name,
-                amount=scaled_amount,
+                amount=Decimal("0.00"),
                 amount_unit=ingredient.amount_unit,
                 brand=ingredient.brand,
                 vendor=ingredient.vendor,
                 optional=ingredient.optional,
                 category=cat,
                 aisle=aisle,
-                purpose=recipe_purpose_name,
+                purpose="",
                 status=ItemStatus.NEED,
                 source_meal=meal,
                 source_recipe=recipe,
                 source_ingredient=ingredient,
             )
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}".strip())
+
+        # Create or update the immutable attribution source
+        ShoppingListItemSource.objects.create(
+            item=target_item,
+            meal=meal,
+            meal_dish=dish,
+            recipe=recipe,
+            ingredient=ingredient,
+            amount=scaled_amount,
+            amount_unit=ingredient.amount_unit,
+            purpose=recipe_purpose_name,
+        )
+        target_item.recalculate_from_attributions()
 
     # Warm missing aisles in background so user request returns immediately
     if shopping_list.active_store:
@@ -270,10 +286,23 @@ def remove_recipe_from_meal(
     dish = MealDish.objects.filter(meal=meal, recipe=recipe).first()
     factor = dish.scale_factor if dish else Decimal("1.00")
 
-    meal.recipes.remove(recipe)
+    # 1. Query and remove immutable source attributions for this dish/meal
+    sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
     if dish:
-        dish.delete()
+        dish_sources = sources_qs.filter(models.Q(meal_dish=dish) | models.Q(meal=meal, recipe=recipe))
+    else:
+        dish_sources = sources_qs.filter(meal=meal, recipe=recipe)
 
+    affected_item_ids = list(dish_sources.values_list("item_id", flat=True).distinct())
+    dish_sources.delete()
+
+    for item_id in affected_item_ids:
+        item = ShoppingListItem.objects.filter(id=item_id).first()
+        if item:
+            item.recalculate_from_attributions()
+
+    # 2. Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
+    recipe_purpose_name = clean_purpose(recipe.name)
     for ingredient in recipe.ingredients.all():
         scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
         normalized_name = singularize(ingredient.name.lower())
@@ -285,8 +314,10 @@ def remove_recipe_from_meal(
             ]
 
         for item in items:
-            if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe.name in item.purpose:
-                # Deduct amount
+            # Skip items that are managed by attributions
+            if item.attributions.exists():
+                continue
+            if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe_purpose_name in item.purpose or recipe.name in item.purpose:
                 try:
                     new_amount = item.amount - scaled_amount
                 except Exception:
@@ -296,11 +327,18 @@ def remove_recipe_from_meal(
                     item.delete()
                 else:
                     item.amount = new_amount
-                    # Clean up purpose string
                     clean_existing = clean_purpose(item.purpose)
-                    purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe.name not in p]
-                    item.purpose = ", ".join(purposes) if purposes else "one-time purchase"
-                    item.save()
+                    purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe_purpose_name not in p and recipe.name not in p]
+                    if purposes:
+                        item.purpose = ", ".join(purposes)
+                        item.save()
+                    else:
+                        item.delete()
+
+    # 3. Disassociate dish from meal
+    meal.recipes.remove(recipe)
+    if dish:
+        dish.delete()
 
     # Broadcast WebSocket update
     actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"

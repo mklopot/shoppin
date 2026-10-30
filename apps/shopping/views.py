@@ -35,6 +35,7 @@ from apps.shopping.models import (
     ListMode,
     ShoppingList,
     ShoppingListItem,
+    ShoppingListItemSource,
     StoreItemAisle,
     StoreLocation,
 )
@@ -486,37 +487,27 @@ def add_item(request: HttpRequest) -> HttpResponse:
             break
 
     if existing:
-        new_amount, new_unit = combine_amounts_and_units(
-            existing.amount,
-            existing.amount_unit,
-            amount,
-            amount_unit,
+        # Preserve initial quantity if existing item didn't have attributions yet
+        if not existing.attributions.exists() and existing.amount > Decimal("0.00"):
+            ShoppingListItemSource.objects.create(
+                item=existing,
+                is_one_time=True,
+                amount=existing.amount,
+                amount_unit=existing.amount_unit,
+                purpose=clean_purpose(existing.purpose) or "one-time purchase",
+            )
+        ShoppingListItemSource.objects.create(
+            item=existing,
+            is_one_time=True,
+            amount=amount,
+            amount_unit=amount_unit,
+            purpose=purpose,
         )
-        existing.amount = new_amount
-        existing.amount_unit = new_unit
-        existing_purpose = clean_purpose(existing.purpose)
-        if purpose and purpose not in existing_purpose:
-            existing.purpose = f"{existing_purpose}, {purpose}".strip(", ")
-        else:
-            existing.purpose = existing_purpose
+        existing.locked = True
         if priority_flag:
             existing.priority = True
-        # Item was manually added or combined -> confirm it so it is not in "not confirmed" status
-        existing.locked = True
         _set_item_audit(existing, request)
-        existing.save(
-            update_fields=[
-                "amount",
-                "amount_unit",
-                "purpose",
-                "locked",
-                "priority",
-                "status_changed_at",
-                "status_changed_by",
-                "status_changed_by_name",
-                "updated_at",
-            ]
-        )
+        existing.recalculate_from_attributions()
     else:
         max_order = shopping_list.items.count()
         audit_user = request.user if request.user.is_authenticated else None
@@ -525,7 +516,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
             audit_user_name = first_name or request.user.username
         else:
             audit_user_name = "unknown"
-        ShoppingListItem.objects.create(
+        new_item = ShoppingListItem.objects.create(
             shopping_list=shopping_list,
             name=raw_name,
             amount=amount,
@@ -542,6 +533,13 @@ def add_item(request: HttpRequest) -> HttpResponse:
             status_changed_at=timezone.now(),
             status_changed_by=audit_user,
             status_changed_by_name=audit_user_name,
+        )
+        ShoppingListItemSource.objects.create(
+            item=new_item,
+            is_one_time=True,
+            amount=amount,
+            amount_unit=amount_unit,
+            purpose=purpose,
         )
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)

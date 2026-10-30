@@ -18,7 +18,7 @@ from apps.core.utils import (
 )
 from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating
 from apps.recipes.services.nutrition_service import update_recipe_nutrition
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
+from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
@@ -493,22 +493,16 @@ def add_recipe_to_shopping_list(
                 break
 
         if existing:
-            combined_amount, combined_unit = combine_amounts_and_units(
-                existing.amount,
-                existing.amount_unit,
-                ingredient.amount,
-                unit,
-            )
-            existing.amount = combined_amount
-            existing.amount_unit = combined_unit
-            existing_clean_purpose = clean_purpose(existing.purpose)
-            if recipe_purpose_name not in existing_clean_purpose:
-                existing.purpose = f"{existing_clean_purpose}, {recipe_purpose_name}" if existing_clean_purpose else recipe_purpose_name
-            else:
-                existing.purpose = existing_clean_purpose
-            existing.source_recipe = recipe
-            existing.locked = False
-            existing.save()
+            target_item = existing
+            target_item.locked = False
+            if not target_item.attributions.exists() and target_item.amount > Decimal("0.00"):
+                ShoppingListItemSource.objects.create(
+                    item=target_item,
+                    is_one_time=True,
+                    amount=target_item.amount,
+                    amount_unit=target_item.amount_unit,
+                    purpose=clean_purpose(target_item.purpose) or "one-time purchase",
+                )
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name} (combined)")
         else:
             cat = ingredient.category or categorizer.get_category(ingredient.name)
@@ -517,23 +511,33 @@ def add_recipe_to_shopping_list(
                 aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name, db_only=True)
                 aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
-            ShoppingListItem.objects.create(
+            target_item = ShoppingListItem.objects.create(
                 shopping_list=shopping_list,
                 name=ingredient.name,
-                amount=ingredient.amount,
+                amount=Decimal("0.00"),
                 amount_unit=ingredient.amount_unit,
                 brand=ingredient.brand,
                 vendor=ingredient.vendor,
                 optional=ingredient.optional,
                 category=cat,
                 aisle=aisle,
-                purpose=recipe_purpose_name,
+                purpose="",
                 status=ItemStatus.NEED,
                 source_recipe=recipe,
                 source_ingredient=ingredient,
                 locked=False,
             )
-            added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}")
+            added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}".strip())
+
+        ShoppingListItemSource.objects.create(
+            item=target_item,
+            recipe=recipe,
+            ingredient=ingredient,
+            amount=ingredient.amount,
+            amount_unit=ingredient.amount_unit,
+            purpose=recipe_purpose_name,
+        )
+        target_item.recalculate_from_attributions()
 
     # Warm missing aisles in background so user response returns immediately
     if shopping_list.active_store:

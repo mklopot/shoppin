@@ -7,7 +7,20 @@ StoreLocation, StoreItemAisle, ShoppingList, and ShoppingListItem.
 
 from django.contrib import admin
 
-from apps.shopping.models import ShoppingList, ShoppingListItem, StoreItemAisle, StoreLocation
+from apps.shopping.models import (
+    ShoppingList,
+    ShoppingListItem,
+    ShoppingListItemSource,
+    StoreItemAisle,
+    StoreLocation,
+)
+
+
+class ShoppingListItemSourceInline(admin.TabularInline):
+    """Inline admin editor for source attributions on a shopping list item."""
+    model = ShoppingListItemSource
+    extra = 0
+
 
 
 class ShoppingListItemInline(admin.TabularInline):
@@ -66,3 +79,13 @@ class ShoppingListItemAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "category", "optional", "status_changed_by")
     search_fields = ("name", "brand", "vendor", "purpose", "aisle", "status_changed_by_name")
+    inlines = [ShoppingListItemSourceInline]
+
+
+@admin.register(ShoppingListItemSource)
+class ShoppingListItemSourceAdmin(admin.ModelAdmin):
+    """Admin manager for immutable shopping item source attributions."""
+    list_display = ("item", "amount", "amount_unit", "purpose", "meal", "recipe", "preset_list", "is_one_time", "created_at")
+    list_filter = ("is_one_time", "preset_list")
+    search_fields = ("item__name", "purpose", "recipe__name", "meal__name")
+

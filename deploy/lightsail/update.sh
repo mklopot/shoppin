@@ -23,7 +23,8 @@ echo "==> Collecting static assets..."
 "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" collectstatic --noinput
 
 echo "==> Updating maintenance placeholder page..."
-cp "$APP_DIR/deploy/lightsail/maintenance.html" "$APP_DIR/staticfiles/maintenance.html" 2>/dev/null || true
+sudo cp "$APP_DIR/deploy/lightsail/maintenance.html" "$APP_DIR/staticfiles/maintenance.html" 2>/dev/null || true
+sudo chmod 644 "$APP_DIR/staticfiles/maintenance.html" 2>/dev/null || true
 
 echo "==> Setting directory and media permissions..."
 if [ -d "$APP_DIR/media/media" ]; then

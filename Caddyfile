@@ -34,15 +34,18 @@
         header Cache-Control "public, max-age=86400"
     }
 
-    # Health check passthrough (quick retry so health monitors detect recovery promptly)
-    handle /health/ {
+    # Health check passthrough (short retry window for rapid health checking)
+    handle /health* {
         reverse_proxy web:8000 {
             header_up Host {host}
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}
             header_up X-Forwarded-Proto {scheme}
-            lb_try_duration 2s
+            lb_try_duration 1s
             lb_try_interval 200ms
+            transport http {
+                dial_timeout 500ms
+            }
         }
     }
 
@@ -55,24 +58,28 @@
             header_up X-Forwarded-For {remote_host}
             header_up X-Forwarded-Proto {scheme}
 
-            # Seamless reload: Hold in-flight requests for up to 10s while Daphne restarts
-            lb_try_duration 10s
+            # Seamless zero-downtime reload: Hold in-flight requests and retry for up to 20s while Daphne restarts
+            # Note: Never set fail_duration with a single upstream; omitting it ensures Caddy retries every
+            # 250ms instead of blacklisting the only upstream and aborting immediately with 502!
+            lb_try_duration 20s
             lb_try_interval 250ms
-            fail_duration 1s
 
-            # Extended buffer and timeout settings for long-lived WebSocket sessions
+            # Fast dial timeout & extended buffer for WebSockets
             transport http {
+                dial_timeout 1s
                 read_buffer 4096
             }
         }
     }
 
     # Automatic maintenance placeholder page when backend is restarting or unavailable
-    handle_errors 502 503 {
+    handle_errors 5xx {
         header Retry-After "3"
         header Cache-Control "no-store, no-cache, must-revalidate"
-        root * /var/www/static
         rewrite * /maintenance.html
-        file_server
+        file_server {
+            root /var/www/static
+            status 503
+        }
     }
 }

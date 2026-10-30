@@ -67,9 +67,9 @@ Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
 # Run initial migrations & static collection
 sudo bash deploy/lightsail/update.sh
 
-# Restart services
+# Restart/reload services
 sudo systemctl restart shoppin
-sudo systemctl restart caddy
+sudo systemctl reload caddy
 ```
 
 Now open `https://shoppin.yourdomain.com` in your browser!
@@ -85,7 +85,9 @@ Whenever you push new code to `v2-django`:
 ```bash
 bash /app/deploy/lightsail/update.sh
 ```
-This automatically pulls the latest commit, runs migrations, collects static assets, and restarts Daphne with zero downtime.
+This automatically pulls the latest commit, runs migrations, collects static assets, hot-reloads Caddy, and restarts Daphne.
+* **Zero Client Disconnections:** Caddy holds in-flight client requests for up to 10s during Daphne's ~2s restart window, eliminating `connection refused` errors.
+* **Auto-Reloading Placeholder:** If an update or migration takes longer, Caddy automatically serves an animated placeholder page (`maintenance.html`) that polls `/health/` and auto-reloads the user's current page the moment the app is ready.
 
 ### Viewing Application Logs
 ```bash

@@ -85,8 +85,9 @@ systemctl daemon-reload
 systemctl enable shoppin.service
 
 # 6. Configure Caddy web server
-echo "==> Configuring Caddyfile and permissions..."
-chmod 755 /app /app/staticfiles /app/media
+echo "==> Configuring Caddyfile, maintenance page, and permissions..."
+chmod 755 /app /app/staticfiles /app/media /app/deploy/lightsail
+cp /app/deploy/lightsail/maintenance.html /app/staticfiles/maintenance.html 2>/dev/null || true
 cp /app/deploy/lightsail/Caddyfile /etc/caddy/Caddyfile
 systemctl enable caddy
 

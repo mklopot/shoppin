@@ -38,6 +38,18 @@
         header Cache-Control "public, max-age=3600, must-revalidate"
     }
 
+    # Health check passthrough (quick 2s retry so health checks detect recovery promptly)
+    handle /health/ {
+        reverse_proxy 127.0.0.1:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            lb_try_duration 2s
+            lb_try_interval 200ms
+        }
+    }
+
     # Reverse proxy dynamic requests and /ws/* WebSockets to Daphne ASGI server
     handle {
         reverse_proxy 127.0.0.1:8000 {
@@ -46,6 +58,11 @@
             header_up X-Forwarded-For {remote_host}
             header_up X-Forwarded-Proto {scheme}
 
+            # Seamless reload: Hold in-flight requests for up to 10s while Daphne restarts
+            lb_try_duration 10s
+            lb_try_interval 250ms
+            fail_duration 1s
+
             # Extended buffer for WebSocket connections
             transport http {
                 read_buffer 4096
@@ -53,8 +70,12 @@
         }
     }
 
-    # Health check passthrough
-    handle /health/ {
-        reverse_proxy 127.0.0.1:8000
+    # Automatic maintenance placeholder page when backend is restarting or unavailable
+    handle_errors 502 503 {
+        header Retry-After "3"
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        root * /app/deploy/lightsail
+        rewrite * /maintenance.html
+        file_server
     }
 }

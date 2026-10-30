@@ -34,6 +34,18 @@
         header Cache-Control "public, max-age=86400"
     }
 
+    # Health check passthrough (quick retry so health monitors detect recovery promptly)
+    handle /health/ {
+        reverse_proxy web:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            lb_try_duration 2s
+            lb_try_interval 200ms
+        }
+    }
+
     # Reverse proxy all dynamic HTTP traffic and /ws/* WebSockets to Daphne
     handle {
         reverse_proxy web:8000 {
@@ -43,6 +55,11 @@
             header_up X-Forwarded-For {remote_host}
             header_up X-Forwarded-Proto {scheme}
 
+            # Seamless reload: Hold in-flight requests for up to 10s while Daphne restarts
+            lb_try_duration 10s
+            lb_try_interval 250ms
+            fail_duration 1s
+
             # Extended buffer and timeout settings for long-lived WebSocket sessions
             transport http {
                 read_buffer 4096
@@ -50,8 +67,12 @@
         }
     }
 
-    # Health check passthrough
-    handle /health/ {
-        reverse_proxy web:8000
+    # Automatic maintenance placeholder page when backend is restarting or unavailable
+    handle_errors 502 503 {
+        header Retry-After "3"
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        root * /var/www/static
+        rewrite * /maintenance.html
+        file_server
     }
 }

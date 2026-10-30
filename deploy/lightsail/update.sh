@@ -22,8 +22,8 @@ echo "==> Applying database migrations..."
 echo "==> Collecting static assets..."
 "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" collectstatic --noinput
 
-echo "==> Restarting Shoppin Daphne service..."
-sudo systemctl restart shoppin
+echo "==> Updating maintenance placeholder page..."
+cp "$APP_DIR/deploy/lightsail/maintenance.html" "$APP_DIR/staticfiles/maintenance.html" 2>/dev/null || true
 
 echo "==> Setting directory and media permissions..."
 if [ -d "$APP_DIR/media/media" ]; then
@@ -32,9 +32,9 @@ if [ -d "$APP_DIR/media/media" ]; then
     rm -rf "$APP_DIR/media/media"
 fi
 sudo chmod 755 "$APP_DIR"
-sudo chmod -R 755 "$APP_DIR/staticfiles" "$APP_DIR/media"
+sudo chmod -R 755 "$APP_DIR/staticfiles" "$APP_DIR/media" "$APP_DIR/deploy/lightsail" 2>/dev/null || true
 
-echo "==> Configuring and restarting Caddy web server..."
+echo "==> Configuring Caddy web server..."
 sudo cp "$APP_DIR/deploy/lightsail/Caddyfile" /etc/caddy/Caddyfile
 if [ -f "$APP_DIR/.env" ]; then
     DOMAIN=$(grep -E '^DOMAIN_NAME=' "$APP_DIR/.env" | cut -d '=' -f2- | tr -d '"' | tr -d "'" | tr -d ' ' || true)
@@ -43,13 +43,23 @@ if [ -f "$APP_DIR/.env" ]; then
         sudo sed -i "s/{\$DOMAIN_NAME:localhost}/$DOMAIN/g" /etc/caddy/Caddyfile
     fi
 fi
-sudo systemctl restart caddy
+
+echo "==> Reloading Caddy web server (zero-downtime hot reload)..."
+if systemctl is-active --quiet caddy; then
+    sudo systemctl reload caddy || sudo systemctl restart caddy
+else
+    sudo systemctl start caddy
+fi
+
+echo "==> Restarting Shoppin Daphne service..."
+sudo systemctl restart shoppin
 
 echo "==> Verifying application health..."
 HEALTHY=false
-for i in {1..5}; do
+for i in {1..20}; do
     if curl -fsS -H "X-Forwarded-Proto: https" http://127.0.0.1:8000/health/ > /dev/null 2>&1; then
         HEALTHY=true
+        echo "==> Backend ready after ${i}s"
         break
     fi
     sleep 1
@@ -58,6 +68,6 @@ done
 if [ "$HEALTHY" = true ]; then
     echo "==> SUCCESS: Application is healthy and serving requests!"
 else
-    echo "==> WARNING: Health check failed or timed out. Check journalctl -u shoppin -n 50"
+    echo "==> WARNING: Health check failed or timed out after 20 seconds. Check journalctl -u shoppin -n 50"
     exit 1
 fi

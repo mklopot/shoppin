@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Updating Shoppin...</title>
+    <!-- Fallback automatic refresh every 4 seconds -->
+    <meta http-equiv="refresh" content="4">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --brand-green: #10b981;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .maintenance-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            max-width: 480px;
+            width: 100%;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .icon-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .cart-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .pulse-indicator {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 14px;
+            height: 14px;
+            background-color: var(--brand-green);
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        p.description {
+            font-size: 0.9375rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 1.75rem;
+        }
+
+        .progress-bar-container {
+            height: 4px;
+            width: 100%;
+            background-color: #f1f5f9;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 40%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            animation: progress-indeterminate 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes progress-indeterminate {
+            0% { left: -40%; width: 40%; }
+            50% { left: 40%; width: 60%; }
+            100% { left: 100%; width: 20%; }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #065f46;
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 0.375rem 0.75rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--brand-green);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .btn-reload {
+            display: inline-block;
+            background-color: #0f172a;
+            color: #ffffff;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.625rem 1.25rem;
+            border: 1px solid #0f172a;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .btn-reload:hover {
+            background-color: #334155;
+            border-color: #334155;
+        }
+
+        .footer-note {
+            margin-top: 1.75rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-card">
+        <div class="icon-container">
+            <span class="cart-icon" aria-hidden="true">🛒</span>
+            <div class="pulse-indicator"></div>
+        </div>
+
+        <h1>Shoppin is Updating</h1>
+        <p class="description">
+            We are applying the latest code updates and improvements. Your recipes, meal plans, and shopping lists will be ready momentarily.
+        </p>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+        </div>
+
+        <div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span id="status-label">Reloading in progress...</span>
+            </div>
+        </div>
+
+        <div>
+            <button type="button" class="btn-reload" onclick="forceReload()">
+                Refresh Now
+            </button>
+        </div>
+
+        <p class="footer-note">
+            This page will automatically refresh as soon as the update completes.
+        </p>
+    </div>
+
+    <script>
+        let checkCount = 0;
+        const maxChecks = 40;
+        const statusLabel = document.getElementById('status-label');
+
+        function forceReload() {
+            window.location.reload();
+        }
+
+        async function pollHealth() {
+            checkCount++;
+            try {
+                const response = await fetch('/health/?t=' + Date.now(), {
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.status === 200) {
+                    if (statusLabel) {
+                        statusLabel.textContent = 'App is ready! Reloading...';
+                    }
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 400);
+                    return;
+                }
+            } catch (err) {
+                // Server is still starting up
+            }
+
+            if (statusLabel && checkCount > 2) {
+                statusLabel.textContent = 'Waiting for server to warm up... (' + (checkCount * 2) + 's)';
+            }
+
+            if (checkCount < maxChecks) {
+                setTimeout(pollHealth, 1500);
+            } else {
+                if (statusLabel) {
+                    statusLabel.textContent = 'Please click Refresh Now to continue.';
+                }
+            }
+        }
+
+        setTimeout(pollHealth, 1000);
+    </script>
+</body>
+</html>

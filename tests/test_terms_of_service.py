@@ -53,6 +53,16 @@ def test_guest_can_view_terms_of_service(client: Client):
     assert "Indemnification" in content
     assert "Governing Law and Jurisdiction" in content
 
+    # UGC non-responsibility, editorial discretion, and life-critical/medical prohibitions
+    assert "No Responsibility for User-Generated Content" in content
+    assert "Shoppin expressly disclaims any and all responsibility or liability for User Content" in content
+    assert "Editorial Review and Modification Prior to Publishing" in content
+    assert "may be reviewed, curated, edited, modified, reformatted" in content
+    assert "Prohibition on Life-Critical and Medical or Medically Relevant Nutritional Use" in content
+    assert "life-critical purpose" in content.lower()
+    assert "medically relevant nutritional purpose" in content.lower()
+    assert "No Medical or Healthcare Advice" in content
+
     # Telemetry section and live sensors must be REMOVED
     assert "Comprehensive Real-Time Client Telemetry Ingestion" not in content
     assert "Friendly Device Insights" not in content

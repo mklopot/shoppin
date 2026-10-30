@@ -15,6 +15,7 @@ services:
       - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./maintenance.html:/app/deploy/lightsail/maintenance.html:ro
       - caddy_data:/data
       - caddy_config:/config
       - staticfiles_volume:/app/staticfiles:ro

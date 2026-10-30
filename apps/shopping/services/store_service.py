@@ -11,6 +11,8 @@ import logging
 import math
 import os
 import re
+import sys
+import threading
 import urllib.parse
 import urllib.request
 from typing import Any
@@ -20,6 +22,7 @@ from django.db.models import Q
 
 from apps.core.categorizer import categorizer
 from apps.shopping.models import StoreItemAisle, StoreLocation
+from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 
 logger = logging.getLogger(__name__)
 
@@ -683,13 +686,14 @@ def resolve_store_aisle(
     store: StoreLocation,
     item_name: str,
     category: str | None = None,
+    db_only: bool = False,
 ) -> dict[str, Any] | None:
     """
     Resolve and cache the physical store aisle for a grocery item from the store chain API.
 
     Resolution strategy:
     1. Check local StoreItemAisle cache for existing API or manual entries matching candidate terms.
-    2. If missing and store is a Kroger location with API enabled, query Kroger API across candidates.
+    2. If missing and db_only is False and store is a Kroger location with API enabled, query Kroger API across candidates.
     3. If store-specific API has no match, check for universal perimeter departments from other Kroger stores.
     4. If it cannot be determined, return None (leave blank). Does NOT persist empty negative records.
 
@@ -697,6 +701,7 @@ def resolve_store_aisle(
         store: Target StoreLocation instance.
         item_name: The name of the grocery item.
         category: Optional category string (retained for backward compatibility; ignored for pseudo-aisles).
+        db_only: If True, only inspect local database records and never perform synchronous external network calls.
 
     Returns:
         Dict with aisle_name, bay_number, sequence_order, and source ('api', 'manual') or None.
@@ -736,9 +741,9 @@ def resolve_store_aisle(
             "source": cached.source,
         }
 
-    # 2. Query Kroger API across candidates if applicable
+    # 2. Query Kroger API across candidates if applicable and network calls are permitted
     now = time.time()
-    if store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
+    if not db_only and store.chain == "kroger" and store.external_store_id and kroger_client.is_configured:
         for candidate in candidates:
             # Check in-memory negative cache to prevent spamming
             cache_key = (store.id, candidate)
@@ -776,7 +781,7 @@ def resolve_store_aisle(
                 # Add candidate to in-memory negative cache (never store empty DB records)
                 _NEGATIVE_LOOKUP_CACHE[cache_key] = now
 
-    # 3. Fallback: Universal perimeter department from other Kroger stores
+    # 3. Fallback: Universal perimeter department from other Kroger stores (local DB check)
     if store.chain == "kroger":
         other_kroger_match = (
             StoreItemAisle.objects.filter(
@@ -808,6 +813,92 @@ def resolve_store_aisle(
 
     # 4. Cannot be determined from store chain API -> leave blank (never write empty DB records)
     return None
+
+
+_WARMING_LOCK = threading.Lock()
+_ACTIVE_WARMINGS: set[tuple[int, int]] = set()
+
+
+def warm_store_aisles_async(shopping_list: Any, sync: bool = False) -> None:
+    """
+    Asynchronously resolve and cache missing store aisles in a background thread
+    so user HTTP responses return immediately without blocking on external API calls
+    or holding database locks. Streams live Channels broadcasts as each item is resolved
+    so the UI updates dynamically in real time without requiring manual refreshes.
+
+    Args:
+        shopping_list: Target ShoppingList instance.
+        sync: If True or in testing environment, runs synchronously.
+    """
+    if not shopping_list or not getattr(shopping_list, "active_store", None):
+        return
+
+    store = shopping_list.active_store
+    if not store or store.chain != "kroger" or not kroger_client.is_configured:
+        return
+
+    from apps.shopping.models import ItemStatus
+
+    need_items = list(shopping_list.items.filter(status=ItemStatus.NEED).values_list("name", flat=True))
+    if not need_items:
+        return
+
+    cached_names = set(
+        StoreItemAisle.objects.filter(store=store)
+        .exclude(aisle_name="")
+        .values_list("item_name_normalized", flat=True)
+    )
+    unmapped_names = [
+        name for name in need_items
+        if inflection.singularize(name.strip().lower()) not in cached_names
+    ]
+    if not unmapped_names:
+        return
+
+    task_key = (store.id, shopping_list.id)
+    with _WARMING_LOCK:
+        if task_key in _ACTIVE_WARMINGS:
+            return
+        _ACTIVE_WARMINGS.add(task_key)
+
+    def _worker() -> None:
+        from django.db import connection
+        try:
+            resolved_count = 0
+            for name in unmapped_names:
+                clean_name = inflection.singularize(name.strip().lower())
+                if not StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).exclude(aisle_name="").exists():
+                    res = resolve_store_aisle(store, name)
+                    if res and res.get("aisle_name"):
+                        resolved_count += 1
+                        # Update item aisle if currently blank
+                        shopping_list.items.filter(name=name, aisle="").update(aisle=res["aisle_name"])
+                        # Broadcast update immediately so the item and list sorting refresh in real time!
+                        broadcast_shopping_list_update(
+                            shopping_list=shopping_list,
+                            sender_client_id="",
+                            toast_message="",
+                            actor_name="system",
+                        )
+            if resolved_count > 0:
+                broadcast_shopping_list_update(
+                    shopping_list=shopping_list,
+                    sender_client_id="",
+                    toast_message=f"📍 Aisles updated for {store.name}",
+                    actor_name="system",
+                )
+        except Exception as error:
+            logger.warning(f"Async store aisle warming encountered error: {error}")
+        finally:
+            with _WARMING_LOCK:
+                _ACTIVE_WARMINGS.discard(task_key)
+            connection.close()
+
+    if sync or "pytest" in sys.modules:
+        _worker()
+    else:
+        thread = threading.Thread(target=_worker, daemon=True)
+        thread.start()
 
 
 def ingest_kroger_location(loc_data: dict[str, Any]) -> StoreLocation | None:

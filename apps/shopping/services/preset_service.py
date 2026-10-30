@@ -22,7 +22,7 @@ from apps.core.models import Workspace
 from apps.core.utils import parse_amount_and_unit
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
-from apps.shopping.services.store_service import resolve_store_aisle
+from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
 logger = logging.getLogger(__name__)
 
@@ -238,7 +238,7 @@ def load_preset_items_to_shopping_list(
     for item in source_items:
         aisle = item.aisle
         if not aisle and store:
-            aisle_info = resolve_store_aisle(store, item.name)
+            aisle_info = resolve_store_aisle(store, item.name, db_only=True)
             aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
         cat = item.category or categorizer.get_category(item.name)
@@ -259,6 +259,10 @@ def load_preset_items_to_shopping_list(
             source_preset=preset_list,
         )
         created_items.append(new_item)
+
+    # Warm missing aisles in background so user request returns immediately
+    if store:
+        warm_store_aisles_async(target_list)
 
     actor_name = request.user.username if (request and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id") if request else ""
@@ -349,7 +353,7 @@ def apply_preset_scheduled_refresh(
     for item in active_items:
         aisle = item.aisle
         if not aisle and store:
-            aisle_info = resolve_store_aisle(store, item.name)
+            aisle_info = resolve_store_aisle(store, item.name, db_only=True)
             aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
         cat = item.category or categorizer.get_category(item.name)
@@ -370,6 +374,10 @@ def apply_preset_scheduled_refresh(
             source_preset=preset_list,
         )
         added_items.append(new_item)
+
+    # Warm missing aisles in background so user request returns immediately
+    if store:
+        warm_store_aisles_async(target_list)
 
     # 3. Advance schedule timestamps
     now = timezone.now()

@@ -20,7 +20,7 @@ from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating
 from apps.recipes.services.nutrition_service import update_recipe_nutrition
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
-from apps.shopping.services.store_service import resolve_store_aisle
+from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
 POPULAR_CUISINES: list[str] = [
     "American",
@@ -514,7 +514,7 @@ def add_recipe_to_shopping_list(
             cat = ingredient.category or categorizer.get_category(ingredient.name)
             aisle = ""
             if shopping_list.active_store:
-                aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name)
+                aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name, db_only=True)
                 aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
             ShoppingListItem.objects.create(
@@ -534,6 +534,10 @@ def add_recipe_to_shopping_list(
                 locked=False,
             )
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}")
+
+    # Warm missing aisles in background so user response returns immediately
+    if shopping_list.active_store:
+        warm_store_aisles_async(shopping_list)
 
     # Broadcast WebSocket update
     broadcast_messages = [f"🥘 Added '{recipe.name}' to shopping list"]

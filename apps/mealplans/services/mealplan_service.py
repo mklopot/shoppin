@@ -21,7 +21,7 @@ from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.recipes.models import Recipe
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
-from apps.shopping.services.store_service import resolve_store_aisle
+from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
 
 def get_active_meal_plan(request: HttpRequest | None = None, workspace: Any = None) -> MealPlan | None:
@@ -199,7 +199,7 @@ def add_recipe_to_meal(
             # Resolve aisle if active store
             aisle = ""
             if shopping_list.active_store:
-                aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name)
+                aisle_info = resolve_store_aisle(shopping_list.active_store, ingredient.name, db_only=True)
                 aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
 
             ShoppingListItem.objects.create(
@@ -219,6 +219,10 @@ def add_recipe_to_meal(
                 source_ingredient=ingredient,
             )
             added_descriptions.append(f"{amount_fmt}{unit_str} {ingredient.name}".strip())
+
+    # Warm missing aisles in background so user request returns immediately
+    if shopping_list.active_store:
+        warm_store_aisles_async(shopping_list)
 
     # Broadcast WebSocket update
     actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"

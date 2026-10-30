@@ -11,6 +11,7 @@ import sys
 import threading
 from typing import Any
 
+from django.db import models
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -47,9 +48,12 @@ from apps.shopping.services.store_service import (
     kroger_client,
     resolve_store_aisle,
     search_and_discover_stores,
+    warm_store_aisles_async,
 )
 
 logger = logging.getLogger(__name__)
+
+_warm_store_aisles_async = warm_store_aisles_async
 
 
 def get_active_list(request: HttpRequest | None = None) -> ShoppingList | None:
@@ -114,80 +118,7 @@ def _check_write_permission(request: HttpRequest, shopping_list: ShoppingList | 
     return None
 
 
-_WARMING_LOCK = threading.Lock()
-_ACTIVE_WARMINGS: set[tuple[int, int]] = set()
-
-
-def _warm_store_aisles_async(shopping_list: ShoppingList, sync: bool = False) -> None:
-    """
-    Asynchronously resolve and cache missing store aisles in a background thread
-    so the HTTP response returns immediately without blocking on external API calls
-    or holding database locks. Streams live Channels broadcasts as each item is resolved
-    so the UI updates dynamically in real time without requiring manual refreshes.
-    """
-    store = shopping_list.active_store
-    if not store or store.chain != "kroger" or not kroger_client.is_configured:
-        return
-
-    import inflection
-    need_items = list(shopping_list.items.filter(status=ItemStatus.NEED).values_list("name", flat=True))
-    if not need_items:
-        return
-
-    cached_names = set(
-        StoreItemAisle.objects.filter(store=store)
-        .exclude(aisle_name="")
-        .values_list("item_name_normalized", flat=True)
-    )
-    unmapped_names = [
-        name for name in need_items
-        if inflection.singularize(name.strip().lower()) not in cached_names
-    ]
-    if not unmapped_names:
-        return
-
-    task_key = (store.id, shopping_list.id)
-    with _WARMING_LOCK:
-        if task_key in _ACTIVE_WARMINGS:
-            return
-        _ACTIVE_WARMINGS.add(task_key)
-
-    def _worker():
-        from django.db import connection
-        try:
-            resolved_count = 0
-            for name in unmapped_names:
-                clean_name = inflection.singularize(name.strip().lower())
-                if not StoreItemAisle.objects.filter(store=store, item_name_normalized=clean_name).exclude(aisle_name="").exists():
-                    res = resolve_store_aisle(store, name)
-                    if res and res.get("aisle_name"):
-                        resolved_count += 1
-                        # Broadcast update immediately so the item and list sorting refresh in real time!
-                        broadcast_shopping_list_update(
-                            shopping_list=shopping_list,
-                            sender_client_id="",
-                            toast_message="",
-                            actor_name="system",
-                        )
-            if resolved_count > 0:
-                broadcast_shopping_list_update(
-                    shopping_list=shopping_list,
-                    sender_client_id="",
-                    toast_message=f"📍 Aisles updated for {store.name}",
-                    actor_name="system",
-                )
-        except Exception as error:
-            logger.warning(f"Async store aisle warming encountered error: {error}")
-        finally:
-            with _WARMING_LOCK:
-                _ACTIVE_WARMINGS.discard(task_key)
-            connection.close()
-
-    if sync or "pytest" in sys.modules:
-        _worker()
-    else:
-        thread = threading.Thread(target=_worker, daemon=True)
-        thread.start()
+_warm_store_aisles_async = warm_store_aisles_async
 
 
 def _build_list_context(
@@ -214,7 +145,7 @@ def _build_list_context(
     workspace = shopping_list.workspace or get_active_workspace(request)
     if workspace:
         purge_expired_completed_items(workspace)
-    items = shopping_list.items.all().order_by("order", "id")
+    items = shopping_list.items.select_related("status_changed_by").order_by("order", "id")
 
     # Warm missing aisles asynchronously in background without blocking page render
     if shopping_list.active_store and shopping_list.active_store.chain == "kroger" and kroger_client.is_configured:
@@ -249,8 +180,14 @@ def _build_list_context(
     preset_lists = []
     if workspace:
         raw_presets = list(workspace.get_preset_lists().prefetch_related("items").order_by("name"))
+        preset_counts = dict(
+            shopping_list.items.filter(source_preset__isnull=False)
+            .values("source_preset_id")
+            .annotate(c=models.Count("id"))
+            .values_list("source_preset_id", "c")
+        )
         for p in raw_presets:
-            p.loaded_items_count = shopping_list.items.filter(source_preset=p).count()
+            p.loaded_items_count = preset_counts.get(p.id, 0)
             p.is_loaded = p.loaded_items_count > 0
             preset_lists.append(p)
 
@@ -527,8 +464,10 @@ def add_item(request: HttpRequest) -> HttpResponse:
     if raw_aisle:
         aisle = raw_aisle
     elif shopping_list.active_store:
-        aisle_info = resolve_store_aisle(shopping_list.active_store, raw_name)
+        aisle_info = resolve_store_aisle(shopping_list.active_store, raw_name, db_only=True)
         aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
+        if not aisle:
+            warm_store_aisles_async(shopping_list)
     else:
         aisle = ""
 

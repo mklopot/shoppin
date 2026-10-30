@@ -22,6 +22,7 @@ from apps.shopping.services.store_service import (
     get_nearest_stores,
     haversine_distance,
     resolve_store_aisle,
+    warm_store_aisles_async,
 )
 
 __all__ = [
@@ -40,4 +41,5 @@ __all__ = [
     "get_nearest_stores",
     "haversine_distance",
     "resolve_store_aisle",
+    "warm_store_aisles_async",
 ]

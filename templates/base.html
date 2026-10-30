@@ -59,16 +59,78 @@
     <style>
         body { font-family: Arial, Helvetica, sans-serif; }
 
-        /* Smooth View Transitions for transitioning elements */
+        /* Snappy View Transitions for transitioning elements */
         ::view-transition-old(*),
         ::view-transition-new(*) {
-            animation-duration: 0.22s;
-            animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+            animation-duration: 0.14s;
+            animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* Fallback/complementary transitions for item rows */
         .item-row {
-            transition: background-color 0.15s ease, opacity 0.2s ease, transform 0.2s ease;
+            transition: background-color 0.1s ease-out, opacity 0.1s ease-out, transform 0.1s ease-out;
+        }
+
+        /* Immediate tactile button response */
+        .item-row button {
+            touch-action: manipulation;
+            user-select: none;
+            cursor: pointer;
+            transition: transform 0.05s ease-out, background-color 0.1s ease, border-color 0.1s ease;
+        }
+        .item-row button:active {
+            transform: scale(0.93);
+        }
+
+        /* Immediate Optimistic States on Click/Tap (0ms response) */
+        .item-row.item-moving {
+            opacity: 0.5;
+            transform: scale(0.99);
+            pointer-events: none;
+            transition: opacity 0.06s ease-out, transform 0.06s ease-out;
+        }
+
+        .item-row.item-got-optimistic {
+            background-color: #d1fae5 !important; /* Soft mint / emerald-100 */
+            opacity: 0.7;
+            transform: translateX(4px);
+            pointer-events: none;
+            transition: all 0.06s ease-out;
+        }
+        .item-row.item-got-optimistic .item-title {
+            text-decoration: line-through;
+            color: #065f46;
+        }
+
+        .item-row.item-have-optimistic {
+            background-color: #fef3c7 !important; /* Soft amber / amber-100 */
+            opacity: 0.7;
+            transform: translateX(4px);
+            pointer-events: none;
+            transition: all 0.06s ease-out;
+        }
+        .item-row.item-have-optimistic .item-title {
+            text-decoration: line-through;
+            color: #92400e;
+        }
+
+        .item-row.item-skip-optimistic {
+            opacity: 0.35;
+            transform: translateX(-4px);
+            pointer-events: none;
+            transition: all 0.06s ease-out;
+        }
+        .item-row.item-skip-optimistic .item-title {
+            text-decoration: line-through;
+            color: #4b5563;
+        }
+
+        .item-row.item-need-optimistic {
+            background-color: #dbeafe !important; /* Soft sky / blue-100 */
+            opacity: 0.75;
+            transform: translateX(4px);
+            pointer-events: none;
+            transition: all 0.06s ease-out;
         }
 
         /* Loading state during HTMX requests */
@@ -856,6 +918,51 @@
             if (document.hidden && window.htmx && window.htmx.config) {
                 window.htmx.config.globalViewTransitions = false;
             }
+        })();
+
+        // Instant Optimistic Feedback for Shopping List Actions (0ms response)
+        (function() {
+            function applyOptimisticFeedback(target) {
+                if (!target) return;
+                const row = target.closest('.item-row');
+                if (!row) return;
+
+                const form = target.closest('form');
+                const action = (form ? (form.getAttribute('hx-post') || form.getAttribute('action') || '') : '') || target.getAttribute('hx-post') || '';
+                if (!action) return;
+
+                if (action.includes('/status/GOT')) {
+                    row.classList.add('item-got-optimistic');
+                } else if (action.includes('/status/HAVE')) {
+                    row.classList.add('item-have-optimistic');
+                } else if (action.includes('/status/DONT_NEED')) {
+                    row.classList.add('item-skip-optimistic');
+                } else if (action.includes('/status/NEED')) {
+                    row.classList.add('item-need-optimistic');
+                } else if (action.includes('/toggle-priority') || action.includes('/toggle-lock')) {
+                    row.classList.add('item-moving');
+                }
+            }
+
+            document.addEventListener('submit', function (event) {
+                applyOptimisticFeedback(event.target);
+            }, true);
+
+            document.addEventListener('click', function (event) {
+                const btn = event.target.closest('button, [hx-post]');
+                if (btn && btn.closest('.item-row')) {
+                    applyOptimisticFeedback(btn);
+                }
+            }, true);
+
+            // Revert optimistic styling if network request fails
+            function clearOptimistic() {
+                document.querySelectorAll('.item-moving, .item-got-optimistic, .item-have-optimistic, .item-skip-optimistic, .item-need-optimistic').forEach(el => {
+                    el.classList.remove('item-moving', 'item-got-optimistic', 'item-have-optimistic', 'item-skip-optimistic', 'item-need-optimistic');
+                });
+            }
+            document.addEventListener('htmx:responseError', clearOptimistic);
+            document.addEventListener('htmx:sendError', clearOptimistic);
         })();
     </script>
 

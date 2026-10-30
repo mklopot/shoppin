@@ -8,6 +8,8 @@ Preserves items associated with recipes or preset list templates.
 
 import datetime
 import logging
+import sys
+import time
 from typing import TYPE_CHECKING
 
 from django.db import models
@@ -18,8 +20,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_LAST_PURGE_TIMES: dict[int, float] = {}
+_PURGE_INTERVAL_SECONDS = 600.0  # 10 minutes
 
-def purge_expired_completed_items(workspace: "Workspace | None") -> int:
+
+def purge_expired_completed_items(workspace: "Workspace | None", force: bool = False) -> int:
     """
     Remove items from a workspace's active shopping list that:
     - Are in 'Got' (ItemStatus.GOT) or 'Already Have' (ItemStatus.HAVE) status.
@@ -31,6 +36,7 @@ def purge_expired_completed_items(workspace: "Workspace | None") -> int:
 
     Args:
         workspace: Target Workspace instance.
+        force: If True, bypasses the in-memory throttling interval.
 
     Returns:
         Number of items deleted.
@@ -41,6 +47,13 @@ def purge_expired_completed_items(workspace: "Workspace | None") -> int:
     retention_days = workspace.completed_items_retention_days
     if retention_days is None or retention_days <= 0:
         return 0
+
+    if "pytest" not in sys.modules and not force:
+        now_ts = time.time()
+        last = _LAST_PURGE_TIMES.get(workspace.id, 0.0)
+        if now_ts - last < _PURGE_INTERVAL_SECONDS:
+            return 0
+        _LAST_PURGE_TIMES[workspace.id] = now_ts
 
     from apps.shopping.models import ItemStatus, ShoppingListItem
 

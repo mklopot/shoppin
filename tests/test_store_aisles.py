@@ -533,8 +533,8 @@ def test_warm_store_aisles_streams_live_updates_per_item():
         broadcast_calls.append(kwargs)
 
     with patch.object(type(kroger_client), "is_configured", True), \
-         patch("apps.shopping.views.resolve_store_aisle", side_effect=mock_resolve), \
-         patch("apps.shopping.views.broadcast_shopping_list_update", side_effect=mock_broadcast):
+         patch("apps.shopping.services.store_service.resolve_store_aisle", side_effect=mock_resolve), \
+         patch("apps.shopping.services.store_service.broadcast_shopping_list_update", side_effect=mock_broadcast):
         _warm_store_aisles_async(s_list, sync=True)
 
     # Must have 2 per-item streaming broadcasts (toast_message="") + 1 final completion broadcast
@@ -744,6 +744,86 @@ def test_store_switching_aisle_resolution_flow(client):
         assert switch2.status_code == 200
         assert item.get_effective_aisle(store_111) == "Produce Table 3"
         assert item.get_effective_bay(store_111) == "2"
+
+
+@pytest.mark.django_db
+def test_resolve_store_aisle_db_only_mode():
+    """
+    Verify that resolve_store_aisle(..., db_only=True) returns cached entries immediately,
+    and returns None without calling the Kroger API client when an item is not cached.
+    """
+    from unittest.mock import patch
+    from apps.shopping.services.store_service import kroger_client
+
+    store = StoreLocation.objects.create(
+        name="King Soopers #62000999",
+        chain="kroger",
+        external_store_id="62000999",
+    )
+
+    StoreItemAisle.objects.create(
+        store=store,
+        item_name_normalized="milk",
+        aisle_name="Dairy",
+        bay_number="3",
+        sequence_order=95,
+        source="api",
+    )
+
+    with patch.object(type(kroger_client), "is_configured", True), \
+         patch.object(kroger_client, "lookup_product_aisle") as mock_lookup:
+
+        # 1. Cached item with db_only=True -> resolves from DB without network call
+        cached_res = resolve_store_aisle(store, "milk", db_only=True)
+        assert cached_res is not None
+        assert cached_res["aisle_name"] == "Dairy"
+        mock_lookup.assert_not_called()
+
+        # 2. Uncached item with db_only=True -> returns None without calling Kroger API
+        uncached_res = resolve_store_aisle(store, "dragonfruit", db_only=True)
+        assert uncached_res is None
+        mock_lookup.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_add_recipe_to_meal_fast_db_only_and_async_warming(client):
+    """
+    Verify that add_recipe_to_meal uses db_only=True for immediate non-blocking resolution,
+    and schedules async warming for missing aisles.
+    """
+    from unittest.mock import patch
+    from django.contrib.auth import get_user_model
+    from apps.core.models import Workspace
+    from apps.recipes.models import Recipe, Ingredient
+    from apps.mealplans.models import Meal, MealPlan
+    from apps.mealplans.services.mealplan_service import add_recipe_to_meal
+
+    User = get_user_model()
+    user = User.objects.create_user(username="chef_speedy")
+    ws = Workspace.objects.create(name="Speedy Kitchen", owner=user)
+    store = StoreLocation.objects.create(name="King Soopers Fast", chain="kroger", external_store_id="62000888")
+    s_list = ShoppingList.objects.create(name="Speedy List", workspace=ws, owner=user, active_store=store)
+
+    meal_plan = MealPlan.objects.create(name="Weekly Plan", workspace=ws, owner=user)
+    meal = Meal.objects.create(meal_plan=meal_plan, name="Dinner", order=1)
+
+    recipe = Recipe.objects.create(name="Quick Curry", created_by=user)
+    Ingredient.objects.create(recipe=recipe, name="coconut milk", amount=Decimal("1"), amount_unit="can")
+    Ingredient.objects.create(recipe=recipe, name="curry powder", amount=Decimal("2"), amount_unit="tbsp")
+
+    with patch("apps.mealplans.services.mealplan_service.resolve_store_aisle") as mock_resolve, \
+         patch("apps.mealplans.services.mealplan_service.warm_store_aisles_async") as mock_warm:
+        mock_resolve.return_value = None
+
+        descriptions = add_recipe_to_meal(meal, recipe, s_list)
+
+        assert len(descriptions) == 2
+        # Verify db_only=True was passed to resolve_store_aisle for each ingredient
+        for call_args in mock_resolve.call_args_list:
+            assert call_args.kwargs.get("db_only") is True
+        # Verify warm_store_aisles_async was called
+        mock_warm.assert_called_once_with(s_list)
+
 
 
 

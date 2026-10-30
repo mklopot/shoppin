@@ -316,7 +316,7 @@
                                 <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 select-none text-sm font-mono" aria-hidden="true">⋮⋮</span>
                                 {% endif %}
                                 <div class="min-w-0 flex-1 leading-snug">
-                                    <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                                    <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                                     {% if item.priority %}
                                         {% if can_write %}
                                         <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
@@ -455,7 +455,7 @@
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     <span class="text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
                     <div class="min-w-0 flex-1 leading-snug">
-                        <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                        <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                                     {% if item.priority %}
                                         {% if can_write %}
                                         <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
@@ -532,7 +532,7 @@
                     <span class="text-gray-600 font-bold select-none text-sm" title="Skipped" aria-label="Skipped" role="img">⏭</span>
                     {% endif %}
                     <div class="min-w-0 flex-1 leading-snug">
-                        <span class="font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                        <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                                     {% if item.priority %}
                                         {% if can_write %}
                                         <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">

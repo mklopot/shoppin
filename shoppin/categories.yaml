@@ -112,6 +112,7 @@
   chicken: meat
   chicken breast: meat
   chicken broth: pantry
+  chicken drumstick: meat
   chicken thigh: meat
   chili lime seasoning: spices
   chili or seasoned bean: canned goods
@@ -163,6 +164,7 @@
   dave's killer bread: bread
   decaffeinated coffee: tea and coffee
   deli turkey lunch meat: deli meat
+  dental floss: toiletries, oral and personal care
   dessert: bread
   dill: produce
   dill pickle: condiments
@@ -238,6 +240,7 @@
   gruyere cheese shredded: eggs and dairy
   guacamole: prepared foods
   gum: candy
+  hair ties for iri: toiletries, oral and personal care
   ham: deli meat
   ham or polish sausage: deli meat
   hamburger bun: bread
@@ -256,6 +259,7 @@
   ice cream: frozen
   iceberg lettuce or napa cabbage: produce
   imitation crab: fish
+  italian bread crumb: pantry
   'italian bread crumbs ': pantry
   italian sausage: meat
   italian seasoning: spices
@@ -320,6 +324,8 @@
   milk: eggs and dairy
   mint: produce
   mirin: sushi supplies
+  mixed nuts, flavored: chips and snacks
+  mochi: international foods
   monterey jack cheese, shredded: eggs and dairy
   mouthwash: toiletries, oral and personal care
   mozarella cheese: eggs and dairy
@@ -339,6 +345,7 @@
   nutmeg: spices
   oat bran: baking
   oat milk: eggs and dairy
+  oatmeal: cereal and breakfast
   octopus: fish
   oil: oil
   olive: condiments
@@ -406,6 +413,7 @@
   puff pastry: frozen
   puff pastry sheet, frozen: frozen
   puff pastry tarts, frozen: frozen
+  pumpkin pie: bakery
   purple cabbage: produce
   q tip: toiletries, oral and personal care
   q-tip: toiletries, oral and personal care
@@ -434,6 +442,7 @@
   ritz cracker: crackers
   roast beef: deli meat
   roasted seaweed: international foods
+  room deodorzer spray: housewares and hardware
   rosemary: produce
   rubber band: stationery
   russet potato: produce
@@ -472,6 +481,7 @@
   sliced cheddar: eggs and dairy
   sliced cheese: eggs and dairy
   sliced deli ham: deli meat
+  sliced ham: deli meat
   sliced sharp cheddar: eggs and dairy
   sliced swiss cheese: eggs and dairy
   sloppy joe seasoning packet: seasoning mix
@@ -503,12 +513,15 @@
   strawberry: produce
   sugar: baking
   sugar or honey: baking
+  sumo citru: produce
   sunscreen: skin care and lotions
   sushi grade salmon: sushi supplies
   sushi grade tuna: sushi supplies
   sushi rice: sushi supplies
   sweet dream: tea and coffee
   sweet pea: canned vegetables
+  sweet potato: produce
+  sweet potatoes 4-5: produce
   'sweet red wine or grape juice ': juices
   taco sauce: mexican food
   tangerine: produce
@@ -547,6 +560,7 @@
   vegetable stock: pantry
   vegetarian chicken: frozen
   'veggie : onion, parsley, radish or celery': produce
+  veggie burger: vegetarian foods
   veggie chicken: frozen
   veggie dog: vegetarian foods
   veggie meat: vegetarian foods
@@ -583,14 +597,18 @@
   yoghurt: eggs and dairy
   yogurt: eggs and dairy
   yogurt drink: eggs and dairy
+  yogurt pack: dried fruit
   yogurt, plain: eggs and dairy
   z bar: energy bars
   z-bar: energy bars
+  zbar: energy bars
   zucchini: produce
 - automotive:
   - yellow heet
   baby care:
   - wet wipe
+  bakery:
+  - pumpkin pie
   baking:
   - flour
   - baking powder
@@ -686,6 +704,7 @@
   - kix cereal
   - quakers fruit n cream instant oatmeal
   - maple syrup
+  - oatmeal
   chips and snacks:
   - pork rind
   - potato chip
@@ -697,6 +716,7 @@
   - fruit gummy
   - jerky
   - dry popcorn
+  - mixed nuts, flavored
   cle: []
   cleaning supplies:
   - dish soap
@@ -749,9 +769,11 @@
   - sliced deli ham
   - lunch meat
   - roast beef
+  - sliced ham
   dried fruit:
   - raisin
   - dried mango
+  - yogurt pack
   drinks:
   - spindrift
   - other sparkling water
@@ -833,6 +855,7 @@
   - fig bar
   - brownies or fig bar
   - snack bar
+  - zbar
   fish:
   - smoked salmon
   - imitation crab
@@ -879,6 +902,7 @@
   - windshield washer fluid
   - charcoal
   - duct tape
+  - room deodorzer spray
   international foods:
   - stir fry sauce
   - soy sauce
@@ -905,6 +929,7 @@
   - soba noodle
   - 'rice vinegar '
   - roasted seaweed
+  - mochi
   juices:
   - grape juice
   - grape juice, sparkling
@@ -928,6 +953,7 @@
   - pork
   - bbq meat
   - sausage
+  - chicken drumstick
   mexican food:
   - enchilada sauce
   - salsa
@@ -982,6 +1008,7 @@
   - white vinegar
   - 'italian bread crumbs '
   - bouillon base
+  - italian bread crumb
   pet food:
   - cat food
   picnic supplies:
@@ -1088,6 +1115,9 @@
   - chopped parsley
   - beet, large
   - mango
+  - sumo citru
+  - sweet potato
+  - sweet potatoes 4-5
   refrigerated drinks:
   - refrigerated coffee can
   - probiotic soda
@@ -1217,6 +1247,8 @@
   - maxi pad
   - medium tan nose strip
   - shampoo for ian
+  - dental floss
+  - hair ties for iri
   trash bags:
   - trash bag
   - compost bag
@@ -1228,6 +1260,7 @@
   - veggie dog
   - baked tofu
   - chick'n
+  - veggie burger
   vitamins:
   - vitamin c gummy
   - vitamin d3 gummy

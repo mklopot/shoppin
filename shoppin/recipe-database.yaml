@@ -240,10 +240,10 @@
         optional: True
 
     - 'Milk':
-        amount: '1 /4 cup'
+        amount: '.25 cup'
 
-    - 'Italian bread crumbs ':
-        amount: '1 /2 cup'
+    - 'Italian bread crumbs':
+        amount: '.5 cup'
 
     - 'Chopped parsley':
         optional: True

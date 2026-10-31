@@ -75,6 +75,7 @@
                            id="id_is_public_top"
                            name="is_public"
                            value="1"
+                           autocomplete="off"
                            onchange="syncPublicToggle(this)"
                            {% if is_edit and recipe.is_public %}checked{% endif %}
                            class="public-recipe-checkbox sr-only peer">
@@ -177,43 +178,6 @@
                                placeholder="https://images.unsplash.com/... or https://..."
                                class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">
                         <span class="text-[11px] text-gray-500 mt-0.5 block">Paste a public web link if you prefer linking directly to an online image.</span>
-                    </div>
-
-                    <!-- Visibility & Public Sharing Setting -->
-                    <div class="border-t border-gray-200 pt-3 mt-3">
-                        <label class="block font-bold text-gray-700 mb-1">
-                            Recipe Visibility & Sharing
-                        </label>
-                        <div class="flex items-center justify-between bg-gray-50 border border-gray-300 p-3">
-                            <div class="space-y-0.5 pr-2">
-                                <span class="text-xs font-bold text-gray-900">Make public</span>
-                                <p class="text-[11px] text-gray-500 leading-tight">
-                                    Make this recipe public: Anyone will be able to view and cook it once approved by moderators.
-                                </p>
-                            </div>
-                            <div class="flex items-center space-x-2 flex-shrink-0">
-                                <label for="id_is_public_card" class="inline-flex items-center cursor-pointer select-none" title="Make this recipe public on the web">
-                                    <input type="checkbox"
-                                           id="id_is_public_card"
-                                           name="is_public"
-                                           value="1"
-                                           onchange="syncPublicToggle(this)"
-                                           {% if is_edit and recipe.is_public %}checked{% endif %}
-                                           class="public-recipe-checkbox sr-only peer">
-                                    <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-                                    <span class="ml-2.5 text-xs font-semibold text-gray-800">Make public</span>
-                                </label>
-                                <button type="button"
-                                        onclick="togglePublicRecipeModal(true)"
-                                        aria-label="Public recipe visibility information"
-                                        title="Click to learn about public recipe sharing and moderation"
-                                        class="text-blue-600 hover:text-blue-800 focus:outline-none cursor-pointer p-0.5 rounded-full inline-flex items-center justify-center">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -656,6 +620,7 @@
                            id="id_is_public"
                            name="is_public"
                            value="1"
+                           autocomplete="off"
                            onchange="syncPublicToggle(this)"
                            {% if is_edit and recipe.is_public %}checked{% endif %}
                            class="public-recipe-checkbox sr-only peer">

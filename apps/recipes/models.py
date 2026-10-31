@@ -180,9 +180,15 @@ class Recipe(models.Model):
         check_model_instance_for_moderation(self)
 
     def save(self, *args, **kwargs) -> None:
-        """Auto-populate URL slug from name if not specified."""
+        """Auto-populate URL slug from name if not specified and ensure uniqueness."""
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name) or "recipe"
+            slug = base_slug
+            counter = 1
+            while Recipe.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

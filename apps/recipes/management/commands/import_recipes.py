@@ -13,6 +13,7 @@ import yaml
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils.text import slugify
 
 from apps.core.categorizer import categorizer
 from apps.core.utils import parse_amount_and_unit
@@ -119,8 +120,13 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         update_existing = options["update_existing"]
 
-        # Cache existing recipes by normalized name for fast lookup
-        existing_recipes = {r.name.strip().lower(): r for r in Recipe.objects.all()}
+        # Cache existing recipes by normalized name and slug for fast lookup
+        existing_recipes = {}
+        existing_by_slug = {}
+        for r in Recipe.objects.all():
+            existing_recipes[r.name.strip().lower()] = r
+            if r.slug:
+                existing_by_slug[r.slug] = r
 
         created_recipes = 0
         created_ingredients = 0
@@ -134,10 +140,11 @@ class Command(BaseCommand):
 
                 clean_name = recipe_name.strip()
                 norm_key = clean_name.lower()
+                target_slug = slugify(clean_name)
                 description = (details.get("description", "") or "").strip()
                 directions = (details.get("directions", "") or "").strip()
 
-                existing = existing_recipes.get(norm_key)
+                existing = existing_recipes.get(norm_key) or existing_by_slug.get(target_slug)
 
                 if existing:
                     if update_existing:
@@ -171,6 +178,8 @@ class Command(BaseCommand):
                         is_approved=True,
                     )
                     existing_recipes[norm_key] = recipe_obj
+                    if recipe_obj.slug:
+                        existing_by_slug[recipe_obj.slug] = recipe_obj
 
                 raw_ingredients = details.get("ingredients") or []
                 for order_idx, item in enumerate(raw_ingredients):

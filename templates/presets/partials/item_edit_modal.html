@@ -31,31 +31,22 @@
                                name="name"
                                value="{{ item.name }}"
                                required
+                               list="all-ingredients-datalist"
+                               autocomplete="off"
                                class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label for="preset-edit-item-amount" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                Amount
-                            </label>
-                            <input type="text"
-                                   id="preset-edit-item-amount"
-                                   name="amount"
-                                   value="{{ item.amount_display }}"
-                                   class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="preset-edit-item-unit" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                Unit
-                            </label>
-                            <input type="text"
-                                   id="preset-edit-item-unit"
-                                   name="amount_unit"
-                                   value="{{ item.amount_unit }}"
-                                   placeholder="e.g. can, gallon"
-                                   class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
-                        </div>
+                    <div>
+                        <label for="preset-edit-item-amount" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                            Amount &amp; Unit
+                        </label>
+                        <input type="text"
+                               id="preset-edit-item-amount"
+                               name="amount"
+                               value="{% if item.amount_unit %}{{ item.amount_display }} {{ item.amount_unit }}{% else %}{{ item.amount_display }}{% endif %}"
+                               placeholder="e.g. 1 can, 2 lbs"
+                               class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
+                        <input type="hidden" name="amount_unit" id="preset-edit-item-unit" value="">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">

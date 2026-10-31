@@ -9,6 +9,7 @@ import json
 import logging
 import sys
 import threading
+from decimal import Decimal
 from typing import Any
 
 from django.db import models
@@ -387,7 +388,7 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
     context = _build_list_context(request, shopping_list, group_by)
 
     status_messages = {
-        ItemStatus.GOT: f"🛒 You moved '{item.name}' to Cart",
+        ItemStatus.GOT: f"🛒 You got '{item.name}'",
         ItemStatus.HAVE: f"🏠 You marked '{item.name}' as Already in Pantry",
         ItemStatus.DONT_NEED: f"⏭ You skipped '{item.name}'",
         ItemStatus.NEED: f"📋 You moved '{item.name}' back to To Buy",
@@ -396,7 +397,7 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
 
     actor_name = item.status_actor_first_name or "Someone"
     other_status_messages = {
-        ItemStatus.GOT: f"🛒 {actor_name} moved '{item.name}' to Cart",
+        ItemStatus.GOT: f"🛒 {actor_name} got '{item.name}'",
         ItemStatus.HAVE: f"🏠 {actor_name} marked '{item.name}' as in Pantry",
         ItemStatus.DONT_NEED: f"⏭ {actor_name} skipped '{item.name}'",
         ItemStatus.NEED: f"📋 {actor_name} moved '{item.name}' back to To Buy",
@@ -591,19 +592,21 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         raw_unit = request.POST.get("amount_unit", "").strip()
         if raw_unit:
             item.amount_unit = raw_unit
-        elif parsed_unit:
+        else:
             item.amount_unit = parsed_unit
         item.brand = request.POST.get("brand", item.brand).strip()
         item.vendor = request.POST.get("vendor", item.vendor).strip()
         item.category = request.POST.get("category", item.category).strip()
-        item.aisle = request.POST.get("aisle", item.aisle).strip()
+        new_aisle = request.POST.get("aisle", item.aisle).strip()
+        aisle_changed = (new_aisle != item.aisle)
+        item.aisle = new_aisle
         item.purpose = clean_purpose(request.POST.get("purpose", item.purpose).strip()) or "one-time purchase"
         item.priority = request.POST.get("priority") in ("true", "1", "on", True)
 
         # Moderation: Disallow expletives, obscene or hurtful language
         is_obscene, _ = contains_obscene_language(f"{item.name} {item.brand} {item.vendor} {item.purpose} {item.aisle}")
         if is_obscene:
-            group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+            group_by = request.POST.get("group_by") or request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
             context = _build_list_context(request, item.shopping_list, group_by)
             return render_list_response(
                 request,
@@ -655,18 +658,20 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             # Delete the redundant edited item
             item.delete()
 
-            # Update store aisle learning cache if aisle is set
+            # Update store aisle learning cache if aisle is set (zeroing bay out if aisle was changed)
             if existing.aisle and existing.shopping_list.active_store:
                 StoreItemAisle.objects.update_or_create(
                     store=existing.shopping_list.active_store,
                     item_name_normalized=normalized_name,
                     defaults={
                         "aisle_name": existing.aisle,
+                        "bay_number": "",
                         "source": "manual",
                     },
                 )
 
-            group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+            group_by = request.POST.get("group_by") or request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
+            request.session["shopping_list_group_by"] = group_by
             context = _build_list_context(request, existing.shopping_list, group_by)
             unit_str = f" {existing.unit_display}" if existing.unit_display else ""
             toast = f"Combined into '{existing.name}' ({existing.amount_display}{unit_str})"
@@ -686,18 +691,20 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         _set_item_audit(item, request)
         item.save()
 
-        # If user explicitly edited aisle and store is active, update store learning cache
+        # If user explicitly edited aisle and store is active, update store learning cache (zeroing out bay)
         if item.aisle and item.shopping_list.active_store:
             StoreItemAisle.objects.update_or_create(
                 store=item.shopping_list.active_store,
                 item_name_normalized=normalized_name,
                 defaults={
                     "aisle_name": item.aisle,
+                    "bay_number": "",
                     "source": "manual",
                 },
             )
 
-        group_by = request.GET.get("group_by", GroupBy.CATEGORY)
+        group_by = request.POST.get("group_by") or request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
+        request.session["shopping_list_group_by"] = group_by
         context = _build_list_context(request, item.shopping_list, group_by)
         edit_actor = item.status_actor_first_name or "Someone"
         broadcast_shopping_list_update(
@@ -710,6 +717,8 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
     known_categories = get_known_categories()
     known_aisles = get_known_aisles(item.shopping_list.active_store)
+    group_by = request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
+    request.session["shopping_list_group_by"] = group_by
     return render(
         request,
         "shopping/partials/item_edit_modal.html",
@@ -717,6 +726,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             "item": item,
             "known_categories": known_categories,
             "known_aisles": known_aisles,
+            "group_by": group_by,
         },
     )
 

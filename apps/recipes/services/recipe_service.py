@@ -15,6 +15,7 @@ from apps.core.utils import (
     clean_purpose,
     combine_amounts_and_units,
     parse_amount_and_unit,
+    parse_ingredient_line,
     singularize,
 )
 from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating
@@ -382,7 +383,16 @@ def create_or_update_recipe(
 
             raw_amt = ingredient_amounts[i] if i < len(ingredient_amounts) else "1"
             amount, parsed_unit = parse_amount_and_unit(raw_amt)
-            unit = ingredient_units[i].strip() if i < len(ingredient_units) and ingredient_units[i] else parsed_unit
+            unit = ingredient_units[i].strip() if (i < len(ingredient_units) and ingredient_units[i]) else parsed_unit
+
+            # If user typed entire item & quantity into name (e.g. "2 cups all-purpose flour"), parse it
+            if (not raw_amt or raw_amt == "1") and not unit:
+                parsed_name, p_amt, p_unit = parse_ingredient_line(ing_name)
+                if p_unit:
+                    ing_name = parsed_name
+                    amount = p_amt
+                    unit = p_unit
+
             is_opt = (ingredient_optionals[i] == "1") if i < len(ingredient_optionals) else False
             brand = ingredient_brands[i].strip() if i < len(ingredient_brands) else ""
             vendor = ingredient_vendors[i].strip() if i < len(ingredient_vendors) else ""

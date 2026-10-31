@@ -11,7 +11,8 @@ Provides:
 """
 
 import logging
-from datetime import datetime
+import re
+from datetime import datetime, time as datetime_time
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
@@ -32,6 +33,7 @@ from apps.shopping.services.preset_service import (
     check_and_apply_due_preset_schedules,
     create_preset_list,
     delete_preset_item,
+    get_default_next_schedule_occurrence,
     get_workspace_presets,
     load_preset_items_to_shopping_list,
     unload_preset_from_shopping_list,
@@ -40,6 +42,52 @@ from apps.shopping.services.preset_service import (
 from apps.shopping.services.store_service import get_known_categories
 
 logger = logging.getLogger(__name__)
+
+
+def parse_time_component(time_str: str | None) -> tuple[int, int] | None:
+    """
+    Parse flexible user-typed time string into (hour, minute).
+
+    Supports formats like '4am', '4 AM', '4:00 AM', '4:00am', '16:30', '4:30pm', '4', '12am', '12pm'.
+    """
+    if not time_str or not time_str.strip():
+        return None
+    s = time_str.strip().lower()
+
+    # Pattern 1: HH:MM with optional AM/PM (e.g. "4:00 am", "16:30", "04:15pm")
+    m = re.match(r"^(\d{1,2}):(\d{2})\s*([ap]m?)?$", s)
+    if m:
+        hour = int(m.group(1))
+        minute = int(m.group(2))
+        ampm = m.group(3)
+        if ampm:
+            if "p" in ampm and hour < 12:
+                hour += 12
+            elif "a" in ampm and hour == 12:
+                hour = 0
+        if 0 <= hour <= 23 and 0 <= minute <= 59:
+            return hour, minute
+
+    # Pattern 2: H or HH with AM/PM (e.g. "4am", "4 pm", "11pm")
+    m = re.match(r"^(\d{1,2})\s*([ap]m?)$", s)
+    if m:
+        hour = int(m.group(1))
+        ampm = m.group(2)
+        if "p" in ampm and hour < 12:
+            hour += 12
+        elif "a" in ampm and hour == 12:
+            hour = 0
+        if 0 <= hour <= 23:
+            return hour, 0
+
+    # Pattern 3: Standalone hour number (e.g. "4", "16")
+    m = re.match(r"^(\d{1,2})$", s)
+    if m:
+        hour = int(m.group(1))
+        if 0 <= hour <= 23:
+            return hour, 0
+
+    return None
 
 
 def _parse_form_datetime(
@@ -51,14 +99,27 @@ def _parse_form_datetime(
     Parse date and time inputs into an aware timezone.datetime.
 
     Supports:
-    - Separate date string (YYYY-MM-DD) and time string (HH:MM or 12h h:mm AM/PM)
+    - Separate date string (YYYY-MM-DD or MM/DD/YYYY) and flexible time string (e.g. '4am', '4:00 AM', '16:00')
     - Combined ISO string (YYYY-MM-DDTHH:MM)
     """
     if date_val and date_val.strip():
         d_str = date_val.strip()
-        now_local = timezone.localtime(timezone.now())
-        t_str = (time_val or now_local.strftime("%H:%M")).strip()
-        val = f"{d_str} {t_str}"
+        parsed_date = None
+        for dfmt in ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y"):
+            try:
+                parsed_date = datetime.strptime(d_str, dfmt).date()
+                break
+            except ValueError:
+                continue
+
+        if parsed_date:
+            parsed_time = parse_time_component(time_val) if time_val else None
+            if parsed_time is None:
+                parsed_time = (4, 0)
+            target_dt = datetime.combine(parsed_date, datetime_time(parsed_time[0], parsed_time[1]))
+            if timezone.is_naive(target_dt):
+                target_dt = timezone.make_aware(target_dt, timezone.get_current_timezone())
+            return target_dt
 
     if not val or not val.strip():
         return None
@@ -141,8 +202,9 @@ def preset_list_index(request: HttpRequest) -> HttpResponse:
     can_write = workspace.can_write(user)
     user_role = workspace.get_user_role(user) or "viewer"
 
-    default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-    default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
+    default_target = get_default_next_schedule_occurrence()
+    default_next_date = default_target.strftime("%Y-%m-%d")
+    default_next_time = default_target.strftime("%I:%M %p").lstrip("0")
 
     context: dict[str, Any] = {
         "workspace": workspace,
@@ -224,8 +286,9 @@ def preset_detail(request: HttpRequest, preset_id: int) -> HttpResponse:
     loaded_count = primary_list.items.filter(source_preset=preset_list).count() if primary_list else 0
     is_loaded = loaded_count > 0
 
-    default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-    default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
+    default_target = get_default_next_schedule_occurrence()
+    default_next_date = default_target.strftime("%Y-%m-%d")
+    default_next_time = default_target.strftime("%I:%M %p").lstrip("0")
 
     context: dict[str, Any] = {
         "workspace": workspace,
@@ -355,9 +418,10 @@ def preset_edit_item(request: HttpRequest, preset_id: int, item_id: int) -> Http
         item.name = name
     raw_amount = request.POST.get("amount", "1")
     parsed_amount, parsed_unit = parse_amount_and_unit(raw_amount)
-    item.amount = parsed_amount or item.amount
+    if parsed_amount is not None:
+        item.amount = parsed_amount
     unit_input = request.POST.get("amount_unit", "").strip()
-    item.amount_unit = unit_input if unit_input else (parsed_unit or item.amount_unit)
+    item.amount_unit = unit_input if unit_input else parsed_unit
     item.brand = request.POST.get("brand", "").strip()
     item.vendor = request.POST.get("vendor", "").strip()
     item.category = request.POST.get("category", "").strip() or categorizer.get_category(item.name)
@@ -489,8 +553,9 @@ def preset_update_schedule(request: HttpRequest, preset_id: int) -> HttpResponse
                 force_partial=True,
             )
 
-        default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-        default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
+        default_target = get_default_next_schedule_occurrence()
+        default_next_date = default_target.strftime("%Y-%m-%d")
+        default_next_time = default_target.strftime("%I:%M %p").lstrip("0")
         return render(
             request,
             "presets/partials/schedule_section.html",
@@ -547,8 +612,9 @@ def preset_run_schedule_now(request: HttpRequest, preset_id: int) -> HttpRespons
                 force_partial=True,
             )
 
-        default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-        default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
+        default_target = get_default_next_schedule_occurrence()
+        default_next_date = default_target.strftime("%Y-%m-%d")
+        default_next_time = default_target.strftime("%I:%M %p").lstrip("0")
         return render(
             request,
             "presets/partials/schedule_section.html",
@@ -578,8 +644,9 @@ def preset_schedule_modal(request: HttpRequest, preset_id: int) -> HttpResponse:
 
     can_write = workspace.can_write(user) if workspace else False
 
-    default_next_date = (timezone.now() + timezone.timedelta(days=7)).strftime("%Y-%m-%d")
-    default_next_time = timezone.localtime(timezone.now()).strftime("%I:%M %p").lstrip("0")
+    default_target = get_default_next_schedule_occurrence()
+    default_next_date = default_target.strftime("%Y-%m-%d")
+    default_next_time = default_target.strftime("%I:%M %p").lstrip("0")
 
     return render(
         request,

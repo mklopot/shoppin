@@ -209,7 +209,7 @@ def test_item_transitions_and_toast_notifications(client, active_list):
     res = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res.status_code == 200
     content = res.content.decode("utf-8")
-    assert "You moved &#x27;Bananas&#x27; to Cart" in content or "You moved 'Bananas' to Cart" in content
+    assert "You got &#x27;Bananas&#x27;" in content or "You got 'Bananas'" in content
     assert 'hx-swap-oob="beforeend"' in content
     assert "bg-white/90" in content
     assert "backdrop-blur-sm" in content
@@ -345,7 +345,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     # Shopping List and Pantry Check navigation tabs on top are visually higher up than Store selector and sort order
     shopping_tab_pos = content.find("Shopping List")
     pantry_tab_pos = content.find("Pantry Check")
-    store_pos = content.find("Store:")
+    store_pos = content.find('id="store-selector-select"')
     sort_pos = content.find("By Category")
     assert shopping_tab_pos < pantry_tab_pos < store_pos < sort_pos
 

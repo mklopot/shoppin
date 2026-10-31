@@ -342,8 +342,7 @@
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-300 text-gray-700 text-[11px] uppercase tracking-wider">
                             <th class="p-2 font-bold min-w-[180px]">Ingredient Name *</th>
-                            <th class="p-2 font-bold w-20">Amount</th>
-                            <th class="p-2 font-bold w-24">Unit</th>
+                            <th class="p-2 font-bold w-36 sm:w-44">Amount &amp; Unit</th>
                             <th class="p-2 font-bold w-28">Brand</th>
                             <th class="p-2 font-bold w-28">Vendor</th>
                             <th class="p-2 font-bold text-center w-16">Optional</th>
@@ -358,26 +357,21 @@
                                     <input type="text"
                                            name="ingredient_name[]"
                                            required
+                                           list="all-ingredients-datalist"
+                                           autocomplete="off"
                                            value="{{ ing.name }}"
                                            aria-label="Ingredient name"
                                            placeholder="e.g. Yellow onion, Diced tomatoes"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_amount[]"
-                                           value="{{ ing.amount|floatformat:'-2' }}"
-                                           aria-label="Ingredient amount"
-                                           placeholder="1"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
-                                </td>
-                                <td class="p-1.5">
-                                    <input type="text"
-                                           name="ingredient_unit[]"
-                                           value="{{ ing.amount_unit }}"
-                                           aria-label="Ingredient unit"
-                                           placeholder="cup, lb, tbsp"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           value="{% if ing.amount_unit %}{{ ing.amount|floatformat:'-2' }} {{ ing.amount_unit }}{% elif ing.amount %}{{ ing.amount|floatformat:'-2' }}{% endif %}"
+                                           aria-label="Amount and unit"
+                                           placeholder="e.g. 1 cup, 2 lbs"
+                                           class="w-28 sm:w-36 focus:w-48 sm:focus:w-40 border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none transition-all duration-150 bg-white">
+                                    <input type="hidden" name="ingredient_unit[]" value="">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
@@ -385,7 +379,7 @@
                                            value="{{ ing.brand }}"
                                            aria-label="Ingredient brand"
                                            placeholder="Brand"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
@@ -393,7 +387,7 @@
                                            value="{{ ing.vendor }}"
                                            aria-label="Ingredient vendor"
                                            placeholder="Vendor/Store"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5 text-center align-middle">
                                     <input type="checkbox"
@@ -421,38 +415,34 @@
                                     <input type="text"
                                            name="ingredient_name[]"
                                            required
+                                           list="all-ingredients-datalist"
+                                           autocomplete="off"
                                            aria-label="Ingredient name"
                                            placeholder="e.g. Yellow onion, Olive oil"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_amount[]"
-                                           placeholder="1"
+                                           placeholder="e.g. 1 cup, 2 lbs"
                                            value="1"
-                                           aria-label="Ingredient amount"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
-                                </td>
-                                <td class="p-1.5">
-                                    <input type="text"
-                                           name="ingredient_unit[]"
-                                           placeholder="cup, tbsp, lb"
-                                           aria-label="Ingredient unit"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           aria-label="Amount and unit"
+                                           class="w-28 sm:w-36 focus:w-48 sm:focus:w-40 border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none transition-all duration-150 bg-white">
+                                    <input type="hidden" name="ingredient_unit[]" value="">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_brand[]"
                                            placeholder="Brand"
                                            aria-label="Ingredient brand"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
                                            name="ingredient_vendor[]"
                                            placeholder="Vendor/Store"
                                            aria-label="Ingredient vendor"
-                                           class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                                           class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5 text-center align-middle">
                                     <input type="checkbox"
@@ -591,38 +581,34 @@ function addIngredientRow() {
             <input type="text"
                    name="ingredient_name[]"
                    required
+                   list="all-ingredients-datalist"
+                   autocomplete="off"
                    aria-label="Ingredient name"
                    placeholder="e.g. Yellow onion, Olive oil"
-                   class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                   class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_amount[]"
-                   placeholder="1"
+                   placeholder="e.g. 1 cup, 2 lbs"
                    value="1"
-                   aria-label="Ingredient amount"
-                   class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
-        </td>
-        <td class="p-1.5">
-            <input type="text"
-                   name="ingredient_unit[]"
-                   placeholder="cup, tbsp, lb"
-                   aria-label="Ingredient unit"
-                   class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                   aria-label="Amount and unit"
+                   class="w-28 sm:w-36 focus:w-48 sm:focus:w-40 border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none transition-all duration-150 bg-white">
+            <input type="hidden" name="ingredient_unit[]" value="">
         </td>
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_brand[]"
                    placeholder="Brand"
                    aria-label="Ingredient brand"
-                   class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                   class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_vendor[]"
                    placeholder="Vendor/Store"
                    aria-label="Ingredient vendor"
-                   class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none rounded-none">
+                   class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5 text-center align-middle">
             <input type="checkbox"

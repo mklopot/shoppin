@@ -1,6 +1,6 @@
 <div class="occurrence-picker-block space-y-2">
     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-        Next Refresh Date & Time
+        Next Refresh Date &amp; Time
     </label>
 
     <!-- Date & Time Inputs -->
@@ -19,30 +19,39 @@
                    class="occurrence-date-input w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500">
         </div>
 
-        <!-- Android Material Time Picker -->
+        <!-- Direct Typed & Dial Time Picker -->
         <div>
             <label class="block text-[11px] font-semibold text-gray-700 mb-1">
-                Time
+                Time (e.g. 4:00 AM, 4am)
             </label>
-            <div class="relative">
+            <div class="relative flex items-center">
                 <input type="text"
                        name="next_occurrence_time"
                        aria-label="Next refresh time"
                        value="{{ preset_list.next_occurrence|date:'g:i A'|default:default_next_time }}"
-                       data-time="{{ preset_list.next_occurrence|date:'g:i A'|default:default_next_time }}"
-                       onfocus="initAndOpenTimePicker(this)"
-                       onclick="initAndOpenTimePicker(this)"
-                       readonly
+                       oninput="presetUpdatePreview(this.closest('.occurrence-picker-block'))"
+                       onchange="presetUpdatePreview(this.closest('.occurrence-picker-block'))"
                        {% if not can_write and can_write is not None %}disabled{% endif %}
-                       class="android-time-input occurrence-time-input w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500 cursor-pointer pr-8 font-medium text-gray-800"
-                       placeholder="Select time">
-                <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-indigo-600">
+                       class="occurrence-time-input w-full border border-gray-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-indigo-500 pr-10 font-medium text-gray-800"
+                       placeholder="4:00 AM">
+                <!-- Hidden proxy for mdtimepicker dial popup -->
+                <input type="text"
+                       style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;"
+                       class="clock-dial-proxy"
+                       tabindex="-1"
+                       aria-hidden="true">
+                <button type="button"
+                        onclick="triggerClockDialPicker(this)"
+                        {% if not can_write and can_write is not None %}disabled{% endif %}
+                        title="Pick hour &amp; minute on clock dial"
+                        aria-label="Pick time on clock dial"
+                        class="absolute right-0 top-0 bottom-0 px-2.5 flex items-center text-indigo-600 hover:text-indigo-800 focus:outline-none">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                </div>
+                </button>
             </div>
-            <p class="text-[10px] text-gray-600 mt-0.5">Tap to pick any hour &amp; minute on clock dial</p>
+            <p class="text-[10px] text-gray-500 mt-0.5">Type directly or click clock icon for dial</p>
         </div>
     </div>
 
@@ -62,17 +71,30 @@
 <script>
 if (typeof initAndroidTimePickers === 'undefined') {
     window.parseTimeTo24 = function(timeStr) {
-        if (!timeStr) return { h: 12, m: 0 };
-        const clean = timeStr.trim();
-        const isPM = /pm/i.test(clean);
-        const isAM = /am/i.test(clean);
-        const match = clean.match(/(\d{1,2}):(\d{2})/);
-        if (!match) return { h: 12, m: 0 };
-        let h = parseInt(match[1], 10);
-        const m = parseInt(match[2], 10);
-        if (isPM && h < 12) h += 12;
-        if (isAM && h === 12) h = 0;
-        return { h: h, m: m };
+        if (!timeStr) return { h: 4, m: 0 };
+        const clean = timeStr.trim().toLowerCase();
+        const isPM = /p/i.test(clean);
+        const isAM = /a/i.test(clean);
+
+        // match "4:00" or "4:00am" or "16:30"
+        let match = clean.match(/^(\d{1,2}):(\d{2})/);
+        if (match) {
+            let h = parseInt(match[1], 10);
+            const m = parseInt(match[2], 10);
+            if (isPM && h < 12) h += 12;
+            if (isAM && h === 12) h = 0;
+            return { h: Math.min(23, Math.max(0, h)), m: Math.min(59, Math.max(0, m)) };
+        }
+
+        // match "4am" or "4 pm" or standalone "4"
+        match = clean.match(/^(\d{1,2})/);
+        if (match) {
+            let h = parseInt(match[1], 10);
+            if (isPM && h < 12) h += 12;
+            if (isAM && h === 12) h = 0;
+            return { h: Math.min(23, Math.max(0, h)), m: 0 };
+        }
+        return { h: 4, m: 0 };
     };
 
     window.presetUpdatePreview = function(container) {
@@ -99,62 +121,62 @@ if (typeof initAndroidTimePickers === 'undefined') {
         }
     };
 
-    window.initAndroidTimePickers = function(container) {
-        if (typeof mdtimepicker === 'undefined') return;
-        const scope = container || document;
-        const inputs = scope.querySelectorAll ? scope.querySelectorAll('.android-time-input') : [];
-        inputs.forEach(function(input) {
-            if (!input._mdtimepicker_initialized) {
-                input._mdtimepicker_initialized = true;
-                mdtimepicker(input, {
-                    format: 'h:mm tt',
-                    theme: 'indigo',
-                    hourPadding: false,
-                    clearBtn: false,
-                    is24hour: false
-                });
-                input.addEventListener('change', function() {
-                    presetUpdatePreview(input.closest('.occurrence-picker-block'));
-                });
-            }
-        });
-    };
+    window.triggerClockDialPicker = function(btn) {
+        const container = btn.closest('.occurrence-picker-block');
+        if (!container) return;
+        const textInput = container.querySelector('.occurrence-time-input');
+        const proxyInput = container.querySelector('.clock-dial-proxy');
+        if (!proxyInput || typeof mdtimepicker === 'undefined') return;
 
-    window.initAndOpenTimePicker = function(input) {
-        if (typeof mdtimepicker === 'undefined' || !input) return;
-        if (!input._mdtimepicker_initialized) {
-            input._mdtimepicker_initialized = true;
-            mdtimepicker(input, {
+        if (!proxyInput._initialized) {
+            proxyInput._initialized = true;
+            mdtimepicker(proxyInput, {
                 format: 'h:mm tt',
                 theme: 'indigo',
                 hourPadding: false,
                 clearBtn: false,
                 is24hour: false
             });
-            input.addEventListener('change', function() {
-                presetUpdatePreview(input.closest('.occurrence-picker-block'));
+            proxyInput.addEventListener('change', function() {
+                if (textInput) {
+                    textInput.value = proxyInput.value;
+                    presetUpdatePreview(container);
+                }
             });
+        }
+
+        if (textInput && textInput.value) {
+            proxyInput.value = textInput.value;
             try {
-                mdtimepicker(input, 'show');
-            } catch (err) {
-                // fall through
-            }
+                mdtimepicker(proxyInput, 'setValue', textInput.value);
+            } catch (e) {}
+        }
+        try {
+            mdtimepicker(proxyInput, 'show');
+        } catch (e) {
+            console.error(e);
         }
     };
 
-    document.addEventListener('DOMContentLoaded', function() {
-        initAndroidTimePickers();
-    });
-    document.addEventListener('htmx:afterSwap', function(e) {
-        initAndroidTimePickers(e.target);
-    });
-    document.addEventListener('htmx:afterProcessNode', function(e) {
-        initAndroidTimePickers(e.target);
-    });
-}
-
-// Always try to initialize any uninitialized pickers in this block
-if (typeof initAndroidTimePickers === 'function') {
-    initAndroidTimePickers();
+    window.toggleScheduleStatusUI = function(checkbox, badgeId, fieldsContainerId) {
+        const badge = document.getElementById(badgeId);
+        if (badge) {
+            if (checkbox.checked) {
+                badge.textContent = 'ACTIVE';
+                badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300';
+            } else {
+                badge.textContent = 'DISABLED';
+                badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded bg-gray-200 text-gray-600 border border-gray-300';
+            }
+        }
+        const container = document.getElementById(fieldsContainerId);
+        if (container) {
+            if (checkbox.checked) {
+                container.classList.remove('opacity-60');
+            } else {
+                container.classList.add('opacity-60');
+            }
+        }
+    };
 }
 </script>

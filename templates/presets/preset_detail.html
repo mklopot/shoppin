@@ -18,14 +18,14 @@
             <div id="preset-header-title-box">
                 {% include "presets/partials/preset_title.html" %}
             </div>
-            <!-- Loaded Indicator -->
+            <!-- Active Indicator -->
             {% if is_loaded %}
             <span class="inline-flex items-center px-2.5 py-1 rounded-none text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300">
-                ✓ Loaded on Shopping List ({{ loaded_count }} items)
+                ✓ Active on Shopping List ({{ loaded_count }} items)
             </span>
             {% else %}
             <span class="inline-flex items-center px-2 py-0.5 rounded-none text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                Not on Shopping List
+                Inactive on Shopping List
             </span>
             {% endif %}
         </div>
@@ -113,6 +113,8 @@
                                    id="new-item-name"
                                    name="name"
                                    required
+                                   list="all-ingredients-datalist"
+                                   autocomplete="off"
                                    placeholder='e.g. "celery", "Greek yogurt", "garlic powder"'
                                    class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
                         </div>
@@ -131,30 +133,22 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label for="new-item-amount" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                Amount
+                                Amount &amp; Unit
                             </label>
                             <input type="text"
                                    id="new-item-amount"
                                    name="amount"
                                    value="1"
+                                   placeholder="e.g. 1 can, 2 lbs"
                                    class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="new-item-unit" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                Unit
-                            </label>
-                            <input type="text"
-                                   id="new-item-unit"
-                                   name="amount_unit"
-                                   placeholder="e.g. bunch, can, oz"
-                                   class="w-full border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:border-indigo-500">
+                            <input type="hidden" name="amount_unit" id="new-item-unit" value="">
                         </div>
                         <div>
                             <label for="new-item-brand" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                Brand <span class="text-gray-600 font-normal">optional</span>
+                                Brand <span class="text-gray-400 font-normal">optional</span>
                             </label>
                             <input type="text"
                                    id="new-item-brand"
@@ -164,7 +158,7 @@
                         </div>
                         <div>
                             <label for="new-item-vendor" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                                Best Vendor <span class="text-gray-600 font-normal">optional</span>
+                                Preferred Store <span class="text-gray-400 font-normal">optional</span>
                             </label>
                             <input type="text"
                                    id="new-item-vendor"

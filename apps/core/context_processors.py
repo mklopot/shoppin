@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 
 from apps.core.services.workspace_service import get_active_workspace, get_user_workspaces
+from apps.core.utils import get_known_ingredient_suggestions
 
 User = get_user_model()
 
@@ -51,4 +52,5 @@ def workspace_context(request: HttpRequest) -> dict[str, Any]:
         "user_workspaces": user_workspaces,
         "dev_personas": personas,
         "debug_mode": settings.DEBUG,
+        "known_ingredient_suggestions": get_known_ingredient_suggestions(),
     }

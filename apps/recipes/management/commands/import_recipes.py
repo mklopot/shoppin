@@ -63,16 +63,20 @@ class Command(BaseCommand):
 
         # 1. Determine recipe source
         if options["url"]:
-            source_desc = f"URL {options['url']}"
+            target_url = options["url"].strip()
+            if not target_url.startswith(("http://", "https://")):
+                self.stderr.write(self.style.ERROR(f"Invalid URL scheme in {target_url}. Only HTTP/HTTPS allowed."))
+                return
+            source_desc = f"URL {target_url}"
             self.stdout.write(f"Fetching recipes from {source_desc}...")
-            req = urllib.request.Request(options["url"], headers={"User-Agent": "Shoppin-RecipeImporter/2.0"})
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            req = urllib.request.Request(target_url, headers={"User-Agent": "Shoppin-RecipeImporter/2.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:  # nosec B310
                 yaml_content = resp.read().decode("utf-8")
         elif options["from_github"]:
             source_desc = f"GitHub ({DEFAULT_GITHUB_RAW_URL})"
             self.stdout.write(f"Fetching latest recipes from {source_desc}...")
             req = urllib.request.Request(DEFAULT_GITHUB_RAW_URL, headers={"User-Agent": "Shoppin-RecipeImporter/2.0"})
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:  # nosec B310
                 yaml_content = resp.read().decode("utf-8")
         elif options["file"]:
             target_path = Path(options["file"])
@@ -96,7 +100,7 @@ class Command(BaseCommand):
                 source_desc = f"GitHub fallback ({DEFAULT_GITHUB_RAW_URL})"
                 self.stdout.write(f"Local legacy recipe file not found. Fetching from {source_desc}...")
                 req = urllib.request.Request(DEFAULT_GITHUB_RAW_URL, headers={"User-Agent": "Shoppin-RecipeImporter/2.0"})
-                with urllib.request.urlopen(req, timeout=15) as resp:
+                with urllib.request.urlopen(req, timeout=15) as resp:  # nosec B310
                     yaml_content = resp.read().decode("utf-8")
 
         # 2. Parse YAML

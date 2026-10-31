@@ -190,7 +190,6 @@
         <div class="flex items-center">
             <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline-flex items-center">
                 {% csrf_token %}
-                <label for="store-selector-select" class="font-bold text-gray-700 mr-1.5">Store:</label>
                 <div class="inline-flex border border-gray-400 items-stretch bg-white">
                     <select id="store-selector-select" name="store_id" aria-label="Select active grocery store" onchange="this.form.requestSubmit()"
                             class="border-0 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:ring-0 text-xs">
@@ -236,7 +235,7 @@
     <div class="bg-gray-50 border border-gray-300 p-2">
         <form hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
-            <input type="text" name="name" id="add-item-name" aria-label="Item name" placeholder="Item name (e.g. celery, butter, bread)" required autocomplete="off"
+            <input type="text" name="name" id="add-item-name" aria-label="Item name" placeholder="Item name (e.g. celery, butter, bread)" list="all-ingredients-datalist" required autocomplete="off"
                    class="flex-1 min-w-[140px] sm:min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-700 rounded-none text-xs">
             <input type="text" name="amount" id="add-item-amount" aria-label="Item amount" value="1" placeholder="Amount" style="width: 55px;"
                    class="border border-gray-400 px-2 py-1 bg-white text-center rounded-none focus:outline-none text-xs">
@@ -414,7 +413,7 @@
                                     </button>
                                 </form>
                                 {% endif %}
-                                <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                                <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                                     <span aria-hidden="true">✏️</span>
                                 </button>
                             </div>
@@ -494,7 +493,7 @@
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                         <span aria-hidden="true">✏️</span>
                     </button>
                 </div>
@@ -571,7 +570,7 @@
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                         <span aria-hidden="true">✏️</span>
                     </button>
                 </div>

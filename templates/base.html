@@ -901,6 +901,13 @@
         })();
     </script>
 
+    <!-- Global Autocomplete Datalist for Ingredients & Grocery Items -->
+    <datalist id="all-ingredients-datalist">
+        {% for ing_suggestion in known_ingredient_suggestions %}
+        <option value="{{ ing_suggestion }}">
+        {% endfor %}
+    </datalist>
+
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

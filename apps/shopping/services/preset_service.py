@@ -11,6 +11,7 @@ Handles:
 """
 
 import logging
+from datetime import datetime, time as datetime_time, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -44,6 +45,23 @@ def get_workspace_presets(workspace: Workspace) -> list[ShoppingList]:
     )
 
 
+def get_default_next_schedule_occurrence() -> timezone.datetime:
+    """
+    Return 4:00 AM on next Saturday in the active timezone.
+
+    Defaults new preset list schedules to 4:00 AM next Saturday.
+    """
+    now_local = timezone.localtime(timezone.now())
+    days_ahead = (5 - now_local.weekday()) % 7
+    if days_ahead == 0 and now_local.time() >= datetime_time(4, 0):
+        days_ahead = 7
+    target_date = now_local.date() + timedelta(days=days_ahead)
+    target_dt = datetime.combine(target_date, datetime_time(4, 0))
+    if timezone.is_naive(target_dt):
+        target_dt = timezone.make_aware(target_dt, timezone.get_current_timezone())
+    return target_dt
+
+
 def create_preset_list(
     workspace: Workspace,
     name: str,
@@ -68,7 +86,7 @@ def create_preset_list(
     days = interval_days if interval_days and interval_days > 0 else 7
 
     if is_schedule_enabled and next_occurrence is None:
-        next_occurrence = timezone.now() + timezone.timedelta(days=days)
+        next_occurrence = get_default_next_schedule_occurrence()
 
     preset_list = ShoppingList.objects.create(
         workspace=workspace,
@@ -182,7 +200,7 @@ def update_preset_schedule(
         if next_occurrence is not None:
             preset_list.next_occurrence = next_occurrence
         elif not preset_list.next_occurrence:
-            preset_list.next_occurrence = timezone.now() + timezone.timedelta(days=days)
+            preset_list.next_occurrence = get_default_next_schedule_occurrence()
     else:
         # If disabled, keep or clear next_occurrence
         preset_list.next_occurrence = next_occurrence
@@ -211,6 +229,7 @@ def load_preset_items_to_shopping_list(
     item_ids: list[int] | None = None,
     replace_existing: bool = False,
     request: HttpRequest | None = None,
+    user: Any | None = None,
 ) -> list[ShoppingListItem]:
     """
     Load items from a preset list onto the primary shopping list.
@@ -221,6 +240,7 @@ def load_preset_items_to_shopping_list(
         item_ids: Optional list of item IDs to selectively load (None loads all).
         replace_existing: If True, removes all previous entries from this preset list first.
         request: Optional HttpRequest for WebSocket attribution.
+        user: Optional User instance for direct status_changed_by attribution.
 
     Returns:
         List of newly created ShoppingListItem records on the target list.
@@ -234,6 +254,13 @@ def load_preset_items_to_shopping_list(
 
     created_items: list[ShoppingListItem] = []
     store = target_list.active_store
+    req_user = getattr(request, "user", None) if (request and request.user.is_authenticated) else None
+    actual_user = user or req_user
+    actor_name = ""
+    if actual_user:
+        actor_name = (getattr(actual_user, "first_name", "") or "").strip() or actual_user.username
+    elif request:
+        actor_name = request.headers.get("X-Client-Name", "")
 
     for item in source_items:
         aisle = item.aisle
@@ -257,6 +284,8 @@ def load_preset_items_to_shopping_list(
             status=ItemStatus.NEED,
             locked=True,
             source_preset=preset_list,
+            status_changed_by=actual_user,
+            status_changed_by_name=actor_name,
         )
         ShoppingListItemSource.objects.create(
             item=new_item,

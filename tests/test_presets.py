@@ -474,3 +474,91 @@ def test_preset_item_active_inactive_slider_and_scheduling(client, preset_setup)
     })
     assert resp.status_code in (200, 302)
     assert primary_list.items.filter(source_preset=preset, name="Cinnamon").exists()
+
+
+@pytest.mark.django_db
+def test_default_schedule_next_saturday_at_4am(preset_setup):
+    """Test that new preset list schedules default to 4:00 AM next Saturday and 7-day period."""
+    from apps.shopping.services.preset_service import get_default_next_schedule_occurrence
+
+    target_dt = get_default_next_schedule_occurrence()
+    # Saturday is weekday 5
+    assert target_dt.weekday() == 5
+    assert target_dt.hour == 4
+    assert target_dt.minute == 0
+    assert target_dt > timezone.now()
+
+    ws = preset_setup["workspace"]
+    preset = create_preset_list(
+        workspace=ws,
+        name="Saturday Essentials",
+        is_schedule_enabled=True,
+    )
+    assert preset.interval_days == 7
+    assert preset.next_occurrence is not None
+    assert preset.next_occurrence.weekday() == 5
+    assert preset.next_occurrence.hour == 4
+    assert preset.next_occurrence.minute == 0
+
+
+@pytest.mark.django_db
+def test_preset_schedule_flexible_time_typing():
+    """Test typing flexible time strings like '4am', '4:00 AM', '16:00' into the schedule."""
+    from apps.shopping.views_preset import _parse_form_datetime, parse_time_component
+
+    assert parse_time_component("4am") == (4, 0)
+    assert parse_time_component("4 AM") == (4, 0)
+    assert parse_time_component("4:00 AM") == (4, 0)
+    assert parse_time_component("4:00am") == (4, 0)
+    assert parse_time_component("4:30pm") == (16, 30)
+    assert parse_time_component("16:00") == (16, 0)
+    assert parse_time_component("12am") == (0, 0)
+    assert parse_time_component("12pm") == (12, 0)
+
+    # Combined with date
+    parsed = _parse_form_datetime(date_val="2026-11-07", time_val="4am")
+    assert parsed is not None
+    assert parsed.year == 2026
+    assert parsed.month == 11
+    assert parsed.day == 7
+    assert parsed.hour == 4
+    assert parsed.minute == 0
+
+
+@pytest.mark.django_db
+def test_preset_item_attribution_on_manual_load(preset_setup):
+    """Test that items added by manually loading a preset list receive the loading user's attribution."""
+    ws = preset_setup["workspace"]
+    editor = preset_setup["editor"]
+    primary_list = preset_setup["primary_list"]
+
+    preset = create_preset_list(workspace=ws, name="Tacos")
+    item1 = add_preset_item(preset_list=preset, name="Tortillas", amount="1", amount_unit="pack")
+
+    # Manually load preset onto primary list with user
+    loaded_items = load_preset_items_to_shopping_list(
+        preset_list=preset,
+        target_list=primary_list,
+        user=editor,
+    )
+    assert len(loaded_items) == 1
+    loaded_item = loaded_items[0]
+    assert loaded_item.name == "Tortillas"
+    assert loaded_item.status_changed_by == editor
+    assert loaded_item.status_changed_by_name == editor.username
+
+
+@pytest.mark.django_db
+def test_combined_amount_and_unit_parsing():
+    """Test that unified amount & unit inputs parse properly."""
+    from apps.core.utils import parse_amount_and_unit, parse_ingredient_line
+
+    name, amt, unit = parse_ingredient_line("2 cups all-purpose flour")
+    assert name == "all-purpose flour"
+    assert amt == Decimal("2.00")
+    assert unit == "cups"
+
+    p_amt, p_unit = parse_amount_and_unit("1.5 lbs")
+    assert p_amt == Decimal("1.50")
+    assert p_unit == "lbs"
+

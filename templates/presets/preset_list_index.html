@@ -49,14 +49,14 @@
                         </div>
                     </div>
 
-                    <!-- Loaded Status Indicator Badge -->
+                    <!-- Active Status Indicator Badge -->
                     {% if preset.is_loaded %}
                     <span class="inline-flex items-center px-2.5 py-1 rounded-none text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 shrink-0">
-                        ✓ Loaded ({{ preset.loaded_items_count }})
+                        ✓ Active ({{ preset.loaded_items_count }})
                     </span>
                     {% else %}
                     <span class="inline-flex items-center px-2 py-0.5 rounded-none text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200 shrink-0">
-                        Not on List
+                        Inactive
                     </span>
                     {% endif %}
                 </div>
@@ -238,24 +238,32 @@
                                    class="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
                         </div>
 
-                        <!-- Schedule Configuration (Visible by default) -->
+                        <!-- Schedule Configuration -->
                         <div class="pt-3 border-t border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <div>
-                                    <label for="enable-schedule" class="text-sm font-bold text-gray-900 cursor-pointer">
-                                        Recurring Schedule (Optional)
-                                    </label>
-                                    <p class="text-[11px] text-gray-500">
-                                        Auto-refreshes items on your shopping list on a recurring cycle.
-                                    </p>
+                            <div class="p-3 bg-gray-50 border border-gray-200 mb-2">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <label for="enable-schedule" class="text-xs font-bold text-gray-800 cursor-pointer">
+                                            Automatic Schedule Status
+                                        </label>
+                                        <p class="text-[11px] text-gray-600">
+                                            Turn on to auto-refresh items on your shopping list on a recurring cycle.
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span id="create-modal-status-badge" class="text-xs font-bold px-2.5 py-0.5 rounded bg-gray-200 text-gray-600 border border-gray-300">
+                                            DISABLED (Optional)
+                                        </span>
+                                        <input type="checkbox"
+                                               id="enable-schedule"
+                                               name="is_schedule_enabled"
+                                               onchange="toggleScheduleStatusUI(this, 'create-modal-status-badge', 'schedule-options')"
+                                               class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-0 cursor-pointer">
+                                    </div>
                                 </div>
-                                <input type="checkbox"
-                                       id="enable-schedule"
-                                       name="is_schedule_enabled"
-                                       class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-0 cursor-pointer">
                             </div>
 
-                            <div id="schedule-options" class="space-y-3 p-3 bg-gray-50 border border-gray-200">
+                            <div id="schedule-options" class="space-y-3 p-3 bg-gray-50 border border-gray-200 transition-opacity duration-150 opacity-60">
                                 <div>
                                     <label for="create-preset-interval" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                                         Recurrence Interval (from last occurrence)

@@ -442,7 +442,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     res_got = client.post(reverse("shopping:set_status", args=[milk_item.id, "GOT"]))
     assert res_got.status_code == 200
     got_content = res_got.content.decode("utf-8")
-    got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
+    got_section = got_content.split("Purchased or in cart")[1].split("Already Have / Skipped")[0]
     assert "📋 Need" in got_section
     assert "🏠 Have" not in got_section
     assert "Skip" not in got_section
@@ -500,7 +500,7 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
     assert item.status_changed_by is not None
     today_str = timezone.localtime(timezone.now()).strftime("%m/%d")
     got_content = res_got.content.decode("utf-8")
-    got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
+    got_section = got_content.split("Purchased or in cart")[1].split("Already Have / Skipped")[0]
     assert today_str in got_section
     assert f"{item.status_changed_by_name} {today_str}" not in got_section
     assert f"You {today_str}" not in got_section
@@ -546,7 +546,7 @@ def test_in_store_location_not_shown_in_got_and_already_have(client, active_list
     res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))
     assert res_got.status_code == 200
     got_content = res_got.content.decode("utf-8")
-    got_section = got_content.split("Purchased in cart")[1].split("Already Have / Skipped")[0]
+    got_section = got_content.split("Purchased or in cart")[1].split("Already Have / Skipped")[0]
     assert "Bananas" in got_section
     assert "📍 Aisle 1" not in got_section
     assert "(Produce)" not in got_section

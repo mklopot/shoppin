@@ -363,7 +363,7 @@ def create_or_update_recipe(
             raw_public = vals[-1] if vals else raw_public
         is_public = str(raw_public).lower() in ("1", "true", "on", "yes")
     else:
-        is_public = True
+        is_public = False
 
     if recipe_id:
         recipe = Recipe.objects.get(id=recipe_id)

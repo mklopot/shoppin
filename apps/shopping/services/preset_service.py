@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from apps.core.categorizer import categorizer
 from apps.core.models import Workspace
-from apps.core.utils import parse_amount_and_unit
+from apps.core.utils import can_combine_units, clean_purpose, parse_amount_and_unit, singularize
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
@@ -223,6 +223,85 @@ def update_preset_schedule(
     return preset_list
 
 
+def _add_or_combine_preset_item(
+    target_list: ShoppingList,
+    preset_list: ShoppingList,
+    item: ShoppingListItem,
+    is_scheduled: bool = False,
+    actual_user: Any = None,
+    actor_name: str = "",
+) -> ShoppingListItem:
+    """
+    Add or combine an item from a preset list onto the target shopping list.
+    Combines with an existing NEED item if normalized name, brand, and compatible units match.
+    Items added via scheduled runs are marked with locked=False ("pantry check needed").
+    """
+    store = target_list.active_store
+    aisle = item.aisle
+    if not aisle and store:
+        aisle_info = resolve_store_aisle(store, item.name, db_only=True)
+        aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
+
+    cat = item.category or categorizer.get_category(item.name)
+    normalized_name = singularize(item.name.lower().strip())
+
+    existing: ShoppingListItem | None = None
+    for candidate in target_list.items.filter(status=ItemStatus.NEED):
+        if (
+            singularize(candidate.name.lower().strip()) == normalized_name
+            and can_combine_units(candidate.amount_unit, item.amount_unit)
+            and candidate.brand.lower().strip() == item.brand.lower().strip()
+        ):
+            existing = candidate
+            break
+
+    if existing:
+        target_item = existing
+        if is_scheduled:
+            # Request 1: items loaded via scheduled run require pantry check confirmation
+            target_item.locked = False
+        if not target_item.attributions.exists() and target_item.amount > Decimal("0.00"):
+            ShoppingListItemSource.objects.create(
+                item=target_item,
+                is_one_time=True,
+                amount=target_item.amount,
+                amount_unit=target_item.amount_unit,
+                purpose=clean_purpose(target_item.purpose) or "one-time purchase",
+            )
+        if actual_user:
+            target_item.status_changed_by = actual_user
+            target_item.status_changed_by_name = actor_name
+    else:
+        target_item = ShoppingListItem.objects.create(
+            shopping_list=target_list,
+            name=item.name,
+            amount=Decimal("0.00"),
+            amount_unit=item.amount_unit,
+            brand=item.brand,
+            vendor=item.vendor,
+            category=cat,
+            aisle=aisle,
+            purpose="",
+            optional=item.optional,
+            status=ItemStatus.NEED,
+            locked=False if is_scheduled else True,
+            source_preset=preset_list,
+            status_changed_at=timezone.now(),
+            status_changed_by=actual_user,
+            status_changed_by_name=actor_name,
+        )
+
+    ShoppingListItemSource.objects.create(
+        item=target_item,
+        preset_list=preset_list,
+        amount=item.amount,
+        amount_unit=item.amount_unit,
+        purpose=f"Preset: {preset_list.name}",
+    )
+    target_item.recalculate_from_attributions()
+    return target_item
+
+
 def load_preset_items_to_shopping_list(
     preset_list: ShoppingList,
     target_list: ShoppingList,
@@ -243,10 +322,17 @@ def load_preset_items_to_shopping_list(
         user: Optional User instance for direct status_changed_by attribution.
 
     Returns:
-        List of newly created ShoppingListItem records on the target list.
+        List of newly created or combined ShoppingListItem records on the target list.
     """
     if replace_existing:
-        target_list.items.filter(source_preset=preset_list).delete()
+        sources = ShoppingListItemSource.objects.filter(preset_list=preset_list, item__shopping_list=target_list)
+        affected_item_ids = list(sources.values_list("item_id", flat=True).distinct())
+        sources.delete()
+        for item_id in affected_item_ids:
+            it = ShoppingListItem.objects.filter(id=item_id).first()
+            if it:
+                it.recalculate_from_attributions()
+        target_list.items.filter(source_preset=preset_list, attributions__isnull=True).delete()
 
     source_items = preset_list.items.all().order_by("order", "id")
     if item_ids is not None:
@@ -263,38 +349,15 @@ def load_preset_items_to_shopping_list(
         actor_name = request.headers.get("X-Client-Name", "")
 
     for item in source_items:
-        aisle = item.aisle
-        if not aisle and store:
-            aisle_info = resolve_store_aisle(store, item.name, db_only=True)
-            aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
-
-        cat = item.category or categorizer.get_category(item.name)
-
-        new_item = ShoppingListItem.objects.create(
-            shopping_list=target_list,
-            name=item.name,
-            amount=item.amount,
-            amount_unit=item.amount_unit,
-            brand=item.brand,
-            vendor=item.vendor,
-            category=cat,
-            aisle=aisle,
-            purpose=f"Preset: {preset_list.name}",
-            optional=item.optional,
-            status=ItemStatus.NEED,
-            locked=True,
-            source_preset=preset_list,
-            status_changed_by=actual_user,
-            status_changed_by_name=actor_name,
-        )
-        ShoppingListItemSource.objects.create(
-            item=new_item,
+        processed_item = _add_or_combine_preset_item(
+            target_list=target_list,
             preset_list=preset_list,
-            amount=item.amount,
-            amount_unit=item.amount_unit,
-            purpose=f"Preset: {preset_list.name}",
+            item=item,
+            is_scheduled=False,
+            actual_user=actual_user,
+            actor_name=actor_name,
         )
-        created_items.append(new_item)
+        created_items.append(processed_item)
 
     # Warm missing aisles in background so user request returns immediately
     if store:
@@ -385,10 +448,17 @@ def apply_preset_scheduled_refresh(
             )
 
     # 1. Remove ALL previous entries from this preset list regardless of status
-    old_items = target_list.items.filter(source_preset=preset_list)
-    removed_count = old_items.count()
-    old_items.delete()
-    logger.info("Scheduled refresh for '%s': removed %d previous items from shopping list",
+    sources = ShoppingListItemSource.objects.filter(preset_list=preset_list, item__shopping_list=target_list)
+    affected_item_ids = list(sources.values_list("item_id", flat=True).distinct())
+    sources.delete()
+    for item_id in affected_item_ids:
+        it = ShoppingListItem.objects.filter(id=item_id).first()
+        if it:
+            it.recalculate_from_attributions()
+
+    removed_unlinked, _ = target_list.items.filter(source_preset=preset_list, attributions__isnull=True).delete()
+    removed_count = len(affected_item_ids) + removed_unlinked
+    logger.info("Scheduled refresh for '%s': removed %d previous entries from shopping list",
                 preset_list.name, removed_count)
 
     # 2. Right away, re-add all active items from the preset list (excludes paused/inactive items)
@@ -397,29 +467,15 @@ def apply_preset_scheduled_refresh(
     store = target_list.active_store
 
     for item in active_items:
-        aisle = item.aisle
-        if not aisle and store:
-            aisle_info = resolve_store_aisle(store, item.name, db_only=True)
-            aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
-
-        cat = item.category or categorizer.get_category(item.name)
-
-        new_item = ShoppingListItem.objects.create(
-            shopping_list=target_list,
-            name=item.name,
-            amount=item.amount,
-            amount_unit=item.amount_unit,
-            brand=item.brand,
-            vendor=item.vendor,
-            category=cat,
-            aisle=aisle,
-            purpose=f"Preset: {preset_list.name}",
-            optional=item.optional,
-            status=ItemStatus.NEED,
-            locked=True,
-            source_preset=preset_list,
+        processed_item = _add_or_combine_preset_item(
+            target_list=target_list,
+            preset_list=preset_list,
+            item=item,
+            is_scheduled=True,
+            actual_user=None,
+            actor_name="system",
         )
-        added_items.append(new_item)
+        added_items.append(processed_item)
 
     # Warm missing aisles in background so user request returns immediately
     if store:

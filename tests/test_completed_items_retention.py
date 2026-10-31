@@ -137,8 +137,8 @@ def test_purge_expired_standalone_completed_items(retention_setup):
 
 
 @pytest.mark.django_db
-def test_purge_preserves_recipe_and_preset_items(retention_setup):
-    """Verify items linked to recipes or preset lists are NEVER purged even if older than retention."""
+def test_purge_cleans_completed_items_regardless_of_source(retention_setup):
+    """Verify completed items (GOT/HAVE) older than retention are purged regardless of source, while NEED items are preserved."""
     ws = retention_setup["workspace"]
     s_list = retention_setup["primary_list"]
     recipe = retention_setup["recipe"]
@@ -147,7 +147,7 @@ def test_purge_preserves_recipe_and_preset_items(retention_setup):
     preset = retention_setup["preset"]
     now = timezone.now()
 
-    # Item with source_recipe in GOT 14 days ago
+    # Item with source_recipe in GOT 14 days ago -> should be purged
     item_recipe = ShoppingListItem.objects.create(
         shopping_list=s_list,
         name="Rigatoni Pasta",
@@ -159,7 +159,7 @@ def test_purge_preserves_recipe_and_preset_items(retention_setup):
         status_changed_at=now - datetime.timedelta(days=14)
     )
 
-    # Item with source_ingredient in HAVE 14 days ago
+    # Item with source_ingredient in HAVE 14 days ago -> should be purged
     item_ingr = ShoppingListItem.objects.create(
         shopping_list=s_list,
         name="Garlic",
@@ -171,7 +171,7 @@ def test_purge_preserves_recipe_and_preset_items(retention_setup):
         status_changed_at=now - datetime.timedelta(days=14)
     )
 
-    # Item with source_meal in GOT 14 days ago
+    # Item with source_meal in GOT 14 days ago -> should be purged
     item_meal = ShoppingListItem.objects.create(
         shopping_list=s_list,
         name="Parmesan Cheese",
@@ -183,7 +183,7 @@ def test_purge_preserves_recipe_and_preset_items(retention_setup):
         status_changed_at=now - datetime.timedelta(days=14)
     )
 
-    # Item with source_preset in GOT 14 days ago
+    # Item with source_preset in GOT 14 days ago -> should be purged
     item_preset = ShoppingListItem.objects.create(
         shopping_list=s_list,
         name="Whole Milk",
@@ -195,14 +195,39 @@ def test_purge_preserves_recipe_and_preset_items(retention_setup):
         status_changed_at=now - datetime.timedelta(days=14)
     )
 
+    # Active NEED items (even if old) must NEVER be purged
+    item_recipe_need = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Tomato Paste",
+        amount=Decimal("1.00"),
+        status=ItemStatus.NEED,
+        source_recipe=recipe,
+    )
+    ShoppingListItem.objects.filter(id=item_recipe_need.id).update(
+        status_changed_at=now - datetime.timedelta(days=14)
+    )
+
+    item_preset_need = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Eggs",
+        amount=Decimal("1.00"),
+        status=ItemStatus.NEED,
+        source_preset=preset,
+    )
+    ShoppingListItem.objects.filter(id=item_preset_need.id).update(
+        status_changed_at=now - datetime.timedelta(days=14)
+    )
+
     purged = purge_expired_completed_items(ws)
-    assert purged == 0
+    assert purged == 4
 
     remaining_ids = set(ShoppingListItem.objects.filter(shopping_list=s_list).values_list("id", flat=True))
-    assert item_recipe.id in remaining_ids
-    assert item_ingr.id in remaining_ids
-    assert item_meal.id in remaining_ids
-    assert item_preset.id in remaining_ids
+    assert item_recipe.id not in remaining_ids
+    assert item_ingr.id not in remaining_ids
+    assert item_meal.id not in remaining_ids
+    assert item_preset.id not in remaining_ids
+    assert item_recipe_need.id in remaining_ids
+    assert item_preset_need.id in remaining_ids
 
 
 @pytest.mark.django_db

@@ -164,3 +164,42 @@ def test_render_list_response_partial_vs_full(sample_shopping_list):
     )
     assert resp2.status_code == 200
     assert b"<!DOCTYPE html>" in resp2.content
+
+
+def test_alphabetical_sorting_within_categories(db):
+    """Test that items within the same category are sorted alphabetically by name."""
+    s_list = ShoppingList.objects.create(name="Alphabetical Category Test")
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Zucchini", category="produce", status=ItemStatus.NEED)
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Apples", category="produce", status=ItemStatus.NEED)
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Bananas", category="produce", status=ItemStatus.NEED)
+
+    items = list(s_list.items.all())
+    grouped = ShoppingListOrganizer.group_and_sort_need_items(
+        need_items=items,
+        group_by=GroupBy.CATEGORY,
+        shopping_list=s_list,
+    )
+    produce_names = [it.name for it in grouped["Produce"]]
+    assert produce_names == ["Apples", "Bananas", "Zucchini"]
+
+
+def test_alphabetical_sorting_within_aisles_and_priorities(db):
+    """Test that items within the same aisle and priority levels are sorted alphabetically."""
+    store = StoreLocation.objects.create(name="Store A")
+    s_list = ShoppingList.objects.create(name="Aisle Test", active_store=store)
+
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Zesta Crackers", aisle="Aisle 3", status=ItemStatus.NEED, priority=False)
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Animal Crackers", aisle="Aisle 3", status=ItemStatus.NEED, priority=False)
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Oreos", aisle="Aisle 3", status=ItemStatus.NEED, priority=True)
+    ShoppingListItem.objects.create(shopping_list=s_list, name="Chips Ahoy", aisle="Aisle 3", status=ItemStatus.NEED, priority=True)
+
+    items = list(s_list.items.all())
+    grouped = ShoppingListOrganizer.group_and_sort_need_items(
+        need_items=items,
+        group_by=GroupBy.AISLE,
+        shopping_list=s_list,
+    )
+    aisle3_names = [it.name for it in grouped["Aisle 3"]]
+    # Priority items first alphabetically (Chips Ahoy, Oreos), then standard items alphabetically (Animal Crackers, Zesta Crackers)
+    assert aisle3_names == ["Chips Ahoy", "Oreos", "Animal Crackers", "Zesta Crackers"]
+

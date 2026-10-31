@@ -195,7 +195,7 @@ def test_scheduled_refresh_removes_old_items_regardless_of_status_and_readds(pre
     assert preset_shopping_items.count() == 3
     for it in preset_shopping_items:
         assert it.status == ItemStatus.NEED
-        assert it.locked is True
+        assert it.locked is False  # Items from scheduled preset runs come in with 'pantry check needed'
 
     # Verify preset schedule timestamps were advanced
     preset.refresh_from_db()
@@ -561,4 +561,48 @@ def test_combined_amount_and_unit_parsing():
     p_amt, p_unit = parse_amount_and_unit("1.5 lbs")
     assert p_amt == Decimal("1.50")
     assert p_unit == "lbs"
+
+
+@pytest.mark.django_db
+def test_scheduled_refresh_combines_matching_items_from_multiple_presets(preset_setup):
+    """
+    Test that when two separate preset lists are scheduled to load at the same time and contain
+    the same item (e.g. 'Kix (1)'), they combine together into a single item ('Kix (2)') with
+    pantry check needed (locked=False).
+    """
+    from apps.shopping.services.scheduler import process_due_schedules
+    ws = preset_setup["workspace"]
+    primary_list = preset_setup["primary_list"]
+    now = timezone.now()
+
+    # Preset 1 has Kix (1)
+    preset1 = create_preset_list(ws, "Kids Breakfast", interval_days=7, is_schedule_enabled=True)
+    add_preset_item(preset1, "Kix", amount="1", amount_unit="")
+    preset1.next_occurrence = now - timedelta(minutes=5)
+    preset1.save()
+
+    # Preset 2 has Kix (1)
+    preset2 = create_preset_list(ws, "Snack Packs", interval_days=7, is_schedule_enabled=True)
+    add_preset_item(preset2, "Kix", amount="1", amount_unit="")
+    preset2.next_occurrence = now - timedelta(minutes=5)
+    preset2.save()
+
+    # Process due schedules for both presets
+    results = process_due_schedules()
+    assert len(results) == 2
+
+    # Verify only ONE 'Kix' item on primary shopping list, combined with amount 2
+    kix_items = primary_list.items.filter(name__iexact="kix")
+    assert kix_items.count() == 1
+
+    combined_kix = kix_items.first()
+    assert combined_kix.amount == Decimal("2.00")
+    assert combined_kix.status == ItemStatus.NEED
+    # Request 1: pantry check needed
+    assert combined_kix.locked is False
+    # Verify source attributions from both presets
+    assert combined_kix.attributions.count() == 2
+    assert "Preset: Kids Breakfast" in combined_kix.purpose
+    assert "Preset: Snack Packs" in combined_kix.purpose
+
 

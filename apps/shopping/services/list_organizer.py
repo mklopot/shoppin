@@ -49,6 +49,9 @@ class ShoppingListOrganizer:
             elif item.status in (ItemStatus.HAVE, ItemStatus.DONT_NEED):
                 pantry_items.append(item)
 
+        got_items.sort(key=lambda it: ((it.name or "").lower(), it.id))
+        pantry_items.sort(key=lambda it: ((it.name or "").lower(), it.id))
+
         return need_items, got_items, pantry_items
 
     @staticmethod
@@ -59,6 +62,7 @@ class ShoppingListOrganizer:
     ) -> dict[str, list[ShoppingListItem]]:
         """
         Group active 'NEED' items by category or store aisle, applying custom or heuristic sort orders.
+        Within each section/group, items are sorted alphabetically by name (with high-priority items first).
 
         Args:
             need_items: List of items with status NEED.
@@ -88,6 +92,8 @@ class ShoppingListOrganizer:
                 return (1, 0 if "priority" in group_name_lower else 1)
 
             sorted_keys = sorted(grouped_need.keys(), key=priority_sort_key_fn)
+            for key in sorted_keys:
+                grouped_need[key].sort(key=lambda it: ((it.name or "").lower(), it.id))
             return {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
         if str(group_by) == GroupBy.AISLE and shopping_list.active_store:
@@ -103,7 +109,7 @@ class ShoppingListOrganizer:
 
             sorted_keys = sorted(grouped_need.keys(), key=aisle_sort_key_fn)
             for key in sorted_keys:
-                grouped_need[key].sort(key=lambda it: (not it.priority, it.order, it.id))
+                grouped_need[key].sort(key=lambda it: (not it.priority, (it.name or "").lower(), it.id))
             return {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
         # Default: group by category
@@ -119,7 +125,7 @@ class ShoppingListOrganizer:
 
         sorted_keys = sorted(grouped_need.keys(), key=category_sort_key_fn)
         for key in sorted_keys:
-            grouped_need[key].sort(key=lambda it: (not it.priority, it.order, it.id))
+            grouped_need[key].sort(key=lambda it: (not it.priority, (it.name or "").lower(), it.id))
         return {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
     @staticmethod

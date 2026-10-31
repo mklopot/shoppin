@@ -213,7 +213,7 @@ def update_workspace_settings_view(request: HttpRequest, workspace_id: int) -> H
     workspace.save()
 
     from apps.shopping.services.cleanup_service import purge_expired_completed_items
-    purged_count = purge_expired_completed_items(workspace)
+    purged_count = purge_expired_completed_items(workspace, force=True)
     if purged_count > 0:
         primary_list = workspace.get_primary_list()
         if primary_list:

@@ -1,9 +1,8 @@
 """
 Cleanup service for expired completed shopping list items.
 
-Handles automated purging of standalone items in 'Got' and 'Already Have' sections
+Handles automated purging of items in 'Got' and 'Already Have' sections
 that have remained past the workspace's configured retention threshold.
-Preserves items associated with recipes or preset list templates.
 """
 
 import datetime
@@ -21,16 +20,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _LAST_PURGE_TIMES: dict[int, float] = {}
-_PURGE_INTERVAL_SECONDS = 600.0  # 10 minutes
+_PURGE_INTERVAL_SECONDS = 60.0  # 1 minute
 
 
 def purge_expired_completed_items(workspace: "Workspace | None", force: bool = False) -> int:
     """
     Remove items from a workspace's active shopping list that:
     - Are in 'Got' (ItemStatus.GOT) or 'Already Have' (ItemStatus.HAVE) status.
-    - Are NOT associated with recipes (source_recipe, source_meal, source_ingredient are null).
-    - Are NOT associated with preset lists (source_preset is null).
-    - Have been in their current section/status longer than the workspace's configured retention period.
+    - Have been in their current completed section longer than the workspace's configured retention period.
 
     If retention is disabled (0 or None), no items are removed.
 
@@ -63,10 +60,6 @@ def purge_expired_completed_items(workspace: "Workspace | None", force: bool = F
         shopping_list__workspace=workspace,
         shopping_list__is_preset=False,
         status__in=[ItemStatus.GOT, ItemStatus.HAVE],
-        source_recipe__isnull=True,
-        source_meal__isnull=True,
-        source_ingredient__isnull=True,
-        source_preset__isnull=True,
     ).filter(
         models.Q(status_changed_at__lte=cutoff)
         | models.Q(status_changed_at__isnull=True, updated_at__lte=cutoff)

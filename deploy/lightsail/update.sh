@@ -14,6 +14,8 @@ echo "==> Pulling latest code from git..."
 git pull origin v2-django
 
 echo "==> Updating Python dependencies..."
+# Clean up orphaned temporary directories left by interrupted pip operations (e.g. ~hoppin)
+rm -rf "$APP_DIR"/.venv/lib*/python*/site-packages/~* 2>/dev/null || true
 "$APP_DIR/.venv/bin/pip" install -q -e "$APP_DIR"
 
 echo "==> Applying database migrations..."

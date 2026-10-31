@@ -172,13 +172,9 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Uploaded user media
 # Django static files
 staticfiles/
+
+# Uploaded user media (development test recipes, photos, and uploads are never committed)
 media/*
-!# Django static files
-staticfiles/
-media/.gitkeep
-!# Django static files
-staticfiles/
-media/recipes/
+!media/.gitkeep

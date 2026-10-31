@@ -10,7 +10,7 @@
             <span>&larr;</span>
             <span>{% if is_edit %}Cancel and return to recipe{% else %}Back to recipes{% endif %}</span>
         </a>
-        <span class="text-gray-400">Recipe Schema Form</span>
+        <span class="text-gray-400">Recipe edit form</span>
     </div>
 
     <!-- Page Title -->
@@ -51,6 +51,49 @@
 
     <form method="post" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
+        <input type="hidden" name="has_public_toggle" value="1">
+
+        <!-- Top Action Bar (Save & Public Slider) -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-gray-300 p-3 shadow-sm">
+            <div class="flex items-center space-x-3">
+                <button type="submit"
+                        class="bg-gray-900 hover:bg-black text-white font-bold px-4 py-2 text-xs flex items-center space-x-2 shadow-sm cursor-pointer">
+                    <span>💾</span>
+                    <span>{% if is_edit %}Save Changes{% else %}Create Recipe{% endif %}</span>
+                </button>
+
+                <a href="{% if is_edit %}{% url 'recipes:detail' recipe.id %}{% else %}{% url 'recipes:list' %}{% endif %}"
+                   class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 font-medium px-3.5 py-2 text-xs">
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Public Sharing Slider with Info Circle (Top) -->
+            <div class="flex items-center space-x-2 bg-white border border-gray-300 px-3 py-1.5 shadow-sm">
+                <label for="id_is_public_top" class="inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox"
+                           id="id_is_public_top"
+                           name="is_public"
+                           value="1"
+                           onchange="syncPublicToggle(this)"
+                           {% if is_edit %}{% if recipe.is_public %}checked{% endif %}{% else %}checked{% endif %}
+                           class="public-recipe-checkbox sr-only peer">
+                    <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <span class="ml-2.5 text-xs font-semibold text-gray-800">Make this recipe public</span>
+                </label>
+
+                <!-- Info Circle Trigger -->
+                <button type="button"
+                        onclick="togglePublicRecipeModal(true)"
+                        aria-label="Public recipe visibility information"
+                        title="Click to learn about public recipe sharing and moderation"
+                        class="text-blue-600 hover:text-blue-800 focus:outline-none cursor-pointer p-0.5 rounded-full inline-flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
         <!-- Card 1: Core Details -->
         <div class="bg-white border border-gray-300 p-5 space-y-4">
@@ -569,16 +612,16 @@
                 </a>
             </div>
 
-            <!-- Public Sharing Slider with Info Circle -->
+            <!-- Public Sharing Slider with Info Circle (Bottom) -->
             <div class="flex items-center space-x-2 bg-gray-50 border border-gray-300 px-3 py-2 shadow-sm">
-                <input type="hidden" name="has_public_toggle" value="1">
                 <label for="id_is_public" class="inline-flex items-center cursor-pointer select-none">
                     <input type="checkbox"
                            id="id_is_public"
                            name="is_public"
                            value="1"
+                           onchange="syncPublicToggle(this)"
                            {% if is_edit %}{% if recipe.is_public %}checked{% endif %}{% else %}checked{% endif %}
-                           class="sr-only peer">
+                           class="public-recipe-checkbox sr-only peer">
                     <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                     <span class="ml-2.5 text-xs font-semibold text-gray-800">Make this recipe public</span>
                 </label>
@@ -745,6 +788,13 @@ function previewUploadedImage(input) {
         container.classList.add('hidden');
         container.classList.remove('flex');
     }
+}
+
+function syncPublicToggle(sourceCheckbox) {
+    const isChecked = sourceCheckbox.checked;
+    document.querySelectorAll('.public-recipe-checkbox').forEach(cb => {
+        cb.checked = isChecked;
+    });
 }
 
 function togglePublicRecipeModal(show) {

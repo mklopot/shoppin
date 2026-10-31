@@ -7,7 +7,7 @@
             onclick="toggleWorkspaceDropdown()"
             title="{{ active_workspace.name }}"
             class="h-8 inline-flex items-center space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-2 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none">
-        <span class="text-xs" aria-hidden="true">🍳</span>
+        <span class="text-xs" aria-hidden="true">🍴</span>
         <span id="workspace-dropdown-name" class="font-semibold max-w-[110px] xs:max-w-[140px] sm:max-w-[190px] md:max-w-[240px] lg:max-w-[280px] truncate" title="{{ active_workspace.name }}">{{ active_workspace.name }}</span>
         <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 leading-none {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
             {{ workspace_role|title }}

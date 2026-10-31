@@ -176,6 +176,89 @@ def test_search_recipes_facets(sample_recipes):
 
 
 @pytest.mark.django_db
+def test_search_recipes_multi_include_and_exclude(sample_recipes, auth_user):
+    user, _ = auth_user
+    r1, r2, r3 = sample_recipes
+
+    # Add r4: Kosher + Vegan Main dish
+    r4 = Recipe.objects.create(
+        name="Kosher Parve Chickpea Stew",
+        description="Hearty Middle Eastern chickpea dish.",
+        directions="1. Simmer chickpeas with cumin.",
+        cuisine="Middle Eastern",
+        dish_type="Main",
+        difficulty_level="easy",
+        portions=4,
+        dietary_restrictions=["Vegan", "Kosher (Parve)", "Gluten-Free"],
+        meal_type=["Dinner"],
+        occasions=["Weeknight Fast"],
+        special_equipment=["Slow Cooker"],
+        created_by=user,
+    )
+
+    # 1. Multi-value inclusion with OR logic within the same attribute: "Main" or "Stew"
+    dish_results = list(search_recipes({"include_dish_type": ["Main", "Stew"]}))
+    assert len(dish_results) == 2
+    assert r3 in dish_results  # r3 is Stew
+    assert r4 in dish_results  # r4 is Main
+    assert r1 not in dish_results  # r1 is Sandwich
+    assert r2 not in dish_results  # r2 is Casserole
+
+    # Also test comma-separated inclusion string
+    comma_results = list(search_recipes({"include_dish_type": "Main, Stew"}))
+    assert set(comma_results) == {r3, r4}
+
+    # 2. Attribute inclusion + exclusion: Include "Kosher", Exclude "Vegan"
+    # r2 has ["Vegetarian", "Kosher (Dairy)"] -> Matches Kosher, not Vegan -> Included
+    # r4 has ["Vegan", "Kosher (Parve)", "Gluten-Free"] -> Matches Kosher, BUT has Vegan -> Excluded
+    diet_results = list(search_recipes({"include_dietary": ["Kosher"], "exclude_dietary": ["Vegan"]}))
+    assert diet_results == [r2]
+
+    # 3. Combined inclusion across multiple attributes with exclusions
+    # Include cuisines Mexican or Italian, exclude dish_type Casserole
+    multi_results = list(search_recipes({
+        "include_cuisine": ["Mexican", "Italian"],
+        "exclude_dish_type": ["Casserole"],
+    }))
+    assert multi_results == [r1]  # r2 is Casserole, so excluded; r1 is Mexican Sandwich, so included
+
+    # 4. Exclusion taking precedence if a value is in both include and exclude
+    conflict_results = list(search_recipes({
+        "include_dish_type": ["Stew"],
+        "exclude_dish_type": ["Stew"],
+    }))
+    assert r3 not in conflict_results
+
+
+@pytest.mark.django_db
+def test_recipe_list_view_multi_filters_htmx(client: Client, sample_recipes, auth_user):
+    user, _ = auth_user
+    client.force_login(user)
+
+    # Request with multi-facet GET parameters via HTMX partial swap
+    url = reverse("recipes:list")
+    resp = client.get(
+        url,
+        {
+            "include_dish_type": ["Casserole", "Stew"],
+            "exclude_dietary": ["Vegetarian"],
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+
+    # Should contain r3 (Beef Brisket Stew), but not r2 (Lasagna Casserole is Vegetarian)
+    assert "Instant Pot Beef Brisket" in content
+    assert "Vegetarian Lasagna" not in content
+
+    # Should render active inclusion and exclusion badges
+    assert "Dish: Casserole" in content
+    assert "Dish: Stew" in content
+    assert "NOT Diet: Vegetarian" in content
+
+
+@pytest.mark.django_db
 def test_search_recipes_sorting(sample_recipes, auth_user):
     user, _ = auth_user
     r1, r2, r3 = sample_recipes

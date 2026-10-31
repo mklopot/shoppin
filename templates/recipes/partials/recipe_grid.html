@@ -5,8 +5,10 @@
             <span class="font-bold text-gray-800">
                 Found {{ recipe_count }} recipe{{ recipe_count|pluralize }}
             </span>
-            {% if active_filter_count > 0 %}
-            <span class="text-gray-500">({{ active_filter_count }} filter{{ active_filter_count|pluralize }} active)</span>
+            {% if active_filter_count > 0 or params.q %}
+            <span class="text-gray-500">
+                ({% if active_filter_count > 0 %}{{ active_filter_count }} filter{{ active_filter_count|pluralize }}{% endif %}{% if active_filter_count > 0 and params.q %} + {% endif %}{% if params.q %}search{% endif %} active)
+            </span>
             <button type="button"
                     onclick="resetRecipeFilters()"
                     class="text-blue-700 hover:underline font-semibold ml-1 cursor-pointer">
@@ -21,81 +23,39 @@
     </div>
 
     <!-- Active Filter Tags Row -->
-    {% if active_filter_count > 0 %}
+    {% if active_filter_count > 0 or params.q %}
     <div class="flex flex-wrap items-center gap-1.5 text-xs">
         <span class="text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Active:</span>
         {% if params.q %}
         <button type="button"
                 onclick="clearSingleRecipeFilter('q')"
                 title="Remove search query filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 cursor-pointer">
+                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 cursor-pointer shadow-sm rounded-none">
             <span>Query: "{{ params.q }}"</span>
             <span class="text-gray-500 hover:text-black font-bold ml-1">✕</span>
         </button>
         {% endif %}
-        {% if params.cuisine and params.cuisine != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('cuisine')"
-                title="Remove cuisine filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 font-medium cursor-pointer">
-            <span>Cuisine: {{ params.cuisine }}</span>
-            <span class="text-blue-700 hover:text-blue-950 font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
-        {% if params.dish_type and params.dish_type != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('dish_type')"
-                title="Remove dish type filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-medium cursor-pointer">
-            <span>Dish: {{ params.dish_type }}</span>
-            <span class="text-amber-700 hover:text-amber-950 font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
-        {% if params.dietary and params.dietary != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('dietary')"
-                title="Remove dietary filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 font-medium cursor-pointer">
-            <span>Diet: {{ params.dietary }}</span>
-            <span class="text-emerald-700 hover:text-emerald-950 font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
-        {% if params.meal_type and params.meal_type != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('meal_type')"
-                title="Remove meal type filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 font-medium cursor-pointer">
-            <span>Meal: {{ params.meal_type }}</span>
-            <span class="text-indigo-700 hover:text-indigo-950 font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
-        {% if params.occasion and params.occasion != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('occasion')"
-                title="Remove occasion filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 font-medium cursor-pointer">
-            <span>Occasion: {{ params.occasion }}</span>
-            <span class="text-purple-700 hover:text-purple-950 font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
-        {% if params.difficulty and params.difficulty != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('difficulty')"
-                title="Remove difficulty filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 font-medium cursor-pointer">
-            <span>Difficulty: {{ params.difficulty|title }}</span>
-            <span class="text-gray-600 hover:text-black font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
-        {% if params.equipment and params.equipment != 'all' %}
-        <button type="button"
-                onclick="clearSingleRecipeFilter('equipment')"
-                title="Remove equipment filter"
-                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 font-medium cursor-pointer">
-            <span>Equipment: {{ params.equipment }}</span>
-            <span class="text-gray-600 hover:text-black font-bold ml-1">✕</span>
-        </button>
-        {% endif %}
+        {% for filter in active_filters %}
+            {% if filter.type == 'include' %}
+            <button type="button"
+                    onclick="toggleFacetOption('{{ filter.facet }}', '{{ filter.value|escapejs }}', 'off')"
+                    title="Remove {{ filter.value }} inclusion"
+                    class="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-medium cursor-pointer shadow-sm rounded-none">
+                <span class="text-emerald-700 font-bold mr-0.5">+</span>
+                <span>{{ filter.facet_label }}: {{ filter.value }}</span>
+                <span class="text-emerald-700 hover:text-emerald-950 font-bold ml-1">✕</span>
+            </button>
+            {% else %}
+            <button type="button"
+                    onclick="toggleFacetOption('{{ filter.facet }}', '{{ filter.value|escapejs }}', 'off')"
+                    title="Remove {{ filter.value }} exclusion"
+                    class="inline-flex items-center space-x-1 px-2 py-0.5 bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-900 font-medium cursor-pointer shadow-sm rounded-none">
+                <span class="text-rose-700 font-bold mr-0.5">−</span>
+                <span>NOT {{ filter.facet_label }}: {{ filter.value }}</span>
+                <span class="text-rose-700 hover:text-rose-950 font-bold ml-1">✕</span>
+            </button>
+            {% endif %}
+        {% endfor %}
         <button type="button"
                 onclick="resetRecipeFilters()"
                 class="text-blue-700 hover:underline font-semibold ml-2 cursor-pointer">

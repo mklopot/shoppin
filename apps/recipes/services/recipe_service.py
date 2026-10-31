@@ -43,6 +43,7 @@ POPULAR_CUISINES: list[str] = [
 ]
 
 POPULAR_DISH_TYPES: list[str] = [
+    "Main",
     "Casserole",
     "Salad",
     "Stew",
@@ -106,16 +107,42 @@ POPULAR_EQUIPMENT: list[str] = [
 ]
 
 
+def _normalize_filter_values(val: Any) -> list[str]:
+    """Normalize input values into a cleaned list of non-empty strings (excluding 'all')."""
+    if not val:
+        return []
+    items: list[str] = []
+    if isinstance(val, str):
+        for part in val.split(","):
+            cleaned = part.strip()
+            if cleaned and cleaned.lower() != "all" and cleaned not in items:
+                items.append(cleaned)
+    elif isinstance(val, (list, tuple, set)):
+        for elem in val:
+            if isinstance(elem, str):
+                for part in elem.split(","):
+                    cleaned = part.strip()
+                    if cleaned and cleaned.lower() != "all" and cleaned not in items:
+                        items.append(cleaned)
+            elif elem is not None:
+                cleaned = str(elem).strip()
+                if cleaned and cleaned.lower() != "all" and cleaned not in items:
+                    items.append(cleaned)
+    return items
+
+
 def search_recipes(params: dict[str, Any], user: Any = None) -> QuerySet[Recipe]:
     """
     Search and filter recipes using multiple query parameters.
+    Supports including and excluding multiple values per attribute.
 
     Anonymous guests see publicly published and approved recipes. Authenticated
     users also see their own unpublished/pending recipes, while moderators (staff)
     can browse all recipes.
 
     Args:
-        params: Dictionary containing filter options.
+        params: Dictionary containing filter options (e.g. q, sort,
+                include_<facet>, exclude_<facet>, or legacy single <facet>).
         user: Optional requesting user instance.
 
     Returns:
@@ -144,50 +171,53 @@ def search_recipes(params: dict[str, Any], user: Any = None) -> QuerySet[Recipe]
             | Q(ingredients__name__icontains=q_str)
         ).distinct()
 
-    # 2. Cuisine filter
-    cuisine = str(params.get("cuisine", "")).strip()
-    if cuisine and cuisine.lower() != "all":
-        qs = qs.filter(cuisine__iexact=cuisine)
+    # 2. Multi-facet filtering with Include (+) and Exclude (-)
+    # Facet definitions: key -> (field_name, is_json_array)
+    facets = {
+        "cuisine": ("cuisine", False),
+        "dish_type": ("dish_type", False),
+        "difficulty": ("difficulty_level", False),
+        "meal_type": ("meal_type", True),
+        "dietary": ("dietary_restrictions", True),
+        "occasion": ("occasions", True),
+        "equipment": ("special_equipment", True),
+    }
 
-    # 3. Dish type filter
-    dish_type = str(params.get("dish_type", "")).strip()
-    if dish_type and dish_type.lower() != "all":
-        qs = qs.filter(dish_type__iexact=dish_type)
+    includes_dict = params.get("includes", {}) if isinstance(params.get("includes"), dict) else {}
+    excludes_dict = params.get("excludes", {}) if isinstance(params.get("excludes"), dict) else {}
 
-    # 4. Difficulty filter
-    difficulty = str(params.get("difficulty", "")).strip()
-    if difficulty and difficulty.lower() != "all":
-        qs = qs.filter(difficulty_level__iexact=difficulty)
+    for facet, (field_name, is_json) in facets.items():
+        # Collect included values from includes dict, include_<facet>, and legacy <facet>
+        raw_inc = includes_dict.get(facet) or params.get(f"include_{facet}") or []
+        inc_vals = _normalize_filter_values(raw_inc)
+        if facet in params and not inc_vals:
+            inc_vals = _normalize_filter_values(params.get(facet))
 
-    # 5. Meal type filter (searches within JSON list or case-insensitive string)
-    meal_type = str(params.get("meal_type", "")).strip()
-    if meal_type and meal_type.lower() != "all":
-        qs = qs.filter(
-            Q(meal_type__icontains=meal_type)
-        )
+        # Collect excluded values
+        raw_exc = excludes_dict.get(facet) or params.get(f"exclude_{facet}") or []
+        exc_vals = _normalize_filter_values(raw_exc)
 
-    # 6. Dietary restrictions filter
-    dietary = str(params.get("dietary", "")).strip()
-    if dietary and dietary.lower() != "all":
-        qs = qs.filter(
-            Q(dietary_restrictions__icontains=dietary)
-        )
+        # Avoid conflicts: exclusion takes precedence
+        inc_vals = [v for v in inc_vals if v.lower() not in [x.lower() for x in exc_vals]]
 
-    # 7. Occasions filter
-    occasion = str(params.get("occasion", "")).strip()
-    if occasion and occasion.lower() != "all":
-        qs = qs.filter(
-            Q(occasions__icontains=occasion)
-        )
+        # Apply inclusions (OR logic within the facet: matching any included value)
+        if inc_vals:
+            facet_q = Q()
+            for val in inc_vals:
+                if is_json:
+                    facet_q |= Q(**{f"{field_name}__icontains": val})
+                else:
+                    facet_q |= (Q(**{f"{field_name}__iexact": val}) | Q(**{f"{field_name}__icontains": val}))
+            qs = qs.filter(facet_q)
 
-    # 8. Special equipment filter
-    equipment = str(params.get("equipment", "")).strip()
-    if equipment and equipment.lower() != "all":
-        qs = qs.filter(
-            Q(special_equipment__icontains=equipment)
-        )
+        # Apply exclusions (AND NOT logic: must not contain any excluded value)
+        for val in exc_vals:
+            if is_json:
+                qs = qs.filter(~Q(**{f"{field_name}__icontains": val}))
+            else:
+                qs = qs.filter(~Q(**{f"{field_name}__iexact": val}) & ~Q(**{f"{field_name}__icontains": val}))
 
-    # 9. Sorting
+    # 3. Sorting
     sort_key = str(params.get("sort", "name")).strip().lower()
     if sort_key == "rating":
         qs = qs.annotate(avg_stars=Avg("ratings__stars")).order_by("-avg_stars", "name")

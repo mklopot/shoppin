@@ -52,40 +52,169 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
     """
     Render the main Recipes directory page or HTMX filtered results grid.
     Publicly published and moderator-approved recipes are visible without being logged in.
+    Supports multi-attribute including (+) and excluding (-) across all facets.
     """
     workspace = get_active_workspace(request)
     user = getattr(request, "user", None)
     is_authenticated = bool(user and user.is_authenticated)
     can_write = workspace.can_write(user) if (is_authenticated and workspace) else False
 
+    facet_keys = [
+        "cuisine",
+        "dish_type",
+        "meal_type",
+        "dietary",
+        "occasion",
+        "equipment",
+        "difficulty",
+    ]
+
+    facet_labels = {
+        "cuisine": "Cuisine",
+        "dish_type": "Dish",
+        "meal_type": "Meal",
+        "dietary": "Diet",
+        "occasion": "Occasion",
+        "equipment": "Equipment",
+        "difficulty": "Difficulty",
+    }
+
+    def _extract_facet_list(param_name: str) -> list[str]:
+        raw_list = request.GET.getlist(param_name)
+        items: list[str] = []
+        for item in raw_list:
+            for part in str(item).split(","):
+                cleaned = part.strip()
+                if cleaned and cleaned.lower() != "all" and cleaned not in items:
+                    items.append(cleaned)
+        return items
+
+    includes: dict[str, list[str]] = {}
+    excludes: dict[str, list[str]] = {}
+
+    for facet in facet_keys:
+        inc = _extract_facet_list(f"include_{facet}")
+        # Legacy single/multi parameter compatibility (e.g. ?dish_type=Stew or ?cuisine=Italian)
+        legacy = _extract_facet_list(facet)
+        for l in legacy:
+            if l not in inc:
+                inc.append(l)
+
+        exc = _extract_facet_list(f"exclude_{facet}")
+        # Disallow simultaneous include & exclude of same value (exclusion wins)
+        inc = [x for x in inc if x.lower() not in [e.lower() for e in exc]]
+
+        includes[facet] = inc
+        excludes[facet] = exc
+
     params: dict[str, Any] = {
         "q": request.GET.get("q", "").strip(),
-        "cuisine": request.GET.get("cuisine", "").strip(),
-        "dish_type": request.GET.get("dish_type", "").strip(),
-        "meal_type": request.GET.get("meal_type", "").strip(),
-        "dietary": request.GET.get("dietary", "").strip(),
-        "occasion": request.GET.get("occasion", "").strip(),
-        "difficulty": request.GET.get("difficulty", "").strip(),
-        "equipment": request.GET.get("equipment", "").strip(),
         "sort": request.GET.get("sort", "name").strip(),
+        "includes": includes,
+        "excludes": excludes,
     }
+    # Populate flat keys for legacy template and test references
+    for facet in facet_keys:
+        params[f"include_{facet}"] = includes[facet]
+        params[f"exclude_{facet}"] = excludes[facet]
+        params[facet] = includes[facet][0] if includes[facet] else ""
 
     recipes = search_recipes(params, user=user)
     filter_options = get_filter_options()
     meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
     meals = meal_plan.meals.all() if meal_plan else []
 
-    active_filter_count = sum(
-        1 for k, v in params.items()
-        if k != "sort" and v and v.lower() != "all"
-    )
+    # Active filters list for chips rendering
+    active_filters: list[dict[str, Any]] = []
+    for facet in facet_keys:
+        label = facet_labels.get(facet, facet.title())
+        for val in includes[facet]:
+            active_filters.append({
+                "facet": facet,
+                "facet_label": label,
+                "value": val,
+                "type": "include",
+            })
+        for val in excludes[facet]:
+            active_filters.append({
+                "facet": facet,
+                "facet_label": label,
+                "value": val,
+                "type": "exclude",
+            })
+
+    active_filter_count = len(active_filters)
+
+    def _format_options(opts: list[Any]) -> list[dict[str, str]]:
+        res = []
+        for o in opts:
+            if isinstance(o, dict):
+                res.append({"value": str(o.get("value", "")), "label": str(o.get("label", ""))})
+            else:
+                str_o = str(o)
+                res.append({"value": str_o, "label": str_o.title() if str_o.islower() else str_o})
+        return res
+
+    facets_config = [
+        {
+            "key": "cuisine",
+            "label": "Cuisine",
+            "options": _format_options(filter_options["cuisines"]),
+            "included": includes["cuisine"],
+            "excluded": excludes["cuisine"],
+        },
+        {
+            "key": "dish_type",
+            "label": "Dish Type",
+            "options": _format_options(filter_options["dish_types"]),
+            "included": includes["dish_type"],
+            "excluded": excludes["dish_type"],
+        },
+        {
+            "key": "meal_type",
+            "label": "Meal Type",
+            "options": _format_options(filter_options["meal_types"]),
+            "included": includes["meal_type"],
+            "excluded": excludes["meal_type"],
+        },
+        {
+            "key": "dietary",
+            "label": "Dietary",
+            "options": _format_options(filter_options["dietary_options"]),
+            "included": includes["dietary"],
+            "excluded": excludes["dietary"],
+        },
+        {
+            "key": "occasion",
+            "label": "Occasion",
+            "options": _format_options(filter_options["occasions"]),
+            "included": includes["occasion"],
+            "excluded": excludes["occasion"],
+        },
+        {
+            "key": "equipment",
+            "label": "Equipment",
+            "options": _format_options(filter_options["equipment_options"]),
+            "included": includes["equipment"],
+            "excluded": excludes["equipment"],
+        },
+        {
+            "key": "difficulty",
+            "label": "Difficulty",
+            "options": _format_options(filter_options["difficulties"]),
+            "included": includes["difficulty"],
+            "excluded": excludes["difficulty"],
+        },
+    ]
 
     context: dict[str, Any] = {
         "workspace": workspace,
         "recipes": recipes,
         "recipe_count": recipes.count(),
         "filter_options": filter_options,
+        "facets_config": facets_config,
         "params": params,
+        "active_filters": active_filters,
         "active_filter_count": active_filter_count,
         "can_write": can_write,
         "meal_plan": meal_plan,

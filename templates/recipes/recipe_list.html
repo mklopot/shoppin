@@ -35,8 +35,23 @@
               hx-get="{% url 'recipes:list' %}"
               hx-target="#recipe-results-container"
               hx-swap="outerHTML"
+              hx-trigger="submit"
               hx-push-url="true"
               class="space-y-3">
+
+            <!-- Active filter inputs for multi-facet inclusions and exclusions -->
+            <div id="active-filter-inputs">
+                {% for facet, inc_list in params.includes.items %}
+                    {% for val in inc_list %}
+                    <input type="hidden" name="include_{{ facet }}" value="{{ val }}">
+                    {% endfor %}
+                {% endfor %}
+                {% for facet, exc_list in params.excludes.items %}
+                    {% for val in exc_list %}
+                    <input type="hidden" name="exclude_{{ facet }}" value="{{ val }}">
+                    {% endfor %}
+                {% endfor %}
+            </div>
 
             <!-- Primary Search Bar & Sort -->
             <div class="flex flex-wrap items-center gap-2">
@@ -90,84 +105,98 @@
                 </button>
             </div>
 
-            <!-- Multi-Facet Filter Selects Row -->
+            <!-- Multi-Facet Filter Dropdowns Row -->
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 pt-1 text-xs">
-                <!-- Cuisine Filter -->
-                <div>
-                    <label for="recipe-filter-cuisine" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Cuisine</label>
-                    <select id="recipe-filter-cuisine" name="cuisine" aria-label="Filter by cuisine" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">All Cuisines</option>
-                        {% for c in filter_options.cuisines %}
-                        <option value="{{ c }}" {% if params.cuisine|lower == c|lower %}selected{% endif %}>{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                {% for f in facets_config %}
+                <div class="relative facet-dropdown" data-facet="{{ f.key }}">
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">{{ f.label }}</label>
+                    <button type="button"
+                            onclick="toggleFacetMenu('{{ f.key }}', event)"
+                            id="facet-btn-{{ f.key }}"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            class="w-full flex items-center justify-between border border-gray-300 bg-white text-xs px-2 py-1.5 text-gray-800 hover:bg-gray-50 focus:outline-none focus:border-gray-500 shadow-sm transition-colors rounded-none {% if f.included or f.excluded %}border-emerald-600 bg-emerald-50/40{% endif %}">
+                        <span class="truncate font-medium text-gray-700">All {{ f.label }}s</span>
+                        <span class="flex items-center space-x-1 ml-1 flex-shrink-0">
+                            <span id="facet-badge-{{ f.key }}"
+                                  class="{% if not f.included and not f.excluded %}hidden{% endif %} px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-600 text-white leading-tight">
+                                {% if f.included %}+{{ f.included|length }}{% endif %}{% if f.excluded %}-{{ f.excluded|length }}{% endif %}
+                            </span>
+                            <span class="text-gray-400 text-[10px]">▼</span>
+                        </span>
+                    </button>
 
-                <!-- Dish Type Filter -->
-                <div>
-                    <label for="recipe-filter-dish-type" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Dish Type</label>
-                    <select id="recipe-filter-dish-type" name="dish_type" aria-label="Filter by dish type" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">All Dish Types</option>
-                        {% for d in filter_options.dish_types %}
-                        <option value="{{ d }}" {% if params.dish_type|lower == d|lower %}selected{% endif %}>{{ d }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                    <!-- Dropdown Popover Menu -->
+                    <div id="facet-menu-{{ f.key }}"
+                         class="hidden absolute z-30 mt-1 w-64 max-w-[90vw] bg-white border border-gray-300 shadow-xl rounded-none text-xs left-0">
+                        <!-- Menu Header -->
+                        <div class="px-2.5 py-1.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                            <span class="font-bold text-[11px] uppercase tracking-wider text-gray-700">{{ f.label }} Filters</span>
+                            <button type="button"
+                                    onclick="closeFacetMenu('{{ f.key }}')"
+                                    class="text-gray-400 hover:text-gray-700 font-bold text-sm leading-none">&times;</button>
+                        </div>
 
-                <!-- Meal Type Filter -->
-                <div>
-                    <label for="recipe-filter-meal-type" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Meal Type</label>
-                    <select id="recipe-filter-meal-type" name="meal_type" aria-label="Filter by meal type" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">All Meals</option>
-                        {% for m in filter_options.meal_types %}
-                        <option value="{{ m }}" {% if params.meal_type|lower == m|lower %}selected{% endif %}>{{ m }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                        <!-- Search within facet options if > 5 options -->
+                        {% if f.options|length > 5 %}
+                        <div class="p-1.5 border-b border-gray-100 bg-white">
+                            <input type="text"
+                                   placeholder="Filter {{ f.label }}..."
+                                   oninput="filterFacetList('{{ f.key }}', this.value)"
+                                   class="w-full px-2 py-1 text-xs border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-400">
+                        </div>
+                        {% endif %}
 
-                <!-- Dietary Restrictions / Allergens -->
-                <div>
-                    <label for="recipe-filter-dietary" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Dietary</label>
-                    <select id="recipe-filter-dietary" name="dietary" aria-label="Filter by dietary option" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">All Diets</option>
-                        {% for diet in filter_options.dietary_options %}
-                        <option value="{{ diet }}" {% if params.dietary|lower == diet|lower %}selected{% endif %}>{{ diet }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                        <!-- Options List -->
+                        <div class="max-h-56 overflow-y-auto divide-y divide-gray-100 py-0.5" id="facet-list-{{ f.key }}">
+                            {% for opt in f.options %}
+                            <div class="facet-option-row flex items-center justify-between px-2.5 py-1.5 hover:bg-gray-50 transition-colors"
+                                 data-opt-label="{{ opt.label|lower }}">
+                                <span class="truncate text-gray-800 font-medium cursor-pointer select-none flex-1 mr-2"
+                                      onclick="toggleFacetOption('{{ f.key }}', '{{ opt.value|escapejs }}', 'include')"
+                                      title="Include {{ opt.label }} (+)">
+                                    {{ opt.label }}
+                                </span>
+                                <div class="flex items-center space-x-1 flex-shrink-0">
+                                    <button type="button"
+                                            data-facet="{{ f.key }}"
+                                            data-value="{{ opt.value }}"
+                                            data-type="include"
+                                            onclick="toggleFacetOption('{{ f.key }}', '{{ opt.value|escapejs }}', 'include')"
+                                            title="Include {{ opt.label }} (+)"
+                                            class="facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors {% if opt.value in f.included %}bg-emerald-600 text-white border-emerald-600{% else %}border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50{% endif %}">
+                                        +
+                                    </button>
+                                    <button type="button"
+                                            data-facet="{{ f.key }}"
+                                            data-value="{{ opt.value }}"
+                                            data-type="exclude"
+                                            onclick="toggleFacetOption('{{ f.key }}', '{{ opt.value|escapejs }}', 'exclude')"
+                                            title="Exclude {{ opt.label }} (−)"
+                                            class="facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors {% if opt.value in f.excluded %}bg-rose-600 text-white border-rose-600{% else %}border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50{% endif %}">
+                                        −
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
 
-                <!-- Occasion / Season -->
-                <div>
-                    <label for="recipe-filter-occasion" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Occasion</label>
-                    <select id="recipe-filter-occasion" name="occasion" aria-label="Filter by occasion" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">All Occasions</option>
-                        {% for occ in filter_options.occasions %}
-                        <option value="{{ occ }}" {% if params.occasion|lower == occ|lower %}selected{% endif %}>{{ occ }}</option>
-                        {% endfor %}
-                    </select>
+                        <!-- Menu Footer -->
+                        <div class="px-2.5 py-1.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-[11px]">
+                            <button type="button"
+                                    onclick="clearFacetGroup('{{ f.key }}')"
+                                    class="text-gray-500 hover:text-gray-800 underline cursor-pointer">
+                                Clear {{ f.label }}
+                            </button>
+                            <button type="button"
+                                    onclick="closeFacetMenu('{{ f.key }}')"
+                                    class="px-2 py-0.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold cursor-pointer">
+                                Done
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Special Equipment -->
-                <div>
-                    <label for="recipe-filter-equipment" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Equipment</label>
-                    <select id="recipe-filter-equipment" name="equipment" aria-label="Filter by special equipment" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">Any Equipment</option>
-                        {% for eq in filter_options.equipment_options %}
-                        <option value="{{ eq }}" {% if params.equipment|lower == eq|lower %}selected{% endif %}>{{ eq }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Difficulty -->
-                <div>
-                    <label for="recipe-filter-difficulty" class="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-0.5">Difficulty</label>
-                    <select id="recipe-filter-difficulty" name="difficulty" aria-label="Filter by difficulty" onchange="onRecipeFilterChange()" class="w-full border border-gray-300 bg-white text-xs px-1.5 py-1 text-gray-800 rounded-none">
-                        <option value="all">All Difficulties</option>
-                        <option value="easy" {% if params.difficulty == 'easy' %}selected{% endif %}>Easy</option>
-                        <option value="medium" {% if params.difficulty == 'medium' %}selected{% endif %}>Medium</option>
-                        <option value="hard" {% if params.difficulty == 'hard' %}selected{% endif %}>Hard</option>
-                    </select>
-                </div>
+                {% endfor %}
             </div>
         </form>
     </div>
@@ -240,28 +269,200 @@
 </div>
 
 <script>
+    function toggleFacetMenu(key, event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById(`facet-menu-${key}`);
+        if (!menu) return;
+        const isHidden = menu.classList.contains('hidden');
+        closeAllFacetMenus();
+        if (isHidden) {
+            const rect = menu.parentElement.getBoundingClientRect();
+            if (rect.left + 260 > window.innerWidth) {
+                menu.classList.remove('left-0');
+                menu.classList.add('right-0');
+            } else {
+                menu.classList.remove('right-0');
+                menu.classList.add('left-0');
+            }
+            menu.classList.remove('hidden');
+            const btn = document.getElementById(`facet-btn-${key}`);
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closeFacetMenu(key) {
+        const menu = document.getElementById(`facet-menu-${key}`);
+        if (menu) menu.classList.add('hidden');
+        const btn = document.getElementById(`facet-btn-${key}`);
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function closeAllFacetMenus() {
+        document.querySelectorAll('[id^="facet-menu-"]').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+        document.querySelectorAll('[id^="facet-btn-"]').forEach(btn => {
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.facet-dropdown')) {
+            closeAllFacetMenus();
+        }
+    });
+
+    function filterFacetList(key, query) {
+        const list = document.getElementById(`facet-list-${key}`);
+        if (!list) return;
+        const q = query.trim().toLowerCase();
+        list.querySelectorAll('.facet-option-row').forEach(row => {
+            const label = row.getAttribute('data-opt-label') || '';
+            if (!q || label.includes(q)) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+
+    function toggleFacetOption(facet, value, action) {
+        const container = document.getElementById('active-filter-inputs');
+        if (!container) return;
+
+        const incInputs = Array.from(container.querySelectorAll(`input[name="include_${facet}"]`));
+        const excInputs = Array.from(container.querySelectorAll(`input[name="exclude_${facet}"]`));
+
+        const existingInc = incInputs.find(i => i.value.toLowerCase() === value.toLowerCase());
+        const existingExc = excInputs.find(i => i.value.toLowerCase() === value.toLowerCase());
+
+        let finalAction = action;
+        if (action === 'include') {
+            if (existingInc) {
+                finalAction = 'off';
+            }
+        } else if (action === 'exclude') {
+            if (existingExc) {
+                finalAction = 'off';
+            }
+        }
+
+        if (existingInc) existingInc.remove();
+        if (existingExc) existingExc.remove();
+
+        if (finalAction === 'include') {
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = `include_${facet}`;
+            inp.value = value;
+            container.appendChild(inp);
+        } else if (finalAction === 'exclude') {
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = `exclude_${facet}`;
+            inp.value = value;
+            container.appendChild(inp);
+        }
+
+        syncFacetOptionUI(facet, value, finalAction);
+        updateFacetBadge(facet);
+        updateResetButtonState();
+
+        htmx.trigger('#recipe-filter-form', 'submit');
+    }
+
+    function syncFacetOptionUI(facet, value, action) {
+        const list = document.getElementById(`facet-list-${facet}`);
+        if (!list) return;
+
+        list.querySelectorAll('.facet-option-row').forEach(row => {
+            const incBtn = row.querySelector('.facet-inc-btn');
+            const excBtn = row.querySelector('.facet-exc-btn');
+            if (!incBtn || !excBtn) return;
+
+            if ((incBtn.getAttribute('data-value') || '').toLowerCase() === value.toLowerCase()) {
+                if (action === 'include') {
+                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-emerald-600 text-white border-emerald-600';
+                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                } else if (action === 'exclude') {
+                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-rose-600 text-white border-rose-600';
+                } else {
+                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                }
+            }
+        });
+    }
+
+    function updateFacetBadge(facet) {
+        const container = document.getElementById('active-filter-inputs');
+        const badge = document.getElementById(`facet-badge-${facet}`);
+        const btn = document.getElementById(`facet-btn-${facet}`);
+        if (!badge || !btn) return;
+
+        let incCount = 0;
+        let excCount = 0;
+        if (container) {
+            incCount = container.querySelectorAll(`input[name="include_${facet}"]`).length;
+            excCount = container.querySelectorAll(`input[name="exclude_${facet}"]`).length;
+        }
+
+        if (incCount > 0 || excCount > 0) {
+            let text = '';
+            if (incCount > 0) text += `+${incCount}`;
+            if (excCount > 0) text += `-${excCount}`;
+            badge.textContent = text;
+            badge.classList.remove('hidden');
+            btn.classList.add('border-emerald-600', 'bg-emerald-50/40');
+        } else {
+            badge.textContent = '';
+            badge.classList.add('hidden');
+            btn.classList.remove('border-emerald-600', 'bg-emerald-50/40');
+        }
+    }
+
+    function clearFacetGroup(facet) {
+        const container = document.getElementById('active-filter-inputs');
+        if (container) {
+            container.querySelectorAll(`input[name="include_${facet}"], input[name="exclude_${facet}"]`).forEach(el => el.remove());
+        }
+        const list = document.getElementById(`facet-list-${facet}`);
+        if (list) {
+            list.querySelectorAll('.facet-inc-btn').forEach(btn => {
+                btn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 rounded-sm transition-colors';
+            });
+            list.querySelectorAll('.facet-exc-btn').forEach(btn => {
+                btn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50 rounded-sm transition-colors';
+            });
+        }
+        updateFacetBadge(facet);
+        updateResetButtonState();
+        htmx.trigger('#recipe-filter-form', 'submit');
+    }
+
+    function clearSingleRecipeFilter(name) {
+        if (name === 'q') {
+            const searchInput = document.getElementById('recipe-search-input');
+            if (searchInput) searchInput.value = '';
+            updateResetButtonState();
+            htmx.trigger('#recipe-filter-form', 'submit');
+        } else {
+            clearFacetGroup(name);
+        }
+    }
+
     function updateResetButtonState() {
         const btn = document.getElementById('recipe-reset-btn');
         if (!btn) return;
 
-        const form = document.getElementById('recipe-filter-form');
-        if (!form) return;
-
         const searchVal = document.getElementById('recipe-search-input')?.value.trim();
-        let hasFilter = Boolean(searchVal);
+        const container = document.getElementById('active-filter-inputs');
+        const filterCount = container ? container.querySelectorAll('input').length : 0;
+        const hasFilters = Boolean(searchVal) || filterCount > 0;
 
-        if (!hasFilter) {
-            const selects = form.querySelectorAll('select');
-            for (const s of selects) {
-                if (s.name !== 'sort' && s.value && s.value.toLowerCase() !== 'all') {
-                    hasFilter = true;
-                    break;
-                }
-            }
-        }
-
-        btn.disabled = !hasFilter;
-        if (hasFilter) {
+        btn.disabled = !hasFilters;
+        if (hasFilters) {
             btn.classList.remove('opacity-40', 'cursor-not-allowed');
             btn.classList.add('hover:bg-gray-100');
         } else {
@@ -270,53 +471,39 @@
         }
     }
 
-    function onRecipeFilterChange() {
-        updateResetButtonState();
-        htmx.trigger('#recipe-filter-form', 'submit');
-    }
-
-    function clearSingleRecipeFilter(name) {
-        const form = document.getElementById('recipe-filter-form');
-        if (!form) return;
-
-        if (name === 'q') {
-            const searchInput = document.getElementById('recipe-search-input');
-            if (searchInput) searchInput.value = '';
-        } else {
-            const sel = form.querySelector(`select[name="${name}"]`);
-            if (sel) {
-                sel.value = (name === 'sort') ? 'name' : 'all';
-            }
-        }
-
-        updateResetButtonState();
-        htmx.trigger(form, 'submit');
-    }
-
     function resetRecipeFilters() {
         const form = document.getElementById('recipe-filter-form');
         if (form) {
-            // Reset search input
             const searchInput = document.getElementById('recipe-search-input');
             if (searchInput) searchInput.value = '';
 
-            // Reset all filter select pull-downs
-            const selects = form.querySelectorAll('select');
-            selects.forEach(sel => {
-                if (sel.name === 'sort') {
-                    sel.value = 'name';
-                } else {
-                    sel.value = 'all';
-                }
-            });
+            const sortSelect = document.getElementById('recipe-sort');
+            if (sortSelect) sortSelect.value = 'name';
+
+            const container = document.getElementById('active-filter-inputs');
+            if (container) container.innerHTML = '';
         }
 
-        // Clean the browser URL bar
+        ['cuisine', 'dish_type', 'meal_type', 'dietary', 'occasion', 'equipment', 'difficulty'].forEach(facet => {
+            const list = document.getElementById(`facet-list-${facet}`);
+            if (list) {
+                list.querySelectorAll('.facet-inc-btn').forEach(btn => {
+                    btn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 rounded-sm transition-colors';
+                });
+                list.querySelectorAll('.facet-exc-btn').forEach(btn => {
+                    btn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50 rounded-sm transition-colors';
+                });
+            }
+            updateFacetBadge(facet);
+        });
+
+        closeAllFacetMenus();
+        updateResetButtonState();
+
         if (window.history && window.history.pushState) {
             window.history.pushState({}, '', "{% url 'recipes:list' %}");
         }
 
-        // Fetch fresh unfiltered recipes grid via HTMX
         if (window.htmx) {
             htmx.ajax('GET', "{% url 'recipes:list' %}", {
                 target: '#recipe-results-container',
@@ -325,11 +512,39 @@
         } else {
             window.location.href = "{% url 'recipes:list' %}";
         }
-
-        updateResetButtonState();
     }
 
-    // Sync form pull-down controls on browser back/forward navigation
+    function syncAllFacetUIFromInputs() {
+        const container = document.getElementById('active-filter-inputs');
+        ['cuisine', 'dish_type', 'meal_type', 'dietary', 'occasion', 'equipment', 'difficulty'].forEach(facet => {
+            const incValues = container ? Array.from(container.querySelectorAll(`input[name="include_${facet}"]`)).map(i => i.value.toLowerCase()) : [];
+            const excValues = container ? Array.from(container.querySelectorAll(`input[name="exclude_${facet}"]`)).map(i => i.value.toLowerCase()) : [];
+
+            const list = document.getElementById(`facet-list-${facet}`);
+            if (list) {
+                list.querySelectorAll('.facet-option-row').forEach(row => {
+                    const incBtn = row.querySelector('.facet-inc-btn');
+                    const excBtn = row.querySelector('.facet-exc-btn');
+                    if (!incBtn || !excBtn) return;
+                    const val = (incBtn.getAttribute('data-value') || '').toLowerCase();
+
+                    if (incValues.includes(val)) {
+                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-emerald-600 text-white border-emerald-600';
+                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                    } else if (excValues.includes(val)) {
+                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-rose-600 text-white border-rose-600';
+                    } else {
+                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                    }
+                });
+            }
+            updateFacetBadge(facet);
+        });
+    }
+
+    // Sync form on browser back/forward navigation
     window.addEventListener('popstate', function() {
         const params = new URLSearchParams(window.location.search);
         const form = document.getElementById('recipe-filter-form');
@@ -341,42 +556,62 @@
         const sortSelect = document.getElementById('recipe-sort');
         if (sortSelect) sortSelect.value = params.get('sort') || 'name';
 
-        ['cuisine', 'dish_type', 'meal_type', 'dietary', 'occasion', 'equipment', 'difficulty'].forEach(field => {
-            const sel = form.querySelector(`select[name="${field}"]`);
-            if (!sel) return;
-            const val = params.get(field);
-            if (!val || val.toLowerCase() === 'all') {
-                sel.value = 'all';
-            } else {
-                let matched = false;
-                for (const opt of sel.options) {
-                    if (opt.value.toLowerCase() === val.toLowerCase()) {
-                        sel.value = opt.value;
-                        matched = true;
-                        break;
-                    }
-                }
-                if (!matched) sel.value = 'all';
-            }
-        });
+        const container = document.getElementById('active-filter-inputs');
+        if (container) {
+            container.innerHTML = '';
+            ['cuisine', 'dish_type', 'meal_type', 'dietary', 'occasion', 'equipment', 'difficulty'].forEach(facet => {
+                const incList = params.getAll(`include_${facet}`).concat(params.getAll(facet));
+                incList.forEach(v => {
+                    v.split(',').forEach(item => {
+                        item = item.trim();
+                        if (item && item.toLowerCase() !== 'all') {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = `include_${facet}`;
+                            input.value = item;
+                            container.appendChild(input);
+                        }
+                    });
+                });
+                const excList = params.getAll(`exclude_${facet}`);
+                excList.forEach(v => {
+                    v.split(',').forEach(item => {
+                        item = item.trim();
+                        if (item && item.toLowerCase() !== 'all') {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = `exclude_${facet}`;
+                            input.value = item;
+                            container.appendChild(input);
+                        }
+                    });
+                });
+            });
+        }
 
+        syncAllFacetUIFromInputs();
         updateResetButtonState();
     });
 
-    // Ensure reset button state matches after any HTMX swap into results container
     document.addEventListener('htmx:afterSwap', function(evt) {
         if (evt.detail.target && evt.detail.target.id === 'recipe-results-container') {
             updateResetButtonState();
         }
     });
 
-    // Expose helpers globally for partial templates
-    window.updateResetButtonState = updateResetButtonState;
-    window.onRecipeFilterChange = onRecipeFilterChange;
+    // Expose helpers globally
+    window.toggleFacetMenu = toggleFacetMenu;
+    window.closeFacetMenu = closeFacetMenu;
+    window.closeAllFacetMenus = closeAllFacetMenus;
+    window.filterFacetList = filterFacetList;
+    window.toggleFacetOption = toggleFacetOption;
+    window.syncFacetOptionUI = syncFacetOptionUI;
+    window.updateFacetBadge = updateFacetBadge;
+    window.clearFacetGroup = clearFacetGroup;
     window.clearSingleRecipeFilter = clearSingleRecipeFilter;
+    window.updateResetButtonState = updateResetButtonState;
     window.resetRecipeFilters = resetRecipeFilters;
 
-    // Run on initial page load
     document.addEventListener('DOMContentLoaded', updateResetButtonState);
 </script>
 {% endblock %}

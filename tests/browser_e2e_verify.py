@@ -53,7 +53,7 @@ def run_all_checks():
         print("\nVerifying Item 3: Auto-suggest ingredient names as you type...")
         datalist = page.locator("#all-ingredients-datalist")
         assert datalist.count() > 0, "#all-ingredients-datalist not found in DOM"
-        quick_add_input = page.locator("#quick-add-name")
+        quick_add_input = page.locator("#add-item-name, #quick-add-name").first
         assert quick_add_input.get_attribute("list") == "all-ingredients-datalist", "quick-add input missing list attribute"
         results["Item 3 (Auto-suggest datalist attached)"] = "PASSED"
         print("✓ Item 3 verified: <datalist id='all-ingredients-datalist'> exists and is wired to quick add.")
@@ -62,9 +62,9 @@ def run_all_checks():
         # Item 7: Ingredient entry unified amount and unit in Quick Add
         # ---------------------------------------------------------------------
         print("\nVerifying Item 7: Unified amount and unit parsing in Quick Add...")
-        page.fill("#quick-add-name", "Organic Apples")
-        page.fill("#quick-add-amount", "3 lbs")
-        page.click("#quick-add-submit-btn")
+        page.fill("#add-item-name, #quick-add-name", "Organic Apples")
+        page.fill("#add-item-amount, #quick-add-amount", "3 lbs")
+        page.click("button:has-text('+ Add Item'), #quick-add-submit-btn")
         page.wait_for_timeout(1000)
         # Check that Organic Apples was added with 3 lbs
         page_html = page.content()
@@ -113,7 +113,7 @@ def run_all_checks():
         page.goto(f"{BASE_URL}/preset-lists/")
         page.wait_for_load_state("networkidle")
         # Open create preset modal
-        open_create_btn = page.locator("button:has-text('Create New Preset List'), button:has-text('Create Your First Preset List')").first
+        open_create_btn = page.locator("button:has-text('New Preset List'), button:has-text('Create New Preset List'), button:has-text('Create Your First Preset List')").first
         open_create_btn.click()
         page.wait_for_timeout(500)
         # Check default time and interval
@@ -181,21 +181,23 @@ def run_all_checks():
         page.fill("#new-item-amount", "1 dozen")
         page.click("button:has-text('Add Item')")
         page.wait_for_timeout(1000)
+        page.goto(page.url)
+        page.wait_for_load_state("networkidle")
         # Load preset to shopping list
-        load_btn = page.locator("button:has-text('Load into Shopping List')")
-        if load_btn.count() > 0:
-            load_btn.click()
-            page.wait_for_timeout(1000)
-            page.click("button:has-text('Confirm & Load')")
-            page.wait_for_load_state("networkidle")
-            page.wait_for_timeout(1000)
-            content = page.content()
-            assert "Active on Shopping List" in content or "Active (" in content, f"Expected 'Active on Shopping List', got content"
-            assert "Loaded into Shopping List" not in content, "Found old phrasing 'Loaded into Shopping List'"
-            results["Item 1 ('Active' instead of 'Loaded')"] = "PASSED"
-            print("✓ Item 1 verified: Phrased as 'Active on Shopping List'.")
-        else:
-            results["Item 1 ('Active' instead of 'Loaded')"] = "SKIPPED - load button not found"
+        load_btn = page.locator("button:has-text('Load into Shopping List'), button:has-text('Reload / Update List')").first
+        assert load_btn.count() > 0, "Load into Shopping List button not found"
+        load_btn.click()
+        page.wait_for_timeout(1000)
+        page.click("button:has-text('Load to Shopping List'), button:has-text('Confirm & Load')")
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(1000)
+        page.reload()
+        page.wait_for_load_state("networkidle")
+        content = page.content()
+        assert "Active on Shopping List" in content or "Active (" in content, "Expected 'Active on Shopping List'"
+        assert "Loaded into Shopping List" not in content, "Found old phrasing 'Loaded into Shopping List'"
+        results["Item 1 ('Active' instead of 'Loaded')"] = "PASSED"
+        print("✓ Item 1 verified: Phrased as 'Active on Shopping List'.")
 
         # ---------------------------------------------------------------------
         # Item 6: Attribution to user on manual preset load
@@ -219,18 +221,18 @@ def run_all_checks():
         page.goto(f"{BASE_URL}/?group_by=status")
         page.wait_for_load_state("networkidle")
         # Open edit modal on Eggs
-        edit_btn = page.locator("button[aria-label='Edit item']:has-text('✏️')").first
+        edit_btn = page.locator("button[title='Edit'], button[aria-label*='Edit item']").first
         edit_btn.click()
         page.wait_for_timeout(1000)
         # Verify single Amount & Unit field in modal
-        modal_amt = page.locator("#modal-item-amount")
+        modal_amt = page.locator("#modal-item-amount, #edit-item-amount").first
         assert modal_amt.count() > 0, "Amount & Unit input not found in edit modal"
         # Verify group_by hidden input is passed
         group_by_input = page.locator('input[name="group_by"]')
         assert group_by_input.get_attribute("value") == "status", f"Expected group_by=status, got {group_by_input.get_attribute('value')}"
         # Set aisle to 77
-        page.fill("#modal-item-aisle", "77")
-        page.click("button:has-text('Save Changes')")
+        page.fill("#modal-item-aisle, #edit-item-aisle", "77")
+        page.click("button:has-text('Save Changes'), button:has-text('Save')")
         page.wait_for_timeout(1000)
         # Verify list is still grouped by status (Item 10)
         assert "To Buy" in page.content(), "List not grouped properly"

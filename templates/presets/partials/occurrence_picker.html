@@ -140,6 +140,7 @@ if (typeof initAndroidTimePickers === 'undefined') {
             proxyInput.addEventListener('change', function() {
                 if (textInput) {
                     textInput.value = proxyInput.value;
+                    textInput.dispatchEvent(new Event('change', { bubbles: true }));
                     presetUpdatePreview(container);
                 }
             });

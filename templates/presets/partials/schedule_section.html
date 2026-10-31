@@ -14,7 +14,11 @@
                 Automated grocery refresh cycle for this preset list.
             </p>
         </div>
-        <div>
+        <div class="flex items-center space-x-2">
+            <span class="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center space-x-1">
+                <span>✓</span>
+                <span>Auto-saved</span>
+            </span>
             {% if preset_list.is_schedule_enabled %}
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">
                 ● Active
@@ -35,6 +39,7 @@
     <form hx-post="{% url 'shopping:preset_update_schedule' preset_list.id %}"
           hx-target="#preset-schedule-container"
           hx-swap="outerHTML"
+          hx-trigger="change"
           class="space-y-4">
         {% csrf_token %}
 
@@ -82,18 +87,18 @@
                 </div>
                 <div class="mt-1.5 flex gap-1.5">
                     <button type="button"
-                            onclick="this.form.interval_days.value=7"
-                            class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                            onclick="this.form.interval_days.value=7; this.form.interval_days.dispatchEvent(new Event('change', { bubbles: true }));"
+                            class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 cursor-pointer">
                         1 Week (7d)
                     </button>
                     <button type="button"
-                            onclick="this.form.interval_days.value=14"
-                            class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                            onclick="this.form.interval_days.value=14; this.form.interval_days.dispatchEvent(new Event('change', { bubbles: true }));"
+                            class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 cursor-pointer">
                         2 Weeks (14d)
                     </button>
                     <button type="button"
-                            onclick="this.form.interval_days.value=30"
-                            class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                            onclick="this.form.interval_days.value=30; this.form.interval_days.dispatchEvent(new Event('change', { bubbles: true }));"
+                            class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 cursor-pointer">
                         1 Month (30d)
                     </button>
                 </div>
@@ -115,15 +120,9 @@
             </span>
         </div>
 
-        <!-- Save Button -->
-        {% if can_write %}
-        <div class="pt-2 flex items-center justify-between">
-            <button type="submit"
-                    class="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold shadow-sm hover:bg-indigo-700 focus:outline-none">
-                Save Schedule Settings
-            </button>
+        <div class="text-[11px] text-gray-500 pt-1 flex items-center space-x-1.5">
+            <span>⚡ All schedule settings save automatically on every change.</span>
         </div>
-        {% endif %}
     </form>
 
     <!-- Immediate Trigger Action -->

@@ -8,13 +8,12 @@
                   hx-post="{% url 'shopping:preset_update_schedule' preset_list.id %}"
                   hx-target="#shopping-list-content"
                   hx-swap="outerHTML"
-                  hx-on::after-request="document.getElementById('modal-placeholder').innerHTML = ''"
                   {% else %}
                   hx-post="{% url 'shopping:preset_update_schedule' preset_list.id %}"
                   hx-target="#preset-schedule-container"
                   hx-swap="outerHTML"
-                  hx-on::after-request="document.getElementById('modal-placeholder').innerHTML = ''"
-                  {% endif %}>
+                  {% endif %}
+                  hx-trigger="change">
                 {% csrf_token %}
                 {% if from_shopping_list %}
                 <input type="hidden" name="from_shopping_list" value="1">
@@ -32,12 +31,18 @@
                                 Preset: "{{ preset_list.name }}"
                             </p>
                         </div>
-                        <button type="button"
-                                onclick="document.getElementById('modal-placeholder').innerHTML = ''"
-                                aria-label="Close dialog"
-                                class="text-gray-500 hover:text-gray-800 font-bold text-lg">
-                            <span aria-hidden="true">✕</span>
-                        </button>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center space-x-1">
+                                <span>✓</span>
+                                <span>Auto-saved</span>
+                            </span>
+                            <button type="button"
+                                    onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                                    aria-label="Close dialog"
+                                    class="text-gray-500 hover:text-gray-800 font-bold text-lg">
+                                <span aria-hidden="true">✕</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Behavior Explanation -->
@@ -89,18 +94,18 @@
                             </div>
                             <div class="mt-1.5 flex gap-1.5">
                                 <button type="button"
-                                        onclick="document.getElementById('modal-interval-days').value=7"
-                                        class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                                        onclick="const el=document.getElementById('modal-interval-days'); el.value=7; el.dispatchEvent(new Event('change', { bubbles: true }));"
+                                        class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 cursor-pointer">
                                     1 Week (7d)
                                 </button>
                                 <button type="button"
-                                        onclick="document.getElementById('modal-interval-days').value=14"
-                                        class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                                        onclick="const el=document.getElementById('modal-interval-days'); el.value=14; el.dispatchEvent(new Event('change', { bubbles: true }));"
+                                        class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 cursor-pointer">
                                     2 Weeks (14d)
                                 </button>
                                 <button type="button"
-                                        onclick="document.getElementById('modal-interval-days').value=30"
-                                        class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200">
+                                        onclick="const el=document.getElementById('modal-interval-days'); el.value=30; el.dispatchEvent(new Event('change', { bubbles: true }));"
+                                        class="text-[11px] px-2 py-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 cursor-pointer">
                                     1 Month (30d)
                                 </button>
                             </div>
@@ -125,16 +130,14 @@
 
                 <div class="bg-gray-50 px-5 py-3 sm:flex sm:flex-row-reverse border-t border-gray-200 justify-between items-center">
                     <div class="sm:flex sm:flex-row-reverse">
-                        {% if can_write %}
-                        <button type="submit" class="w-full inline-flex justify-center px-4 py-2 bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto shadow-sm">
-                            Save Schedule
-                        </button>
-                        {% endif %}
                         <button type="button"
                                 onclick="document.getElementById('modal-placeholder').innerHTML = ''"
-                                class="mt-3 w-full inline-flex justify-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 sm:mt-0 sm:w-auto">
-                            Cancel
+                                class="w-full inline-flex justify-center px-4 py-2 bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto shadow-sm">
+                            Done
                         </button>
+                    </div>
+                    <div class="text-[11px] text-gray-500 flex items-center space-x-1.5 mt-2 sm:mt-0">
+                        <span>⚡ Changes are saved automatically as you edit</span>
                     </div>
                 </div>
             </form>

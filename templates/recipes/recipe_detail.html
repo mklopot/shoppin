@@ -47,6 +47,19 @@
                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-900 border border-emerald-300">
                     Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}
                 </span>
+                {% if not recipe.is_public %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-700 border border-gray-300">
+                    🔒 Private
+                </span>
+                {% elif not recipe.is_approved %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+                    ⏳ Pending Review
+                </span>
+                {% else %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-300">
+                    🌐 Public
+                </span>
+                {% endif %}
             </div>
 
             <h1 class="text-2xl font-bold text-gray-900 tracking-tight">

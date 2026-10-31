@@ -555,19 +555,104 @@
         </div>
 
         <!-- Action Submission Row -->
-        <div class="flex items-center space-x-3 pt-2">
-            <button type="submit"
-                    class="bg-gray-900 hover:bg-black text-white font-bold px-5 py-2 text-xs flex items-center space-x-2 shadow-sm">
-                <span>💾</span>
-                <span>{% if is_edit %}Save Changes{% else %}Create Recipe{% endif %}</span>
-            </button>
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-gray-300">
+            <div class="flex items-center space-x-3">
+                <button type="submit"
+                        class="bg-gray-900 hover:bg-black text-white font-bold px-5 py-2 text-xs flex items-center space-x-2 shadow-sm cursor-pointer">
+                    <span>💾</span>
+                    <span>{% if is_edit %}Save Changes{% else %}Create Recipe{% endif %}</span>
+                </button>
 
-            <a href="{% if is_edit %}{% url 'recipes:detail' recipe.id %}{% else %}{% url 'recipes:list' %}{% endif %}"
-               class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 font-medium px-4 py-2 text-xs">
-                Cancel
-            </a>
+                <a href="{% if is_edit %}{% url 'recipes:detail' recipe.id %}{% else %}{% url 'recipes:list' %}{% endif %}"
+                   class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 font-medium px-4 py-2 text-xs">
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Public Sharing Slider with Info Circle -->
+            <div class="flex items-center space-x-2 bg-gray-50 border border-gray-300 px-3 py-2 shadow-sm">
+                <input type="hidden" name="has_public_toggle" value="1">
+                <label for="id_is_public" class="inline-flex items-center cursor-pointer select-none">
+                    <input type="checkbox"
+                           id="id_is_public"
+                           name="is_public"
+                           value="1"
+                           {% if is_edit %}{% if recipe.is_public %}checked{% endif %}{% else %}checked{% endif %}
+                           class="sr-only peer">
+                    <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    <span class="ml-2.5 text-xs font-semibold text-gray-800">Make this recipe public</span>
+                </label>
+
+                <!-- Info Circle Trigger -->
+                <button type="button"
+                        onclick="togglePublicRecipeModal(true)"
+                        aria-label="Public recipe visibility information"
+                        title="Click to learn about public recipe sharing and moderation"
+                        class="text-blue-600 hover:text-blue-800 focus:outline-none cursor-pointer p-0.5 rounded-full inline-flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     </form>
+</div>
+
+<!-- Modal: Public Recipe Visibility & Moderation Info -->
+<div id="public-recipe-info-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="public-recipe-modal-title"
+     onclick="togglePublicRecipeModal(false)"
+     class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white border border-gray-400 shadow-2xl max-w-md w-full p-5 space-y-4 rounded-none relative"
+         onclick="event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-gray-200 pb-2.5">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl" aria-hidden="true">🌐</span>
+                <h3 id="public-recipe-modal-title" class="font-bold text-sm text-gray-900 uppercase tracking-wider">
+                    Public Recipe Visibility
+                </h3>
+            </div>
+            <button type="button"
+                    onclick="togglePublicRecipeModal(false)"
+                    aria-label="Close dialog"
+                    class="text-gray-400 hover:text-gray-800 font-bold text-lg leading-none cursor-pointer">
+                &times;
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="text-xs text-gray-700 space-y-3 leading-relaxed">
+            <p>
+                When <strong>"Make this recipe public"</strong> is turned on:
+            </p>
+            <ul class="list-disc list-inside space-y-2 pl-1 text-gray-600">
+                <li>
+                    <strong>Public Access:</strong> Anyone on the internet will be able to search, view, and cook your recipe once it is approved by moderators.
+                </li>
+                <li>
+                    <strong>Moderation Review:</strong> To ensure culinary quality, safety, and community standards, submitted recipes are reviewed before appearing in public searches.
+                </li>
+                <li>
+                    <strong>Editorial Review:</strong> Recipes may be edited (for formatting, ingredient measurement standardization, or typo correction) before being published.
+                </li>
+                <li>
+                    <strong>Private Sharing:</strong> If this slider is turned off, your recipe remains private and visible only to you and members of your household workspace.
+                </li>
+            </ul>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="pt-3 border-t border-gray-200 flex justify-end">
+            <button type="button"
+                    onclick="togglePublicRecipeModal(false)"
+                    class="bg-gray-900 hover:bg-black text-white font-bold px-4 py-1.5 text-xs shadow-sm cursor-pointer">
+                Got it
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Dynamic Ingredient Row Script -->
@@ -661,5 +746,21 @@ function previewUploadedImage(input) {
         container.classList.remove('flex');
     }
 }
+
+function togglePublicRecipeModal(show) {
+    const modal = document.getElementById('public-recipe-info-modal');
+    if (!modal) return;
+    if (show) {
+        modal.classList.remove('hidden');
+    } else {
+        modal.classList.add('hidden');
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        togglePublicRecipeModal(false);
+    }
+});
 </script>
 {% endblock %}

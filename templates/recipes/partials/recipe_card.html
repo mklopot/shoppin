@@ -11,6 +11,11 @@
                 {% if recipe.dish_type %}
                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-white/90 text-gray-900 border border-gray-300 shadow-sm">{{ recipe.dish_type }}</span>
                 {% endif %}
+                {% if not recipe.is_public %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-200/95 text-gray-800 border border-gray-400 shadow-sm">🔒 Private</span>
+                {% elif not recipe.is_approved %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100/95 text-amber-900 border border-amber-300 shadow-sm">⏳ Review</span>
+                {% endif %}
             </div>
             <div class="absolute top-2 right-2">
                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if recipe.difficulty_level == 'easy' %}bg-emerald-100 text-emerald-900 border border-emerald-300{% elif recipe.difficulty_level == 'hard' %}bg-red-100 text-red-900 border border-red-300{% else %}bg-amber-100 text-amber-900 border border-amber-300{% endif %}">
@@ -27,6 +32,11 @@
                     {% endif %}
                     {% if recipe.dish_type %}
                     <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-white text-gray-800 border border-gray-300">{{ recipe.dish_type }}</span>
+                    {% endif %}
+                    {% if not recipe.is_public %}
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-gray-800 border border-gray-400">🔒 Private</span>
+                    {% elif not recipe.is_approved %}
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">⏳ Review</span>
                     {% endif %}
                 </div>
                 <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider {% if recipe.difficulty_level == 'easy' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% elif recipe.difficulty_level == 'hard' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-amber-50 text-amber-800 border border-amber-200{% endif %}">

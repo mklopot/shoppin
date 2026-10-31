@@ -354,6 +354,17 @@ def create_or_update_recipe(
         for raw_vendor in ingredient_vendors:
             validate_content_clean(str(raw_vendor), field_label="Ingredient vendor")
 
+    # Visibility & Moderation status
+    has_public_toggle = "has_public_toggle" in data or "is_public" in data
+    if has_public_toggle:
+        raw_public = data.get("is_public")
+        if hasattr(data, "getlist"):
+            vals = data.getlist("is_public")
+            raw_public = vals[-1] if vals else raw_public
+        is_public = str(raw_public).lower() in ("1", "true", "on", "yes")
+    else:
+        is_public = True
+
     if recipe_id:
         recipe = Recipe.objects.get(id=recipe_id)
         recipe.name = name
@@ -374,6 +385,14 @@ def create_or_update_recipe(
         recipe.bibliography = bibliography
         recipe.photo_urls = photo_urls
 
+        if has_public_toggle:
+            recipe.is_public = is_public
+            if not is_public:
+                recipe.is_approved = False
+            elif is_public and not getattr(user, "is_staff", False) and not getattr(user, "is_superuser", False):
+                # If user toggled to public, require moderator review
+                recipe.is_approved = False
+
         if data.get("clear_photo") in ("1", "true", True):
             recipe.photo_file = None
         elif files and "photo_file" in files and files["photo_file"]:
@@ -381,6 +400,11 @@ def create_or_update_recipe(
 
         recipe.save()
     else:
+        if has_public_toggle:
+            is_approved = is_public and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or user is None)
+        else:
+            is_approved = True
+
         recipe = Recipe.objects.create(
             name=name,
             description=description,
@@ -400,6 +424,8 @@ def create_or_update_recipe(
             bibliography=bibliography,
             photo_urls=photo_urls,
             photo_file=files.get("photo_file") if (files and "photo_file" in files) else None,
+            is_public=is_public,
+            is_approved=is_approved,
             created_by=user if user and user.is_authenticated else None,
         )
 

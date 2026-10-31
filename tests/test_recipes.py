@@ -390,6 +390,73 @@ def test_recipe_photo_upload_and_clear(auth_user):
 
 
 @pytest.mark.django_db
+def test_recipe_public_slider_creation_and_moderation(auth_user):
+    user, _ = auth_user
+
+    # 1. Create a private recipe via toggle (is_public=0)
+    priv_data = {
+        "name": "Grandma's Secret Dressing",
+        "cuisine": "American",
+        "dish_type": "Sauce",
+        "has_public_toggle": "1",
+        "is_public": "0",
+    }
+    priv_recipe = create_or_update_recipe(priv_data, user=user)
+    assert priv_recipe.is_public is False
+    assert priv_recipe.is_approved is False
+
+    # 2. Create a public recipe as regular user (is_public=1) -> requires moderator approval
+    pub_data = {
+        "name": "World Famous Tomato Soup",
+        "cuisine": "American",
+        "dish_type": "Soup",
+        "has_public_toggle": "1",
+        "is_public": "1",
+    }
+    pub_recipe = create_or_update_recipe(pub_data, user=user)
+    assert pub_recipe.is_public is True
+    assert pub_recipe.is_approved is False  # Regular user submissions require moderator review
+
+    # 3. Create a public recipe as staff user -> automatically approved
+    staff_user = User.objects.create_user(username="mod_chef", password="pw", is_staff=True)
+    staff_recipe = create_or_update_recipe(
+        {
+            "name": "Staff Approved French Toast",
+            "cuisine": "French",
+            "dish_type": "Breakfast",
+            "has_public_toggle": "1",
+            "is_public": "1",
+        },
+        user=staff_user,
+    )
+    assert staff_recipe.is_public is True
+    assert staff_recipe.is_approved is True
+
+
+@pytest.mark.django_db
+def test_recipe_form_renders_public_slider_and_modal(client: Client, auth_user):
+    user, _ = auth_user
+    client.force_login(user)
+
+    url = reverse("recipes:create")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+
+    # Check slider input and label
+    assert 'name="is_public"' in content
+    assert 'has_public_toggle' in content
+    assert "Make this recipe public" in content
+
+    # Check info circle and modal dialog
+    assert "togglePublicRecipeModal" in content
+    assert "public-recipe-info-modal" in content
+    assert "Public Recipe Visibility" in content
+    assert "approved by moderators" in content
+    assert "may be edited" in content
+
+
+@pytest.mark.django_db
 def test_submit_recipe_rating(sample_recipes, auth_user):
     user, _ = auth_user
     r1, _, _ = sample_recipes

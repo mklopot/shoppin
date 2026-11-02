@@ -351,6 +351,10 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
                 dish_type=data["dish_type"],
                 photo_urls=[data["photo_url"]] if data["photo_url"] else [],
                 bibliography=[data["source_url"]],
+                is_public=False,
+                is_approved=False,
+                is_web_imported=True,
+                copyright_cleared=False,
             )
             ingredients = data["ingredients"]
             messages.info(

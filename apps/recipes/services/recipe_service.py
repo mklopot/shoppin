@@ -5,6 +5,7 @@ Service layer for recipe search, multi-faceted filtering, creation, and synchron
 from decimal import Decimal
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db.models import Avg, Case, F, IntegerField, Q, QuerySet, Value, When
 from django.http import HttpRequest
 
@@ -391,6 +392,8 @@ def fork_recipe(
         photo_file=source_recipe.photo_file if source_recipe.photo_file else None,
         is_public=False,
         is_approved=False,
+        is_web_imported=bool(source_recipe.is_web_imported),
+        copyright_cleared=False,
         created_by=user if (user and user.is_authenticated) else None,
         forked_from=source_recipe,
         forked_from_title=source_recipe.name,
@@ -556,6 +559,8 @@ def create_or_update_recipe(
                 photo_file=files.get("photo_file") if (files and "photo_file" in files) else existing_recipe.photo_file,
                 is_public=False,
                 is_approved=False,
+                is_web_imported=bool(existing_recipe.is_web_imported),
+                copyright_cleared=False,
                 created_by=user if (user and user.is_authenticated) else None,
                 forked_from=existing_recipe,
                 forked_from_title=existing_recipe.name,
@@ -586,6 +591,23 @@ def create_or_update_recipe(
             recipe.bibliography = bibliography
             recipe.photo_urls = photo_urls
 
+            raw_web_imported = data.get("is_web_imported")
+            if str(raw_web_imported).lower() in ("1", "true", "yes") or bool(data.get("import_url")):
+                recipe.is_web_imported = True
+
+            is_staff_or_super = user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False))
+            if is_staff_or_super and "copyright_cleared" in data:
+                recipe.copyright_cleared = str(data.get("copyright_cleared")).lower() in ("1", "true", "yes", "on")
+
+            if recipe.is_web_imported and not recipe.copyright_cleared:
+                if has_public_toggle and is_public and not is_staff_or_super:
+                    raise ValidationError(
+                        "Web-imported recipes cannot be made public until verified as re-worded and non-infringing by an administrator."
+                    )
+                if not is_staff_or_super:
+                    is_public = False
+                    recipe.is_public = False
+
             if has_public_toggle:
                 recipe.is_public = is_public
                 if not is_public:
@@ -593,7 +615,7 @@ def create_or_update_recipe(
                 elif is_public:
                     # If recipe was already approved, keep it approved!
                     # Only require moderation if it was previously NOT approved and user is non-staff
-                    if not existing_recipe.is_approved and not getattr(user, "is_staff", False) and not getattr(user, "is_superuser", False):
+                    if not existing_recipe.is_approved and not is_staff_or_super:
                         recipe.is_approved = False
                     elif existing_recipe.is_approved:
                         recipe.is_approved = True
@@ -608,8 +630,25 @@ def create_or_update_recipe(
 
             recipe.save()
     else:
+        is_staff_or_super = user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False))
+
+        raw_web_imported = data.get("is_web_imported")
+        is_web_imported = str(raw_web_imported).lower() in ("1", "true", "yes") or bool(data.get("import_url"))
+
+        copyright_cleared = False
+        if is_staff_or_super and "copyright_cleared" in data:
+            copyright_cleared = str(data.get("copyright_cleared")).lower() in ("1", "true", "yes", "on")
+
+        if is_web_imported and not copyright_cleared:
+            if has_public_toggle and is_public and not is_staff_or_super:
+                raise ValidationError(
+                    "Web-imported recipes cannot be made public until verified as re-worded and non-infringing by an administrator."
+                )
+            if not is_staff_or_super:
+                is_public = False
+
         if has_public_toggle:
-            is_approved = is_public and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or user is None)
+            is_approved = is_public and (is_staff_or_super or user is None)
         else:
             is_approved = True
 
@@ -634,6 +673,8 @@ def create_or_update_recipe(
             photo_file=files.get("photo_file") if (files and "photo_file" in files) else None,
             is_public=is_public,
             is_approved=is_approved,
+            is_web_imported=is_web_imported,
+            copyright_cleared=copyright_cleared,
             created_by=user if user and user.is_authenticated else None,
             last_shared_by=user if user and user.is_authenticated else None,
         )

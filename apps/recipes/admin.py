@@ -30,14 +30,31 @@ class RecipeAdmin(admin.ModelAdmin):
         "portions",
         "is_public",
         "is_approved",
+        "is_web_imported",
+        "copyright_cleared",
         "created_at",
     )
-    list_editable = ("is_public", "is_approved")
-    list_filter = ("is_public", "is_approved", "difficulty_level", "cuisine", "dish_type")
+    list_editable = ("is_public", "is_approved", "copyright_cleared")
+    list_filter = (
+        "is_public",
+        "is_approved",
+        "is_web_imported",
+        "copyright_cleared",
+        "difficulty_level",
+        "cuisine",
+        "dish_type",
+    )
     search_fields = ("name", "description", "directions", "cuisine", "dish_type")
     prepopulated_fields = {"slug": ("name",)}
     inlines = [IngredientInline]
-    actions = ["approve_recipes", "revoke_approval", "make_public", "make_private"]
+    actions = [
+        "approve_recipes",
+        "revoke_approval",
+        "verify_copyright",
+        "revoke_copyright",
+        "make_public",
+        "make_private",
+    ]
 
     @admin.action(description="Approve selected recipes for public browse")
     def approve_recipes(self, request, queryset):
@@ -51,10 +68,32 @@ class RecipeAdmin(admin.ModelAdmin):
         count = queryset.update(is_approved=False)
         self.message_user(request, f"{count} recipe(s) marked unapproved.")
 
+    @admin.action(description="Verify as re-worded & non-infringing")
+    def verify_copyright(self, request, queryset):
+        """Batch verify web-imported recipes as re-worded and non-infringing."""
+        count = queryset.update(copyright_cleared=True)
+        self.message_user(request, f"{count} recipe(s) verified as re-worded & non-infringing.")
+
+    @admin.action(description="Revoke copyright clearance")
+    def revoke_copyright(self, request, queryset):
+        """Batch revoke copyright clearance."""
+        count = queryset.update(copyright_cleared=False)
+        self.message_user(request, f"{count} recipe(s) copyright clearance revoked.")
+
     @admin.action(description="Mark selected recipes as Public")
     def make_public(self, request, queryset):
-        """Batch make public."""
-        count = queryset.update(is_public=True)
+        """Batch make public (unverified web-imported recipes remain private)."""
+        unverified = queryset.filter(is_web_imported=True, copyright_cleared=False)
+        unverified_count = unverified.count()
+        if unverified_count > 0:
+            from django.contrib import messages
+            self.message_user(
+                request,
+                f"Skipped {unverified_count} recipe(s): web-imported recipes must be verified as non-infringing before being made public.",
+                level=messages.WARNING,
+            )
+        eligible = queryset.exclude(is_web_imported=True, copyright_cleared=False)
+        count = eligible.update(is_public=True)
         self.message_user(request, f"{count} recipe(s) set to Public.")
 
     @admin.action(description="Mark selected recipes as Private")

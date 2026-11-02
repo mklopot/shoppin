@@ -470,6 +470,10 @@ def import_recipe_from_url(
         dish_type=data["dish_type"],
         photo_urls=[data["photo_url"]] if data["photo_url"] else [],
         bibliography=[data["source_url"]],
+        is_public=False,
+        is_approved=False,
+        is_web_imported=True,
+        copyright_cleared=False,
         created_by=user if (user and user.is_authenticated) else None,
     )
 

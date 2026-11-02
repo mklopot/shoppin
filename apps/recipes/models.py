@@ -159,6 +159,16 @@ class Recipe(models.Model):
         default=True,
         help_text="Approved by moderator for public browse/search",
     )
+    is_web_imported = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Whether this recipe was created or pre-filled from an external web URL",
+    )
+    copyright_cleared = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Verified by an administrator as sufficiently re-worded and non-infringing for public sharing",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -220,10 +230,32 @@ class Recipe(models.Model):
         ordering = ["name"]
 
     def clean(self) -> None:
-        """Validate that all recipe fields are free of expletives and hurtful language."""
+        """Validate recipe content, expletives, moderation, and public status permissions."""
         super().clean()
         from apps.core.services.moderation_service import check_model_instance_for_moderation
         check_model_instance_for_moderation(self)
+        if self.is_web_imported and not self.copyright_cleared and self.is_public:
+            from django.core.exceptions import ValidationError
+            raise ValidationError(
+                "Web-imported recipes cannot be made public until verified as re-worded and non-infringing by an administrator."
+            )
+
+    @property
+    def is_locked_from_public(self) -> bool:
+        """Return True if this recipe cannot be made public without admin copyright clearance."""
+        return bool(self.is_web_imported and not self.copyright_cleared)
+
+    def can_be_made_public(self, user=None) -> bool:
+        """
+        Check if this recipe can be made public, taking user permissions into account.
+        Regular users cannot make web-imported recipes public unless copyright is cleared.
+        Staff and superusers can override and make recipes public.
+        """
+        if not self.is_web_imported or self.copyright_cleared:
+            return True
+        if user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
+            return True
+        return False
 
     def save(self, *args, **kwargs) -> None:
         """Auto-populate URL slug from name if not specified, ensure uniqueness, and maintain provenance metadata."""

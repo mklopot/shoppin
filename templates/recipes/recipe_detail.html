@@ -72,6 +72,15 @@
                     🌐 Public
                 </span>
                 {% endif %}
+                {% if recipe.is_web_imported and not recipe.copyright_cleared %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-900 border border-amber-300" title="Web-imported: requires administrator review for re-wording and non-infringement before it can be made public">
+                    📥 Web-Imported (Review Required)
+                </span>
+                {% elif recipe.is_web_imported and recipe.copyright_cleared %}
+                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-300" title="Verified by administrator as re-worded and non-infringing">
+                    ✓ Copyright Cleared
+                </span>
+                {% endif %}
             </div>
 
             <h1 class="text-2xl font-bold text-gray-900 tracking-tight">

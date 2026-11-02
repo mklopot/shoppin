@@ -66,6 +66,9 @@
     <form method="post" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
         <input type="hidden" name="has_public_toggle" value="1">
+        {% if recipe.is_web_imported or import_url %}
+        <input type="hidden" name="is_web_imported" value="1">
+        {% endif %}
 
         <!-- Top Action Bar (Save & Public Slider) -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-gray-50 border border-gray-300 p-3 shadow-sm">
@@ -84,6 +87,22 @@
 
             <!-- Public Sharing Slider with Info Circle (Top) -->
             <div class="flex items-center space-x-2 bg-white border border-gray-300 px-3 py-1.5 shadow-sm">
+                {% if recipe.is_locked_from_public and not user.is_staff and not user.is_superuser %}
+                <label for="id_is_public_top" class="inline-flex items-center cursor-not-allowed opacity-70 select-none" title="Web-imported recipes require administrator review for re-wording and copyright clearance before they can be made public.">
+                    <input type="checkbox"
+                           id="id_is_public_top"
+                           name="is_public"
+                           value="1"
+                           disabled
+                           autocomplete="off"
+                           class="public-recipe-checkbox sr-only peer">
+                    <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    <span class="ml-2.5 text-xs font-semibold text-gray-500">Make public</span>
+                </label>
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-900 border border-amber-300" title="Web-imported: Must be verified by an administrator as sufficiently re-worded and non-infringing before making public.">
+                    🔒 Admin Review Required
+                </span>
+                {% else %}
                 <label for="id_is_public_top" class="inline-flex items-center cursor-pointer select-none" title="Make this recipe public on the web">
                     <input type="checkbox"
                            id="id_is_public_top"
@@ -96,6 +115,16 @@
                     <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                     <span class="ml-2.5 text-xs font-semibold text-gray-800">Make public</span>
                 </label>
+                {% if recipe.is_web_imported and recipe.copyright_cleared %}
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-300" title="Verified by administrator as sufficiently re-worded and non-infringing.">
+                    ✓ Copyright Cleared
+                </span>
+                {% elif recipe.is_web_imported and user.is_staff or recipe.is_web_imported and user.is_superuser %}
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-purple-50 text-purple-800 border border-purple-300" title="Staff review mode active.">
+                    ⚡ Staff Review Mode
+                </span>
+                {% endif %}
+                {% endif %}
 
                 <!-- Info Circle Trigger -->
                 <button type="button"
@@ -675,6 +704,22 @@
 
             <!-- Public Sharing Slider with Info Circle (Bottom) -->
             <div class="flex items-center space-x-2 bg-gray-50 border border-gray-300 px-3 py-2 shadow-sm">
+                {% if recipe.is_locked_from_public and not user.is_staff and not user.is_superuser %}
+                <label for="id_is_public" class="inline-flex items-center cursor-not-allowed opacity-70 select-none" title="Web-imported recipes require administrator review for re-wording and copyright clearance before they can be made public.">
+                    <input type="checkbox"
+                           id="id_is_public"
+                           name="is_public"
+                           value="1"
+                           disabled
+                           autocomplete="off"
+                           class="public-recipe-checkbox sr-only peer">
+                    <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    <span class="ml-2.5 text-xs font-semibold text-gray-500">Make public</span>
+                </label>
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-900 border border-amber-300" title="Web-imported: Must be verified by an administrator as sufficiently re-worded and non-infringing before making public.">
+                    🔒 Admin Review Required
+                </span>
+                {% else %}
                 <label for="id_is_public" class="inline-flex items-center cursor-pointer select-none" title="Make this recipe public on the web">
                     <input type="checkbox"
                            id="id_is_public"
@@ -687,6 +732,16 @@
                     <div class="relative w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                     <span class="ml-2.5 text-xs font-semibold text-gray-800">Make public</span>
                 </label>
+                {% if recipe.is_web_imported and recipe.copyright_cleared %}
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-800 border border-emerald-300" title="Verified by administrator as sufficiently re-worded and non-infringing.">
+                    ✓ Copyright Cleared
+                </span>
+                {% elif recipe.is_web_imported and user.is_staff or recipe.is_web_imported and user.is_superuser %}
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-purple-50 text-purple-800 border border-purple-300" title="Staff review mode active.">
+                    ⚡ Staff Review Mode
+                </span>
+                {% endif %}
+                {% endif %}
 
                 <!-- Info Circle Trigger -->
                 <button type="button"
@@ -745,6 +800,9 @@
                 </li>
                 <li>
                     <strong>Private Sharing:</strong> If this slider is turned off, your recipe remains private and visible only to you and members of your household workspace.
+                </li>
+                <li class="border-t border-gray-200 pt-2 text-gray-800">
+                    <strong>Web Imports & Copyright:</strong> Recipes imported or pre-filled from an external web URL cannot be made public until an administrator verifies they have been sufficiently re-worded and are non-infringing. This restriction is also inherited when forking or copying a recipe.
                 </li>
             </ul>
         </div>

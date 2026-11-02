@@ -746,6 +746,12 @@ def test_import_recipe_from_url_service(auth_user):
     assert recipe.photo_urls == ["https://images.example.com/guac.jpg"]
     assert recipe.bibliography == [url]
     assert recipe.created_by == user
+    assert recipe.is_web_imported is True
+    assert recipe.copyright_cleared is False
+    assert recipe.is_public is False
+    assert recipe.is_approved is False
+    assert recipe.is_locked_from_public is True
+    assert recipe.can_be_made_public(user) is False
 
     # Check ingredients created in DB
     ings = list(recipe.ingredients.all())
@@ -789,6 +795,9 @@ def test_recipe_import_url_view_direct(client: Client, auth_user, monkeypatch):
     created = Recipe.objects.get(name="Classic Guacamole")
     assert resp.url == created.get_absolute_url()
     assert created.ingredients.count() == 6
+    assert created.is_web_imported is True
+    assert created.copyright_cleared is False
+    assert created.is_public is False
 
 
 @pytest.mark.django_db
@@ -822,6 +831,8 @@ def test_recipe_create_view_with_import_url_prefill(client: Client, auth_user, m
     assert "diced red onion" in html
     assert "Mexican" in html
     assert "Pre-filled recipe from www.allrecipes.com" in html
+    assert "Admin Review Required" in html
+    assert 'name="is_web_imported" value="1"' in html
 
 
 @pytest.mark.django_db
@@ -974,5 +985,235 @@ def test_edit_recipe_preserves_approval_for_already_approved_recipes(auth_user):
     # Must remain public and approved!
     assert updated.is_public is True
     assert updated.is_approved is True
+
+
+@pytest.mark.django_db
+def test_web_imported_recipe_cannot_be_made_public_by_non_staff(auth_user):
+    """Ensure web-imported recipes cannot be made public by non-staff until copyright-cleared."""
+    from django.core.exceptions import ValidationError
+
+    user, _ = auth_user
+    imported = Recipe.objects.create(
+        name="Scraped Chicken Soup",
+        directions="Boil chicken and veggies.",
+        is_web_imported=True,
+        copyright_cleared=False,
+        is_public=False,
+        is_approved=False,
+        created_by=user,
+    )
+    assert imported.is_locked_from_public is True
+    assert imported.can_be_made_public(user) is False
+
+    # Attempting to save as public must raise ValidationError
+    with pytest.raises(ValidationError) as exc_info:
+        create_or_update_recipe(
+            {
+                "name": "Scraped Chicken Soup",
+                "directions": "Boil chicken and veggies.",
+                "has_public_toggle": "1",
+                "is_public": "1",
+            },
+            recipe_id=imported.id,
+            user=user,
+        )
+    assert "Web-imported recipes cannot be made public" in str(exc_info.value)
+    imported.refresh_from_db()
+    assert imported.is_public is False
+
+
+@pytest.mark.django_db
+def test_web_imported_flag_inherited_on_fork_and_copy(auth_user):
+    """Ensure is_web_imported flag is inherited when forking or copy-on-write modifying a recipe."""
+    from django.contrib.auth import get_user_model
+    from django.core.exceptions import ValidationError
+    from apps.recipes.services.recipe_service import fork_recipe
+
+    User = get_user_model()
+    user1, _ = auth_user
+    user2 = User.objects.create_user(username="cook2", email="cook2@example.com")
+
+    # User 1 has an imported recipe
+    original = Recipe.objects.create(
+        name="Grandma's Web Imported Lasagna",
+        directions="Layer noodles and sauce.",
+        is_web_imported=True,
+        copyright_cleared=False,
+        is_public=False,
+        is_approved=False,
+        created_by=user1,
+    )
+
+    # 1. User 2 forks via fork_recipe
+    forked = fork_recipe(source_recipe=original, user=user2)
+    assert forked.is_web_imported is True
+    assert forked.copyright_cleared is False
+    assert forked.is_public is False
+    assert forked.is_locked_from_public is True
+
+    # User 2 tries to make the forked recipe public -> blocked!
+    with pytest.raises(ValidationError):
+        create_or_update_recipe(
+            {
+                "name": forked.name,
+                "directions": "Layer noodles and extra cheese.",
+                "has_public_toggle": "1",
+                "is_public": "1",
+            },
+            recipe_id=forked.id,
+            user=user2,
+        )
+
+    # 2. User 2 triggers copy-on-write by editing User 1's recipe directly
+    cow_recipe = create_or_update_recipe(
+        {
+            "name": "Lasagna with extra spices",
+            "directions": "Layer noodles with spicy sauce.",
+            "has_public_toggle": "1",
+            "is_public": "0",
+        },
+        recipe_id=original.id,
+        user=user2,
+    )
+    assert cow_recipe.id != original.id
+    assert cow_recipe.is_web_imported is True
+    assert cow_recipe.copyright_cleared is False
+    assert cow_recipe.is_public is False
+    assert cow_recipe.is_locked_from_public is True
+
+
+@pytest.mark.django_db
+def test_admin_can_verify_and_publish_web_imported_recipe(auth_user):
+    """Ensure administrators can verify copyright clearance and publish web-imported recipes."""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    regular_user, _ = auth_user
+    admin_user = User.objects.create_superuser(username="admin_chef", email="admin@example.com", password="password")
+
+    imported = Recipe.objects.create(
+        name="Imported Beef Stew",
+        directions="Simmer beef slowly.",
+        is_web_imported=True,
+        copyright_cleared=False,
+        is_public=False,
+        is_approved=False,
+        created_by=regular_user,
+    )
+    assert imported.can_be_made_public(admin_user) is True
+
+    # Admin verifies recipe and sets it public
+    verified = create_or_update_recipe(
+        {
+            "name": "Imported Beef Stew (Re-worded)",
+            "directions": "Thoroughly re-worded directions in cook's own words.",
+            "copyright_cleared": "1",
+            "has_public_toggle": "1",
+            "is_public": "1",
+        },
+        recipe_id=imported.id,
+        user=admin_user,
+    )
+    assert verified.copyright_cleared is True
+    assert verified.is_public is True
+    assert verified.is_locked_from_public is False
+
+    # Regular user owner can now update their recipe while keeping it public
+    updated_by_owner = create_or_update_recipe(
+        {
+            "name": "Imported Beef Stew (Re-worded)",
+            "directions": "Add a bay leaf and simmer.",
+            "has_public_toggle": "1",
+            "is_public": "1",
+        },
+        recipe_id=verified.id,
+        user=regular_user,
+    )
+    assert updated_by_owner.is_public is True
+    assert updated_by_owner.copyright_cleared is True
+
+
+@pytest.mark.django_db
+def test_recipe_admin_actions_and_batch_make_public(auth_user):
+    """Test RecipeAdmin actions for verifying copyright and safety in make_public batch action."""
+    from django.contrib.admin.sites import AdminSite
+    from django.contrib.auth import get_user_model
+    from django.test import RequestFactory
+    from apps.recipes.admin import RecipeAdmin
+
+    User = get_user_model()
+    admin_user = User.objects.create_superuser(username="site_admin", email="sa@example.com", password="password")
+    rf = RequestFactory()
+    request = rf.get("/admin/recipes/recipe/")
+    request.user = admin_user
+    from django.contrib.messages.storage.fallback import FallbackStorage
+    setattr(request, "session", {})
+    setattr(request, "_messages", FallbackStorage(request))
+
+    model_admin = RecipeAdmin(Recipe, AdminSite())
+
+    r1 = Recipe.objects.create(name="Web Recipe A", is_web_imported=True, copyright_cleared=False, is_public=False)
+    r2 = Recipe.objects.create(name="Web Recipe B", is_web_imported=True, copyright_cleared=False, is_public=False)
+    r3 = Recipe.objects.create(name="Original Recipe C", is_web_imported=False, copyright_cleared=False, is_public=False)
+
+    qs = Recipe.objects.filter(id__in=[r1.id, r2.id, r3.id])
+
+    # Attempt batch make_public: r1 and r2 must be skipped because they are unverified web-imported!
+    model_admin.make_public(request, qs)
+    r1.refresh_from_db()
+    r2.refresh_from_db()
+    r3.refresh_from_db()
+    assert r1.is_public is False
+    assert r2.is_public is False
+    assert r3.is_public is True
+
+    # Admin verifies r1
+    model_admin.verify_copyright(request, Recipe.objects.filter(id=r1.id))
+    r1.refresh_from_db()
+    assert r1.copyright_cleared is True
+
+    # Now make_public on r1 succeeds
+    model_admin.make_public(request, Recipe.objects.filter(id=r1.id))
+    r1.refresh_from_db()
+    assert r1.is_public is True
+
+
+@pytest.mark.django_db
+def test_recipe_detail_and_form_ui_for_web_imported_recipes(client: Client, auth_user):
+    """Test that recipe detail and form templates display proper lock and badges for web-imported recipes."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    recipe = Recipe.objects.create(
+        name="Imported Pad Thai",
+        description="Classic street food noodles.",
+        directions="Soak noodles, stir-fry.",
+        is_web_imported=True,
+        copyright_cleared=False,
+        is_public=False,
+        created_by=user,
+    )
+
+    # 1. Detail view shows Review Required badge
+    resp = client.get(recipe.get_absolute_url())
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "Web-Imported (Review Required)" in html
+
+    # 2. Edit form disables "Make public" toggle and shows review notice
+    resp_form = client.get(reverse("recipes:edit", kwargs={"recipe_id": recipe.id}))
+    assert resp_form.status_code == 200
+    form_html = resp_form.content.decode("utf-8")
+    assert "Admin Review Required" in form_html
+    assert "disabled" in form_html
+
+    # 3. Once cleared, detail view reflects Copyright Cleared
+    recipe.copyright_cleared = True
+    recipe.save()
+    resp_cleared = client.get(recipe.get_absolute_url())
+    assert "Copyright Cleared" in resp_cleared.content.decode("utf-8")
+
 
 

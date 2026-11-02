@@ -1081,6 +1081,29 @@ def test_web_imported_flag_inherited_on_fork_and_copy(auth_user):
     assert cow_recipe.is_public is False
     assert cow_recipe.is_locked_from_public is True
 
+    # 3. If source recipe has copyright_cleared=True, copies inherit copyright_cleared=True
+    original.copyright_cleared = True
+    original.save()
+
+    cleared_fork = fork_recipe(source_recipe=original, user=user2)
+    assert cleared_fork.is_web_imported is True
+    assert cleared_fork.copyright_cleared is True
+    assert cleared_fork.is_locked_from_public is False
+
+    # User 2 can now make their fork public without error!
+    made_public = create_or_update_recipe(
+        {
+            "name": cleared_fork.name,
+            "directions": "Layer noodles with extra cheese.",
+            "has_public_toggle": "1",
+            "is_public": "1",
+        },
+        recipe_id=cleared_fork.id,
+        user=user2,
+    )
+    assert made_public.is_public is True
+    assert made_public.copyright_cleared is True
+
 
 @pytest.mark.django_db
 def test_admin_can_verify_and_publish_web_imported_recipe(auth_user):

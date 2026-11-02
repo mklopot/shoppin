@@ -45,6 +45,17 @@
               class="space-y-3.5 text-xs">
             {% csrf_token %}
 
+            {% if workspace and not is_in_workspace %}
+            <div class="p-2.5 bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-start space-x-2">
+                <span class="text-sm">ℹ️</span>
+                <div>
+                    <strong>Notice:</strong> This recipe is not in <em>{{ workspace.name }}</em> yet.
+                    Adding it will automatically copy it into this workspace so you and other members can view, customize, and shop for it.
+                    <input type="hidden" name="workspace_action" value="copy">
+                </div>
+            </div>
+            {% endif %}
+
             <div>
                 <label for="prompt-meal-select" class="block font-bold text-gray-700 mb-1">Select Meal:</label>
                 <select id="prompt-meal-select"

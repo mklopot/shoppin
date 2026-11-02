@@ -907,3 +907,72 @@ def test_import_recipes_management_command(tmp_path):
     assert Recipe.objects.get(name="Existing Dish").description == "Updated description"
     assert Ingredient.objects.filter(id=orig_ing_id).exists()
 
+
+@pytest.mark.django_db
+def test_recipe_search_multi_word_and_ranking(sample_recipes):
+    # Create two recipes: one with "Stuffed Shells" in name, one with "stuffed" only in description
+    r_name = Recipe.objects.create(
+        name="Stuffed Shells",
+        description="Delicious jumbo pasta filled with cheese.",
+        directions="Bake until bubbly.",
+        is_public=True,
+        is_approved=True,
+    )
+    r_desc = Recipe.objects.create(
+        name="Chile Rellenos",
+        description="Poblano peppers stuffed with cheese.",
+        directions="Fry and serve.",
+        is_public=True,
+        is_approved=True,
+    )
+
+    # 1. Search by exact phrase "Stuffed Shells" -> should retrieve Stuffed Shells
+    res1 = list(search_recipes({"q": "Stuffed Shells"}))
+    assert r_name in res1
+
+    # 2. Search with quotes '"Stuffed shells"' -> quotes stripped, retrieves Stuffed Shells
+    res2 = list(search_recipes({"q": '"Stuffed shells"'}))
+    assert r_name in res2
+
+    # 3. Search single word "shells" -> retrieves Stuffed Shells
+    res3 = list(search_recipes({"q": "shells"}))
+    assert r_name in res3
+
+    # 4. Search single word "stuffed" -> retrieves both, but Stuffed Shells ranked first due to name relevance
+    res4 = list(search_recipes({"q": "stuffed"}))
+    assert r_name in res4
+    assert r_desc in res4
+    assert res4.index(r_name) < res4.index(r_desc)
+
+    # 5. Search multi-word reversed "shells stuffed" -> matches both words
+    res5 = list(search_recipes({"q": "shells stuffed"}))
+    assert r_name in res5
+
+
+@pytest.mark.django_db
+def test_edit_recipe_preserves_approval_for_already_approved_recipes(auth_user):
+    user, _ = auth_user
+    # Existing approved recipe
+    rec = Recipe.objects.create(
+        name="Approved Garlic Bread",
+        is_public=True,
+        is_approved=True,
+        created_by=None,
+    )
+
+    # User edits recipe
+    updated = create_or_update_recipe(
+        {
+            "name": "Approved Garlic Bread",
+            "directions": "Toast for 5 minutes with garlic butter.",
+            "has_public_toggle": "1",
+            "is_public": "1",
+        },
+        recipe_id=rec.id,
+        user=user,
+    )
+    # Must remain public and approved!
+    assert updated.is_public is True
+    assert updated.is_approved is True
+
+

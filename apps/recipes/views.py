@@ -7,6 +7,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -23,6 +24,7 @@ from apps.recipes.models import Recipe, RecipeRating
 from apps.recipes.services.recipe_scraper import import_recipe_from_url, scrape_recipe_data
 from apps.recipes.services.recipe_service import (
     create_or_update_recipe,
+    fork_recipe,
     get_filter_options,
     search_recipes,
     submit_recipe_rating,
@@ -119,7 +121,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         params[f"exclude_{facet}"] = excludes[facet]
         params[facet] = includes[facet][0] if includes[facet] else ""
 
-    recipes = search_recipes(params, user=user)
+    recipes = search_recipes(params, user=user, workspace=workspace)
     filter_options = get_filter_options()
     meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
     meals = meal_plan.meals.all() if meal_plan else []
@@ -243,17 +245,23 @@ def recipe_detail_view(
     user = getattr(request, "user", None)
     is_authenticated = bool(user and user.is_authenticated)
 
+    workspace = get_active_workspace(request)
+
     # Visibility & Moderation Access Control:
     # Public & approved recipes can be viewed by anyone without logging in.
-    # Private or unapproved recipes require authentication and creator/moderator privileges.
+    # Private or unapproved recipes require authentication and creator/moderator or shared workspace privileges.
     if not (recipe.is_public and recipe.is_approved):
         if not is_authenticated:
             messages.info(request, "This recipe is private or pending moderator approval. Please sign in to view it.")
             return redirect(f"{reverse('core:login')}?next={request.path}")
-        if recipe.created_by != user and not (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
+        is_creator = (recipe.created_by == user)
+        is_staff = getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)
+        is_in_user_workspace = recipe.shared_workspaces.filter(
+            Q(owner=user) | Q(memberships__user=user)
+        ).exists()
+        if not (is_creator or is_staff or is_in_user_workspace):
             return HttpResponseForbidden("This recipe is private or pending moderator approval.")
 
-    workspace = get_active_workspace(request)
     shopping_list = get_active_list(request) if is_authenticated else None
     meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
 
@@ -262,6 +270,19 @@ def recipe_detail_view(
     user_rating = None
     if is_authenticated:
         user_rating = RecipeRating.objects.filter(recipe=recipe, user=user).first()
+
+    provenance_chain = recipe.get_provenance_chain()
+    related_versions = recipe.get_related_workspace_versions(workspace) if workspace else Recipe.objects.none()
+    is_in_current_workspace = recipe.shared_workspaces.filter(id=workspace.id).exists() if workspace else False
+    is_owner = bool(is_authenticated and recipe.created_by == user)
+
+    # Calculate who shared/copied it into this workspace
+    sharer_display = ""
+    if is_in_current_workspace:
+        if recipe.last_shared_by:
+            sharer_display = recipe.last_shared_by.get_full_name() or recipe.last_shared_by.username
+        elif recipe.created_by:
+            sharer_display = recipe.created_by.get_full_name() or recipe.created_by.username
 
     context: dict[str, Any] = {
         "workspace": workspace,
@@ -273,6 +294,11 @@ def recipe_detail_view(
         "user_rating": user_rating,
         "can_write": can_write,
         "meals": meal_plan.meals.all() if meal_plan else [],
+        "provenance_chain": provenance_chain,
+        "related_versions": related_versions,
+        "is_in_current_workspace": is_in_current_workspace,
+        "is_owner": is_owner,
+        "sharer_display": sharer_display,
     }
 
     if request.headers.get("HX-Request") and request.GET.get("modal") == "1":
@@ -298,7 +324,7 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
 
     if request.method == "POST":
         try:
-            recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user)
+            recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user, workspace=workspace)
             messages.success(request, f"Recipe '{recipe.name}' created successfully!")
             return redirect(recipe.get_absolute_url())
         except ValidationError as ve:
@@ -395,6 +421,7 @@ def recipe_edit_view(
 ) -> HttpResponse:
     """
     Edit an existing recipe entry and ingredients.
+    If the user does not own the recipe, creates a new forked version (copy-on-write).
     """
     user = getattr(request, "user", None)
     if not (user and user.is_authenticated):
@@ -406,17 +433,41 @@ def recipe_edit_view(
     if workspace and not workspace.can_write(user):
         return HttpResponseForbidden("You have read-only access to this workspace.")
 
+    is_owner = (
+        (recipe.created_by == user)
+        or (recipe.created_by is None)
+        or getattr(user, "is_superuser", False)
+        or getattr(user, "is_staff", False)
+    )
+
     if request.method == "POST":
         try:
-            create_or_update_recipe(request.POST, files=request.FILES, recipe_id=recipe.id, user=user)
-            messages.success(request, f"Recipe '{recipe.name}' updated successfully!")
-            return redirect(recipe.get_absolute_url())
+            saved_recipe = create_or_update_recipe(
+                request.POST,
+                files=request.FILES,
+                recipe_id=recipe.id,
+                user=user,
+                workspace=workspace,
+            )
+            if not is_owner:
+                messages.success(
+                    request,
+                    f"Created your version '{saved_recipe.name}' (forked from '{recipe.name}')! "
+                    f"Note: Recipes shared with a workspace or made public can be copied and modified by other members."
+                )
+            else:
+                messages.success(request, f"Recipe '{saved_recipe.name}' updated successfully!")
+            return redirect(saved_recipe.get_absolute_url())
         except ValidationError as ve:
             err_msg = getattr(ve, "message", None) or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
             messages.error(request, err_msg)
 
     filter_options = get_filter_options()
     all_recipes = Recipe.objects.exclude(id=recipe.id).order_by("name")
+
+    user_display = (user.first_name or user.username) if user else "My"
+    suggested_fork_name = f"{user_display}'s version of {recipe.name}"
+    original_workspaces = recipe.shared_workspaces.all()
 
     context: dict[str, Any] = {
         "workspace": workspace,
@@ -425,6 +476,10 @@ def recipe_edit_view(
         "filter_options": filter_options,
         "all_recipes": all_recipes,
         "is_edit": True,
+        "is_owner": is_owner,
+        "is_fork_mode": not is_owner,
+        "suggested_fork_name": suggested_fork_name,
+        "original_workspaces": original_workspaces,
     }
     return render(request, "recipes/recipe_form.html", context)
 
@@ -497,6 +552,7 @@ def recipe_prompt_mealplan_view(
     meal_plan = get_active_meal_plan(request, workspace)
     meals = meal_plan.meals.all() if meal_plan else []
     can_write = workspace.can_write(user) if workspace else True
+    is_in_workspace = recipe.shared_workspaces.filter(id=workspace.id).exists() if workspace else False
 
     context = {
         "recipe": recipe,
@@ -504,6 +560,7 @@ def recipe_prompt_mealplan_view(
         "meal_plan": meal_plan,
         "workspace": workspace,
         "can_write": can_write,
+        "is_in_workspace": is_in_workspace,
     }
     return render(request, "recipes/partials/add_to_mealplan_modal.html", context)
 
@@ -516,6 +573,7 @@ def recipe_add_to_mealplan_view(
 ) -> HttpResponse:
     """
     Add a recipe to a meal plan meal entry, creating a new meal if requested or needed.
+    Enforces that recipes must be associated with the active workspace.
     """
     user = getattr(request, "user", None)
     if not (user and user.is_authenticated):
@@ -525,6 +583,24 @@ def recipe_add_to_mealplan_view(
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     shopping_list = get_active_list(request)
+
+    workspace_action = request.POST.get("workspace_action", "").strip().lower()
+    if workspace and not recipe.shared_workspaces.filter(id=workspace.id).exists():
+        if workspace_action == "copy" or request.POST.get("copy_to_workspace") in ("1", "true", "yes"):
+            recipe = fork_recipe(recipe, user, target_workspaces=[workspace])
+        elif workspace_action == "share" or request.POST.get("share_to_workspace") in ("1", "true", "yes"):
+            recipe.shared_workspaces.add(workspace)
+            recipe.last_shared_by = user
+            recipe.save(update_fields=["last_shared_by"])
+        elif recipe.created_by == user or (not recipe.shared_workspaces.exists() and not recipe.is_public):
+            recipe.shared_workspaces.add(workspace)
+            recipe.last_shared_by = user
+            recipe.save(update_fields=["last_shared_by"])
+        else:
+            context = {
+                "toast_message": f"⚠️ Recipe '{recipe.name}' is not in workspace '{workspace.name}'. Please copy or share it with this workspace first.",
+            }
+            return render(request, "recipes/partials/toast_oob.html", context)
 
     meal_id = request.POST.get("meal_id", "").strip()
     meal_name = request.POST.get("meal_name", "").strip()
@@ -542,7 +618,14 @@ def recipe_add_to_mealplan_view(
         target_name = meal_name or f"{recipe.name} Dinner"
         meal = add_meal_to_plan(meal_plan, target_name)
 
-    added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request, scale_factor=scale_factor)
+    try:
+        added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request, scale_factor=scale_factor)
+    except ValidationError as ve:
+        err_msg = getattr(ve, "message", None) or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
+        context = {
+            "toast_message": f"⚠️ {err_msg}",
+        }
+        return render(request, "recipes/partials/toast_oob.html", context)
 
     scale_tag = f" ({scale_factor.normalize():f}x)" if scale_factor != Decimal("1.00") else ""
     toast_msg = f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name} and loaded {len(added_descriptions)} ingredients onto Shopping List"
@@ -550,3 +633,31 @@ def recipe_add_to_mealplan_view(
         "toast_message": toast_msg,
     }
     return render(request, "recipes/partials/toast_oob.html", context)
+
+
+@require_POST
+def recipe_copy_to_workspace_view(
+    request: HttpRequest,
+    recipe_id: int | None = None,
+    slug: str | None = None,
+) -> HttpResponse:
+    """
+    1-click copy/fork of an existing recipe into the active workspace.
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Must be logged in to copy recipes.")
+
+    workspace = get_active_workspace(request)
+    if not workspace:
+        messages.error(request, "No active workspace selected.")
+        return redirect("recipes:list")
+
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
+    forked = fork_recipe(recipe, user, target_workspaces=[workspace])
+    messages.success(
+        request,
+        f"Copied '{forked.name}' into workspace '{workspace.name}'! "
+        f"Note: Recipes shared with a workspace or made public can be copied and modified by other members."
+    )
+    return redirect(forked.get_absolute_url())

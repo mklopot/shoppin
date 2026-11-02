@@ -147,6 +147,14 @@ class Command(BaseCommand):
                 existing = existing_recipes.get(norm_key) or existing_by_slug.get(target_slug)
 
                 if existing:
+                    # Ensure legacy catalog recipes are always public and approved
+                    if not existing.is_public or not existing.is_approved:
+                        if not dry_run:
+                            existing.is_public = True
+                            existing.is_approved = True
+                            existing.save(update_fields=["is_public", "is_approved"])
+                        self.stdout.write(self.style.SUCCESS(f"  • Restored public/approved status for: {clean_name}"))
+
                     if update_existing:
                         if not dry_run:
                             changed = False

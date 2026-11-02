@@ -5,7 +5,7 @@ Service layer for recipe search, multi-faceted filtering, creation, and synchron
 from decimal import Decimal
 from typing import Any
 
-from django.db.models import Avg, F, Q, QuerySet
+from django.db.models import Avg, Case, F, IntegerField, Q, QuerySet, Value, When
 from django.http import HttpRequest
 
 from apps.core.categorizer import categorizer
@@ -131,45 +131,82 @@ def _normalize_filter_values(val: Any) -> list[str]:
     return items
 
 
-def search_recipes(params: dict[str, Any], user: Any = None) -> QuerySet[Recipe]:
+def search_recipes(
+    params: dict[str, Any],
+    user: Any = None,
+    workspace: Any = None,
+) -> QuerySet[Recipe]:
     """
     Search and filter recipes using multiple query parameters.
     Supports including and excluding multiple values per attribute.
 
     Anonymous guests see publicly published and approved recipes. Authenticated
-    users also see their own unpublished/pending recipes, while moderators (staff)
-    can browse all recipes.
+    users also see their own unpublished/pending recipes and recipes shared to
+    workspaces they are members of, while moderators (staff) can browse all recipes.
 
     Args:
         params: Dictionary containing filter options (e.g. q, sort,
                 include_<facet>, exclude_<facet>, or legacy single <facet>).
         user: Optional requesting user instance.
+        workspace: Optional active Workspace instance.
 
     Returns:
         Filtered and sorted QuerySet of Recipe objects.
     """
     if user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
-        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").all()
+        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with", "shared_workspaces").all()
     elif user and user.is_authenticated:
-        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").filter(
-            Q(is_public=True, is_approved=True) | Q(created_by=user)
-        )
+        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with", "shared_workspaces").filter(
+            Q(is_public=True, is_approved=True)
+            | Q(created_by=user)
+            | Q(shared_workspaces__owner=user)
+            | Q(shared_workspaces__memberships__user=user)
+        ).distinct()
     else:
-        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with").filter(
+        qs = Recipe.objects.prefetch_related("ingredients", "ratings", "serve_with", "shared_workspaces").filter(
             is_public=True, is_approved=True
         )
 
+    if workspace and params.get("workspace_only") in ("1", "true", True):
+        qs = qs.filter(shared_workspaces=workspace)
+
     # 1. Free-text search
-    q_str = str(params.get("q", "")).strip()
+    q_str = str(params.get("q", "")).strip().strip("'\"")
     if q_str:
-        qs = qs.filter(
+        words = [w for w in q_str.split() if w]
+        phrase_q = (
             Q(name__icontains=q_str)
             | Q(description__icontains=q_str)
             | Q(directions__icontains=q_str)
             | Q(cuisine__icontains=q_str)
             | Q(dish_type__icontains=q_str)
             | Q(ingredients__name__icontains=q_str)
-        ).distinct()
+        )
+        if len(words) > 1:
+            words_q = Q()
+            for w in words:
+                words_q &= (
+                    Q(name__icontains=w)
+                    | Q(description__icontains=w)
+                    | Q(directions__icontains=w)
+                    | Q(cuisine__icontains=w)
+                    | Q(dish_type__icontains=w)
+                    | Q(ingredients__name__icontains=w)
+                )
+            qs = qs.filter(phrase_q | words_q).distinct()
+        else:
+            qs = qs.filter(phrase_q).distinct()
+
+        # Score relevance so matches in the recipe name appear at the top
+        qs = qs.annotate(
+            search_relevance=Case(
+                When(name__iexact=q_str, then=Value(1)),
+                When(name__istartswith=q_str, then=Value(2)),
+                When(name__icontains=q_str, then=Value(3)),
+                default=Value(4),
+                output_field=IntegerField(),
+            )
+        )
 
     # 2. Multi-facet filtering with Include (+) and Exclude (-)
     # Facet definitions: key -> (field_name, is_json_array)
@@ -228,7 +265,10 @@ def search_recipes(params: dict[str, Any], user: Any = None) -> QuerySet[Recipe]
     elif sort_key == "name_desc":
         qs = qs.order_by("-name")
     else:
-        qs = qs.order_by("name")
+        if q_str:
+            qs = qs.order_by("search_relevance", "name")
+        else:
+            qs = qs.order_by("name")
 
     return qs
 
@@ -288,11 +328,108 @@ def parse_tag_list(raw_input: Any) -> list[str]:
     return []
 
 
+def generate_unique_recipe_name(base_name: str, exclude_id: int | None = None) -> str:
+    """Generate a unique recipe name if base_name is already taken."""
+    name = base_name.strip()
+    qs = Recipe.objects.all()
+    if exclude_id:
+        qs = qs.exclude(id=exclude_id)
+    if not qs.filter(name__iexact=name).exists():
+        return name
+    counter = 2
+    while qs.filter(name__iexact=f"{name} ({counter})").exists():
+        counter += 1
+    return f"{name} ({counter})"
+
+
+def fork_recipe(
+    source_recipe: Recipe,
+    user: Any,
+    target_workspaces: list[Any] | None = None,
+    new_name: str | None = None,
+    copy_ingredients: bool = True,
+) -> Recipe:
+    """
+    Fork an existing recipe creating a new independent copy with full provenance links.
+    """
+    user_name = (user.first_name or user.username) if (user and user.is_authenticated) else "Someone"
+    if not new_name:
+        default_name = f"{user_name}'s version of {source_recipe.name}"
+        new_name = generate_unique_recipe_name(default_name)
+    else:
+        new_name = generate_unique_recipe_name(new_name)
+
+    root = source_recipe.root_recipe or source_recipe
+    orig_author = source_recipe.original_author or source_recipe.created_by
+    orig_author_name = source_recipe.original_author_display
+    orig_created_at = source_recipe.original_date
+
+    source_author_name = (
+        (source_recipe.created_by.get_full_name() or source_recipe.created_by.username)
+        if source_recipe.created_by
+        else "Community Cook"
+    )
+
+    forked = Recipe.objects.create(
+        name=new_name,
+        description=source_recipe.description,
+        directions=source_recipe.directions,
+        cuisine=source_recipe.cuisine,
+        dish_type=source_recipe.dish_type,
+        difficulty_level=source_recipe.difficulty_level,
+        portions=source_recipe.portions,
+        prep_time_minutes=source_recipe.prep_time_minutes,
+        cook_time_minutes=source_recipe.cook_time_minutes,
+        storage_instructions=source_recipe.storage_instructions,
+        reheating_instructions=source_recipe.reheating_instructions,
+        dietary_restrictions=list(source_recipe.dietary_restrictions or []),
+        meal_type=list(source_recipe.meal_type or []),
+        occasions=list(source_recipe.occasions or []),
+        special_equipment=list(source_recipe.special_equipment or []),
+        bibliography=list(source_recipe.bibliography or []),
+        photo_urls=list(source_recipe.photo_urls or []),
+        photo_file=source_recipe.photo_file if source_recipe.photo_file else None,
+        is_public=False,
+        is_approved=False,
+        created_by=user if (user and user.is_authenticated) else None,
+        forked_from=source_recipe,
+        forked_from_title=source_recipe.name,
+        forked_from_author_name=source_author_name,
+        root_recipe=root,
+        original_author=orig_author,
+        original_author_name=orig_author_name,
+        original_created_at=orig_created_at,
+        last_shared_by=user if (user and user.is_authenticated) else None,
+    )
+
+    if target_workspaces:
+        for ws in target_workspaces:
+            if ws:
+                forked.shared_workspaces.add(ws)
+
+    if copy_ingredients:
+        for ing in source_recipe.ingredients.all():
+            Ingredient.objects.create(
+                recipe=forked,
+                name=ing.name,
+                amount=ing.amount,
+                amount_unit=ing.amount_unit,
+                optional=ing.optional,
+                brand=ing.brand,
+                vendor=ing.vendor,
+                category=ing.category,
+                order=ing.order,
+            )
+
+    return forked
+
+
 def create_or_update_recipe(
     data: dict[str, Any],
     files: Any = None,
     recipe_id: int | None = None,
     user: Any = None,
+    workspace: Any = None,
 ) -> Recipe:
     """
     Create a new recipe or update an existing one, parsing metadata, uploaded photos, and ingredients.
@@ -365,40 +502,111 @@ def create_or_update_recipe(
     else:
         is_public = False
 
+    existing_recipe: Recipe | None = None
+    is_owner = True
     if recipe_id:
-        recipe = Recipe.objects.get(id=recipe_id)
-        recipe.name = name
-        recipe.description = description
-        recipe.directions = directions
-        recipe.cuisine = cuisine
-        recipe.dish_type = dish_type
-        recipe.difficulty_level = difficulty
-        recipe.portions = portions
-        recipe.prep_time_minutes = prep_time
-        recipe.cook_time_minutes = cook_time
-        recipe.storage_instructions = storage_instructions
-        recipe.reheating_instructions = reheating_instructions
-        recipe.dietary_restrictions = dietary_restrictions
-        recipe.meal_type = meal_type
-        recipe.occasions = occasions
-        recipe.special_equipment = special_equipment
-        recipe.bibliography = bibliography
-        recipe.photo_urls = photo_urls
+        existing_recipe = Recipe.objects.get(id=recipe_id)
+        if user and user.is_authenticated:
+            is_owner = (
+                (existing_recipe.created_by_id == user.id)
+                or (existing_recipe.created_by is None)
+                or getattr(user, "is_superuser", False)
+                or getattr(user, "is_staff", False)
+            )
+        else:
+            is_owner = False
 
-        if has_public_toggle:
-            recipe.is_public = is_public
-            if not is_public:
-                recipe.is_approved = False
-            elif is_public and not getattr(user, "is_staff", False) and not getattr(user, "is_superuser", False):
-                # If user toggled to public, require moderator review
-                recipe.is_approved = False
+        if not is_owner:
+            # Copy-on-write: Modifying a recipe you don't own creates a copy
+            user_display = (user.first_name or user.username) if (user and user.is_authenticated) else "Someone"
+            default_name = f"{user_display}'s version of {existing_recipe.name}"
+            if not name or name == existing_recipe.name:
+                name = generate_unique_recipe_name(default_name)
+            else:
+                name = generate_unique_recipe_name(name)
 
-        if data.get("clear_photo") in ("1", "true", True):
-            recipe.photo_file = None
-        elif files and "photo_file" in files and files["photo_file"]:
-            recipe.photo_file = files["photo_file"]
+            root = existing_recipe.root_recipe or existing_recipe
+            orig_author = existing_recipe.original_author or existing_recipe.created_by
+            orig_author_name = existing_recipe.original_author_display
+            orig_created_at = existing_recipe.original_date
+            source_author = (
+                (existing_recipe.created_by.get_full_name() or existing_recipe.created_by.username)
+                if existing_recipe.created_by
+                else "Community Cook"
+            )
 
-        recipe.save()
+            recipe = Recipe.objects.create(
+                name=name,
+                description=description,
+                directions=directions,
+                cuisine=cuisine,
+                dish_type=dish_type,
+                difficulty_level=difficulty,
+                portions=portions,
+                prep_time_minutes=prep_time,
+                cook_time_minutes=cook_time,
+                storage_instructions=storage_instructions,
+                reheating_instructions=reheating_instructions,
+                dietary_restrictions=dietary_restrictions,
+                meal_type=meal_type,
+                occasions=occasions,
+                special_equipment=special_equipment,
+                bibliography=bibliography,
+                photo_urls=photo_urls,
+                photo_file=files.get("photo_file") if (files and "photo_file" in files) else existing_recipe.photo_file,
+                is_public=False,
+                is_approved=False,
+                created_by=user if (user and user.is_authenticated) else None,
+                forked_from=existing_recipe,
+                forked_from_title=existing_recipe.name,
+                forked_from_author_name=source_author,
+                root_recipe=root,
+                original_author=orig_author,
+                original_author_name=orig_author_name,
+                original_created_at=orig_created_at,
+                last_shared_by=user if (user and user.is_authenticated) else None,
+            )
+        else:
+            recipe = existing_recipe
+            recipe.name = name
+            recipe.description = description
+            recipe.directions = directions
+            recipe.cuisine = cuisine
+            recipe.dish_type = dish_type
+            recipe.difficulty_level = difficulty
+            recipe.portions = portions
+            recipe.prep_time_minutes = prep_time
+            recipe.cook_time_minutes = cook_time
+            recipe.storage_instructions = storage_instructions
+            recipe.reheating_instructions = reheating_instructions
+            recipe.dietary_restrictions = dietary_restrictions
+            recipe.meal_type = meal_type
+            recipe.occasions = occasions
+            recipe.special_equipment = special_equipment
+            recipe.bibliography = bibliography
+            recipe.photo_urls = photo_urls
+
+            if has_public_toggle:
+                recipe.is_public = is_public
+                if not is_public:
+                    recipe.is_approved = False
+                elif is_public:
+                    # If recipe was already approved, keep it approved!
+                    # Only require moderation if it was previously NOT approved and user is non-staff
+                    if not existing_recipe.is_approved and not getattr(user, "is_staff", False) and not getattr(user, "is_superuser", False):
+                        recipe.is_approved = False
+                    elif existing_recipe.is_approved:
+                        recipe.is_approved = True
+
+            if recipe.created_by is None and user and user.is_authenticated:
+                recipe.created_by = user
+
+            if data.get("clear_photo") in ("1", "true", True):
+                recipe.photo_file = None
+            elif files and "photo_file" in files and files["photo_file"]:
+                recipe.photo_file = files["photo_file"]
+
+            recipe.save()
     else:
         if has_public_toggle:
             is_approved = is_public and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or user is None)
@@ -427,6 +635,7 @@ def create_or_update_recipe(
             is_public=is_public,
             is_approved=is_approved,
             created_by=user if user and user.is_authenticated else None,
+            last_shared_by=user if user and user.is_authenticated else None,
         )
 
     # Process ingredients if provided in data
@@ -470,6 +679,43 @@ def create_or_update_recipe(
     serve_with_ids = data.getlist("serve_with[]") if hasattr(data, "getlist") else data.get("serve_with[]", [])
     if serve_with_ids:
         recipe.serve_with.set(Recipe.objects.filter(id__in=serve_with_ids))
+
+    # Workspace Association & Sharing Destinations
+    sharing_dest = str(data.get("sharing_destination", "")).strip().lower()
+    if sharing_dest == "private":
+        recipe.shared_workspaces.clear()
+    elif sharing_dest == "original" and existing_recipe:
+        recipe.shared_workspaces.set(existing_recipe.shared_workspaces.all())
+        if user and user.is_authenticated:
+            recipe.last_shared_by = user
+            recipe.save(update_fields=["last_shared_by"])
+    elif sharing_dest == "both" and existing_recipe:
+        workspaces_to_add = set(existing_recipe.shared_workspaces.all())
+        if workspace:
+            workspaces_to_add.add(workspace)
+        recipe.shared_workspaces.set(workspaces_to_add)
+        if user and user.is_authenticated:
+            recipe.last_shared_by = user
+            recipe.save(update_fields=["last_shared_by"])
+    elif sharing_dest in ("current", "workspace", "active_workspace"):
+        if workspace:
+            recipe.shared_workspaces.set([workspace])
+            if user and user.is_authenticated:
+                recipe.last_shared_by = user
+                recipe.save(update_fields=["last_shared_by"])
+    elif "share_workspaces" in data:
+        ws_ids = data.getlist("share_workspaces") if hasattr(data, "getlist") else data.get("share_workspaces")
+        if ws_ids:
+            recipe.shared_workspaces.set(ws_ids)
+            if user and user.is_authenticated:
+                recipe.last_shared_by = user
+                recipe.save(update_fields=["last_shared_by"])
+    elif workspace and (not recipe_id or not is_owner):
+        # Default association for newly created recipes or newly created forks in workspace context
+        recipe.shared_workspaces.add(workspace)
+        if user and user.is_authenticated:
+            recipe.last_shared_by = user
+            recipe.save(update_fields=["last_shared_by"])
 
     # Recalculate nutritional analysis for the updated ingredients and portions
     try:

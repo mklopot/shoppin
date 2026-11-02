@@ -170,6 +170,52 @@ class Recipe(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Workspace Associations
+    shared_workspaces = models.ManyToManyField(
+        "core.Workspace",
+        blank=True,
+        related_name="associated_recipes",
+        help_text="Workspaces where this recipe is accessible and eligible for meal planning.",
+    )
+    last_shared_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shared_recipes",
+        help_text="User who most recently shared or copied this recipe into a workspace",
+    )
+
+    # Provenance & Version Lineage
+    forked_from = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="forks",
+        help_text="Immediate recipe this was copied/modified from",
+    )
+    forked_from_title = models.CharField(max_length=255, blank=True)
+    forked_from_author_name = models.CharField(max_length=255, blank=True)
+
+    root_recipe = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="all_descendants",
+        help_text="The ultimate original root recipe in the provenance chain",
+    )
+    original_author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="original_recipes_seeded",
+    )
+    original_author_name = models.CharField(max_length=255, blank=True)
+    original_created_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["name"]
 
@@ -180,7 +226,8 @@ class Recipe(models.Model):
         check_model_instance_for_moderation(self)
 
     def save(self, *args, **kwargs) -> None:
-        """Auto-populate URL slug from name if not specified and ensure uniqueness."""
+        """Auto-populate URL slug from name if not specified, ensure uniqueness, and maintain provenance metadata."""
+        is_new = self.pk is None
         if not self.slug:
             base_slug = slugify(self.name) or "recipe"
             slug = base_slug
@@ -189,7 +236,18 @@ class Recipe(models.Model):
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
+
+        # Seed original author snapshot if original root recipe
+        if not self.forked_from_id and not self.original_author_name and self.created_by:
+            self.original_author = self.original_author or self.created_by
+            self.original_author_name = self.created_by.get_full_name() or self.created_by.username
+
         super().save(*args, **kwargs)
+
+        # Set root_recipe to self if original root and not already linked
+        if is_new and not self.forked_from_id and not self.root_recipe_id:
+            Recipe.objects.filter(pk=self.pk).update(root_recipe=self)
+            self.root_recipe = self
 
     def __str__(self) -> str:
         """Return the recipe title."""
@@ -200,6 +258,111 @@ class Recipe(models.Model):
         if self.slug:
             return reverse("recipes:detail_slug", kwargs={"slug": self.slug})
         return reverse("recipes:detail", kwargs={"recipe_id": self.id})
+
+    @property
+    def original_author_display(self) -> str:
+        """Display name of original author, falling back through root and snapshot fields."""
+        if self.original_author:
+            name = self.original_author.get_full_name() or self.original_author.username
+            if name:
+                return name
+        if self.original_author_name:
+            return self.original_author_name
+        if self.root_recipe and self.root_recipe.created_by:
+            name = self.root_recipe.created_by.get_full_name() or self.root_recipe.created_by.username
+            if name:
+                return name
+        if self.created_by:
+            return self.created_by.get_full_name() or self.created_by.username
+        return "Community Cook"
+
+    @property
+    def original_date(self):
+        """Date of original recipe creation."""
+        if self.original_created_at:
+            return self.original_created_at
+        if self.root_recipe and self.root_recipe.created_at:
+            return self.root_recipe.created_at
+        return self.created_at
+
+    def get_provenance_chain(self) -> list[dict]:
+        """
+        Traverse up the forked_from chain to return the full ancestry of this recipe.
+        Safely prevents cycles and falls back to snapshot fields if parent records were deleted.
+        """
+        chain: list[dict] = []
+        current: Recipe | None = self
+        visited_ids: set[int] = set()
+
+        while current:
+            if current.id in visited_ids:
+                break
+            visited_ids.add(current.id)
+
+            author_name = "Community Cook"
+            if current.created_by:
+                author_name = current.created_by.get_full_name() or current.created_by.username
+            elif current.original_author_name:
+                author_name = current.original_author_name
+
+            chain.append({
+                "recipe": current,
+                "name": current.name,
+                "author": author_name,
+                "author_id": current.created_by_id,
+                "created_at": current.created_at,
+                "is_current": (current.id == self.id),
+                "slug": current.slug,
+            })
+
+            parent = current.forked_from
+            if not parent and current.forked_from_title:
+                # Historical snapshot fallback
+                chain.append({
+                    "recipe": None,
+                    "name": current.forked_from_title,
+                    "author": current.forked_from_author_name or "Original Chef",
+                    "author_id": None,
+                    "created_at": None,
+                    "is_current": False,
+                    "slug": None,
+                })
+                break
+            current = parent
+
+        # If chain only has self, but root_recipe is different from self
+        if len(chain) == 1 and self.root_recipe_id and self.root_recipe_id != self.id:
+            root = self.root_recipe
+            root_author = "Community Cook"
+            if root and root.created_by:
+                root_author = root.created_by.get_full_name() or root.created_by.username
+            elif self.original_author_name:
+                root_author = self.original_author_name
+            if root:
+                chain.append({
+                    "recipe": root,
+                    "name": root.name,
+                    "author": root_author,
+                    "author_id": root.created_by_id,
+                    "created_at": root.created_at,
+                    "is_current": False,
+                    "slug": root.slug,
+                })
+
+        return chain
+
+    def get_related_workspace_versions(self, workspace) -> models.QuerySet:
+        """
+        Find all other recipes in the same workspace that share the same root ancestor.
+        """
+        if not workspace:
+            return Recipe.objects.none()
+        root_id = self.root_recipe_id or self.id
+        return Recipe.objects.filter(
+            shared_workspaces=workspace
+        ).filter(
+            models.Q(root_recipe_id=root_id) | models.Q(id=root_id)
+        ).exclude(id=self.id).distinct().order_by("name")
 
     @property
     def average_rating(self) -> float | None:

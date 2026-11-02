@@ -6,6 +6,7 @@ ingredient loading onto the shopping list, and cooking readiness calculation.
 from decimal import Decimal
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import HttpRequest
 
@@ -127,10 +128,12 @@ def add_recipe_to_meal(
     shopping_list: ShoppingList,
     request: HttpRequest | None = None,
     scale_factor: Decimal | float | str = Decimal("1.00"),
+    enforce_workspace: bool = True,
 ) -> list[str]:
     """
     Add a recipe dish to a meal and populate its ingredients onto the shopping list,
     optionally scaled up or down by a given factor.
+    Enforces that the recipe must be associated with the meal plan's workspace.
 
     Args:
         meal: Target Meal.
@@ -138,10 +141,25 @@ def add_recipe_to_meal(
         shopping_list: Workspace active ShoppingList.
         request: Optional HttpRequest for attribution / WebSocket sender client ID.
         scale_factor: Portion scaling factor (e.g. 0.5, 1.0, 2.0).
+        enforce_workspace: If True, validates recipe workspace association.
 
     Returns:
         List of formatted strings describing each added or combined ingredient.
     """
+    workspace = meal.meal_plan.workspace if meal.meal_plan else None
+    if enforce_workspace and workspace:
+        if not recipe.shared_workspaces.filter(id=workspace.id).exists():
+            user = getattr(request, "user", None)
+            # If the recipe is newly created by a workspace member or in a personal draft
+            if recipe.created_by and workspace.can_read(recipe.created_by) and not recipe.shared_workspaces.exists():
+                recipe.shared_workspaces.add(workspace)
+            elif not recipe.shared_workspaces.exists() and not recipe.is_public:
+                recipe.shared_workspaces.add(workspace)
+            else:
+                raise ValidationError(
+                    f"Recipe '{recipe.name}' must be associated with or copied into workspace '{workspace.name}' before adding to its meal plan."
+                )
+
     try:
         factor = Decimal(str(scale_factor))
         if factor <= Decimal("0"):

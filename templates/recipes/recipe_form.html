@@ -16,12 +16,26 @@
     <!-- Page Title -->
     <div>
         <h1 class="text-xl font-bold text-gray-900 tracking-tight">
-            {% if is_edit %}✏️ Edit Recipe: {{ recipe.name }}{% else %}➕ Create New Recipe{% endif %}
+            {% if is_fork_mode %}🍴 Adapt Recipe: {{ recipe.name }}{% elif is_edit %}✏️ Edit Recipe: {{ recipe.name }}{% else %}➕ Create New Recipe{% endif %}
         </h1>
         <p class="text-xs text-gray-500">
-            Fill in the recipe specifications, ingredients, directions, and dietary metadata.
+            {% if is_fork_mode %}Create your own modified version. The original will remain untouched.{% else %}Fill in the recipe specifications, ingredients, directions, and dietary metadata.{% endif %}
         </p>
     </div>
+
+    {% if is_fork_mode %}
+    <!-- Copy-on-Write Fork Notice -->
+    <div class="bg-amber-50 border border-amber-300 p-4 space-y-2">
+        <div class="flex items-center space-x-2 text-amber-950 font-bold text-xs uppercase tracking-wider">
+            <span>🍴</span>
+            <span>Adapting "{{ recipe.name }}" (Creating Your Version)</span>
+        </div>
+        <p class="text-xs text-amber-900">
+            This recipe was created by <strong>{{ recipe.original_author_display }}</strong>.
+            Making modifications will create a new copy attributed to you, while preserving full provenance and historical attribution.
+        </p>
+    </div>
+    {% endif %}
 
     {% if not is_edit %}
     <!-- Import from Webpage URL Bar -->
@@ -111,7 +125,7 @@
                            id="id_name"
                            name="name"
                            required
-                           value="{% if recipe %}{{ recipe.name }}{% endif %}"
+                           value="{% if is_fork_mode %}{{ suggested_fork_name }}{% elif recipe %}{{ recipe.name }}{% endif %}"
                            placeholder="e.g. Grandma's Chicken Pot Pie, Soviet Olivier Salad, Beef Tacos..."
                            class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none font-medium">
                 </div>
@@ -594,6 +608,52 @@
                               rows="5"
                               placeholder="Enter one source URL or book citation per line, e.g.:&#10;https://cooking.nytimes.com/...&#10;The Joy of Cooking, 75th Anniversary Edition, p. 240"
                               class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">{% if recipe and recipe.bibliography %}{% for b in recipe.bibliography %}{{ b }}&#10;{% endfor %}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sharing Decision & Workspace Association -->
+        <div class="bg-white border border-gray-300 p-4 space-y-3">
+            <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wider">Sharing & Workspace Association</h3>
+            <p class="text-xs text-gray-600">Choose who can view, adapt, and schedule this recipe version on meal plans:</p>
+
+            <div class="space-y-2 text-xs">
+                {% if original_workspaces %}
+                <label class="flex items-start space-x-2 cursor-pointer p-2 border border-gray-200 hover:bg-gray-50">
+                    <input type="radio" name="sharing_destination" value="original" class="mt-0.5 text-gray-900 focus:ring-gray-500">
+                    <div>
+                        <span class="font-bold text-gray-900">Share back to original workspace(s)</span>
+                        <span class="text-gray-500 block text-[11px]">
+                            Share with: {% for ws in original_workspaces %}{{ ws.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </span>
+                    </div>
+                </label>
+                {% endif %}
+
+                {% if workspace %}
+                <label class="flex items-start space-x-2 cursor-pointer p-2 border border-gray-200 hover:bg-gray-50">
+                    <input type="radio" name="sharing_destination" value="current" checked class="mt-0.5 text-gray-900 focus:ring-gray-500">
+                    <div>
+                        <span class="font-bold text-gray-900">Share with current workspace: {{ workspace.name }}</span>
+                        <span class="text-gray-500 block text-[11px]">Visible to all members of {{ workspace.name }} and eligible for this workspace's meal plans.</span>
+                    </div>
+                </label>
+                {% endif %}
+
+                <label class="flex items-start space-x-2 cursor-pointer p-2 border border-gray-200 hover:bg-gray-50">
+                    <input type="radio" name="sharing_destination" value="private" {% if not workspace and not original_workspaces %}checked{% endif %} class="mt-0.5 text-gray-900 focus:ring-gray-500">
+                    <div>
+                        <span class="font-bold text-gray-900">Keep Private (Only Me)</span>
+                        <span class="text-gray-500 block text-[11px]">Only you can view or edit this recipe. It cannot be scheduled on shared workspace meal plans until shared.</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Mandatory Sharing Warning -->
+            <div class="p-2.5 bg-yellow-50 border border-yellow-300 text-yellow-950 text-xs flex items-start space-x-2 mt-2">
+                <span class="text-sm">⚠️</span>
+                <div class="text-[11px]">
+                    <strong>Sharing Notice:</strong> Any recipe shared with a workspace or published publicly can be copied, adapted, and modified into new versions by other users.
                 </div>
             </div>
         </div>

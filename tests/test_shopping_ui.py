@@ -971,6 +971,9 @@ def test_pantry_check_need_reset_toggle(client, active_list):
     assert "↺ Reset" in lock_html
     assert "item-need-tag" in lock_html
     assert "📋 You set" in lock_html
+    # Have button is not rendered while locked
+    lock_row = [r for r in lock_html.split('id="item-row-') if r.startswith(f'{item.id}"')][0]
+    assert "🏠 Have" not in lock_row
 
     # 3. Toggle lock again (Reset pressed -> changes to unlocked / Need)
     res_unlock = client.post(reverse("shopping:toggle_lock", args=[item.id]) + "?mode=pantry")
@@ -980,7 +983,9 @@ def test_pantry_check_need_reset_toggle(client, active_list):
     assert item.locked is False
     assert 'data-locked="false"' in unlock_html
     assert "📋 Need" in unlock_html
-    assert "🏠 Have" in unlock_html
+    # Reset brings back the Have button
+    unlock_row = [r for r in unlock_html.split('id="item-row-') if r.startswith(f'{item.id}"')][0]
+    assert "🏠 Have" in unlock_row
     assert "You unchecked" in unlock_html
 
 

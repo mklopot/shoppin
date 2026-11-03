@@ -435,9 +435,28 @@
             }
 
             // Restore the "Have" button if in pantry mode
-            const haveForm = row.querySelector('form[action*="/status/HAVE"], form[hx-post*="/status/HAVE"]');
+            let haveForm = row.querySelector('form[action*="/status/HAVE"], form[hx-post*="/status/HAVE"]');
             if (haveForm) {
                 haveForm.classList.remove('hidden');
+            } else {
+                const lockForm = lockBtn?.closest('form') || row.querySelector('form[action*="/lock/"], form[hx-post*="/lock/"]');
+                if (lockForm) {
+                    const groupBy = document.getElementById('section-groups-container')?.getAttribute('data-group-by') || 'category';
+                    const mode = document.querySelector('input[name="mode"]')?.value || 'pantry';
+                    const csrf = getCsrfToken();
+                    haveForm = document.createElement('form');
+                    haveForm.setAttribute('hx-post', `/item/${itemId}/status/HAVE/?group_by=${groupBy}&mode=${mode}`);
+                    haveForm.setAttribute('hx-target', '#shopping-list-content');
+                    haveForm.setAttribute('hx-swap', 'outerHTML transition:true');
+                    haveForm.className = 'have-status-form';
+                    haveForm.innerHTML = `
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+                        <button type="submit" aria-label="Mark ${itemName} as have at home" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold rounded-none">
+                            🏠 Have
+                        </button>
+                    `;
+                    lockForm.before(haveForm);
+                }
             }
 
             // In store mode, restore the "pantry check needed" button if present

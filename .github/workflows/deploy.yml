@@ -54,5 +54,6 @@ jobs:
           script: |
             set -e
             echo "==> Executing automated production update on Lightsail..."
+            cd /app && git reset --hard HEAD
             bash /app/deploy/lightsail/update.sh
             echo "==> Production update finished successfully!"

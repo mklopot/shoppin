@@ -10,6 +10,9 @@ set -euo pipefail
 APP_DIR="/app"
 cd "$APP_DIR"
 
+echo "==> Discarding any local tracked modifications..."
+git reset --hard HEAD
+
 echo "==> Pulling latest code from git..."
 git pull origin v2-django
 

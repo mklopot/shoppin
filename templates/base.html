@@ -571,6 +571,7 @@
             container.appendChild(toast);
             initToasts();
         }
+        window.showToast = showToast;
 
         function dismissToast(el) {
             if (!el || el.dataset.dismissing) return;

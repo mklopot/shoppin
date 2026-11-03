@@ -10,6 +10,7 @@
     'use strict';
 
     const QUEUE_STORAGE_KEY = 'shoppin_offline_actions_v1';
+    const BADGE_BASE = 'w-[120px] h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-2 py-0.5 border rounded-none select-none transition-opacity duration-200';
     let isFlushing = false;
     let syncIndicatorTimer = null;
 
@@ -49,24 +50,22 @@
         }
 
         if (queue.length > 0) {
-            indicator.classList.remove('hidden');
             if (!isOnline) {
-                indicator.textContent = `⚡ Offline (${queue.length} saved)`;
-                indicator.className = 'text-[11px] font-semibold px-2 py-0.5 border border-amber-400 bg-amber-50 text-amber-900 inline-block rounded-none select-none';
+                indicator.textContent = `⚡ Offline (${queue.length})`;
+                indicator.className = `${BADGE_BASE} opacity-100 border-amber-400 bg-amber-50 text-amber-900`;
                 indicator.setAttribute('title', `${queue.length} change(s) saved on your phone. Will sync when back online.`);
             } else {
                 indicator.textContent = `🔄 Syncing (${queue.length})...`;
-                indicator.className = 'text-[11px] font-semibold px-2 py-0.5 border border-blue-400 bg-blue-50 text-blue-900 inline-block rounded-none select-none';
+                indicator.className = `${BADGE_BASE} opacity-100 border-blue-400 bg-blue-50 text-blue-900`;
                 indicator.setAttribute('title', 'Syncing changes with server in background.');
             }
         } else {
             if (!isOnline) {
-                indicator.classList.remove('hidden');
                 indicator.textContent = '⚡ Offline';
-                indicator.className = 'text-[11px] font-semibold px-2 py-0.5 border border-amber-300 bg-amber-50 text-amber-800 inline-block rounded-none select-none';
+                indicator.className = `${BADGE_BASE} opacity-100 border-amber-300 bg-amber-50 text-amber-800`;
                 indicator.setAttribute('title', 'Working offline. You can continue checking items off.');
             } else {
-                indicator.classList.add('hidden');
+                indicator.className = `${BADGE_BASE} opacity-0 pointer-events-none border-transparent bg-transparent`;
             }
         }
     }
@@ -75,12 +74,27 @@
         const indicator = document.getElementById('offline-sync-indicator');
         if (!indicator) return;
         indicator.textContent = '✓ Saved';
-        indicator.className = 'text-[11px] font-semibold px-2 py-0.5 border border-emerald-400 bg-emerald-50 text-emerald-900 inline-block rounded-none select-none';
-        indicator.classList.remove('hidden');
+        indicator.className = `${BADGE_BASE} opacity-100 border-emerald-400 bg-emerald-50 text-emerald-900`;
         if (syncIndicatorTimer) clearTimeout(syncIndicatorTimer);
         syncIndicatorTimer = setTimeout(() => {
             updateSyncIndicator();
         }, 1800);
+    }
+
+    function triggerToast(message) {
+        if (!message) return;
+        if (typeof window.showToast === 'function') {
+            window.showToast(message);
+        } else {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer';
+            toast.innerHTML = `<span class="font-medium pr-2">${message}</span><button type="button" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>`;
+            toast.onclick = function() { toast.remove(); };
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3500);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -156,8 +170,10 @@
             `;
         }
 
-        // 6. Tactile celebration animation
+        // 6. Tactile celebration animation & instant toast
         animateRow(row, '#d1fae5');
+        const itemName = row.getAttribute('data-item-name') || 'item';
+        triggerToast(`🛒 You got '${itemName}'`);
     }
 
     function handleLocalNeed(itemId, row) {
@@ -231,6 +247,8 @@
         }
 
         animateRow(row, '#dbeafe');
+        const itemName = row.getAttribute('data-item-name') || 'item';
+        triggerToast(`📋 You moved '${itemName}' back to To Buy`);
     }
 
     function handleLocalHaveOrSkip(itemId, row, targetStatus) {
@@ -283,6 +301,12 @@
         }
 
         animateRow(row, '#e0f2fe');
+        const itemName = row.getAttribute('data-item-name') || 'item';
+        if (targetStatus === 'HAVE') {
+            triggerToast(`🏠 You marked '${itemName}' as Already in Pantry`);
+        } else {
+            triggerToast(`⏭ You skipped '${itemName}'`);
+        }
     }
 
     function handleLocalLockToggle(itemId, row, button) {
@@ -318,6 +342,7 @@
             }
 
             animateRow(row, '#dbeafe');
+            triggerToast(`📋 You set '${itemName}' to "needed"`);
         } else {
             // LOCKED -> UNLOCKED ("Reset" was pressed, flips back to "Need")
             row.setAttribute('data-locked', 'false');
@@ -344,6 +369,7 @@
             }
 
             animateRow(row, '#f3f4f6');
+            triggerToast(`You unchecked '${itemName}'`);
         }
     }
 

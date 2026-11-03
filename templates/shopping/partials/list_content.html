@@ -34,7 +34,7 @@
             <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">
                 {{ shopping_list.name }}{% if mode == 'pantry' %} <span class="text-sm font-normal text-gray-500">(Pantry Check)</span>{% endif %}
             </h1>
-            <span id="offline-sync-indicator" class="hidden text-[11px] font-semibold px-2 py-0.5 border select-none transition-all duration-150"></span>
+            <span id="offline-sync-indicator" class="opacity-0 pointer-events-none w-[120px] h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-2 py-0.5 border border-transparent rounded-none select-none transition-opacity duration-200"></span>
         </div>
     </div>
 

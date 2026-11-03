@@ -941,3 +941,81 @@ def test_empty_category_header_disappears_when_last_item_bought(client, active_l
     assert "Juices" in to_buy_after_have
 
 
+@pytest.mark.django_db
+def test_pantry_check_need_reset_toggle(client, active_list):
+    """
+    Test Pantry Check mode:
+    - Initially item has Need button and Have button.
+    - Pressing Need locks item (confirms need) and button becomes Reset.
+    - Pressing Reset unlocks item and returns Need and Have buttons.
+    """
+    item = active_list.items.first()
+    assert not item.locked
+
+    # 1. Pantry mode GET
+    res = client.get(reverse("shopping:list") + "?mode=pantry")
+    assert res.status_code == 200
+    html = res.content.decode("utf-8")
+    assert f'id="item-row-{item.id}"' in html
+    assert 'data-locked="false"' in html
+    assert "📋 Need" in html
+    assert "🏠 Have" in html
+
+    # 2. Toggle lock (Need pressed -> changes to locked / Reset)
+    res_lock = client.post(reverse("shopping:toggle_lock", args=[item.id]) + "?mode=pantry")
+    assert res_lock.status_code == 200
+    lock_html = res_lock.content.decode("utf-8")
+    item.refresh_from_db()
+    assert item.locked is True
+    assert 'data-locked="true"' in lock_html
+    assert "↺ Reset" in lock_html
+    assert "item-need-tag" in lock_html
+    assert "📋 You set" in lock_html
+
+    # 3. Toggle lock again (Reset pressed -> changes to unlocked / Need)
+    res_unlock = client.post(reverse("shopping:toggle_lock", args=[item.id]) + "?mode=pantry")
+    assert res_unlock.status_code == 200
+    unlock_html = res_unlock.content.decode("utf-8")
+    item.refresh_from_db()
+    assert item.locked is False
+    assert 'data-locked="false"' in unlock_html
+    assert "📋 Need" in unlock_html
+    assert "🏠 Have" in unlock_html
+    assert "You unchecked" in unlock_html
+
+
+def test_shopping_sync_js_syntax_integrity():
+    """
+    Ensure static/js/shopping_sync.js has balanced braces, parentheses, and brackets.
+    Prevents syntax errors that break optimistic click interception and snappiness.
+    """
+    import re
+    from pathlib import Path
+    js_path = Path(__file__).resolve().parent.parent / "static" / "js" / "shopping_sync.js"
+    assert js_path.exists(), f"Could not find {js_path}"
+
+    with open(js_path, "r", encoding="utf-8") as f:
+        code = f.read()
+
+    # Strip single-line comments
+    clean = re.sub(r"//[^\n]*", "", code)
+    # Strip block comments
+    clean = re.sub(r"/\*[\s\S]*?\*/", "", clean)
+    # Strip template literals
+    clean = re.sub(r"`[\s\S]*?`", '""', clean)
+    # Strip double and single quoted strings
+    clean = re.sub(r'"(?:\\.|[^"\\])*"', '""', clean)
+    clean = re.sub(r"'(?:\\.|[^'\\])*'", "''", clean)
+    # Strip regex literals
+    clean = re.sub(r"/(?:\\.|[^/\\\n])+/[gimsuy]*", "", clean)
+
+    # Count braces, parentheses, and brackets
+    open_b, close_b = clean.count("{"), clean.count("}")
+    open_p, close_p = clean.count("("), clean.count(")")
+    open_k, close_k = clean.count("["), clean.count("]")
+
+    assert open_b == close_b, f"Unbalanced braces in shopping_sync.js: {open_b} open vs {close_b} close"
+    assert open_p == close_p, f"Unbalanced parens in shopping_sync.js: {open_p} open vs {close_p} close"
+    assert open_k == close_k, f"Unbalanced brackets in shopping_sync.js: {open_k} open vs {close_k} close"
+
+

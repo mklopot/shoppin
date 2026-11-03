@@ -373,19 +373,11 @@
         }
     }
 
-        animateRow(row, '#e0f2fe');
-        const itemName = row.getAttribute('data-item-name') || 'item';
-        if (targetStatus === 'HAVE') {
-            triggerToast(`🏠 You marked '${itemName}' as Already in Pantry`);
-        } else {
-            triggerToast(`⏭ You skipped '${itemName}'`);
-        }
-    }
-
     function handleLocalLockToggle(itemId, row, button) {
         const isLocked = row.getAttribute('data-locked') === 'true';
         const titleEl = row.querySelector('.item-title');
         const itemName = row.getAttribute('data-item-name') || 'item';
+        const lockBtn = button || row.querySelector('form[action*="/lock/"] button, form[hx-post*="/lock/"] button');
 
         if (!isLocked) {
             // UNLOCKED -> LOCKED ("Need" was pressed, now changes to "Reset")
@@ -401,17 +393,24 @@
             }
 
             // Button flips from "Need" to "↺ Reset"
-            if (button) {
-                button.innerHTML = '↺ Reset';
-                button.className = 'border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 text-xs text-gray-800 font-semibold rounded-none';
-                button.setAttribute('title', 'Confirmed need (click to reset)');
-                button.setAttribute('aria-label', `Reset confirmed need for ${itemName}`);
+            if (lockBtn) {
+                lockBtn.innerHTML = '↺ Reset';
+                lockBtn.className = 'border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 text-xs text-gray-800 font-semibold rounded-none';
+                lockBtn.setAttribute('title', 'Confirmed need (click to reset)');
+                lockBtn.setAttribute('aria-label', `Reset confirmed need for ${itemName}`);
             }
 
             // In pantry mode, hide the "Have" button on this row since it's confirmed needed
-            const haveForm = row.querySelector('form[action*="/status/HAVE"]');
+            const haveForm = row.querySelector('form[action*="/status/HAVE"], form[hx-post*="/status/HAVE"]');
             if (haveForm) {
                 haveForm.classList.add('hidden');
+            }
+
+            // In store mode, hide the "pantry check needed" button if present
+            const checkTag = row.querySelector('button[title*="Pantry check needed"]');
+            if (checkTag) {
+                const checkForm = checkTag.closest('form');
+                if (checkForm) checkForm.classList.add('hidden');
             }
 
             animateRow(row, '#dbeafe');
@@ -428,17 +427,24 @@
             }
 
             // Button flips back to "📋 Need"
-            if (button) {
-                button.innerHTML = '📋 Need';
-                button.className = 'border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium rounded-none';
-                button.setAttribute('title', 'Check item: confirm we need to buy this');
-                button.setAttribute('aria-label', `Confirm need to buy ${itemName}`);
+            if (lockBtn) {
+                lockBtn.innerHTML = '📋 Need';
+                lockBtn.className = 'border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium rounded-none';
+                lockBtn.setAttribute('title', 'Check item: confirm we need to buy this');
+                lockBtn.setAttribute('aria-label', `Confirm need to buy ${itemName}`);
             }
 
             // Restore the "Have" button if in pantry mode
-            const haveForm = row.querySelector('form[action*="/status/HAVE"]');
+            const haveForm = row.querySelector('form[action*="/status/HAVE"], form[hx-post*="/status/HAVE"]');
             if (haveForm) {
                 haveForm.classList.remove('hidden');
+            }
+
+            // In store mode, restore the "pantry check needed" button if present
+            const checkTag = row.querySelector('button[title*="Pantry check needed"]');
+            if (checkTag) {
+                const checkForm = checkTag.closest('form');
+                if (checkForm) checkForm.classList.remove('hidden');
             }
 
             animateRow(row, '#f3f4f6');
@@ -551,7 +557,7 @@
         // /item/<id>/status/<STATUS>/
         // /item/<id>/lock/
         const statusMatch = actionUrl.match(/\/item\/(\d+)\/status\/(GOT|NEED|HAVE|DONT_NEED)/);
-        const lockMatch = actionUrl.match(/\/item\/(\d+)\/lock\//);
+        const lockMatch = actionUrl.match(/\/item\/(\d+)\/lock/);
 
         if (!statusMatch && !lockMatch) {
             return; // Not a status transition or lock toggle, let normal HTMX flow handle it

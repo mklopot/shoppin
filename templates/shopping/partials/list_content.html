@@ -29,12 +29,12 @@
     {% endif %}
 
     <!-- Top Header: Title & Real-Time Sync Indicator -->
-    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
-        <div class="flex items-center space-x-2">
-            <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">
-                {{ shopping_list.name }}{% if mode == 'pantry' %} <span class="text-sm font-normal text-gray-500">(Pantry Check)</span>{% endif %}
-            </h1>
-            <span id="offline-sync-indicator" class="opacity-0 pointer-events-none w-[120px] h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-2 py-0.5 border border-transparent rounded-none select-none transition-opacity duration-200"></span>
+    <div class="flex items-center justify-between gap-2 border-b border-gray-400 pb-2.5 min-h-[42px]">
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none min-w-0 flex-1 truncate">
+            {{ shopping_list.name }}{% if mode == 'pantry' %} <span class="text-sm font-normal text-gray-500 font-sans whitespace-nowrap">(Pantry Check)</span>{% endif %}
+        </h1>
+        <div class="flex-shrink-0 flex items-center justify-end">
+            <span id="offline-sync-indicator" class="opacity-0 pointer-events-none w-[110px] h-[22px] min-w-[110px] max-w-[110px] min-h-[22px] max-h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-1.5 py-0.5 border border-transparent rounded-none select-none transition-opacity duration-200 whitespace-nowrap overflow-hidden flex-shrink-0"></span>
         </div>
     </div>
 

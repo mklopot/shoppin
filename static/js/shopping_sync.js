@@ -10,7 +10,7 @@
     'use strict';
 
     const QUEUE_STORAGE_KEY = 'shoppin_offline_actions_v1';
-    const BADGE_BASE = 'w-[120px] h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-2 py-0.5 border rounded-none select-none transition-opacity duration-200';
+    const BADGE_BASE = 'w-[110px] h-[22px] min-w-[110px] max-w-[110px] min-h-[22px] max-h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-1.5 py-0.5 border rounded-none select-none transition-opacity duration-200 whitespace-nowrap overflow-hidden flex-shrink-0';
     let isFlushing = false;
     let syncIndicatorTimer = null;
 
@@ -51,11 +51,11 @@
 
         if (queue.length > 0) {
             if (!isOnline) {
-                indicator.textContent = `⚡ Offline (${queue.length})`;
+                indicator.textContent = queue.length > 1 ? `⚡ Offline (${queue.length})` : '⚡ Offline';
                 indicator.className = `${BADGE_BASE} opacity-100 border-amber-400 bg-amber-50 text-amber-900`;
                 indicator.setAttribute('title', `${queue.length} change(s) saved on your phone. Will sync when back online.`);
             } else {
-                indicator.textContent = `🔄 Syncing (${queue.length})...`;
+                indicator.textContent = queue.length > 1 ? `🔄 Sync (${queue.length})` : '🔄 Syncing';
                 indicator.className = `${BADGE_BASE} opacity-100 border-blue-400 bg-blue-50 text-blue-900`;
                 indicator.setAttribute('title', 'Syncing changes with server in background.');
             }
@@ -458,8 +458,12 @@
     // -------------------------------------------------------------------------
 
     function interceptAction(event) {
-        const target = event.target;
+        let target = event.target;
         if (!target) return;
+        if (target.nodeType === 3) {
+            target = target.parentElement;
+        }
+        if (!target || typeof target.closest !== 'function') return;
 
         // Check if click was inside an action button or form in the shopping list
         const button = target.closest('button[type="submit"], button');
@@ -513,18 +517,12 @@
 
     function initShoppingSync() {
         updateSyncIndicator();
-
-        const listContent = document.getElementById('shopping-list-content');
-        if (!listContent || listContent._syncInitialized) return;
-        listContent._syncInitialized = true;
-
-        // Capture event early before HTMX attaches its listeners
-        listContent.addEventListener('click', interceptAction, true);
-        listContent.addEventListener('submit', interceptAction, true);
-
-        // Check and flush any pending queue from a previous session or connection loss
         flushQueue();
     }
+
+    // Capture event early before HTMX attaches its listeners (both document and bubbling)
+    document.addEventListener('click', interceptAction, true);
+    document.addEventListener('submit', interceptAction, true);
 
     // Global lifecycle triggers
     window.addEventListener('online', () => {

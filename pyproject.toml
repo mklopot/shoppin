@@ -32,6 +32,7 @@ dev = [
     "pytest>=9.1",
     "pytest-django>=4.14",
     "ruff>=0.17",
+    "bandit>=1.8",
 ]
 
 [tool.ruff]

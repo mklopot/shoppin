@@ -362,6 +362,11 @@ def test_bandit_security_scan_passes_with_zero_medium_or_high_issues():
     Execute standard Bandit security linter across the application code.
     Ensures zero high or medium severity security vulnerabilities exist.
     """
+    import importlib.util
+
+    if importlib.util.find_spec("bandit") is None:
+        pytest.skip("bandit is not installed in the current environment")
+
     cmd = [
         sys.executable,
         "-m",

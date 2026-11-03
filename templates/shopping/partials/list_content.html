@@ -28,12 +28,13 @@
     </div>
     {% endif %}
 
-    <!-- Top Header: Title -->
+    <!-- Top Header: Title & Real-Time Sync Indicator -->
     <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-400 pb-2.5">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none">
                 {{ shopping_list.name }}{% if mode == 'pantry' %} <span class="text-sm font-normal text-gray-500">(Pantry Check)</span>{% endif %}
             </h1>
+            <span id="offline-sync-indicator" class="hidden text-[11px] font-semibold px-2 py-0.5 border select-none transition-all duration-150"></span>
         </div>
     </div>
 
@@ -265,7 +266,7 @@
         <div class="px-3 py-2 bg-gray-100 border-b border-gray-300 flex justify-between items-center text-xs">
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-gray-900 uppercase tracking-wider text-xs">To Buy</span>
-                <span class="text-gray-500 font-normal">({{ need_count }})</span>
+                <span id="need-items-count" class="text-gray-500 font-normal">({{ need_count }})</span>
             </div>
             {% if mode == 'shopping' and need_unconfirmed_count > 0 %}
             <div class="flex items-center space-x-2 text-[11px]">
@@ -308,7 +309,7 @@
                     <!-- Items List (Drag & Drop for individual items within section) -->
                     <div class="sortable-group divide-y divide-gray-200" data-group="{{ group_title }}">
                         {% for item in items %}
-                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
+                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-locked="{% if item.locked %}true{% else %}false{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
                             <!-- Left: Drag handle + Name + Specs -->
                             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                                 {% if can_write %}
@@ -334,7 +335,7 @@
                                     {% endif %}
                                     {% if mode == 'pantry' %}
                                         {% if item.locked %}
-                                        <span class="ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none">📋 Need</span>
+                                        <span class="item-need-tag ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none">📋 Need</span>
                                         {% endif %}
                                     {% else %}
                                         <!-- In Store Mode: Only show subtle tag for items needing pantry check -->
@@ -371,12 +372,12 @@
 
                             <!-- Right: Actions -->
                             {% if can_write %}
-                            <div class="flex items-center space-x-1 flex-shrink-0">
+                            <div class="item-actions flex items-center space-x-1 flex-shrink-0">
                                 {% if mode == 'pantry' %}
                                 {% if not item.locked %}
                                 <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
-                                    <button type="submit" aria-label="Mark {{ item.name }} as have at home" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold">
+                                    <button type="submit" aria-label="Mark {{ item.name }} as have at home" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold rounded-none">
                                         🏠 Have
                                     </button>
                                 </form>
@@ -384,11 +385,11 @@
                                 <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                                     {% csrf_token %}
                                     {% if item.locked %}
-                                    <button type="submit" aria-label="Uncheck confirmed need for {{ item.name }}" title="Confirmed need (click to uncheck)" class="border border-blue-500 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 text-xs text-blue-900 font-bold">
-                                        📋 Need
+                                    <button type="submit" aria-label="Reset confirmed need for {{ item.name }}" title="Confirmed need (click to reset)" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 text-xs text-gray-800 font-semibold rounded-none">
+                                        ↺ Reset
                                     </button>
                                     {% else %}
-                                    <button type="submit" aria-label="Confirm need to buy {{ item.name }}" title="Check item: confirm we need to buy this" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium">
+                                    <button type="submit" aria-label="Confirm need to buy {{ item.name }}" title="Check item: confirm we need to buy this" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-700 font-medium rounded-none">
                                         📋 Need
                                     </button>
                                     {% endif %}
@@ -437,22 +438,22 @@
       Uses a soft, desaturated mint-green theme (bg-cart-header, bg-cart-bg, border-cart-border)
       configured in Tailwind theme config to clearly communicate completion without harsh contrast.
     -->
-    {% if got_items %}
-    <div class="border border-cart-border bg-cart-bg mt-5">
+    <div id="got-section-container" class="border border-cart-border bg-cart-bg mt-5 {% if not got_items %}hidden{% endif %}">
         <!-- Section Header -->
         <div class="px-3 py-2 border-b border-cart-border bg-cart-header flex justify-between items-center text-xs">
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-emerald-950 uppercase tracking-wider text-xs">Got</span>
                 <span class="text-emerald-800 font-normal">Purchased or in cart</span>
             </div>
+            <span id="got-items-count" class="text-emerald-800 font-semibold text-xs">({{ got_items|length }})</span>
         </div>
 
-        <div class="divide-y divide-emerald-200">
+        <div id="got-items-list" class="divide-y divide-emerald-200">
             {% for item in got_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status check + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
-                    <span class="text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
+                    <span class="status-icon text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
                     <div class="min-w-0 flex-1 leading-snug">
                         <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
                                     {% if item.priority %}
@@ -486,10 +487,10 @@
 
                 <!-- Right: Actions -->
                 {% if can_write %}
-                <div class="flex items-center space-x-1 flex-shrink-0">
+                <div class="item-actions flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
-                        <button type="submit" aria-label="Put {{ item.name }} back to To Buy" title="Put back to To Buy" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                        <button type="submit" aria-label="Put {{ item.name }} back to To Buy" title="Put back to To Buy" class="border border-emerald-300 hover:border-emerald-500 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-800 font-medium rounded-none">
                             📋 Need
                         </button>
                     </form>
@@ -502,7 +503,6 @@
             {% endfor %}
         </div>
     </div>
-    {% endif %}
 
     <!--
       SECTION 3: ALREADY HAVE / SKIPPED
@@ -510,25 +510,25 @@
       Uses a soft, cool sky-blue tint (bg-pantry-header, bg-pantry-bg, border-pantry-border)
       configured in Tailwind theme config to represent items already at home or deferred.
     -->
-    {% if pantry_items %}
-    <div class="border border-pantry-border bg-pantry-bg mt-5 text-xs">
+    <div id="pantry-section-container" class="border border-pantry-border bg-pantry-bg mt-5 text-xs {% if not pantry_items %}hidden{% endif %}">
         <!-- Section Header -->
         <div class="px-3 py-2 border-b border-pantry-border bg-pantry-header flex justify-between items-center text-xs">
             <div class="flex items-center space-x-2">
                 <span class="font-bold text-blue-950 uppercase tracking-wider text-xs">Already Have / Skipped</span>
                 <span class="text-blue-800 font-normal">At home or skipped</span>
             </div>
+            <span id="pantry-items-count" class="text-blue-800 font-semibold text-xs">({{ pantry_items|length }})</span>
         </div>
 
-        <div class="divide-y divide-blue-200">
+        <div id="pantry-items-list" class="divide-y divide-blue-200">
             {% for item in pantry_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status Icon + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     {% if item.status == 'HAVE' %}
-                    <span class="text-blue-800 font-bold select-none text-sm" title="Already have at home" aria-label="Already have at home" role="img">🏠</span>
+                    <span class="status-icon text-blue-800 font-bold select-none text-sm" title="Already have at home" aria-label="Already have at home" role="img">🏠</span>
                     {% else %}
-                    <span class="text-gray-600 font-bold select-none text-sm" title="Skipped" aria-label="Skipped" role="img">⏭</span>
+                    <span class="status-icon text-gray-600 font-bold select-none text-sm" title="Skipped" aria-label="Skipped" role="img">⏭</span>
                     {% endif %}
                     <div class="min-w-0 flex-1 leading-snug">
                         <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
@@ -563,10 +563,10 @@
 
                 <!-- Right: Actions -->
                 {% if can_write %}
-                <div class="flex items-center space-x-1 flex-shrink-0">
+                <div class="item-actions flex items-center space-x-1 flex-shrink-0">
                     <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
                         {% csrf_token %}
-                        <button type="submit" aria-label="Move {{ item.name }} back to To Buy" title="Move back to To Buy" class="border border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50 px-2 py-0.5 text-xs text-gray-800 font-medium">
+                        <button type="submit" aria-label="Move {{ item.name }} back to To Buy" title="Move back to To Buy" class="border border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50 px-2 py-0.5 text-xs text-gray-800 font-medium rounded-none">
                             📋 Need
                         </button>
                     </form>
@@ -579,5 +579,4 @@
             {% endfor %}
         </div>
     </div>
-    {% endif %}
 </div>

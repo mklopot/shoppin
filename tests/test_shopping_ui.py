@@ -410,12 +410,13 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     # When locked/confirmed needed:
     # - Shows visual badge 📋 Need
     # - Hides the "🏠 Have" button for this item
-    # - Button shows "📋 Need"
+    # - Button flips to "↺ Reset" so user can uncheck/reset need
     lock_content = res_lock.content.decode("utf-8")
     assert "You set &#x27;Bananas&#x27; to &quot;needed&quot;" in lock_content or "You set 'Bananas' to \"needed\"" in lock_content
     banana_row = [row for row in lock_content.split('id="item-row-') if f'item-row-{banana_item.id}' in f'item-row-{row}'][0]
     assert "📋 Need" in banana_row
     assert "🏠 Have" not in banana_row
+    assert "Reset" in banana_row
 
     # Toggling lock again reverses it cleanly
     res_unlock = client.post(reverse("shopping:toggle_lock", args=[banana_item.id]))
@@ -425,6 +426,7 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
     unlock_content = res_unlock.content.decode("utf-8")
     banana_row_unlocked = [row for row in unlock_content.split('id="item-row-') if f'item-row-{banana_item.id}' in f'item-row-{row}'][0]
     assert "🏠 Have" in banana_row_unlocked
+    assert "Reset" not in banana_row_unlocked
 
     # 5. Marking an item as HAVE in Pantry mode moves it to Already Have
     res_mark = client.post(reverse("shopping:set_status", args=[banana_item.id, "HAVE"]))

@@ -533,7 +533,7 @@ def test_preset_item_attribution_on_manual_load(preset_setup):
     primary_list = preset_setup["primary_list"]
 
     preset = create_preset_list(workspace=ws, name="Tacos")
-    item1 = add_preset_item(preset_list=preset, name="Tortillas", amount="1", amount_unit="pack")
+    add_preset_item(preset_list=preset, name="Tortillas", amount="1", amount_unit="pack")
 
     # Manually load preset onto primary list with user
     loaded_items = load_preset_items_to_shopping_list(

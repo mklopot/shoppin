@@ -178,13 +178,14 @@ def test_add_dish_in_mealplan_triggers_websocket_broadcast(client, websocket_sho
 def test_add_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
     """Test that adding a meal in meal plan triggers real-time WebSocket broadcast."""
     from asgiref.sync import sync_to_async
+
     from apps.mealplans.models import MealPlan
 
     user = websocket_shopping_list.owner
     client.force_login(user)
 
     ws = websocket_shopping_list.workspace
-    meal_plan = MealPlan.objects.create(name="Weekly Plan", workspace=ws)
+    MealPlan.objects.create(name="Weekly Plan", workspace=ws)
 
     session = client.session
     session["active_workspace_id"] = ws.id
@@ -220,6 +221,7 @@ def test_add_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
 def test_edit_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
     """Test that editing a meal name triggers real-time WebSocket broadcast."""
     from asgiref.sync import sync_to_async
+
     from apps.mealplans.models import Meal, MealPlan
 
     user = websocket_shopping_list.owner
@@ -263,6 +265,7 @@ def test_edit_meal_triggers_websocket_broadcast(client, websocket_shopping_list)
 def test_delete_meal_triggers_websocket_broadcast(client, websocket_shopping_list):
     """Test that deleting a meal triggers real-time WebSocket broadcast."""
     from asgiref.sync import sync_to_async
+
     from apps.mealplans.models import Meal, MealPlan
 
     user = websocket_shopping_list.owner

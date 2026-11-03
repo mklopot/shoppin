@@ -597,6 +597,7 @@ def test_resolve_store_aisle_cleans_culinary_terms_and_prevents_negative_db_cach
     persists resolved aisles for both candidate and raw term, and NEVER saves empty aisle strings.
     """
     from unittest.mock import patch
+
     from apps.shopping.services.store_service import kroger_client
 
     store = StoreLocation.objects.create(
@@ -642,6 +643,7 @@ def test_resolve_store_aisle_cross_store_universal_department_fallback():
     learned from other Kroger stores.
     """
     from unittest.mock import patch
+
     from apps.shopping.services.store_service import kroger_client
 
     store1 = StoreLocation.objects.create(
@@ -686,8 +688,10 @@ def test_store_switching_aisle_resolution_flow(client):
     3. Switch back to #62000111 -> aisles remain populated and never locked out.
     """
     from unittest.mock import patch
+
     from django.contrib.auth import get_user_model
     from django.urls import reverse
+
     from apps.core.models import Workspace
     from apps.shopping.services.store_service import kroger_client
 
@@ -753,6 +757,7 @@ def test_resolve_store_aisle_db_only_mode():
     and returns None without calling the Kroger API client when an item is not cached.
     """
     from unittest.mock import patch
+
     from apps.shopping.services.store_service import kroger_client
 
     store = StoreLocation.objects.create(
@@ -792,11 +797,13 @@ def test_add_recipe_to_meal_fast_db_only_and_async_warming(client):
     and schedules async warming for missing aisles.
     """
     from unittest.mock import patch
+
     from django.contrib.auth import get_user_model
+
     from apps.core.models import Workspace
-    from apps.recipes.models import Recipe, Ingredient
     from apps.mealplans.models import Meal, MealPlan
     from apps.mealplans.services.mealplan_service import add_recipe_to_meal
+    from apps.recipes.models import Ingredient, Recipe
 
     User = get_user_model()
     user = User.objects.create_user(username="chef_speedy")
@@ -861,6 +868,7 @@ def test_kroger_api_client_filters_checklane_and_prioritizes_floor_aisle():
     """
     import json
     from unittest.mock import MagicMock, patch
+
     from apps.shopping.services.store_service import kroger_client
 
     mock_kroger_response = {
@@ -915,6 +923,7 @@ def test_kroger_api_client_falls_back_to_category_when_all_are_checklane():
     """
     import json
     from unittest.mock import MagicMock, patch
+
     from apps.shopping.services.store_service import kroger_client
 
     mock_kroger_response = {

@@ -6,8 +6,10 @@ Tests all 11 items and the auto-save functionality against the running server
 """
 
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+
 from playwright.sync_api import sync_playwright
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -131,7 +133,7 @@ def run_all_checks():
         # Item 4: Preset list schedule controls, direct time typing, dial trigger, auto-save
         # ---------------------------------------------------------------------
         print("\nVerifying Item 4: Direct time typing and clock dial icon trigger...")
-        assert not time_input.is_editable() is False, "Time input should be editable (not readonly)"
+        assert time_input.is_editable() is not False, "Time input should be editable (not readonly)"
         # Test typing directly
         time_input.fill("4am")
         time_input.dispatch_event("input")

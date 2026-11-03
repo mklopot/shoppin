@@ -15,7 +15,6 @@ from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
     clean_purpose,
-    combine_amounts_and_units,
     singularize,
 )
 from apps.mealplans.models import Meal, MealDish, MealPlan
@@ -150,10 +149,12 @@ def add_recipe_to_meal(
     if enforce_workspace and workspace:
         if not recipe.shared_workspaces.filter(id=workspace.id).exists():
             user = getattr(request, "user", None)
-            # If the recipe is newly created by a workspace member or in a personal draft
-            if recipe.created_by and workspace.can_read(recipe.created_by) and not recipe.shared_workspaces.exists():
+            # Public recipes and recipes created by workspace members can be added to the workspace meal plan
+            if recipe.is_public:
                 recipe.shared_workspaces.add(workspace)
-            elif not recipe.shared_workspaces.exists() and not recipe.is_public:
+            elif recipe.created_by and workspace.can_read(recipe.created_by):
+                recipe.shared_workspaces.add(workspace)
+            elif not recipe.shared_workspaces.exists() and (user is None or workspace.can_write(user)):
                 recipe.shared_workspaces.add(workspace)
             else:
                 raise ValidationError(
@@ -365,7 +366,6 @@ def remove_dish_from_meal(
                                 item.delete()
 
     # 3. Delete the MealDish instance
-    dish_id = dish.id
     dish.delete()
 
     # 4. Only disassociate recipe from meal M2M if no other MealDish for this recipe remains

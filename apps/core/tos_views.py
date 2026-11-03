@@ -91,7 +91,7 @@ def terms_accept_view(request: HttpRequest) -> HttpResponse:
             )
             return redirect(f"{reverse('core:terms_accept')}?next={next_url}")
 
-        record = record_tos_acceptance(user, request)
+        record_tos_acceptance(user, request)
         messages.success(
             request,
             "Terms of Service accepted.",

@@ -14,13 +14,12 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.core.models import Workspace, WorkspaceRole
+from apps.core.models import WorkspaceRole
 from apps.core.services.workspace_service import create_workspace, share_workspace
-from apps.mealplans.models import Meal, MealPlan
+from apps.mealplans.models import Meal
 from apps.recipes.models import Ingredient, Recipe
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
 from apps.shopping.services.cleanup_service import (
-    purge_all_expired_completed_items,
     purge_expired_completed_items,
 )
 

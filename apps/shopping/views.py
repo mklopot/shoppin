@@ -7,8 +7,6 @@ item and section drag-and-drop reordering, store selection, and Pantry Check mod
 
 import json
 import logging
-import sys
-import threading
 from decimal import Decimal
 from typing import Any
 
@@ -597,9 +595,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         item.brand = request.POST.get("brand", item.brand).strip()
         item.vendor = request.POST.get("vendor", item.vendor).strip()
         item.category = request.POST.get("category", item.category).strip()
-        new_aisle = request.POST.get("aisle", item.aisle).strip()
-        aisle_changed = (new_aisle != item.aisle)
-        item.aisle = new_aisle
+        item.aisle = request.POST.get("aisle", item.aisle).strip()
         item.purpose = clean_purpose(request.POST.get("purpose", item.purpose).strip()) or "one-time purchase"
         item.priority = request.POST.get("priority") in ("true", "1", "on", True)
 

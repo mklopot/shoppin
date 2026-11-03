@@ -14,7 +14,6 @@ from apps.core.services.moderation_service import validate_content_clean
 from apps.core.utils import (
     can_combine_units,
     clean_purpose,
-    combine_amounts_and_units,
     parse_amount_and_unit,
     parse_ingredient_line,
     singularize,

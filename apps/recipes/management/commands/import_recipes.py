@@ -5,12 +5,11 @@ Preserves referential integrity by never deleting existing recipes or altering e
 ensuring existing meal plans, shopping list attributions, ratings, and logs remain completely intact.
 """
 
-from decimal import Decimal
-import os
-from pathlib import Path
 import urllib.request
-import yaml
+from decimal import Decimal
+from pathlib import Path
 
+import yaml
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.text import slugify

@@ -1,14 +1,16 @@
-import pytest
 from decimal import Decimal
+
+import pytest
 from django.contrib.auth import get_user_model
+
 from apps.core.services.workspace_service import create_workspace
 from apps.mealplans.models import Meal
-from apps.recipes.models import Recipe, Ingredient
 from apps.mealplans.services.mealplan_service import (
     add_recipe_to_meal,
-    remove_recipe_from_meal,
     delete_meal_from_plan,
+    remove_recipe_from_meal,
 )
+from apps.recipes.models import Ingredient, Recipe
 
 User = get_user_model()
 
@@ -212,7 +214,12 @@ def test_scale_factor_preserves_immutable_quantities(workspace_with_recipes):
 
 def test_preset_list_and_recipe_combined_lifecycle(workspace_with_recipes):
     """Items loaded from preset lists and recipe dishes coexist cleanly and unload cleanly."""
-    from apps.shopping.services.preset_service import create_preset_list, add_preset_item, load_preset_items_to_shopping_list, unload_preset_from_shopping_list
+    from apps.shopping.services.preset_service import (
+        add_preset_item,
+        create_preset_list,
+        load_preset_items_to_shopping_list,
+        unload_preset_from_shopping_list,
+    )
 
     data = workspace_with_recipes
     ws = data["ws"]
@@ -293,7 +300,7 @@ def test_delete_meal_from_plan_removes_all_dish_sources(workspace_with_recipes):
 
 def test_add_dish_multiple_times_to_same_meal_shows_twice_and_separate_scaling(workspace_with_recipes):
     """Adding a dish multiple times to the same meal creates distinct occurrences that can be scaled and removed separately."""
-    from apps.mealplans.services.mealplan_service import scale_meal_dish, remove_dish_from_meal
+    from apps.mealplans.services.mealplan_service import remove_dish_from_meal, scale_meal_dish
 
     data = workspace_with_recipes
     sl = data["sl"]

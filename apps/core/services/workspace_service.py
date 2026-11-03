@@ -204,8 +204,11 @@ def clear_workspace_data(
         Dictionary with counts of cleared items:
         {"items_cleared": int, "presets_unloaded": int, "meals_cleared": int}
     """
-    from apps.mealplans.services.mealplan_service import broadcast_mealplan_update, delete_meal_from_plan
-    from apps.shopping.models import ShoppingListItem, ShoppingListItemSource
+    from apps.mealplans.services.mealplan_service import (
+        broadcast_mealplan_update,
+        delete_meal_from_plan,
+    )
+    from apps.shopping.models import ShoppingListItemSource
     from apps.shopping.services.broadcaster import broadcast_shopping_list_update
     from apps.shopping.services.preset_service import unload_preset_from_shopping_list
 

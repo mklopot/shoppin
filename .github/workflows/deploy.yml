@@ -38,25 +38,21 @@ jobs:
           pytest
 
   deploy:
-    name: Deploy to Production EC2
+    name: Deploy to Production Lightsail
     needs: test
-    if: github.ref == 'refs/heads/v2-django' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/v2-django' || github.ref == 'refs/heads/main') && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH to EC2 Server
+      - name: Deploy via SSH to Lightsail Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: ubuntu
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          port: 22
+          script_stop: true
           script: |
             set -e
-            echo "==> Deploying Shoppin update..."
-            cd /app
-            git pull origin v2-django
-            docker compose -f docker-compose.prod.yml build web
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            echo "==> Verifying application health..."
-            sleep 5
-            docker compose -f docker-compose.prod.yml exec -T web curl -f http://127.0.0.1:8000/health/
-            echo "==> Deployment successfully verified!"
+            echo "==> Executing automated production update on Lightsail..."
+            bash /app/deploy/lightsail/update.sh
+            echo "==> Production update finished successfully!"

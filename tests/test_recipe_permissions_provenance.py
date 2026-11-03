@@ -4,16 +4,15 @@ provenance chain tracking, related versions discovery, and meal plan workspace g
 """
 
 from decimal import Decimal
+
 import pytest
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import Client
 from django.urls import reverse
 
-from apps.core.models import Workspace, WorkspaceMember, WorkspaceRole
+from apps.core.models import WorkspaceRole
 from apps.core.services.workspace_service import create_workspace, share_workspace
-from apps.mealplans.models import Meal, MealPlan
 from apps.mealplans.services.mealplan_service import add_meal_to_plan, add_recipe_to_meal
 from apps.recipes.models import Ingredient, Recipe
 from apps.recipes.services.recipe_service import (
@@ -138,7 +137,6 @@ def test_provenance_chain_resilient_to_ancestor_deletion(permissions_setup):
     ws_bob = permissions_setup["ws_bob"]
 
     r_bob = fork_recipe(r_alice, bob, target_workspaces=[ws_bob])
-    r_alice_id = r_alice.id
     r_alice.delete()
 
     r_bob.refresh_from_db()
@@ -156,7 +154,6 @@ def test_provenance_chain_resilient_to_ancestor_deletion(permissions_setup):
 @pytest.mark.django_db
 def test_related_workspace_versions(permissions_setup):
     """Verify sibling versions sharing the same root are discoverable in the workspace."""
-    alice = permissions_setup["alice"]
     bob = permissions_setup["bob"]
     r_alice = permissions_setup["recipe_alice"]
     ws_alice = permissions_setup["ws_alice"]
@@ -258,8 +255,6 @@ def test_sharing_destination_choices(permissions_setup):
 @pytest.mark.django_db
 def test_meal_plan_workspace_guard(permissions_setup):
     """Enforce that recipes can only be added to a meal plan in the same workspace."""
-    alice = permissions_setup["alice"]
-    bob = permissions_setup["bob"]
     r_alice = permissions_setup["recipe_alice"]
     ws_alice = permissions_setup["ws_alice"]
     ws_bob = permissions_setup["ws_bob"]

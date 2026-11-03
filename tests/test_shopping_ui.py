@@ -810,6 +810,7 @@ def test_attribution_shows_first_name_and_omitted_when_unshared(client):
     """
     from django.contrib.auth import get_user_model
     from django.utils import timezone
+
     from apps.core.models import Workspace, WorkspaceMember, WorkspaceRole
 
     User = get_user_model()

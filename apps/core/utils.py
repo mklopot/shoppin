@@ -184,9 +184,9 @@ def get_known_ingredient_suggestions() -> list[str]:
     if _KNOWN_INGREDIENTS_CACHE is not None and (now - _KNOWN_INGREDIENTS_CACHE_TIME) < 60:
         return _KNOWN_INGREDIENTS_CACHE
 
+    from apps.core.categorizer import categorizer
     from apps.recipes.models import Ingredient
     from apps.shopping.models import ShoppingListItem
-    from apps.core.categorizer import categorizer
 
     names: set[str] = set()
     try:

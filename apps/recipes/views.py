@@ -98,9 +98,9 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         inc = _extract_facet_list(f"include_{facet}")
         # Legacy single/multi parameter compatibility (e.g. ?dish_type=Stew or ?cuisine=Italian)
         legacy = _extract_facet_list(facet)
-        for l in legacy:
-            if l not in inc:
-                inc.append(l)
+        for item in legacy:
+            if item not in inc:
+                inc.append(item)
 
         exc = _extract_facet_list(f"exclude_{facet}")
         # Disallow simultaneous include & exclude of same value (exclusion wins)
@@ -597,6 +597,10 @@ def recipe_add_to_mealplan_view(
             recipe.last_shared_by = user
             recipe.save(update_fields=["last_shared_by"])
         elif recipe.created_by == user or (not recipe.shared_workspaces.exists() and not recipe.is_public):
+            recipe.shared_workspaces.add(workspace)
+            recipe.last_shared_by = user
+            recipe.save(update_fields=["last_shared_by"])
+        elif recipe.is_public:
             recipe.shared_workspaces.add(workspace)
             recipe.last_shared_by = user
             recipe.save(update_fields=["last_shared_by"])

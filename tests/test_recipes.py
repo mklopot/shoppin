@@ -870,6 +870,7 @@ def test_import_recipes_management_command(tmp_path):
     """Test the safe, idempotent import_recipes management command."""
     import yaml
     from django.core.management import call_command
+
     from apps.recipes.models import Ingredient, Recipe
 
     # Setup initial recipe
@@ -1027,6 +1028,7 @@ def test_web_imported_flag_inherited_on_fork_and_copy(auth_user):
     """Ensure is_web_imported flag is inherited when forking or copy-on-write modifying a recipe."""
     from django.contrib.auth import get_user_model
     from django.core.exceptions import ValidationError
+
     from apps.recipes.services.recipe_service import fork_recipe
 
     User = get_user_model()
@@ -1161,6 +1163,7 @@ def test_recipe_admin_actions_and_batch_make_public(auth_user):
     from django.contrib.admin.sites import AdminSite
     from django.contrib.auth import get_user_model
     from django.test import RequestFactory
+
     from apps.recipes.admin import RecipeAdmin
 
     User = get_user_model()

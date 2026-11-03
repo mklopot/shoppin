@@ -343,11 +343,14 @@ def test_clear_workspace_removes_items_unloads_presets_clears_mealplan(client, w
     unloads all presets from shopping list, and clears all meals from the meal plan,
     while preserving preset list templates and recipes.
     """
-    from apps.core.services.workspace_service import clear_workspace_data
-    from apps.mealplans.models import Meal, MealDish, MealPlan
+    from apps.mealplans.models import Meal, MealDish
     from apps.recipes.models import Ingredient, Recipe
     from apps.shopping.models import ShoppingListItemSource
-    from apps.shopping.services.preset_service import create_preset_list, add_preset_item, load_preset_items_to_shopping_list
+    from apps.shopping.services.preset_service import (
+        add_preset_item,
+        create_preset_list,
+        load_preset_items_to_shopping_list,
+    )
 
     ws = workspace_setup["workspace"]
     owner = workspace_users["owner"]

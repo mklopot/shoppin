@@ -12,7 +12,8 @@ Provides:
 
 import logging
 import re
-from datetime import datetime, time as datetime_time
+from datetime import datetime
+from datetime import time as datetime_time
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden

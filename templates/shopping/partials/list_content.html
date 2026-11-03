@@ -309,7 +309,7 @@
                     <!-- Items List (Drag & Drop for individual items within section) -->
                     <div class="sortable-group divide-y divide-gray-200" data-group="{{ group_title }}">
                         {% for item in items %}
-                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-locked="{% if item.locked %}true{% else %}false{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
+                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-locked="{% if item.locked %}true{% else %}false{% endif %}" data-group-name="{{ group_title }}" style="view-transition-name: item-row-{{ item.id }};">
                             <!-- Left: Drag handle + Name + Specs -->
                             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                                 {% if can_write %}
@@ -424,6 +424,9 @@
                     </div>
                 </div>
                 {% endfor %}
+            </div>
+            <div id="to-buy-empty-placeholder" class="p-6 text-center text-gray-500 text-xs hidden">
+                All items in To Buy have been checked off!
             </div>
         {% else %}
             <div class="p-6 text-center text-gray-500 text-xs">

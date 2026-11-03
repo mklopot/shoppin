@@ -872,3 +872,72 @@ def test_attribution_shows_first_name_and_omitted_when_unshared(client):
     assert f"michael.klopot {today_str}" not in shared_html
     assert 'title="Date placed or updated by Mike"' in shared_html
 
+
+@pytest.mark.django_db
+def test_empty_category_header_disappears_when_last_item_bought(client, active_list):
+    """
+    When the last item in a category is bought or moved out of 'To Buy',
+    the category header must disappear. When moved back to 'To Buy', it reappears.
+    """
+    # Clear existing items
+    active_list.items.all().delete()
+
+    # Create 1 juice and 1 dairy item
+    juice = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Orange Juice",
+        amount=Decimal("1.00"),
+        category="juices",
+        status=ItemStatus.NEED,
+        order=1,
+    )
+    milk = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Whole Milk",
+        amount=Decimal("1.00"),
+        category="dairy",
+        status=ItemStatus.NEED,
+        order=2,
+    )
+
+    # 1. Initial GET: Both "Juices" and "Dairy" headers exist in To Buy
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    html = res.content.decode("utf-8")
+    assert 'data-group-name="Juices"' in html
+    assert 'data-group-name="Dairy"' in html
+    assert 'data-group-name="Juices"' in html.split('id="section-groups-container"')[1].split('id="got-section-container"')[0]
+
+    # 2. Buy the ONLY juice: POST status -> GOT
+    res_got = client.post(reverse("shopping:set_status", args=[juice.id, "GOT"]))
+    assert res_got.status_code == 200
+    got_html = res_got.content.decode("utf-8")
+
+    # To Buy section must still have Dairy, but Juices header MUST NOT appear in To Buy
+    to_buy_html = got_html.split('id="section-groups-container"')[1].split('id="got-section-container"')[0]
+    assert "Dairy" in to_buy_html
+    assert "Juices" not in to_buy_html
+
+    # Orange Juice is now in Got section
+    assert "Orange Juice" in got_html
+
+    # 3. Move Orange Juice back to To Buy: POST status -> NEED
+    res_need = client.post(reverse("shopping:set_status", args=[juice.id, "NEED"]))
+    assert res_need.status_code == 200
+    need_html = res_need.content.decode("utf-8")
+    to_buy_restored = need_html.split('id="section-groups-container"')[1].split('id="got-section-container"')[0]
+    assert "Juices" in to_buy_restored
+    assert "Orange Juice" in to_buy_restored
+    # Client-side optimistic DOM relies on data-group-name on the row
+    assert f'id="item-row-{juice.id}"' in need_html
+    assert 'data-group-name="Juices"' in need_html
+
+    # 4. Have/Skip Whole Milk: POST status -> HAVE
+    res_have = client.post(reverse("shopping:set_status", args=[milk.id, "HAVE"]))
+    assert res_have.status_code == 200
+    have_html = res_have.content.decode("utf-8")
+    to_buy_after_have = have_html.split('id="section-groups-container"')[1].split('id="got-section-container"')[0]
+    assert "Dairy" not in to_buy_after_have
+    assert "Juices" in to_buy_after_have
+
+

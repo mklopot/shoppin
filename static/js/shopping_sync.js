@@ -123,10 +123,38 @@
         });
     }
 
+    function checkAndUpdateSectionEmptyState(sectionBlock) {
+        if (!sectionBlock) return;
+        const remainingItems = sectionBlock.querySelectorAll('.item-row');
+        if (remainingItems.length === 0) {
+            sectionBlock.classList.add('hidden');
+        } else {
+            sectionBlock.classList.remove('hidden');
+        }
+
+        const sectionsContainer = document.getElementById('section-groups-container');
+        const emptyPlaceholder = document.getElementById('to-buy-empty-placeholder');
+        if (sectionsContainer && emptyPlaceholder) {
+            const anyVisible = sectionsContainer.querySelector('.section-group-block:not(.hidden)');
+            if (!anyVisible) {
+                emptyPlaceholder.classList.remove('hidden');
+            } else {
+                emptyPlaceholder.classList.add('hidden');
+            }
+        }
+    }
+
     function handleLocalGot(itemId, row) {
         const gotList = document.getElementById('got-items-list');
         const gotContainer = document.getElementById('got-section-container');
         if (!gotList || !gotContainer) return;
+
+        // Remember original category/section block before moving
+        const originalGroupBlock = row.closest('.section-group-block');
+        if (originalGroupBlock) {
+            const groupName = originalGroupBlock.getAttribute('data-group-name');
+            if (groupName) row.setAttribute('data-group-name', groupName);
+        }
 
         // 1. Move DOM element to Got section
         gotContainer.classList.remove('hidden');
@@ -170,6 +198,11 @@
             `;
         }
 
+        // Hide empty category header if last item in group was bought
+        if (originalGroupBlock) {
+            checkAndUpdateSectionEmptyState(originalGroupBlock);
+        }
+
         // 6. Tactile celebration animation & instant toast
         animateRow(row, '#d1fae5');
         const itemName = row.getAttribute('data-item-name') || 'item';
@@ -181,14 +214,33 @@
         if (!sectionsContainer) return;
 
         const previousStatus = row.getAttribute('data-item-status') || 'GOT';
+        const groupName = row.getAttribute('data-group-name');
 
-        // 1. Move row to To Buy section
-        let targetGroup = sectionsContainer.querySelector('.sortable-group');
-        if (targetGroup) {
-            targetGroup.prepend(row);
-        } else {
-            sectionsContainer.prepend(row);
+        // 1. Move row to To Buy section under its matching category block
+        let targetBlock = null;
+        if (groupName) {
+            targetBlock = sectionsContainer.querySelector(`.section-group-block[data-group-name="${CSS.escape(groupName)}"]`);
         }
+        if (targetBlock) {
+            targetBlock.classList.remove('hidden');
+            const targetGroup = targetBlock.querySelector('.sortable-group');
+            if (targetGroup) {
+                targetGroup.prepend(row);
+            } else {
+                targetBlock.appendChild(row);
+            }
+        } else {
+            const firstGroup = sectionsContainer.querySelector('.sortable-group');
+            if (firstGroup) {
+                firstGroup.prepend(row);
+                firstGroup.closest('.section-group-block')?.classList.remove('hidden');
+            } else {
+                sectionsContainer.prepend(row);
+            }
+        }
+
+        const emptyPlaceholder = document.getElementById('to-buy-empty-placeholder');
+        if (emptyPlaceholder) emptyPlaceholder.classList.add('hidden');
 
         // 2. Adjust counters
         adjustCount('need-items-count', 1);
@@ -256,6 +308,13 @@
         const pantryContainer = document.getElementById('pantry-section-container');
         if (!pantryList || !pantryContainer) return;
 
+        // Remember original category/section block before moving
+        const originalGroupBlock = row.closest('.section-group-block');
+        if (originalGroupBlock) {
+            const groupName = originalGroupBlock.getAttribute('data-group-name');
+            if (groupName) row.setAttribute('data-group-name', groupName);
+        }
+
         // 1. Move row to pantry list
         pantryContainer.classList.remove('hidden');
         pantryList.prepend(row);
@@ -299,6 +358,20 @@
                 </button>
             `;
         }
+
+        // Hide empty category header if last item in group was skipped or marked in pantry
+        if (originalGroupBlock) {
+            checkAndUpdateSectionEmptyState(originalGroupBlock);
+        }
+
+        animateRow(row, '#e0f2fe');
+        const itemName = row.getAttribute('data-item-name') || 'item';
+        if (targetStatus === 'HAVE') {
+            triggerToast(`🏠 You marked '${itemName}' as Already in Pantry`);
+        } else {
+            triggerToast(`⏭ You skipped '${itemName}'`);
+        }
+    }
 
         animateRow(row, '#e0f2fe');
         const itemName = row.getAttribute('data-item-name') || 'item';

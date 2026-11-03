@@ -366,20 +366,71 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
         return forbidden
 
     if new_status in ItemStatus.values:
-        item.status = new_status
         if new_status == ItemStatus.NEED:
-            item.locked = True
-        _set_item_audit(item, request)
-        item.save(
-            update_fields=[
-                "status",
-                "locked",
-                "status_changed_at",
-                "status_changed_by",
-                "status_changed_by_name",
-                "updated_at",
-            ]
-        )
+            normalized_name = singularize(item.name.lower().strip())
+            existing_need: ShoppingListItem | None = None
+            for candidate in item.shopping_list.items.filter(status=ItemStatus.NEED).exclude(id=item.id):
+                if (
+                    singularize(candidate.name.lower().strip()) == normalized_name
+                    and can_combine_units(candidate.amount_unit, item.amount_unit)
+                    and candidate.brand.lower().strip() == item.brand.lower().strip()
+                    and candidate.vendor.lower().strip() == item.vendor.lower().strip()
+                ):
+                    existing_need = candidate
+                    break
+
+            if existing_need:
+                # Merge into existing_need rather than leaving duplicate rows on the list
+                if not existing_need.attributions.exists() and existing_need.amount > Decimal("0.00"):
+                    ShoppingListItemSource.objects.create(
+                        item=existing_need,
+                        is_one_time=True,
+                        amount=existing_need.amount,
+                        amount_unit=existing_need.amount_unit,
+                        purpose=clean_purpose(existing_need.purpose) or "one-time purchase",
+                    )
+                if not item.attributions.exists() and item.amount > Decimal("0.00"):
+                    ShoppingListItemSource.objects.create(
+                        item=existing_need,
+                        is_one_time=True,
+                        amount=item.amount,
+                        amount_unit=item.amount_unit,
+                        purpose=clean_purpose(item.purpose) or "one-time purchase",
+                    )
+                else:
+                    item.attributions.update(item=existing_need)
+
+                existing_need.locked = True
+                _set_item_audit(existing_need, request)
+                existing_need.recalculate_from_attributions()
+                item.delete()
+                item = existing_need
+            else:
+                item.status = new_status
+                item.locked = True
+                _set_item_audit(item, request)
+                item.save(
+                    update_fields=[
+                        "status",
+                        "locked",
+                        "status_changed_at",
+                        "status_changed_by",
+                        "status_changed_by_name",
+                        "updated_at",
+                    ]
+                )
+        else:
+            item.status = new_status
+            _set_item_audit(item, request)
+            item.save(
+                update_fields=[
+                    "status",
+                    "status_changed_at",
+                    "status_changed_by",
+                    "status_changed_by_name",
+                    "updated_at",
+                ]
+            )
 
     shopping_list = item.shopping_list
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
@@ -485,6 +536,18 @@ def add_item(request: HttpRequest) -> HttpResponse:
             existing = candidate
             break
 
+    if not existing:
+        for candidate in shopping_list.items.filter(status__in=[ItemStatus.HAVE, ItemStatus.DONT_NEED]):
+            if (
+                singularize(candidate.name.lower()) == normalized_name
+                and can_combine_units(candidate.amount_unit, amount_unit)
+                and candidate.brand.lower() == brand.lower()
+                and candidate.vendor.lower() == vendor.lower()
+            ):
+                candidate.status = ItemStatus.NEED
+                existing = candidate
+                break
+
     if existing:
         # Preserve initial quantity if existing item didn't have attributions yet
         if not existing.attributions.exists() and existing.amount > Decimal("0.00"):
@@ -502,10 +565,22 @@ def add_item(request: HttpRequest) -> HttpResponse:
             amount_unit=amount_unit,
             purpose=purpose,
         )
+        existing.status = ItemStatus.NEED
         existing.locked = True
         if priority_flag:
             existing.priority = True
         _set_item_audit(existing, request)
+        existing.save(
+            update_fields=[
+                "status",
+                "locked",
+                "priority",
+                "status_changed_at",
+                "status_changed_by",
+                "status_changed_by_name",
+                "updated_at",
+            ]
+        )
         existing.recalculate_from_attributions()
     else:
         max_order = shopping_list.items.count()

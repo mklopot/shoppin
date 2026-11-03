@@ -196,6 +196,9 @@
                     <span aria-hidden="true">✏️</span>
                 </button>
             `;
+            if (window.htmx) {
+                htmx.process(actionsWrap);
+            }
         }
 
         // Hide empty category header if last item in group was bought
@@ -214,29 +217,35 @@
         if (!sectionsContainer) return;
 
         const previousStatus = row.getAttribute('data-item-status') || 'GOT';
-        const groupName = row.getAttribute('data-group-name');
+        let groupName = row.getAttribute('data-group-name');
+        if (!groupName || groupName === 'null') {
+            groupName = 'Other';
+        }
 
         // 1. Move row to To Buy section under its matching category block
-        let targetBlock = null;
-        if (groupName) {
-            targetBlock = sectionsContainer.querySelector(`.section-group-block[data-group-name="${CSS.escape(groupName)}"]`);
+        let targetBlock = sectionsContainer.querySelector(`.section-group-block[data-group-name="${CSS.escape(groupName)}"]`);
+        if (!targetBlock) {
+            targetBlock = document.createElement('div');
+            targetBlock.className = 'section-group-block space-y-1.5';
+            targetBlock.setAttribute('data-group-name', groupName);
+            targetBlock.innerHTML = `
+                <div class="bg-gray-100 hover:bg-gray-200/80 px-2.5 py-1 text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center justify-between border-y border-gray-200 select-none group/header">
+                    <div class="flex items-center space-x-1.5">
+                        <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 font-mono text-sm leading-none opacity-0 group-hover/header:opacity-100 transition-opacity" title="Drag section to reorder" aria-hidden="true">⋮⋮</span>
+                        <span>${groupName}</span>
+                    </div>
+                </div>
+                <div class="sortable-group divide-y divide-gray-200 border-b border-gray-200 bg-white min-h-[10px]" data-group="${groupName}"></div>
+            `;
+            sectionsContainer.appendChild(targetBlock);
         }
-        if (targetBlock) {
-            targetBlock.classList.remove('hidden');
-            const targetGroup = targetBlock.querySelector('.sortable-group');
-            if (targetGroup) {
-                targetGroup.prepend(row);
-            } else {
-                targetBlock.appendChild(row);
-            }
+
+        targetBlock.classList.remove('hidden');
+        const targetGroup = targetBlock.querySelector('.sortable-group');
+        if (targetGroup) {
+            targetGroup.prepend(row);
         } else {
-            const firstGroup = sectionsContainer.querySelector('.sortable-group');
-            if (firstGroup) {
-                firstGroup.prepend(row);
-                firstGroup.closest('.section-group-block')?.classList.remove('hidden');
-            } else {
-                sectionsContainer.prepend(row);
-            }
+            targetBlock.appendChild(row);
         }
 
         const emptyPlaceholder = document.getElementById('to-buy-empty-placeholder');
@@ -258,9 +267,29 @@
             }
         }
 
+        const listContent = document.getElementById('shopping-list-content');
+        const mode = listContent?.getAttribute('data-mode') || (window.location.search.includes('mode=pantry') ? 'pantry' : 'shopping');
+        const groupBy = sectionsContainer.getAttribute('data-group-by') || 'category';
+        const csrf = getCsrfToken();
+        const itemName = row.getAttribute('data-item-name') || 'item';
+
         // 3. Update styling and attributes
         row.setAttribute('data-item-status', 'NEED');
-        row.className = 'item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors';
+        if (mode === 'pantry') {
+            row.setAttribute('data-locked', 'true');
+            row.className = 'item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors bg-blue-50/40';
+
+            // Insert 📋 Need tag next to item title if not already present
+            const titleEl = row.querySelector('.item-title');
+            if (titleEl && !row.querySelector('.item-need-tag')) {
+                const tag = document.createElement('span');
+                tag.className = 'item-need-tag ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none';
+                tag.textContent = '📋 Need';
+                titleEl.after(tag);
+            }
+        } else {
+            row.className = 'item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors';
+        }
 
         // 4. Update left icon: back to drag handle
         const leftWrap = row.querySelector('.flex.items-center.space-x-2');
@@ -271,31 +300,55 @@
             }
         }
 
-        // 5. Update actions: replace Need with Got and Skip buttons
+        // 5. Update actions: in pantry mode show Reset, Have (hidden), Skip; in store mode show Got, Skip
         const actionsWrap = row.querySelector('.item-actions');
         if (actionsWrap) {
-            const groupBy = sectionsContainer.getAttribute('data-group-by') || 'category';
-            const mode = document.querySelector('input[name="mode"]')?.value || 'shopping';
-            const csrf = getCsrfToken();
-            const itemName = row.getAttribute('data-item-name') || 'item';
-
-            actionsWrap.innerHTML = `
-                <form method="POST" action="/item/${itemId}/status/GOT/?group_by=${groupBy}&mode=${mode}" class="inline">
-                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
-                    <button type="submit" aria-label="Mark ${itemName} as got in cart" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium rounded-none">
-                        🛒 Got
+            if (mode === 'pantry') {
+                actionsWrap.innerHTML = `
+                    <form hx-post="/item/${itemId}/status/HAVE/?group_by=${groupBy}&mode=${mode}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="have-status-form hidden">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+                        <button type="submit" aria-label="Mark ${itemName} as have at home" title="Already have at home" class="border border-amber-400 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold rounded-none">
+                            🏠 Have
+                        </button>
+                    </form>
+                    <form hx-post="/item/${itemId}/lock/?group_by=${groupBy}&mode=${mode}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+                        <button type="submit" aria-label="Reset confirmed need for ${itemName}" title="Confirmed need (click to reset)" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 text-xs text-gray-800 font-semibold rounded-none">
+                            ↺ Reset
+                        </button>
+                    </form>
+                    <form hx-post="/item/${itemId}/status/DONT_NEED/?group_by=${groupBy}&mode=${mode}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+                        <button type="submit" aria-label="Skip ${itemName} for this trip" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900">
+                            ⏭ Skip
+                        </button>
+                    </form>
+                    <button hx-get="/item/${itemId}/edit/?group_by=${groupBy}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item ${itemName}" title="Edit">
+                        <span aria-hidden="true">✏️</span>
                     </button>
-                </form>
-                <form method="POST" action="/item/${itemId}/status/DONT_NEED/?group_by=${groupBy}&mode=${mode}" class="inline">
-                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
-                    <button type="submit" aria-label="Skip ${itemName} for this trip" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900 rounded-none">
-                        ⏭ Skip
+                `;
+            } else {
+                actionsWrap.innerHTML = `
+                    <form method="POST" action="/item/${itemId}/status/GOT/?group_by=${groupBy}&mode=${mode}" class="inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+                        <button type="submit" aria-label="Mark ${itemName} as got in cart" title="Got it (Put in Cart)" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium rounded-none">
+                            🛒 Got
+                        </button>
+                    </form>
+                    <form method="POST" action="/item/${itemId}/status/DONT_NEED/?group_by=${groupBy}&mode=${mode}" class="inline">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+                        <button type="submit" aria-label="Skip ${itemName} for this trip" title="Don't need this trip" class="border border-gray-300 hover:border-gray-500 bg-white hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:text-gray-900 rounded-none">
+                            ⏭ Skip
+                        </button>
+                    </form>
+                    <button hx-get="/item/${itemId}/edit/?group_by=${groupBy}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item ${itemName}" title="Edit">
+                        <span aria-hidden="true">✏️</span>
                     </button>
-                </form>
-                <button hx-get="/item/${itemId}/edit/?group_by=${groupBy}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item ${itemName}" title="Edit">
-                    <span aria-hidden="true">✏️</span>
-                </button>
-            `;
+                `;
+            }
+            if (window.htmx) {
+                htmx.process(actionsWrap);
+            }
         }
 
         animateRow(row, '#dbeafe');
@@ -357,6 +410,9 @@
                     <span aria-hidden="true">✏️</span>
                 </button>
             `;
+            if (window.htmx) {
+                htmx.process(actionsWrap);
+            }
         }
 
         // Hide empty category header if last item in group was skipped or marked in pantry
@@ -562,6 +618,16 @@
             target = target.parentElement;
         }
         if (!target || typeof target.closest !== 'function') return;
+
+        // If user clicks edit while offline, provide immediate feedback that connection is required
+        const editBtn = target.closest('button[hx-get*="/edit/"]');
+        if (editBtn && !navigator.onLine) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            triggerToast('⚠️ Editing item details requires an internet connection');
+            return;
+        }
 
         // Check if click was inside an action button or form in the shopping list
         const button = target.closest('button[type="submit"], button');

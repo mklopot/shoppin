@@ -256,8 +256,22 @@ def _add_or_combine_preset_item(
             existing = candidate
             break
 
+    if not existing:
+        for candidate in target_list.items.filter(status__in=[ItemStatus.HAVE, ItemStatus.DONT_NEED]):
+            if (
+                singularize(candidate.name.lower().strip()) == normalized_name
+                and can_combine_units(candidate.amount_unit, item.amount_unit)
+                and candidate.brand.lower().strip() == item.brand.lower().strip()
+            ):
+                candidate.status = ItemStatus.NEED
+                existing = candidate
+                break
+
     if existing:
         target_item = existing
+        if target_item.status != ItemStatus.NEED:
+            target_item.status = ItemStatus.NEED
+            target_item.save(update_fields=["status", "updated_at"])
         if is_scheduled:
             # Request 1: items loaded via scheduled run require pantry check confirmation
             target_item.locked = False

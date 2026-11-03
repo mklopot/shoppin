@@ -16,7 +16,7 @@
 </div>
 {% endif %}
 
-<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}">
+<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" data-mode="{{ mode }}" data-group-by="{{ group_by }}">
 
     {% if not can_write %}
     <!-- Read-Only / Static View Banner -->
@@ -453,7 +453,7 @@
 
         <div id="got-items-list" class="divide-y divide-emerald-200">
             {% for item in got_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status check + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     <span class="status-icon text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
@@ -525,7 +525,7 @@
 
         <div id="pantry-items-list" class="divide-y divide-blue-200">
             {% for item in pantry_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status Icon + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     {% if item.status == 'HAVE' %}

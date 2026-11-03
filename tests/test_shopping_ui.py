@@ -989,6 +989,53 @@ def test_pantry_check_need_reset_toggle(client, active_list):
     assert "You unchecked" in unlock_html
 
 
+@pytest.mark.django_db
+def test_pantry_item_attributes_and_deduplication(client, active_list):
+    """
+    Test that items in 'Already Have' have data-group-name for optimistic placement,
+    and moving/adding items does not produce duplicate rows.
+    """
+    tofu = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Tofu",
+        amount=Decimal("1.00"),
+        category="vegetarian foods",
+        status=ItemStatus.HAVE,
+        order=5,
+    )
+
+    # 1. Pantry items must render data-group-name
+    res = client.get(reverse("shopping:list") + "?mode=pantry")
+    assert res.status_code == 200
+    html = res.content.decode("utf-8")
+    tofu_row = [r for r in html.split('id="item-row-') if r.startswith(f'{tofu.id}"')][0]
+    assert 'data-group-name="Vegetarian Foods"' in tofu_row
+
+    # 2. Add item with same name while it's in HAVE reactivates it into NEED without duplicating
+    res_add = client.post(reverse("shopping:add_item"), {"name": "Tofu", "amount": "2"})
+    assert res_add.status_code == 200
+    assert active_list.items.filter(name__iexact="Tofu").count() == 1
+    tofu.refresh_from_db()
+    assert tofu.status == ItemStatus.NEED
+    assert tofu.amount == Decimal("3.00")
+
+    # 3. If another item with same name exists in HAVE, moving it to NEED merges them
+    tofu2 = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Tofu",
+        amount=Decimal("1.00"),
+        category="vegetarian foods",
+        status=ItemStatus.HAVE,
+        order=6,
+    )
+    res_status = client.post(reverse("shopping:set_status", args=[tofu2.id, "NEED"]))
+    assert res_status.status_code == 200
+    # Must have merged into 1 item
+    assert active_list.items.filter(name__iexact="Tofu").count() == 1
+    tofu.refresh_from_db()
+    assert tofu.amount == Decimal("4.00")
+
+
 def test_shopping_sync_js_syntax_integrity():
     """
     Ensure static/js/shopping_sync.js has balanced braces, parentheses, and brackets.

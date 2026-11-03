@@ -31,6 +31,7 @@ include = ["apps*", "config*"]
 dev = [
     "pytest>=9.1",
     "pytest-django>=4.14",
+    "pytest-xdist>=3.8",
     "ruff>=0.17",
     "bandit>=1.8",
 ]

@@ -20,6 +20,8 @@ class ShoppingConfig(AppConfig):
             "test" in sys.argv
             or any("pytest" in arg for arg in sys.argv)
             or bool(os.environ.get("PYTEST_CURRENT_TEST"))
+            or bool(os.environ.get("PYTEST_XDIST_WORKER"))
+            or "pytest" in sys.modules
         )
         if is_testing:
             return

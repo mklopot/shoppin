@@ -52,6 +52,18 @@ def terms_view(request: HttpRequest) -> HttpResponse:
     return render(request, "core/terms_of_service.html", context)
 
 
+def privacy_view(request: HttpRequest) -> HttpResponse:
+    """
+    Render public Privacy Policy page.
+    """
+    context: dict[str, Any] = {
+        "support_email": "support@recipe.klopot.tech",
+        "last_updated": "November 2026",
+    }
+    return render(request, "core/privacy_policy.html", context)
+
+
+
 @login_required
 def terms_accept_view(request: HttpRequest) -> HttpResponse:
     """

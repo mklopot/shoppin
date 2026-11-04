@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Sign In - Shoppin{% endblock %}
 
@@ -6,8 +7,8 @@
 <div class="max-w-md mx-auto my-8 space-y-6">
     <!-- Login Card -->
     <div class="bg-white border border-gray-300 p-6 shadow-sm space-y-5">
-        <div class="text-center space-y-1 pb-2 border-b border-gray-200">
-            <span class="text-3xl block" aria-hidden="true">🛒</span>
+        <div class="text-center space-y-2 pb-3 border-b border-gray-200">
+            <img src="{% static 'images/icon.svg' %}" alt="Shoppin" class="w-12 h-12 mx-auto">
             <h1 class="text-xl font-bold text-gray-900 tracking-tight">Sign in to Shoppin</h1>
             <p class="text-xs text-gray-600">
                 Sign in to save recipes, build meal plans, and sync your shopping list.
@@ -94,7 +95,7 @@
                 </a>
             </div>
             <div class="text-[10px] text-gray-600">
-                By signing in, you agree to our <a href="{% url 'core:terms' %}" class="text-gray-800 underline hover:text-black">Terms of Service</a>.
+                By signing in, you agree to our <a href="{% url 'core:terms' %}" class="text-gray-800 underline hover:text-black">Terms of Service</a> and <a href="{% url 'core:privacy' %}" class="text-gray-800 underline hover:text-black">Privacy Policy</a>.
             </div>
         </div>
     </div>

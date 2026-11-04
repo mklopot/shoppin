@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 36" fill="none">
+  <!-- Cart & Leaf Icon Mark -->
+  <g transform="translate(0, 1)">
+    <!-- Cart Basket Base -->
+    <path d="M4 8h4.5l3.5 14a1.8 1.8 0 0 0 1.7 1.3h14.5a1.8 1.8 0 0 0 1.7-1.3L32 11H9.8" 
+          stroke="#059669" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Fresh Leaf / Culinary Cloche Motif -->
+    <path d="M17 8c0-3.8 3-6 6.8-6 0 3.8-3 6-6.8 6z" 
+          fill="#10b981"/>
+    <path d="M19 6c1.5-.8 3-1.2 4.8-1.2" 
+          stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
+    <!-- Wheels -->
+    <circle cx="14" cy="27.5" r="2.2" fill="#0f172a"/>
+    <circle cx="27" cy="27.5" r="2.2" fill="#0f172a"/>
+  </g>
+  <!-- Shoppin Wordmark Typography -->
+  <text x="39" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+        font-size="20" font-weight="800" fill="#0f172a" letter-spacing="-0.035em">Shoppin</text>
+</svg>

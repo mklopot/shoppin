@@ -345,3 +345,50 @@ def test_terms_accept_sanitizes_self_referential_next_url(client: Client, normal
     )
     assert response.status_code == 302
     assert response.url == reverse("recipes:list")
+
+
+# ---------------------------------------------------------------------------
+# Brand Identity, Privacy Policy, & Contact Info Verification
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_terms_of_service_branding_and_contact_info(client: Client):
+    """Terms page displays Waldorf Wellington attribution and correct support email."""
+    response = client.get(reverse("core:terms"))
+    assert response.status_code == 200
+    content = response.content.decode()
+
+    assert "Waldorf Wellington" in content
+    assert "support@recipe.klopot.tech" in content
+    assert "support@klopot.tech" not in content  # Old parent domain email removed
+
+
+@pytest.mark.django_db
+def test_privacy_policy_page_renders_with_brand_disclosures(client: Client):
+    """Privacy policy renders with Google API Limited Use and contact details."""
+    response = client.get(reverse("core:privacy"))
+    assert response.status_code == 200
+    content = response.content.decode()
+
+    assert "Privacy Policy" in content
+    assert "Waldorf Wellington" in content
+    assert "recipe.klopot.tech" in content
+    assert "support@recipe.klopot.tech" in content
+    assert "Google API Services User Data Policy" in content
+    assert "We do not sell, rent, trade, or monetize your personal information" in content
+
+
+@pytest.mark.django_db
+def test_footer_renders_dynamic_copyright_and_brand_links(client: Client):
+    """Base template footer includes dynamic copyright year, Waldorf Wellington, and links."""
+    response = client.get(reverse("recipes:list"))
+    assert response.status_code == 200
+    content = response.content.decode()
+
+    assert "Waldorf Wellington. All Rights Reserved." in content
+    assert 'href="/terms/"' in content or reverse("core:terms") in content
+    assert 'href="/privacy/"' in content or reverse("core:privacy") in content
+    assert "mailto:support@recipe.klopot.tech" in content
+    assert 'src="/static/images/logo.svg"' in content
+

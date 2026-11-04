@@ -828,7 +828,6 @@ function addIngredientRow() {
         <td class="p-1.5">
             <input type="text"
                    name="ingredient_name[]"
-                   required
                    list="all-ingredients-datalist"
                    autocomplete="off"
                    aria-label="Ingredient name"
@@ -878,6 +877,7 @@ function addIngredientRow() {
     tbody.appendChild(tr);
     const newNameInput = tr.querySelector('input[name="ingredient_name[]"]');
     if (newNameInput) newNameInput.focus();
+    return tr;
 }
 
 function removeIngredientRow(btn) {
@@ -891,6 +891,112 @@ function removeIngredientRow(btn) {
         row.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
         row.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
+}
+
+function handleIngredientKeydown(e) {
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) {
+        return;
+    }
+
+    const input = e.target;
+    if (!input || input.tagName !== 'INPUT' || input.type === 'button') {
+        return;
+    }
+
+    const currentRow = input.closest('.ingredient-row');
+    if (!currentRow) {
+        return;
+    }
+
+    // Always prevent submitting the entire recipe on Enter when in an ingredient input
+    e.preventDefault();
+
+    if (e.shiftKey) {
+        const prevRow = currentRow.previousElementSibling;
+        if (prevRow && prevRow.classList.contains('ingredient-row')) {
+            const prevInput = prevRow.querySelector('input[name="ingredient_name[]"]');
+            if (prevInput) {
+                prevInput.focus();
+            }
+        }
+        return;
+    }
+
+    const nextRow = currentRow.nextElementSibling;
+    if (nextRow && nextRow.classList.contains('ingredient-row')) {
+        const nextInput = nextRow.querySelector('input[name="ingredient_name[]"]');
+        if (nextInput) {
+            nextInput.focus();
+        }
+    } else {
+        // Last row: check if current row has content before creating the next row
+        const nameInput = currentRow.querySelector('input[name="ingredient_name[]"]');
+        const nameVal = nameInput ? nameInput.value.trim() : '';
+        const brandInput = currentRow.querySelector('input[name="ingredient_brand[]"]');
+        const brandVal = brandInput ? brandInput.value.trim() : '';
+        const vendorInput = currentRow.querySelector('input[name="ingredient_vendor[]"]');
+        const vendorVal = vendorInput ? vendorInput.value.trim() : '';
+        const amtInput = currentRow.querySelector('input[name="ingredient_amount[]"]');
+        const amtVal = amtInput ? amtInput.value.trim() : '';
+
+        // If the current row has content, create and move to the next ingredient
+        if (nameVal || brandVal || vendorVal || (amtVal && amtVal !== '1')) {
+            addIngredientRow();
+        } else if (nameInput) {
+            nameInput.focus();
+        }
+    }
+}
+
+function cleanupEmptyIngredientRows() {
+    const tbody = document.getElementById('ingredients-table-body');
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('.ingredient-row');
+    if (rows.length <= 1) return;
+
+    const hasFilledRow = Array.from(rows).some(row => {
+        const nameInput = row.querySelector('input[name="ingredient_name[]"]');
+        return nameInput && nameInput.value.trim().length > 0;
+    });
+
+    if (hasFilledRow) {
+        rows.forEach(row => {
+            const nameInput = row.querySelector('input[name="ingredient_name[]"]');
+            const brandInput = row.querySelector('input[name="ingredient_brand[]"]');
+            const vendorInput = row.querySelector('input[name="ingredient_vendor[]"]');
+            const name = nameInput ? nameInput.value.trim() : '';
+            const brand = brandInput ? brandInput.value.trim() : '';
+            const vendor = vendorInput ? vendorInput.value.trim() : '';
+            if (!name && !brand && !vendor) {
+                if (tbody.querySelectorAll('.ingredient-row').length > 1) {
+                    row.remove();
+                }
+            }
+        });
+    }
+}
+
+function initIngredientEnterBehavior() {
+    const tbody = document.getElementById('ingredients-table-body');
+    if (tbody) {
+        tbody.addEventListener('keydown', handleIngredientKeydown);
+    }
+
+    const form = document.querySelector('form[method="post"]');
+    if (form) {
+        form.addEventListener('submit', cleanupEmptyIngredientRows);
+        const submitBtns = form.querySelectorAll('button[type="submit"]');
+        submitBtns.forEach(btn => {
+            btn.addEventListener('pointerdown', cleanupEmptyIngredientRows);
+            btn.addEventListener('click', cleanupEmptyIngredientRows);
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initIngredientEnterBehavior);
+} else {
+    initIngredientEnterBehavior();
 }
 
 function previewUploadedImage(input) {

@@ -457,6 +457,42 @@ def test_recipe_form_renders_public_slider_and_modal(client: Client, auth_user):
 
 
 @pytest.mark.django_db
+def test_recipe_form_ingredient_enter_key_and_cleanup_script(client: Client, auth_user):
+    user, _ = auth_user
+    client.force_login(user)
+
+    url = reverse("recipes:create")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+
+    # Check ingredient table and dynamic keyboard handlers
+    assert 'id="ingredients-table-body"' in content
+    assert "handleIngredientKeydown" in content
+    assert "cleanupEmptyIngredientRows" in content
+    assert "initIngredientEnterBehavior" in content
+    assert "addIngredientRow" in content
+
+    # Test recipe creation where a trailing empty ingredient row was submitted
+    post_data = {
+        "name": "Chili Con Carne",
+        "directions": "Cook beef and spices thoroughly.",
+        "portions": 4,
+        "ingredient_name[]": ["Ground Beef", "Kidney Beans", ""],
+        "ingredient_amount[]": ["1 lb", "1 can", "1"],
+        "ingredient_unit[]": ["", "", ""],
+        "ingredient_optional[]": ["0", "0", "0"],
+        "ingredient_brand[]": ["", "", ""],
+        "ingredient_vendor[]": ["", "", ""],
+    }
+    post_resp = client.post(url, post_data)
+    assert post_resp.status_code == 302
+    created = Recipe.objects.get(name="Chili Con Carne")
+    assert created.ingredients.count() == 2
+    assert list(created.ingredients.values_list("name", flat=True)) == ["Ground Beef", "Kidney Beans"]
+
+
+@pytest.mark.django_db
 def test_submit_recipe_rating(sample_recipes, auth_user):
     user, _ = auth_user
     r1, _, _ = sample_recipes

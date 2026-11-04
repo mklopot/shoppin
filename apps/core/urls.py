@@ -12,6 +12,7 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("terms/", tos_views.terms_view, name="terms"),
     path("terms/accept/", tos_views.terms_accept_view, name="terms_accept"),
+    path("privacy/", tos_views.privacy_view, name="privacy"),
     path("login/", auth_views.login_view, name="login"),
     path("logout/", auth_views.logout_view, name="logout"),
     path("google/login/", auth_views.google_login_view, name="google_login"),

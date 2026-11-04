@@ -213,3 +213,9 @@ DEV_AUTO_LOGIN = os.getenv('DEV_AUTO_LOGIN', 'False').lower() in ('true', '1')
 KROGER_CLIENT_ID = os.getenv('KROGER_CLIENT_ID', '')
 KROGER_CLIENT_SECRET = os.getenv('KROGER_CLIENT_SECRET', '')
 
+# Email & Brand Contact Identity
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Shoppin <support@recipe.klopot.tech>')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', 'support@recipe.klopot.tech')
+SUPPORT_EMAIL = 'support@recipe.klopot.tech'
+
+

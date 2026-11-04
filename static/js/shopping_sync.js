@@ -773,10 +773,20 @@
         restoreQuickAddDraft(draft);
 
         // Lock / Restore Scroll Position
-        window.scrollTo({ top: scrollY, behavior: 'instant' });
-        requestAnimationFrame(() => {
+        const restoreScroll = function () {
             window.scrollTo({ top: scrollY, behavior: 'instant' });
-        });
+            if (document.documentElement) document.documentElement.scrollTop = scrollY;
+            if (document.body) document.body.scrollTop = scrollY;
+        };
+
+        restoreScroll();
+        requestAnimationFrame(restoreScroll);
+        setTimeout(restoreScroll, 30);
+        setTimeout(restoreScroll, 100);
+        setTimeout(function () {
+            restoreScroll();
+            try { sessionStorage.removeItem('shoppin_mode_scroll'); } catch (_) {}
+        }, 300);
 
         // Update Document Title & Browser History
         const pageTitle = targetMode === 'pantry' ? 'Pantry Check - Shoppin' : 'Shopping List - Shoppin';
@@ -806,9 +816,12 @@
         isSwitchingMode = true;
 
         // Capture scroll position and input draft
-        const scrollY = window.scrollY || window.pageYOffset || 0;
+        const scrollY = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0;
         const draft = getQuickAddDraft();
         saveQuickAddDraft(draft);
+        try {
+            sessionStorage.setItem('shoppin_mode_scroll', String(scrollY));
+        } catch (_) {}
 
         // Determine target URL preserving current group_by
         const currentGroupBy = listContent.getAttribute('data-group-by') || 'category';
@@ -822,11 +835,11 @@
         // Immediately update nav tab styling for instant feedback
         updateNavTabsStyling(targetMode);
 
-        // Request partial HTML via htmx.ajax or fetch
+        // Request partial HTML via htmx.ajax or fetch (no transition:true to prevent view transition scroller freeze)
         if (window.htmx) {
             htmx.ajax('GET', targetUrl, {
                 target: '#shopping-list-content',
-                swap: 'outerHTML transition:true'
+                swap: 'outerHTML'
             }).then(() => {
                 finishModeSwitch(targetMode, targetUrl, scrollY, draft, pushHistory);
             }).catch((err) => {
@@ -971,6 +984,27 @@
         flushQueue();
         if (!isSwitchingMode) {
             restoreQuickAddDraft();
+            try {
+                const saved = sessionStorage.getItem('shoppin_mode_scroll');
+                if (saved !== null) {
+                    const y = parseInt(saved, 10);
+                    if (!isNaN(y) && y > 0) {
+                        const restore = function () {
+                            window.scrollTo({ top: y, behavior: 'instant' });
+                            if (document.documentElement) document.documentElement.scrollTop = y;
+                            if (document.body) document.body.scrollTop = y;
+                        };
+                        restore();
+                        requestAnimationFrame(restore);
+                        setTimeout(restore, 40);
+                        setTimeout(restore, 120);
+                        setTimeout(function () {
+                            restore();
+                            sessionStorage.removeItem('shoppin_mode_scroll');
+                        }, 300);
+                    }
+                }
+            } catch (_) {}
         }
     }
 

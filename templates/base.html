@@ -666,6 +666,60 @@
         window.CLIENT_ID = 'tab_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
         try { sessionStorage.removeItem('shoppin_client_id'); } catch (_) {}
 
+        // Early mode switch scroll and quick add draft safeguard
+        document.addEventListener('click', function(e) {
+            const link = e.target && e.target.closest && e.target.closest('[data-mode-switch]');
+            if (!link) return;
+            const listContent = document.getElementById('shopping-list-content');
+            if (!listContent) return;
+            try {
+                const y = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0;
+                sessionStorage.setItem('shoppin_mode_scroll', String(y));
+                const nameEl = document.getElementById('add-item-name');
+                if (nameEl) {
+                    const draft = {
+                        name: nameEl.value || '',
+                        amount: document.getElementById('add-item-amount')?.value || '1',
+                        brand: document.getElementById('add-item-brand')?.value || '',
+                        vendor: document.getElementById('add-item-vendor')?.value || '',
+                        purpose: document.getElementById('add-item-purpose')?.value || '',
+                        priority: Boolean(nameEl.form?.querySelector('input[name="priority"]')?.checked)
+                    };
+                    sessionStorage.setItem('shoppin_quick_add_draft', JSON.stringify(draft));
+                }
+            } catch (_) {}
+        }, true);
+
+        function restoreSavedModeScroll() {
+            try {
+                const saved = sessionStorage.getItem('shoppin_mode_scroll');
+                if (saved !== null) {
+                    const y = parseInt(saved, 10);
+                    if (!isNaN(y) && y > 0) {
+                        const restore = function() {
+                            window.scrollTo({ top: y, behavior: 'instant' });
+                            if (document.documentElement) document.documentElement.scrollTop = y;
+                            if (document.body) document.body.scrollTop = y;
+                        };
+                        restore();
+                        requestAnimationFrame(restore);
+                        setTimeout(restore, 40);
+                        setTimeout(restore, 120);
+                        setTimeout(function() {
+                            restore();
+                            sessionStorage.removeItem('shoppin_mode_scroll');
+                        }, 300);
+                    }
+                }
+            } catch (_) {}
+        }
+        document.addEventListener('DOMContentLoaded', restoreSavedModeScroll);
+        document.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail && evt.detail.target && evt.detail.target.id === 'shopping-list-content') {
+                restoreSavedModeScroll();
+            }
+        });
+
         document.addEventListener('htmx:configRequest', function(evt) {
             evt.detail.headers['X-Client-Id'] = window.CLIENT_ID;
         });

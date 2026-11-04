@@ -367,16 +367,18 @@ def test_terms_of_service_branding_and_contact_info(client: Client):
 @pytest.mark.django_db
 def test_privacy_policy_page_renders_with_brand_disclosures(client: Client):
     """Privacy policy renders with Google API Limited Use and contact details."""
-    response = client.get(reverse("core:privacy"))
-    assert response.status_code == 200
-    content = response.content.decode()
+    # Test both namespace and root URL
+    for url in [reverse("core:privacy"), "/privacy/"]:
+        response = client.get(url)
+        assert response.status_code == 200
+        content = response.content.decode()
 
-    assert "Privacy Policy" in content
-    assert "Waldorf Wellington" in content
-    assert "recipe.klopot.tech" in content
-    assert "support@recipe.klopot.tech" in content
-    assert "Google API Services User Data Policy" in content
-    assert "We do not sell, rent, trade, or monetize your personal information" in content
+        assert "Privacy Policy" in content
+        assert "Waldorf Wellington" in content
+        assert "recipe.klopot.tech" in content
+        assert "support@recipe.klopot.tech" in content
+        assert "Google API Services User Data Policy" in content
+        assert "We do not sell, rent, trade, or monetize your personal information" in content
 
 
 @pytest.mark.django_db

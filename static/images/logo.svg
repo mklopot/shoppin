@@ -1,19 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 36" fill="none">
-  <!-- Cart & Leaf Icon Mark -->
-  <g transform="translate(0, 1)">
-    <!-- Cart Basket Base -->
-    <path d="M4 8h4.5l3.5 14a1.8 1.8 0 0 0 1.7 1.3h14.5a1.8 1.8 0 0 0 1.7-1.3L32 11H9.8" 
-          stroke="#059669" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- Fresh Leaf / Culinary Cloche Motif -->
-    <path d="M17 8c0-3.8 3-6 6.8-6 0 3.8-3 6-6.8 6z" 
-          fill="#10b981"/>
-    <path d="M19 6c1.5-.8 3-1.2 4.8-1.2" 
-          stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
-    <!-- Wheels -->
-    <circle cx="14" cy="27.5" r="2.2" fill="#0f172a"/>
-    <circle cx="27" cy="27.5" r="2.2" fill="#0f172a"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 215 28" fill="none">
+  <!-- 1. Pixel Clipboard Icon -->
+  <g transform="translate(1, 2)" shape-rendering="crispEdges">
+    <!-- Clip -->
+    <rect x="5.5" y="0" width="7" height="2.5" fill="#0f172a"/>
+    <rect x="6.5" y="1" width="5" height="1" fill="#94a3b8"/>
+    <!-- Board -->
+    <rect x="1" y="2" width="16" height="21" fill="#ffffff" stroke="#0f172a" stroke-width="1.8"/>
+    <!-- Checkmarks and lines -->
+    <rect x="3.5" y="6" width="2.5" height="2.5" fill="#059669"/>
+    <rect x="7.5" y="6.5" width="7.5" height="1.5" fill="#0f172a"/>
+    <rect x="3.5" y="11" width="2.5" height="2.5" fill="#059669"/>
+    <rect x="7.5" y="11.5" width="7.5" height="1.5" fill="#0f172a"/>
+    <rect x="3.5" y="16" width="2.5" height="2.5" fill="#cbd5e1"/>
+    <rect x="7.5" y="16.5" width="4.5" height="1.5" fill="#cbd5e1"/>
   </g>
-  <!-- Shoppin Wordmark Typography -->
-  <text x="39" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
-        font-size="20" font-weight="800" fill="#0f172a" letter-spacing="-0.035em">Shoppin</text>
+
+  <!-- 2. Clean-Line Metal Cart Icon -->
+  <g transform="translate(25, 2)">
+    <path d="M1.5 5h3l2.8 10.5a1.2 1.2 0 0 0 1.2.9h9a1.2 1.2 0 0 0 1.2-.9L20.5 7.5H5.2" 
+          stroke="#0f172a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="9.5" y1="8" x2="9.5" y2="14" stroke="#0f172a" stroke-width="1.2" stroke-linecap="butt"/>
+    <line x1="13" y1="8" x2="13" y2="14" stroke="#0f172a" stroke-width="1.2" stroke-linecap="butt"/>
+    <line x1="16.5" y1="8" x2="16.5" y2="13.5" stroke="#0f172a" stroke-width="1.2" stroke-linecap="butt"/>
+    <circle cx="8.5" cy="19.5" r="1.6" fill="#0f172a"/>
+    <circle cx="16.5" cy="19.5" r="1.6" fill="#0f172a"/>
+  </g>
+
+  <!-- 3. Typography: recipe (bold) .klopot.tech (regular) -->
+  <text x="54" y="19" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="900" fill="#0f172a" letter-spacing="-0.03em">recipe</text>
+  <text x="100" y="19" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" font-weight="400" fill="#64748b" letter-spacing="-0.02em">.klopot.tech</text>
 </svg>

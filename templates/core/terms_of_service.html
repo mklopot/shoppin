@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Terms of Service - Shoppin{% endblock %}
+{% block title %}Terms of Service - Recipe{% endblock %}
 
 {% block footer_terms_link %}{% endblock %}
 
@@ -10,7 +10,7 @@
 <div class="max-w-xl mx-auto my-12 bg-white border border-gray-300 p-8 shadow-xs space-y-6 font-sans">
     <div class="border-b border-gray-200 pb-4">
         <h1 class="text-xl font-bold text-gray-900">Terms of Service</h1>
-        <p class="text-xs text-gray-600 mt-1">Please review and agree to the Terms of Service to continue using Shoppin.</p>
+        <p class="text-xs text-gray-600 mt-1">Please review and agree to the Terms of Service to continue using recipe.klopot.tech.</p>
     </div>
 
     <form method="post" action="{% url 'core:terms_accept' %}" id="tos-acceptance-form" class="space-y-6">
@@ -130,7 +130,7 @@
     </div>
     {% elif not request.user.is_authenticated %}
     <div class="border-t border-gray-200 pt-6 mt-6 text-xs text-gray-600">
-        To use Shoppin features and save recipes, please <a href="{% url 'core:login' %}?next={% url 'core:terms' %}" class="text-blue-600 hover:underline font-medium">sign in</a>.
+        To use recipe.klopot.tech features and save recipes, please <a href="{% url 'core:login' %}?next={% url 'core:terms' %}" class="text-blue-600 hover:underline font-medium">sign in</a>.
     </div>
     {% endif %}
 </div>

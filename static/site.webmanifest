@@ -1,7 +1,7 @@
 {
-    "name": "Shoppin",
-    "short_name": "Shoppin",
-    "description": "Smart recipes, meal planning, and live grocery synchronization by Waldorf Wellington.",
+    "name": "recipe.klopot.tech",
+    "short_name": "Recipe",
+    "description": "Fast recipe manager, meal planning, and grocery lists by Waldorf Wellington.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
@@ -16,13 +16,13 @@
             "purpose": "any"
         },
         {
-            "src": "/static/android-chrome-192x192.png?v=4",
+            "src": "/static/android-chrome-192x192.png?v=6",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "/static/android-chrome-512x512.png?v=4",
+            "src": "/static/android-chrome-512x512.png?v=6",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"

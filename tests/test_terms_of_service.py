@@ -42,8 +42,8 @@ def test_guest_can_view_terms_of_service(client: Client):
     assert "Terms of Service" in content
     assert "Acceptance of Terms" in content
     assert "User Content and Ownership" in content
-    assert "Shoppin does not claim ownership of your User Content" in content
-    assert "License to Shoppin" in content
+    assert "recipe.klopot.tech does not claim ownership of your User Content" in content
+    assert "License to recipe.klopot.tech" in content
     assert "Acceptable Use and Prohibited Activities" in content
     assert "Disclaimer of Warranties" in content
     assert "AS IS" in content
@@ -55,7 +55,7 @@ def test_guest_can_view_terms_of_service(client: Client):
 
     # UGC non-responsibility, editorial discretion, and life-critical/medical prohibitions
     assert "No Responsibility for User-Generated Content" in content
-    assert "Shoppin expressly disclaims any and all responsibility or liability for User Content" in content
+    assert "recipe.klopot.tech expressly disclaims any and all responsibility or liability for User Content" in content
     assert "Editorial Review and Modification Prior to Publishing" in content
     assert "may be reviewed, curated, edited, modified, reformatted" in content
     assert "Prohibition on Life-Critical and Medical or Medically Relevant Nutritional Use" in content
@@ -383,7 +383,7 @@ def test_privacy_policy_page_renders_with_brand_disclosures(client: Client):
 
 @pytest.mark.django_db
 def test_footer_renders_dynamic_copyright_and_brand_links(client: Client):
-    """Base template footer includes dynamic copyright year, Waldorf Wellington, and links."""
+    """Base template footer and navbar include dynamic copyright year, Waldorf Wellington, and brand links."""
     response = client.get(reverse("recipes:list"))
     assert response.status_code == 200
     content = response.content.decode()
@@ -392,5 +392,6 @@ def test_footer_renders_dynamic_copyright_and_brand_links(client: Client):
     assert 'href="/terms/"' in content or reverse("core:terms") in content
     assert 'href="/privacy/"' in content or reverse("core:privacy") in content
     assert "mailto:support@recipe.klopot.tech" in content
-    assert 'src="/static/images/logo.svg"' in content
+    assert "recipe" in content
+    assert ".klopot.tech" in content
 

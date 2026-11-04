@@ -318,6 +318,14 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
         messages.info(request, "Please sign in to create or import recipes.")
         return redirect(f"{reverse('core:login')}?next={request.path}")
 
+    dmca_profile = getattr(user, "dmca_profile", None)
+    if dmca_profile and (dmca_profile.is_banned or dmca_profile.strikes >= 3):
+        messages.error(
+            request,
+            "Your account has been restricted from creating or importing recipes due to repeated copyright infringement under our DMCA policy.",
+        )
+        return redirect("recipes:list")
+
     workspace = get_active_workspace(request)
     if workspace and not workspace.can_write(user):
         return HttpResponseForbidden("You have read-only access to this workspace.")
@@ -431,6 +439,14 @@ def recipe_edit_view(
     if not (user and user.is_authenticated):
         messages.info(request, "Please sign in to edit recipes.")
         return redirect(f"{reverse('core:login')}?next={request.path}")
+
+    dmca_profile = getattr(user, "dmca_profile", None)
+    if dmca_profile and (dmca_profile.is_banned or dmca_profile.strikes >= 3):
+        messages.error(
+            request,
+            "Your account has been restricted from editing recipes due to repeated copyright infringement under our DMCA policy.",
+        )
+        return redirect("recipes:list")
 
     recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id, slug=slug)
     workspace = get_active_workspace(request)

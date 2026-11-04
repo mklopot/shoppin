@@ -63,6 +63,22 @@ def privacy_view(request: HttpRequest) -> HttpResponse:
     return render(request, "core/privacy_policy.html", context)
 
 
+def dmca_view(request: HttpRequest) -> HttpResponse:
+    """
+    Render public Digital Millennium Copyright Act (DMCA) Notice & Policy page.
+    Accessible to both authenticated users and anonymous guests.
+    """
+    context: dict[str, Any] = {
+        "designated_agent_title": "DMCA Designated Agent",
+        "service_name": "recipe.klopot.tech",
+        "dmca_email": "dmca@recipe.klopot.tech",
+        "support_email": "support@recipe.klopot.tech",
+        "last_updated": "November 2026",
+    }
+    return render(request, "core/dmca.html", context)
+
+
+
 
 @login_required
 def terms_accept_view(request: HttpRequest) -> HttpResponse:

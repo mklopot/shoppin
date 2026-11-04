@@ -8,7 +8,11 @@ A Workspace encapsulates an active shopping list, preset lists, and a meal plan.
 from typing import TYPE_CHECKING, Any
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
 
 if TYPE_CHECKING:
     from apps.mealplans.models import MealPlan
@@ -187,3 +191,101 @@ class TermsOfServiceAcceptance(models.Model):
         username = self.user.username if self.user else "Anonymous"
         name_str = f" ({self.first_name} {self.last_name})".strip() if (self.first_name or self.last_name) else ""
         return f"TOS Acceptance v{self.version} by {username}{name_str} at {self.accepted_at}"
+
+
+class UserDMCAProfile(models.Model):
+    """
+    Tracks DMCA notices, copyright infringement strikes, and repeat infringer
+    account status under 17 U.S.C. § 512(i)(1)(A).
+    """
+    MAX_STRIKES_BEFORE_BAN = 3
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="dmca_profile",
+    )
+    strikes = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of validated DMCA copyright strikes against this user.",
+    )
+    is_banned = models.BooleanField(
+        default=False,
+        help_text="Whether this user is banned from uploading/sharing content due to repeat copyright infringement.",
+    )
+    strike_history = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Audit log of strike records: [{timestamp, notice_id, affected_urls, notes}].",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User DMCA Profile"
+        verbose_name_plural = "User DMCA Profiles"
+
+    def __str__(self) -> str:
+        username = self.user.username if self.user else "Unknown"
+        return f"DMCA Profile for {username} (Strikes: {self.strikes}, Banned: {self.is_banned})"
+
+    def record_strike(self, notice_id: str, affected_urls: list[str] | None = None, notes: str = "") -> int:
+        """
+        Record a validated DMCA infringement strike and automatically ban if threshold is reached.
+        """
+        self.strikes += 1
+        entry = {
+            "timestamp": timezone.now().isoformat(),
+            "strike_number": self.strikes,
+            "notice_id": notice_id,
+            "affected_urls": affected_urls or [],
+            "notes": notes,
+        }
+        if not isinstance(self.strike_history, list):
+            self.strike_history = []
+        self.strike_history.append(entry)
+        if self.strikes >= self.MAX_STRIKES_BEFORE_BAN:
+            self.is_banned = True
+        self.save(update_fields=["strikes", "is_banned", "strike_history", "updated_at"])
+        return self.strikes
+
+    def remove_strike(self, reason: str = "") -> int:
+        """
+        Remove a strike (e.g. following a successful, uncontested counter-notice).
+        """
+        if self.strikes > 0:
+            self.strikes -= 1
+        entry = {
+            "timestamp": timezone.now().isoformat(),
+            "action": "strike_removed",
+            "remaining_strikes": self.strikes,
+            "reason": reason,
+        }
+        if not isinstance(self.strike_history, list):
+            self.strike_history = []
+        self.strike_history.append(entry)
+        if self.strikes < self.MAX_STRIKES_BEFORE_BAN:
+            self.is_banned = False
+        self.save(update_fields=["strikes", "is_banned", "strike_history", "updated_at"])
+        return self.strikes
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_or_update_user_dmca_profile(sender: Any, instance: Any, created: bool, **kwargs: Any) -> None:
+    """Ensure a UserDMCAProfile exists for each User."""
+    if created:
+        UserDMCAProfile.objects.get_or_create(user=instance)
+
+
+def _get_dmca_strikes(user: Any) -> int:
+    profile = getattr(user, "dmca_profile", None)
+    if profile is None:
+        profile, _ = UserDMCAProfile.objects.get_or_create(user=user)
+    return profile.strikes
+
+
+# Attach dmca_strikes property to the User model dynamically
+_UserModel = get_user_model()
+if not hasattr(_UserModel, "dmca_strikes"):
+    _UserModel.dmca_strikes = property(_get_dmca_strikes)  # type: ignore[attr-defined]
+

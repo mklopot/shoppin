@@ -1087,3 +1087,46 @@ def test_shopping_sync_js_syntax_integrity():
     assert not duplicate_errors, f"Syntax errors detected in shopping_sync.js: {duplicate_errors}"
 
 
+@pytest.mark.django_db
+def test_mobile_navigation_tabs_high_contrast(client, active_list):
+    """
+    Test that mobile navigation tabs provide high-contrast active styling,
+    aria-current accessibility indicators, and auto-scroll scripting.
+    """
+    # 1. Shopping List is active on /
+    res_shop = client.get(reverse("shopping:list"))
+    assert res_shop.status_code == 200
+    html_shop = res_shop.content.decode("utf-8")
+
+    assert '<nav id="mobile-nav-tabs"' in html_shop
+    # Active tab has high contrast bg-gray-950 text-white and aria-current="page"
+    assert 'aria-current="page"' in html_shop
+    assert "bg-gray-950 text-white" in html_shop
+    assert "scrollActiveNavTab" in html_shop
+
+    # Verify Shopping List is the active tab in mobile nav
+    mobile_nav_shop = html_shop.split('<nav id="mobile-nav-tabs"')[1].split("</nav>")[0]
+    assert 'aria-current="page"' in mobile_nav_shop
+    # Inactive tabs must have light button styling
+    assert "bg-white text-gray-700" in mobile_nav_shop
+
+    # 2. Pantry Check is active on pantry check mode
+    res_pantry = client.get(reverse("shopping:pantry_check"))
+    assert res_pantry.status_code == 200
+    html_pantry = res_pantry.content.decode("utf-8")
+    mobile_nav_pantry = html_pantry.split('<nav id="mobile-nav-tabs"')[1].split("</nav>")[0]
+    pantry_tab_chunk = [c for c in mobile_nav_pantry.split("<a ") if "Pantry Check" in c][0]
+    assert 'aria-current="page"' in pantry_tab_chunk
+    assert "bg-gray-950 text-white" in pantry_tab_chunk
+
+    # 3. Recipes is active on /recipes/
+    res_recipes = client.get(reverse("recipes:list"))
+    assert res_recipes.status_code == 200
+    html_recipes = res_recipes.content.decode("utf-8")
+    mobile_nav_recipes = html_recipes.split('<nav id="mobile-nav-tabs"')[1].split("</nav>")[0]
+    recipes_tab_chunk = [c for c in mobile_nav_recipes.split("<a ") if "Recipes" in c][0]
+    assert 'aria-current="page"' in recipes_tab_chunk
+    assert "bg-gray-950 text-white" in recipes_tab_chunk
+
+
+

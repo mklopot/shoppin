@@ -31,7 +31,11 @@
             <span>Adapting "{{ recipe.name }}" (Creating Your Version)</span>
         </div>
         <p class="text-xs text-amber-900">
+            {% if recipe.is_web_imported %}
+            This recipe was imported from the web by <strong>{{ recipe.original_author_display }}</strong>.
+            {% else %}
             This recipe was created by <strong>{{ recipe.original_author_display }}</strong>.
+            {% endif %}
             Making modifications will create a new copy attributed to you, while preserving full provenance and historical attribution.
         </p>
     </div>

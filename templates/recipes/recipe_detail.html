@@ -89,7 +89,11 @@
 
             <!-- Authorship & Workspace Lineage Metadata -->
             <div class="text-xs text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-1">
+                {% if recipe.is_web_imported %}
+                <span>Imported from the web by <strong class="text-gray-800">{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"N j, Y" }}</span>
+                {% else %}
                 <span>Originally created by <strong class="text-gray-800">{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"N j, Y" }}</span>
+                {% endif %}
                 {% if is_in_current_workspace and sharer_display %}
                 <span class="text-gray-300">•</span>
                 <span class="text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200 font-medium">
@@ -646,7 +650,11 @@
         </div>
         {% else %}
         <p class="text-[11px] text-gray-500">
+            {% if recipe.is_web_imported %}
+            Imported from the web by <strong>{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"F j, Y" }}.
+            {% else %}
             Original recipe created by <strong>{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"F j, Y" }}.
+            {% endif %}
         </p>
         {% endif %}
     </div>

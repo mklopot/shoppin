@@ -1258,11 +1258,29 @@ def test_recipe_detail_and_form_ui_for_web_imported_recipes(client: Client, auth
         created_by=user,
     )
 
-    # 1. Detail view shows Review Required badge
+    # 1. Detail view shows Review Required badge and web import provenance phrasing
     resp = client.get(recipe.get_absolute_url())
     assert resp.status_code == 200
     html = resp.content.decode("utf-8")
     assert "Web-Imported (Review Required)" in html
+    assert "Imported from the web by" in html
+    assert "Original recipe created by" not in html
+    assert "Originally created by" not in html
+
+    # Non-web-imported recipe displays "Original recipe created by"
+    orig_recipe = Recipe.objects.create(
+        name="Handcrafted Stew",
+        description="Made from scratch.",
+        directions="Simmer slowly.",
+        is_web_imported=False,
+        is_public=True,
+        created_by=user,
+    )
+    resp_orig = client.get(orig_recipe.get_absolute_url())
+    html_orig = resp_orig.content.decode("utf-8")
+    assert "Original recipe created by" in html_orig
+    assert "Originally created by" in html_orig
+    assert "Imported from the web by" not in html_orig
 
     # 2. Edit form disables "Make public" toggle and shows review notice
     resp_form = client.get(reverse("recipes:edit", kwargs={"recipe_id": recipe.id}))

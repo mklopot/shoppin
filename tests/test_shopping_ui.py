@@ -1070,4 +1070,20 @@ def test_shopping_sync_js_syntax_integrity():
     assert open_p == close_p, f"Unbalanced parens in shopping_sync.js: {open_p} open vs {close_p} close"
     assert open_k == close_k, f"Unbalanced brackets in shopping_sync.js: {open_k} open vs {close_k} close"
 
+    # Check for duplicate identifier declarations in the same function scope
+    funcs = re.split(r"(?:async\s+)?function\s+([a-zA-Z0-9_]+)\s*\([^)]*\)\s*\{", code)
+    duplicate_errors = []
+    for i in range(1, len(funcs), 2):
+        fn_name = funcs[i]
+        fn_body = funcs[i + 1]
+        # Find all const / let at the top level of this function (indentation of 8 spaces)
+        decls = re.findall(r"^[ ]{8}(?:const|let)\s+([a-zA-Z0-9_]+)", fn_body, re.MULTILINE)
+        seen = set()
+        for d in decls:
+            if d in seen:
+                duplicate_errors.append(f"Duplicate declaration '{d}' in function '{fn_name}'")
+            seen.add(d)
+
+    assert not duplicate_errors, f"Syntax errors detected in shopping_sync.js: {duplicate_errors}"
+
 

@@ -149,6 +149,8 @@
         const gotContainer = document.getElementById('got-section-container');
         if (!gotList || !gotContainer) return;
 
+        const itemName = row.getAttribute('data-item-name') || 'item';
+
         // Remember original category/section block before moving
         const originalGroupBlock = row.closest('.section-group-block');
         if (originalGroupBlock) {
@@ -183,7 +185,6 @@
             const groupBy = document.getElementById('section-groups-container')?.getAttribute('data-group-by') || 'category';
             const mode = document.querySelector('input[name="mode"]')?.value || 'shopping';
             const csrf = getCsrfToken();
-            const itemName = row.getAttribute('data-item-name') || 'item';
 
             actionsWrap.innerHTML = `
                 <form method="POST" action="/item/${itemId}/status/NEED/?group_by=${groupBy}&mode=${mode}" class="inline">
@@ -208,7 +209,6 @@
 
         // 6. Tactile celebration animation & instant toast
         animateRow(row, '#d1fae5');
-        const itemName = row.getAttribute('data-item-name') || 'item';
         triggerToast(`🛒 You got '${itemName}'`);
     }
 
@@ -352,7 +352,6 @@
         }
 
         animateRow(row, '#dbeafe');
-        const itemName = row.getAttribute('data-item-name') || 'item';
         triggerToast(`📋 You moved '${itemName}' back to To Buy`);
     }
 
@@ -360,6 +359,8 @@
         const pantryList = document.getElementById('pantry-items-list');
         const pantryContainer = document.getElementById('pantry-section-container');
         if (!pantryList || !pantryContainer) return;
+
+        const itemName = row.getAttribute('data-item-name') || 'item';
 
         // Remember original category/section block before moving
         const originalGroupBlock = row.closest('.section-group-block');
@@ -397,7 +398,6 @@
             const groupBy = document.getElementById('section-groups-container')?.getAttribute('data-group-by') || 'category';
             const mode = document.querySelector('input[name="mode"]')?.value || 'pantry';
             const csrf = getCsrfToken();
-            const itemName = row.getAttribute('data-item-name') || 'item';
 
             actionsWrap.innerHTML = `
                 <form method="POST" action="/item/${itemId}/status/NEED/?group_by=${groupBy}&mode=${mode}" class="inline">
@@ -421,7 +421,6 @@
         }
 
         animateRow(row, '#e0f2fe');
-        const itemName = row.getAttribute('data-item-name') || 'item';
         if (targetStatus === 'HAVE') {
             triggerToast(`🏠 You marked '${itemName}' as Already in Pantry`);
         } else {

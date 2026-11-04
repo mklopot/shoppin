@@ -607,6 +607,287 @@
     }
 
     // -------------------------------------------------------------------------
+    // Quick Add Draft Preservation & In-Place Mode Switch Engine
+    // -------------------------------------------------------------------------
+
+    const QUICK_ADD_STORAGE_KEY = 'shoppin_quick_add_draft';
+    let isSwitchingMode = false;
+
+    function getQuickAddDraft() {
+        const nameEl = document.getElementById('add-item-name');
+        const amountEl = document.getElementById('add-item-amount');
+        const brandEl = document.getElementById('add-item-brand');
+        const vendorEl = document.getElementById('add-item-vendor');
+        const purposeEl = document.getElementById('add-item-purpose');
+        const priorityEl = nameEl?.form?.querySelector('input[name="priority"]');
+
+        if (!nameEl) {
+            try {
+                const raw = sessionStorage.getItem(QUICK_ADD_STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        const activeEl = document.activeElement;
+        const isQuickAddActive = activeEl && (
+            activeEl.id === 'add-item-name' ||
+            activeEl.id === 'add-item-amount' ||
+            activeEl.id === 'add-item-brand' ||
+            activeEl.id === 'add-item-vendor' ||
+            activeEl.id === 'add-item-purpose'
+        );
+
+        return {
+            name: nameEl.value || '',
+            amount: amountEl ? amountEl.value : '1',
+            brand: brandEl ? brandEl.value : '',
+            vendor: vendorEl ? vendorEl.value : '',
+            purpose: purposeEl ? purposeEl.value : '',
+            priority: priorityEl ? priorityEl.checked : false,
+            focusedId: isQuickAddActive ? activeEl.id : null,
+            selectionStart: isQuickAddActive && typeof activeEl.selectionStart === 'number' ? activeEl.selectionStart : null,
+            selectionEnd: isQuickAddActive && typeof activeEl.selectionEnd === 'number' ? activeEl.selectionEnd : null
+        };
+    }
+
+    function saveQuickAddDraft(draft) {
+        if (!draft) draft = getQuickAddDraft();
+        if (!draft) return;
+        const hasContent = Boolean(
+            draft.name ||
+            draft.brand ||
+            draft.vendor ||
+            draft.purpose ||
+            draft.priority ||
+            (draft.amount && draft.amount !== '1')
+        );
+        try {
+            if (hasContent) {
+                sessionStorage.setItem(QUICK_ADD_STORAGE_KEY, JSON.stringify(draft));
+            } else {
+                sessionStorage.removeItem(QUICK_ADD_STORAGE_KEY);
+            }
+        } catch (_) {}
+    }
+
+    function clearQuickAddDraft() {
+        try {
+            sessionStorage.removeItem(QUICK_ADD_STORAGE_KEY);
+        } catch (_) {}
+    }
+
+    function restoreQuickAddDraft(draft) {
+        if (!draft) {
+            try {
+                const raw = sessionStorage.getItem(QUICK_ADD_STORAGE_KEY);
+                if (raw) draft = JSON.parse(raw);
+            } catch (_) {}
+        }
+        if (!draft) return;
+
+        const nameEl = document.getElementById('add-item-name');
+        const amountEl = document.getElementById('add-item-amount');
+        const brandEl = document.getElementById('add-item-brand');
+        const vendorEl = document.getElementById('add-item-vendor');
+        const purposeEl = document.getElementById('add-item-purpose');
+        const priorityEl = nameEl?.form?.querySelector('input[name="priority"]');
+
+        if (nameEl && typeof draft.name === 'string') nameEl.value = draft.name;
+        if (amountEl && typeof draft.amount === 'string' && draft.amount) amountEl.value = draft.amount;
+        if (brandEl && typeof draft.brand === 'string') brandEl.value = draft.brand;
+        if (vendorEl && typeof draft.vendor === 'string') vendorEl.value = draft.vendor;
+        if (purposeEl && typeof draft.purpose === 'string') purposeEl.value = draft.purpose;
+        if (priorityEl && typeof draft.priority === 'boolean') priorityEl.checked = draft.priority;
+
+        if (draft.focusedId) {
+            const elToFocus = document.getElementById(draft.focusedId);
+            if (elToFocus) {
+                elToFocus.focus();
+                if (typeof draft.selectionStart === 'number' && typeof elToFocus.setSelectionRange === 'function') {
+                    try {
+                        elToFocus.setSelectionRange(draft.selectionStart, draft.selectionEnd);
+                    } catch (_) {}
+                }
+            }
+        }
+    }
+
+    function updateNavTabsStyling(targetMode) {
+        const isPantry = targetMode === 'pantry';
+
+        // Desktop Primary Navigation Tabs
+        const dtShop = document.querySelector('nav[aria-label="Primary Navigation"] a[data-mode-switch="shopping"]');
+        const dtPantry = document.querySelector('nav[aria-label="Primary Navigation"] a[data-mode-switch="pantry"]');
+
+        const dtActive = 'inline-flex items-center px-2.5 text-xs font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]';
+        const dtInactive = 'inline-flex items-center px-2.5 text-xs font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]';
+
+        if (dtShop) {
+            dtShop.className = isPantry ? dtInactive : dtActive;
+            if (isPantry) {
+                dtShop.removeAttribute('aria-current');
+            } else {
+                dtShop.setAttribute('aria-current', 'page');
+            }
+        }
+        if (dtPantry) {
+            dtPantry.className = isPantry ? dtActive : dtInactive;
+            if (isPantry) {
+                dtPantry.setAttribute('aria-current', 'page');
+            } else {
+                dtPantry.removeAttribute('aria-current');
+            }
+        }
+
+        // Mobile Navigation Tabs
+        const mbShop = document.querySelector('#mobile-nav-tabs a[data-mode-switch="shopping"]');
+        const mbPantry = document.querySelector('#mobile-nav-tabs a[data-mode-switch="pantry"]');
+
+        const mbActive = 'inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold whitespace-nowrap flex-shrink-0 rounded-none transition-colors bg-gray-950 text-white border border-gray-950 shadow-sm';
+        const mbInactive = 'inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold whitespace-nowrap flex-shrink-0 rounded-none transition-colors bg-white text-gray-700 hover:text-gray-950 border border-gray-300';
+
+        if (mbShop) {
+            mbShop.className = isPantry ? mbInactive : mbActive;
+            if (isPantry) {
+                mbShop.removeAttribute('aria-current');
+            } else {
+                mbShop.setAttribute('aria-current', 'page');
+            }
+        }
+        if (mbPantry) {
+            mbPantry.className = isPantry ? mbActive : mbInactive;
+            if (isPantry) {
+                mbPantry.setAttribute('aria-current', 'page');
+            } else {
+                mbPantry.removeAttribute('aria-current');
+            }
+        }
+    }
+
+    function finishModeSwitch(targetMode, targetUrl, scrollY, draft, pushHistory) {
+        isSwitchingMode = false;
+
+        // Restore Quick Add Draft values
+        restoreQuickAddDraft(draft);
+
+        // Lock / Restore Scroll Position
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
+        });
+
+        // Update Document Title & Browser History
+        const pageTitle = targetMode === 'pantry' ? 'Pantry Check - Shoppin' : 'Shopping List - Shoppin';
+        document.title = pageTitle;
+
+        if (pushHistory && window.history && window.history.pushState) {
+            window.history.pushState({ mode: targetMode, scrollY: scrollY }, pageTitle, targetUrl);
+        }
+
+        // Finalize Nav tabs styling
+        updateNavTabsStyling(targetMode);
+
+        // Reinitialize Sortables and Card State
+        if (typeof window.initSortables === 'function') {
+            window.initSortables();
+        }
+        if (typeof window.syncCardState === 'function') {
+            window.syncCardState();
+        }
+    }
+
+    function performModeSwitch(targetMode, pushHistory = true) {
+        if (isSwitchingMode) return;
+        const listContent = document.getElementById('shopping-list-content');
+        if (!listContent) return;
+
+        isSwitchingMode = true;
+
+        // Capture scroll position and input draft
+        const scrollY = window.scrollY || window.pageYOffset || 0;
+        const draft = getQuickAddDraft();
+        saveQuickAddDraft(draft);
+
+        // Determine target URL preserving current group_by
+        const currentGroupBy = listContent.getAttribute('data-group-by') || 'category';
+        let targetUrl;
+        if (targetMode === 'pantry') {
+            targetUrl = `/pantry-check/?group_by=${encodeURIComponent(currentGroupBy)}`;
+        } else {
+            targetUrl = `/?mode=shopping&group_by=${encodeURIComponent(currentGroupBy)}`;
+        }
+
+        // Immediately update nav tab styling for instant feedback
+        updateNavTabsStyling(targetMode);
+
+        // Request partial HTML via htmx.ajax or fetch
+        if (window.htmx) {
+            htmx.ajax('GET', targetUrl, {
+                target: '#shopping-list-content',
+                swap: 'outerHTML transition:true'
+            }).then(() => {
+                finishModeSwitch(targetMode, targetUrl, scrollY, draft, pushHistory);
+            }).catch((err) => {
+                console.error('[Shoppin Mode] Mode switch error:', err);
+                isSwitchingMode = false;
+                window.location.href = targetUrl;
+            });
+        } else {
+            fetch(targetUrl, {
+                headers: {
+                    'HX-Request': 'true',
+                    'HX-Target': 'shopping-list-content',
+                    'X-Client-Id': window.CLIENT_ID || 'client_web'
+                }
+            })
+            .then(res => res.text())
+            .then(html => {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                const newContent = temp.querySelector('#shopping-list-content') || temp.firstElementChild;
+                if (newContent) {
+                    listContent.replaceWith(newContent);
+                }
+                finishModeSwitch(targetMode, targetUrl, scrollY, draft, pushHistory);
+            })
+            .catch(() => {
+                isSwitchingMode = false;
+                window.location.href = targetUrl;
+            });
+        }
+    }
+
+    function handleModeSwitchClick(event, link) {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) {
+            return;
+        }
+
+        const listContent = document.getElementById('shopping-list-content');
+        if (!listContent) {
+            // Not on the shopping list page, allow standard page navigation
+            return;
+        }
+
+        const targetMode = link.getAttribute('data-mode-switch');
+        if (!targetMode) return;
+
+        const currentMode = listContent.getAttribute('data-mode') || 'shopping';
+        if (targetMode === currentMode) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        performModeSwitch(targetMode, true);
+    }
+
+    // -------------------------------------------------------------------------
     // Event Delegation Interceptor
     // -------------------------------------------------------------------------
 
@@ -617,6 +898,13 @@
             target = target.parentElement;
         }
         if (!target || typeof target.closest !== 'function') return;
+
+        // Check for mode switch links (Desktop/Mobile Nav tabs or helper banner)
+        const modeSwitchLink = target.closest('[data-mode-switch]');
+        if (modeSwitchLink) {
+            handleModeSwitchClick(event, modeSwitchLink);
+            return;
+        }
 
         // If user clicks edit while offline, provide immediate feedback that connection is required
         const editBtn = target.closest('button[hx-get*="/edit/"]');
@@ -681,11 +969,65 @@
     function initShoppingSync() {
         updateSyncIndicator();
         flushQueue();
+        if (!isSwitchingMode) {
+            restoreQuickAddDraft();
+        }
     }
 
     // Capture event early before HTMX attaches its listeners (both document and bubbling)
     document.addEventListener('click', interceptAction, true);
     document.addEventListener('submit', interceptAction, true);
+
+    // Quick Add form draft listeners
+    function handleQuickAddInput(e) {
+        const target = e.target;
+        if (target && target.id && (
+            target.id === 'add-item-name' ||
+            target.id === 'add-item-amount' ||
+            target.id === 'add-item-brand' ||
+            target.id === 'add-item-vendor' ||
+            target.id === 'add-item-purpose'
+        )) {
+            saveQuickAddDraft();
+        }
+    }
+
+    function handleQuickAddChange(e) {
+        const target = e.target;
+        if (target && target.name === 'priority' && target.form && target.form.querySelector('#add-item-name')) {
+            saveQuickAddDraft();
+        }
+    }
+
+    function handleQuickAddSubmit(e) {
+        const form = e.target;
+        if (form && form.querySelector && form.querySelector('#add-item-name')) {
+            clearQuickAddDraft();
+        }
+    }
+
+    // Browser history back/forward navigation support
+    function handlePopState() {
+        const listContent = document.getElementById('shopping-list-content');
+        if (!listContent) return;
+
+        const pathname = window.location.pathname;
+        const search = window.location.search;
+        let targetMode = 'shopping';
+        if (pathname.includes('pantry-check') || search.includes('mode=pantry')) {
+            targetMode = 'pantry';
+        }
+
+        const currentMode = listContent.getAttribute('data-mode') || 'shopping';
+        if (targetMode !== currentMode) {
+            performModeSwitch(targetMode, false);
+        }
+    }
+
+    document.addEventListener('input', handleQuickAddInput);
+    document.addEventListener('change', handleQuickAddChange);
+    document.addEventListener('submit', handleQuickAddSubmit);
+    window.addEventListener('popstate', handlePopState);
 
     // Global lifecycle triggers
     window.addEventListener('online', () => {

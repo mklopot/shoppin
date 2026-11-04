@@ -257,11 +257,13 @@
                     <!-- Desktop Primary Navigation Tabs -->
                     <nav aria-label="Primary Navigation" class="hidden sm:flex space-x-1 text-xs h-11 items-stretch">
                         <a href="{% url 'shopping:list' %}?mode=shopping"
+                           data-mode-switch="shopping"
                            {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}aria-current="page"{% endif %}
                            class="inline-flex items-center px-2.5 text-xs {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Shopping List
                         </a>
                         <a href="{% url 'shopping:pantry_check' %}"
+                           data-mode-switch="pantry"
                            {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}aria-current="page"{% endif %}
                            class="inline-flex items-center px-2.5 text-xs {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}font-semibold text-gray-900 border-b-2 border-gray-800 -mb-[1px]{% else %}font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 -mb-[1px]{% endif %}">
                             Pantry Check
@@ -396,11 +398,13 @@
             <!-- Mobile Navigation Tabs (Scrollable Horizontal Strip with High Contrast) -->
             <nav id="mobile-nav-tabs" aria-label="Mobile Navigation" class="sm:hidden flex items-stretch space-x-1 text-xs overflow-x-auto border-t border-gray-200 py-1 scrollbar-none -mx-3 px-3">
                 <a href="{% url 'shopping:list' %}?mode=shopping"
+                   data-mode-switch="shopping"
                    {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}aria-current="page"{% endif %}
                    class="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold whitespace-nowrap flex-shrink-0 rounded-none transition-colors {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}bg-gray-950 text-white border border-gray-950 shadow-sm{% else %}bg-white text-gray-700 hover:text-gray-950 border border-gray-300{% endif %}">
                     Shopping List
                 </a>
                 <a href="{% url 'shopping:pantry_check' %}"
+                   data-mode-switch="pantry"
                    {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}aria-current="page"{% endif %}
                    class="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold whitespace-nowrap flex-shrink-0 rounded-none transition-colors {% if 'pantry-check' in request.path or 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and mode == 'pantry' %}bg-gray-950 text-white border border-gray-950 shadow-sm{% else %}bg-white text-gray-700 hover:text-gray-950 border border-gray-300{% endif %}">
                     Pantry Check

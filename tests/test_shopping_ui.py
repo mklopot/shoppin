@@ -708,6 +708,8 @@ def test_pantry_check_navigation_tab(client, active_list):
     # Shopping List tab is active (font-semibold, border-b-2), Pantry Check is inactive (font-medium)
     assert 'href="/?mode=shopping"' in shop_html
     assert 'href="/pantry-check/"' in shop_html
+    assert 'data-mode-switch="shopping"' in shop_html
+    assert 'data-mode-switch="pantry"' in shop_html
     assert 'font-semibold text-gray-900 border-b-2 border-gray-800' in shop_html
     assert 'font-medium text-gray-600 hover:text-gray-900' in shop_html
 
@@ -719,11 +721,61 @@ def test_pantry_check_navigation_tab(client, active_list):
     # Pantry Check tab is active (font-semibold, border-b-2), Shopping List is inactive (font-medium)
     assert 'href="/pantry-check/"' in pantry_html
     assert 'href="/?mode=shopping"' in pantry_html
+    assert 'data-mode-switch="shopping"' in pantry_html
+    assert 'data-mode-switch="pantry"' in pantry_html
     assert 'font-semibold text-gray-900 border-b-2 border-gray-800' in pantry_html
     assert 'font-medium text-gray-600 hover:text-gray-900' in pantry_html
     # Helper banner is shown
     assert "Pantry Check Mode:" in pantry_html
     assert "Ready to shop &rarr;" in pantry_html
+
+
+@pytest.mark.django_db
+def test_in_place_mode_switch_partial_and_quick_add(client, active_list):
+    """
+    Verify HTMX partial GET for shopping and pantry modes returns list_content
+    with identical Quick Add form fields and proper mode-specific action buttons.
+    """
+    # 1. Switch to Pantry Check mode via HTMX
+    res_pantry = client.get(
+        reverse("shopping:pantry_check"),
+        headers={"HX-Request": "true", "HX-Target": "shopping-list-content"},
+    )
+    assert res_pantry.status_code == 200
+    pantry_html = res_pantry.content.decode("utf-8")
+    assert '<div id="shopping-list-content"' in pantry_html
+    assert 'data-mode="pantry"' in pantry_html
+    assert "<!DOCTYPE html>" not in pantry_html  # Must be partial
+    # Quick Add bar must be present in partial
+    assert 'id="add-item-name"' in pantry_html
+    assert 'id="add-item-amount"' in pantry_html
+    assert 'id="add-item-brand"' in pantry_html
+    assert 'id="add-item-vendor"' in pantry_html
+    assert 'id="add-item-purpose"' in pantry_html
+    assert 'name="priority"' in pantry_html
+    # Mode banner & link
+    assert "Pantry Check Mode:" in pantry_html
+    assert 'data-mode-switch="shopping"' in pantry_html
+
+    # 2. Switch back to Shopping mode via HTMX
+    res_shop = client.get(
+        reverse("shopping:list") + "?mode=shopping",
+        headers={"HX-Request": "true", "HX-Target": "shopping-list-content"},
+    )
+    assert res_shop.status_code == 200
+    shop_html = res_shop.content.decode("utf-8")
+    assert '<div id="shopping-list-content"' in shop_html
+    assert 'data-mode="shopping"' in shop_html
+    assert "<!DOCTYPE html>" not in shop_html  # Must be partial
+    # Quick Add bar must be present in partial
+    assert 'id="add-item-name"' in shop_html
+    assert 'id="add-item-amount"' in shop_html
+    assert 'id="add-item-brand"' in shop_html
+    assert 'id="add-item-vendor"' in shop_html
+    assert 'id="add-item-purpose"' in shop_html
+    assert 'name="priority"' in shop_html
+    # Banner not shown in shopping mode
+    assert "Pantry Check Mode:" not in shop_html
 
 
 @pytest.mark.django_db

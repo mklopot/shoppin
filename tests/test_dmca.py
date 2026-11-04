@@ -112,6 +112,16 @@ def test_terms_of_service_references_dmca_policy(client: Client):
     assert reverse("core:dmca") in content
 
 
+@pytest.mark.django_db
+def test_login_page_references_dmca_policy(client: Client):
+    """Login card disclaimer links to Terms, Privacy, and DMCA."""
+    response = client.get(reverse("core:login"))
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert reverse("core:dmca") in content
+    assert "DMCA Policy" in content
+
+
 # ---------------------------------------------------------------------------
 # User Model DMCA Strike Tracking & Auto-Ban
 # ---------------------------------------------------------------------------

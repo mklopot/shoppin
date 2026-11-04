@@ -152,3 +152,36 @@ def test_guest_can_access_recipe_detail_from_login_carousel(carousel_recipes):
     response = client.get(r1.get_absolute_url())
     assert response.status_code == 200
     assert "Crêpes" in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+def test_login_page_upper_right_signin_button(carousel_recipes):
+    """Test that on the login page, the upper right Sign In button targets #sign-in-card and does not reload."""
+    client = Client()
+    response = client.get(reverse("core:login"))
+    assert response.status_code == 200
+    content = response.content.decode("utf-8")
+
+    # Sign in card has proper ID and scroll offset
+    assert 'id="sign-in-card"' in content
+    # Header Sign In button uses hash anchor and smooth scroll handler on the login page
+    assert 'href="#sign-in-card"' in content
+    assert 'onclick="scrollToSignIn(event)"' in content
+    # Should not link to itself with a circular next query param
+    assert 'next=/core/login' not in content
+    assert 'next=/login' not in content
+
+    # On recipe list, guest sign-in button links to login view with next param
+    recipes_response = client.get(reverse("recipes:list"))
+    recipes_content = recipes_response.content.decode("utf-8")
+    assert f'href="{reverse("core:login")}?next={reverse("recipes:list")}"' in recipes_content
+
+
+@pytest.mark.django_db
+def test_login_next_url_sanitization():
+    """Ensure disallowed login/logout next urls are sanitized to prevent loops."""
+    client = Client()
+    response = client.get(f"{reverse('core:login')}?next=/login/")
+    assert response.status_code == 200
+    assert response.context["next"] == ""
+

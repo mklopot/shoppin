@@ -1242,4 +1242,52 @@ def test_recipe_detail_and_form_ui_for_web_imported_recipes(client: Client, auth
     assert "Copyright Cleared" in resp_cleared.content.decode("utf-8")
 
 
+@pytest.mark.django_db
+def test_recipe_dietary_restriction_icons(client: Client, auth_user):
+    """Test that meat dietary tags render meat icon, dairy tags render milk icon, and plant-based render leaf icon."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    recipe = Recipe.objects.create(
+        name="Kosher Beef Brisket",
+        description="Traditional slow cooked brisket.",
+        directions="Sear and braise.",
+        dietary_restrictions=["Kosher (Meat)", "Dairy-Free", "Gluten-Free"],
+        is_public=True,
+        created_by=user,
+    )
+
+    resp = client.get(recipe.get_absolute_url())
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+
+    # Kosher (Meat) must render with meat icon 🥩 and NOT leaf 🌿
+    assert "🥩 Kosher (Meat)" in html
+    assert "🌿 Kosher (Meat)" not in html
+    assert "🌿 Dairy-Free" in html
+    assert "🌿 Gluten-Free" in html
+
+    # Test dairy tag
+    dairy_recipe = Recipe.objects.create(
+        name="Cheese Blintzes",
+        description="Sweet cheese stuffed crepes.",
+        directions="Cook crepes, fold cheese filling.",
+        dietary_restrictions=["Kosher (Dairy)", "Vegetarian"],
+        is_public=True,
+        created_by=user,
+    )
+
+    resp_dairy = client.get(dairy_recipe.get_absolute_url())
+    assert resp_dairy.status_code == 200
+    html_dairy = resp_dairy.content.decode("utf-8")
+
+    assert "🥛 Kosher (Dairy)" in html_dairy
+    assert "🌿 Kosher (Dairy)" not in html_dairy
+    assert "🌿 Vegetarian" in html_dairy
+
+
+
 

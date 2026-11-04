@@ -74,7 +74,7 @@
             <div class="flex flex-wrap gap-1 pt-1 text-[11px]">
                 {% if recipe.dietary_restrictions %}
                     {% for tag in recipe.dietary_restrictions %}
-                    <span class="px-1.5 py-0.2 bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+                    <span class="px-1.5 py-0.2 {% if 'meat' in tag|lower %}bg-red-50 border border-red-200 text-red-800{% elif 'dairy' in tag|lower and 'free' not in tag|lower %}bg-blue-50 border border-blue-200 text-blue-800{% else %}bg-emerald-50 border border-emerald-200 text-emerald-800{% endif %} font-medium">
                         {{ tag }}
                     </span>
                     {% endfor %}

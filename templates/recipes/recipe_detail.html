@@ -143,8 +143,8 @@
                 <span class="font-bold text-gray-600 min-w-[120px]">Dietary / Allergens:</span>
                 <div class="flex flex-wrap gap-1">
                     {% for tag in recipe.dietary_restrictions %}
-                    <span class="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-900 font-medium">
-                        🌿 {{ tag }}
+                    <span class="px-2 py-0.5 {% if 'meat' in tag|lower %}bg-red-50 border border-red-200 text-red-900{% elif 'dairy' in tag|lower and 'free' not in tag|lower %}bg-blue-50 border border-blue-200 text-blue-900{% else %}bg-emerald-50 border border-emerald-200 text-emerald-900{% endif %} font-medium">
+                        {% if 'meat' in tag|lower %}🥩{% elif 'dairy' in tag|lower and 'free' not in tag|lower %}🥛{% else %}🌿{% endif %} {{ tag }}
                     </span>
                     {% endfor %}
                 </div>

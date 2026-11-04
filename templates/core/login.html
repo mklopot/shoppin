@@ -11,11 +11,14 @@
         <div class="md:col-span-7 space-y-4">
             
             <div class="space-y-2">
+                <div class="inline-flex items-center space-x-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5">
+                    <span>✓ Free to use &bull; No ads</span>
+                </div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-950 tracking-tight leading-tight">
                     Browse recipes, manage shopping lists, and plan meals
                 </h1>
                 <p class="text-xs sm:text-sm text-gray-600 leading-normal">
-                    Public recipes can be searched and viewed without an account. Sign in to save lists, track pantry items, and plan meals.
+                    Public recipes can be searched and viewed without an account. The site is free to use and has no ads. Sign in to save lists, track pantry items, and plan meals.
                 </p>
                 <div class="pt-1">
                     <a href="{% url 'recipes:list' %}"
@@ -27,38 +30,23 @@
 
             <!-- Recipe Photo Carousel -->
             {% if featured_recipes %}
-            <div id="recipe-carousel-container" class="border border-gray-300 bg-gray-50 p-3 sm:p-3.5 space-y-2.5 shadow-sm" aria-roledescription="carousel" aria-label="Featured Recipes">
-                <div class="flex items-center justify-between pb-1.5 border-b border-gray-200">
-                    <span class="font-bold text-xs text-gray-800">Recipes with Photos</span>
-                    <div class="flex items-center space-x-1.5">
-                        <button type="button"
-                                onclick="prevCarouselSlide()"
-                                aria-label="Previous recipe"
-                                class="border border-gray-300 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-700 focus:outline-none">
-                            &larr;
-                        </button>
-                        <span id="carousel-indicator" class="font-mono text-gray-600 text-[11px] px-1">
-                            1 / {{ featured_recipes|length }}
-                        </span>
-                        <button type="button"
-                                onclick="nextCarouselSlide()"
-                                aria-label="Next recipe"
-                                class="border border-gray-300 bg-white hover:bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-700 focus:outline-none">
-                            &rarr;
-                        </button>
-                    </div>
-                </div>
-
+            <div id="recipe-carousel-container" class="border border-gray-300 bg-gray-900 shadow-sm relative group overflow-hidden" aria-roledescription="carousel" aria-label="Featured Recipes">
                 <!-- Carousel Viewport -->
-                <div class="relative overflow-hidden bg-black aspect-[16/9] max-h-[260px]">
+                <div class="relative aspect-[16/9] max-h-[280px] w-full overflow-hidden bg-gray-950">
                     {% for recipe in featured_recipes %}
-                    <div class="carousel-slide absolute inset-0 {% if forloop.first %}opacity-100 pointer-events-auto{% else %}opacity-0 pointer-events-none{% endif %} transition-opacity duration-300 flex flex-col justify-end p-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent"
+                    <div class="carousel-slide absolute inset-0 {% if forloop.first %}opacity-100 pointer-events-auto{% else %}opacity-0 pointer-events-none{% endif %} transition-opacity duration-300 overflow-hidden"
                          data-index="{{ forloop.counter0 }}">
+                        <!-- Photo Base Layer (no negative z-index) -->
                         <img src="{{ recipe.primary_photo_url }}"
                              alt="{{ recipe.name }}"
                              loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                             class="absolute inset-0 w-full h-full object-cover -z-10">
-                        <div class="space-y-1 text-white">
+                             class="absolute inset-0 w-full h-full object-cover">
+                        
+                        <!-- High-contrast darkening gradient overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent pointer-events-none"></div>
+
+                        <!-- Content Overlay -->
+                        <div class="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 space-y-1 text-white z-10">
                             <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-200">
                                 {% if recipe.cuisine %}
                                 <span class="bg-black/60 px-1.5 py-0.5 font-medium border border-white/20">{{ recipe.cuisine }}</span>
@@ -70,7 +58,7 @@
                                 <span class="text-gray-300 font-mono">{{ recipe.prep_time_minutes|add:recipe.cook_time_minutes }}m</span>
                                 {% endif %}
                             </div>
-                            <h2 class="text-base sm:text-lg font-bold text-white leading-snug drop-shadow-sm">
+                            <h2 class="text-base sm:text-lg font-bold text-white leading-snug drop-shadow-md">
                                 {{ recipe.name }}
                             </h2>
                             {% if recipe.description %}
@@ -87,19 +75,32 @@
                         </div>
                     </div>
                     {% endfor %}
+
+                    <!-- Previous / Next Controls Overlaid on Carousel Sides -->
+                    <button type="button"
+                            onclick="prevCarouselSlide()"
+                            aria-label="Previous recipe"
+                            class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center text-sm font-bold opacity-80 hover:opacity-100 transition-opacity focus:outline-none">
+                        &larr;
+                    </button>
+                    <button type="button"
+                            onclick="nextCarouselSlide()"
+                            aria-label="Next recipe"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center text-sm font-bold opacity-80 hover:opacity-100 transition-opacity focus:outline-none">
+                        &rarr;
+                    </button>
                 </div>
 
-                <!-- Carousel Dots Navigation -->
-                <div class="flex items-center justify-between text-[11px] text-gray-500 pt-0.5">
+                <!-- Carousel Dots Navigation (Clean, no text) -->
+                <div class="bg-gray-900 py-1.5 px-3 flex items-center justify-center">
                     <div class="flex space-x-1.5" id="carousel-dots-list">
                         {% for recipe in featured_recipes %}
                         <button type="button"
                                 onclick="setCarouselSlide({{ forloop.counter0 }})"
                                 aria-label="Slide {{ forloop.counter }}"
-                                class="w-2 h-2 rounded-full {% if forloop.first %}bg-gray-900{% else %}bg-gray-300{% endif %} focus:outline-none"></button>
+                                class="w-2 h-2 rounded-full {% if forloop.first %}bg-white{% else %}bg-gray-600{% endif %} hover:bg-gray-400 transition-colors focus:outline-none"></button>
                         {% endfor %}
                     </div>
-                    <span class="text-[10px] text-gray-500">Auto-advances every 5 seconds</span>
                 </div>
             </div>
             {% endif %}
@@ -114,7 +115,7 @@
                     <h2 class="text-base font-bold text-gray-900 tracking-tight">Sign In</h2>
                 </div>
                 <p class="text-xs text-gray-600">
-                    Sign in to access your shopping list and meal plan.
+                    Sign in to access your shopping list and meal plan. Free to use with no ads.
                 </p>
             </div>
 
@@ -211,7 +212,6 @@
         let currentSlideIndex = 0;
         const slides = document.querySelectorAll('.carousel-slide');
         const dots = document.querySelectorAll('#carousel-dots-list button');
-        const indicator = document.getElementById('carousel-indicator');
         const totalSlides = slides.length;
         let slideTimer = null;
 
@@ -232,15 +232,11 @@
 
             dots.forEach((dot, i) => {
                 if (i === currentSlideIndex) {
-                    dot.className = 'w-2 h-2 rounded-full bg-gray-900 focus:outline-none';
+                    dot.className = 'w-2 h-2 rounded-full bg-white focus:outline-none';
                 } else {
-                    dot.className = 'w-2 h-2 rounded-full bg-gray-300 focus:outline-none';
+                    dot.className = 'w-2 h-2 rounded-full bg-gray-600 hover:bg-gray-400 focus:outline-none';
                 }
             });
-
-            if (indicator) {
-                indicator.textContent = (currentSlideIndex + 1) + ' / ' + totalSlides;
-            }
         }
 
         window.nextCarouselSlide = function() {

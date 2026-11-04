@@ -1,207 +1,234 @@
+<!-- Guided In-App Site Tutorial Overlay with Dynamic Spotlight & Backdrop Blur -->
 <div id="walkthrough-modal"
      role="dialog"
      aria-modal="true"
-     aria-labelledby="walkthrough-modal-title"
-     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
-    <div class="bg-white border border-gray-400 shadow-2xl w-full max-w-xl overflow-hidden rounded-none flex flex-col max-h-[90vh]">
-        <!-- Top Bar -->
-        <div class="bg-gray-900 text-white px-4 py-2.5 flex items-center justify-between flex-shrink-0">
-            <h2 id="walkthrough-modal-title" class="font-mono text-xs font-bold tracking-tight text-gray-100 flex items-center space-x-1.5">
-                <span aria-hidden="true">💡</span>
-                <span>Product Tour</span>
-            </h2>
-            <div class="flex items-center space-x-3 text-xs">
-                <span id="wt-step-label" class="text-gray-400 font-mono text-[11px]">Step 1 of 6</span>
-                <button type="button"
-                        onclick="closeWalkthroughModal()"
-                        aria-label="Close tour"
-                        class="text-gray-400 hover:text-white font-bold text-lg leading-none focus:outline-none">
-                    &times;
-                </button>
+     aria-labelledby="tour-step-title"
+     class="hidden fixed inset-0 z-50 overflow-hidden">
+
+    <!-- SVG Mask Backdrop: blurs and dims everything outside the active spotlight element -->
+    <svg id="tour-backdrop-svg"
+         class="fixed inset-0 w-full h-full pointer-events-auto"
+         style="backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);">
+        <defs>
+            <mask id="tour-spotlight-mask">
+                <!-- White reveals the blurred dark overlay -->
+                <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                <!-- Black cuts out the spotlight window over the real site element -->
+                <rect id="tour-cutout" x="0" y="0" width="0" height="0" rx="4" fill="black" />
+            </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="rgba(0, 0, 0, 0.65)" mask="url(#tour-spotlight-mask)" />
+    </svg>
+
+    <!-- Glowing Accent Spotlight Border around the active element -->
+    <div id="tour-spotlight-border"
+         class="fixed pointer-events-none border-2 border-emerald-400 ring-4 ring-emerald-500/30 rounded transition-all duration-200 z-50 hidden"></div>
+
+    <!-- Floating Tutorial Card: Anchored directly next to the highlighted element -->
+    <div id="tour-tooltip-card"
+         class="fixed z-50 bg-white border border-gray-400 shadow-2xl p-4 sm:p-5 w-[94vw] max-w-md transition-all duration-200 text-xs text-gray-900 flex flex-col space-y-3.5">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+            <div class="flex items-center space-x-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-600"></span>
+                <span id="tour-step-indicator" class="font-mono text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                    Tutorial 1 of 7
+                </span>
+                <span id="tour-element-badge" class="bg-gray-100 text-gray-600 font-medium text-[10px] px-1.5 py-0.5 rounded-none">
+                    Shopping List
+                </span>
             </div>
+            <button type="button"
+                    onclick="closeWalkthroughModal()"
+                    aria-label="Exit tutorial"
+                    class="text-gray-400 hover:text-gray-900 font-bold text-base leading-none focus:outline-none">
+                &times;
+            </button>
         </div>
 
-        <!-- Step Tabs Strip -->
-        <nav aria-label="Tour navigation steps" class="grid grid-cols-6 border-b border-gray-200 text-center text-[11px] font-semibold bg-gray-50 flex-shrink-0">
-            <button type="button" onclick="goToWalkthroughStep(0)" id="wt-tab-0" class="py-1.5 border-b-2 border-gray-950 bg-white text-gray-950 font-bold focus:outline-none">1. Search</button>
-            <button type="button" onclick="goToWalkthroughStep(1)" id="wt-tab-1" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">2. Import</button>
-            <button type="button" onclick="goToWalkthroughStep(2)" id="wt-tab-2" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">3. Workspaces</button>
-            <button type="button" onclick="goToWalkthroughStep(3)" id="wt-tab-3" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">4. Shopping</button>
-            <button type="button" onclick="goToWalkthroughStep(4)" id="wt-tab-4" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">5. Pantry</button>
-            <button type="button" onclick="goToWalkthroughStep(5)" id="wt-tab-5" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">6. Presets</button>
-        </nav>
-
-        <!-- Step Panes Body -->
-        <div class="p-5 overflow-y-auto space-y-4 text-xs">
-            <!-- Step 1: Search -->
-            <div id="wt-pane-0" class="wt-pane space-y-3">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 1 of 6</span>
-                    <h3 class="text-sm font-bold text-gray-950">Search and filter recipes</h3>
-                </div>
+        <!-- Dynamic Step Content Panes -->
+        <div class="space-y-3 min-h-[140px]">
+            
+            <!-- Step 1: Shopping List Transitions -->
+            <div id="tour-pane-0" class="tour-pane space-y-2.5">
+                <h3 id="tour-step-title" class="text-sm font-bold text-gray-950">
+                    Shopping list with real-time transitions
+                </h3>
                 <p class="text-gray-600 leading-normal">
-                    Search by keyword or filter by cuisine, meal type, diet, and equipment. You can include (<span class="font-mono font-bold text-gray-900">+</span>) or exclude (<span class="font-mono font-bold text-gray-900">-</span>) specific tags. Public recipes can be viewed and searched without logging in.
+                    Tap an item to toggle between needed and completed. If another workspace member makes changes, the list updates in real time via Websockets.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
-                    <div class="flex items-center space-x-2 bg-white border border-gray-300 px-2.5 py-1 text-gray-800">
-                        <span class="text-gray-400" aria-hidden="true">🔍</span>
-                        <span class="font-mono text-xs">casserole, -dairy</span>
+                
+                <!-- Live Interactive Transition Demonstration -->
+                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-2">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Try the tactile response:</div>
+                    <div id="demo-item-row" class="item-row py-1.5 px-2.5 border border-gray-300 bg-white flex items-center justify-between text-xs transition-colors">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-gray-400 font-mono select-none" aria-hidden="true">⋮⋮</span>
+                            <span id="demo-item-title" class="font-semibold text-gray-900 text-sm">Hass Avocados (3 pack)</span>
+                        </div>
+                        <button type="button"
+                                id="demo-toggle-btn"
+                                onclick="toggleDemoItemTransition()"
+                                class="border border-gray-800 bg-gray-900 text-white font-bold px-2.5 py-0.5 text-xs">
+                            Need
+                        </button>
                     </div>
-                    <div class="flex flex-wrap gap-1.5 pt-1">
-                        <span class="bg-gray-200 text-gray-800 text-[11px] px-2 py-0.5 rounded-none font-medium">+ Italian</span>
-                        <span class="bg-gray-200 text-gray-800 text-[11px] px-2 py-0.5 rounded-none font-medium">+ Vegetarian</span>
-                        <span class="bg-rose-100 text-rose-900 text-[11px] px-2 py-0.5 rounded-none font-medium">- Shellfish</span>
+                    <div id="demo-transition-note" class="text-[11px] text-gray-500">
+                        Tap "Need" above to see the 0ms optimistic strikethrough transition.
                     </div>
-                </div>
-                <div class="pt-1">
-                    <a href="{% url 'recipes:list' %}" class="text-blue-700 hover:underline font-semibold text-xs">
-                        Open Recipes directory &rarr;
-                    </a>
                 </div>
             </div>
 
-            <!-- Step 2: Import / Create -->
-            <div id="wt-pane-1" class="wt-pane space-y-3 hidden">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 2 of 6</span>
-                    <h3 class="text-sm font-bold text-gray-950">Import from a URL or create a recipe</h3>
-                </div>
+            <!-- Step 2: Sorting by Priority & Aisle -->
+            <div id="tour-pane-1" class="tour-pane space-y-2.5 hidden">
+                <h3 class="text-sm font-bold text-gray-950">
+                    Sorting by priority and store aisle
+                </h3>
                 <p class="text-gray-600 leading-normal">
-                    Import an existing recipe by pasting a link from supported recipe websites, or enter ingredients, portions, and instructions manually in the recipe editor.
+                    Items are grouped by store aisle so you can move smoothly through the store. Flagging an item with Priority elevates it to the top of its section.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
-                    <div class="flex space-x-2">
-                        <div class="flex-1 bg-white border border-gray-300 px-2 py-1 text-xs text-gray-600 font-mono truncate">
+
+                <!-- Interactive Priority Sorting Demonstration -->
+                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Produce Aisle</span>
+                        <button type="button"
+                                id="demo-priority-sort-btn"
+                                onclick="toggleDemoPrioritySort()"
+                                class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-2 py-0.5 text-[11px] font-semibold">
+                            Sort by Priority
+                        </button>
+                    </div>
+                    <div id="demo-priority-list" class="space-y-1">
+                        <div class="py-1 px-2 bg-white border border-gray-200 text-gray-700 flex justify-between items-center text-xs">
+                            <span>Bananas</span>
+                            <span class="text-[10px] text-gray-500">Standard</span>
+                        </div>
+                        <div class="py-1 px-2 bg-amber-50 border border-amber-300 text-amber-950 flex justify-between items-center text-xs">
+                            <span class="font-bold flex items-center gap-1"><span>🚩</span><span>Hass Avocados (Priority)</span></span>
+                            <span class="text-[10px] bg-amber-200 font-bold px-1.5 py-0.2">Priority Flag</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Pantry Check -->
+            <div id="tour-pane-2" class="tour-pane space-y-2.5 hidden">
+                <h3 class="text-sm font-bold text-gray-950">
+                    Pantry check before you shop
+                </h3>
+                <p class="text-gray-600 leading-normal">
+                    Switch to Pantry Check in the top bar before leaving home. Tap <strong>Have</strong> for ingredients you already have, and <strong>Need</strong> to send missing items directly to your shopping list.
+                </p>
+                <div class="border border-blue-200 bg-blue-50/60 p-2.5 space-y-1.5">
+                    <div class="text-[11px] font-bold text-blue-950">Pantry Audit:</div>
+                    <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200 text-xs">
+                        <span class="font-medium text-gray-800">Olive Oil</span>
+                        <span class="bg-gray-800 text-white font-bold text-[10px] px-2 py-0.5">Have</span>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 bg-white border border-blue-300 text-xs">
+                        <span class="font-medium text-gray-800">Soy Sauce</span>
+                        <span class="bg-blue-700 text-white font-bold text-[10px] px-2 py-0.5">Need &rarr; In Cart</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Recipe Search -->
+            <div id="tour-pane-3" class="tour-pane space-y-2.5 hidden">
+                <h3 class="text-sm font-bold text-gray-950">
+                    Search and filter recipes
+                </h3>
+                <p class="text-gray-600 leading-normal">
+                    Filter recipes by cuisine, meal type, diet, and equipment. You can include (<span class="font-mono font-bold text-gray-900">+</span>) or exclude (<span class="font-mono font-bold text-gray-900">-</span>) specific tags. Public recipes can be viewed and searched without logging in.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5">
+                    <div class="flex items-center space-x-1.5 bg-white border border-gray-300 px-2 py-1 text-xs">
+                        <span class="text-gray-400">🔍</span>
+                        <span class="font-mono text-gray-800">casserole, -dairy</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 pt-1">
+                        <span class="bg-gray-200 text-gray-800 text-[10px] px-1.5 py-0.5 font-medium">+ Italian</span>
+                        <span class="bg-gray-200 text-gray-800 text-[10px] px-1.5 py-0.5 font-medium">+ Vegetarian</span>
+                        <span class="bg-rose-100 text-rose-900 text-[10px] px-1.5 py-0.5 font-medium">- Shellfish</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Import / Create Recipes -->
+            <div id="tour-pane-4" class="tour-pane space-y-2.5 hidden">
+                <h3 class="text-sm font-bold text-gray-950">
+                    Import from a URL or create a recipe
+                </h3>
+                <p class="text-gray-600 leading-normal">
+                    Paste a link from supported recipe websites to automatically extract ingredients, portions, instructions, and photo, or write custom dishes in the editor.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5 text-xs">
+                    <div class="flex space-x-1.5">
+                        <div class="flex-1 bg-white border border-gray-300 px-2 py-1 text-gray-600 truncate font-mono text-[11px]">
                             https://example.com/recipe
                         </div>
-                        <span class="bg-gray-900 text-white font-semibold px-2.5 py-1 text-xs">Import</span>
+                        <span class="bg-gray-900 text-white font-semibold px-2 py-1 text-xs">Import</span>
                     </div>
-                    <div class="bg-white border border-gray-200 p-2 text-[11px] text-gray-700">
-                        Extracted: title, portion yield, ingredients, instructions, and photo
+                    <div class="bg-white border border-gray-200 p-1.5 text-[11px] text-gray-600">
+                        Extracts: portions, ingredients, instructions, and photo
                     </div>
-                </div>
-                <div class="pt-1">
-                    <a href="{% url 'recipes:create' %}" class="text-blue-700 hover:underline font-semibold text-xs">
-                        Create or import recipe &rarr;
-                    </a>
                 </div>
             </div>
 
-            <!-- Step 3: Workspaces -->
-            <div id="wt-pane-2" class="wt-pane space-y-3 hidden">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 3 of 6</span>
-                    <h3 class="text-sm font-bold text-gray-950">Organize with workspaces</h3>
-                </div>
+            <!-- Step 6: Workspaces & Collaboration -->
+            <div id="tour-pane-5" class="tour-pane space-y-2.5 hidden">
+                <h3 class="text-sm font-bold text-gray-950">
+                    Organize with workspaces
+                </h3>
                 <p class="text-gray-600 leading-normal">
-                    Workspaces let you separate shopping lists, pantry checks, and meal plans for different households or occasions. You can invite members with editor or viewer access.
+                    Workspaces separate shopping lists, pantry checks, and meal plans for different households or contexts (e.g. Home, Cabin, Office). Invite collaborators with owner, editor, or viewer access.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
-                    <div class="flex items-center justify-between border-b border-gray-200 pb-1.5">
-                        <span class="font-bold text-gray-900">Workspace: Home Kitchen</span>
+                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-1">
+                        <span class="font-bold text-gray-900">Home Kitchen</span>
                         <span class="text-blue-700 font-medium text-[11px]">+ New Workspace</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 text-[11px]">
-                        <div class="bg-white border border-gray-200 p-2 flex justify-between">
-                            <span class="font-medium text-gray-900">Alice</span>
-                            <span class="text-gray-500">Owner</span>
+                    <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                        <div class="bg-white border border-gray-200 p-1.5 flex justify-between">
+                            <span>Alice</span>
+                            <span class="text-gray-500 font-medium">Owner</span>
                         </div>
-                        <div class="bg-white border border-gray-200 p-2 flex justify-between">
-                            <span class="font-medium text-gray-900">Bob</span>
-                            <span class="text-gray-700">Editor</span>
+                        <div class="bg-white border border-gray-200 p-1.5 flex justify-between">
+                            <span>Bob</span>
+                            <span class="text-gray-800 font-bold">Editor</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Step 4: Shopping List -->
-            <div id="wt-pane-3" class="wt-pane space-y-3 hidden">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 4 of 6</span>
-                    <h3 class="text-sm font-bold text-gray-950">Shopping list with store aisle sorting</h3>
-                </div>
+            <!-- Step 7: Preset Lists & Schedules -->
+            <div id="tour-pane-6" class="tour-pane space-y-2.5 hidden">
+                <h3 class="text-sm font-bold text-gray-950">
+                    Preset lists and recurring schedules
+                </h3>
                 <p class="text-gray-600 leading-normal">
-                    Items are organized by store aisle. Tap an item to toggle between needed and completed. If another workspace member makes changes, the list updates in real time via Websockets.
+                    Save reusable lists of items for common routines. You can configure a recurrence schedule to load items into your active list at set days and times.
                 </p>
-                <div class="border border-gray-300 bg-white p-3 space-y-2">
-                    <div class="bg-gray-100 text-gray-800 font-bold px-2 py-1 text-[11px]">Produce</div>
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between p-1.5 bg-gray-50 border border-gray-200">
-                            <span class="line-through text-gray-500">Fresh Cilantro (1 bunch)</span>
-                            <span class="text-[10px] text-gray-600 font-bold">Got</span>
-                        </div>
-                        <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200">
-                            <span class="text-gray-900">Hass Avocados (3 pack)</span>
-                            <span class="bg-gray-900 text-white text-[10px] px-2 py-0.5 font-bold">Need</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="pt-1">
-                    <a href="{% url 'shopping:list' %}" class="text-blue-700 hover:underline font-semibold text-xs">
-                        Open Shopping List &rarr;
-                    </a>
-                </div>
-            </div>
-
-            <!-- Step 5: Pantry Check -->
-            <div id="wt-pane-4" class="wt-pane space-y-3 hidden">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 5 of 6</span>
-                    <h3 class="text-sm font-bold text-gray-950">Pantry check</h3>
-                </div>
-                <p class="text-gray-600 leading-normal">
-                    Switch to pantry mode before shopping to review staple items. Mark what you have on hand, and send items you need directly to your shopping list.
-                </p>
-                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
-                    <div class="font-bold text-gray-700 text-[11px] pb-1 border-b border-gray-200">Pantry Review</div>
-                    <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200 text-[11px]">
-                        <span>Olive Oil</span>
-                        <span class="bg-gray-900 text-white px-2 py-0.5 text-[10px] font-bold">Have</span>
-                    </div>
-                    <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200 text-[11px]">
-                        <span>Soy Sauce</span>
-                        <span class="bg-blue-700 text-white px-2 py-0.5 text-[10px] font-bold">Need &rarr; Added to list</span>
-                    </div>
-                </div>
-                <div class="pt-1">
-                    <a href="{% url 'shopping:pantry_check' %}" class="text-blue-700 hover:underline font-semibold text-xs">
-                        Open Pantry Check &rarr;
-                    </a>
-                </div>
-            </div>
-
-            <!-- Step 6: Preset Lists -->
-            <div id="wt-pane-5" class="wt-pane space-y-3 hidden">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 6 of 6</span>
-                    <h3 class="text-sm font-bold text-gray-950">Preset lists and recurring schedules</h3>
-                </div>
-                <p class="text-gray-600 leading-normal">
-                    Save reusable lists of items for common routines. You can configure a schedule to load items into your active list at set days and times.
-                </p>
-                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
+                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5 text-xs">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-1">
                         <span class="font-bold text-gray-900">Weekly Grocery Basics</span>
-                        <span class="text-[10px] bg-gray-200 text-gray-800 px-1.5 py-0.5 font-medium">Scheduled</span>
+                        <span class="text-[10px] bg-gray-200 text-gray-800 px-1.5 py-0.2 font-medium">Scheduled</span>
                     </div>
-                    <div class="text-[11px] text-gray-600 bg-white p-2 border border-gray-200">
+                    <div class="text-[11px] text-gray-600 bg-white p-1.5 border border-gray-200">
                         Recurs every Sunday at 08:00 AM &bull; Loads into active shopping list
                     </div>
                 </div>
-                <div class="pt-1">
-                    <a href="/preset-lists/" class="text-blue-700 hover:underline font-semibold text-xs">
-                        Open Preset Lists &rarr;
-                    </a>
-                </div>
             </div>
+
         </div>
 
-        <!-- Modal Footer Controls -->
-        <div class="bg-gray-50 border-t border-gray-200 px-4 py-2.5 flex items-center justify-between flex-shrink-0">
+        <!-- Controls -->
+        <div class="bg-gray-50 -mx-4 -mb-4 sm:-mx-5 sm:-mb-5 p-3 sm:p-3.5 border-t border-gray-200 flex items-center justify-between">
             <button type="button"
-                    onclick="prevWalkthroughStep()"
-                    id="wt-prev-btn"
-                    class="px-3 py-1 text-xs font-semibold border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    onclick="prevTourStep()"
+                    id="tour-prev-btn"
+                    class="px-3 py-1.5 text-xs font-semibold border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
                     disabled>
                 &larr; Back
             </button>
@@ -209,30 +236,59 @@
             <div class="flex items-center space-x-2">
                 <button type="button"
                         onclick="closeWalkthroughModal()"
-                        class="px-2.5 py-1 text-xs text-gray-600 hover:text-gray-900">
-                    Close
+                        class="px-2.5 py-1.5 text-xs text-gray-600 hover:text-gray-900 font-medium">
+                    Exit Tour
                 </button>
                 <button type="button"
-                        onclick="nextWalkthroughStep()"
-                        id="wt-next-btn"
-                        class="px-3 py-1 text-xs font-semibold bg-gray-900 hover:bg-black text-white">
+                        onclick="nextTourStep()"
+                        id="tour-next-btn"
+                        class="px-3.5 py-1.5 text-xs font-semibold bg-gray-900 hover:bg-black text-white shadow-sm">
                     Next &rarr;
                 </button>
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-    let currentWalkthroughStep = 0;
-    const totalWalkthroughSteps = 6;
+    let currentTourStep = 0;
+    const totalTourSteps = 7;
+
+    // Element selectors for spotlighting actual places on the site
+    const tourStepTargets = [
+        // Step 1: Shopping list row / to-buy list
+        '#section-groups-container .item-row, #shopping-list-content, #main-content',
+        // Step 2: Store aisles & sorting controls
+        '#section-groups-container .section-group-block, [aria-label="Sort order"], #section-groups-container',
+        // Step 3: Pantry Check navigation tab
+        'header nav a[href*="pantry"]',
+        // Step 4: Recipes navigation tab
+        'header nav a[href*="recipes"]',
+        // Step 5: Add item / import
+        '#add-item-name, header nav a[href*="recipes"]',
+        // Step 6: Workspace dropdown button
+        '#workspace-dropdown-container, #workspace-dropdown-btn',
+        // Step 7: Preset Lists navigation tab
+        'header nav a[href*="preset"]'
+    ];
+
+    const tourElementBadges = [
+        'Shopping List',
+        'Aisle & Sort Controls',
+        'Top Navigation: Pantry Check',
+        'Top Navigation: Recipes',
+        'Recipe Creation',
+        'Top Navigation: Workspaces',
+        'Top Navigation: Preset Lists'
+    ];
 
     function openWalkthroughModal(initialStep = 0) {
         const modal = document.getElementById('walkthrough-modal');
         if (!modal) return;
         modal.classList.remove('hidden');
-        goToWalkthroughStep(initialStep);
         document.body.classList.add('overflow-hidden');
+        goToTourStep(initialStep);
     }
 
     function closeWalkthroughModal() {
@@ -240,53 +296,203 @@
         if (!modal) return;
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+
+        // Remove tour=1 from URL without full reload
+        if (window.location.search.includes('tour=')) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('tour');
+            window.history.replaceState({}, '', url.toString());
+        }
     }
 
-    function goToWalkthroughStep(index) {
-        currentWalkthroughStep = Math.max(0, Math.min(totalWalkthroughSteps - 1, index));
+    function goToTourStep(index) {
+        currentTourStep = Math.max(0, Math.min(totalTourSteps - 1, index));
 
-        for (let i = 0; i < totalWalkthroughSteps; i++) {
-            const pane = document.getElementById('wt-pane-' + i);
-            const tab = document.getElementById('wt-tab-' + i);
-            if (pane) pane.classList.toggle('hidden', i !== currentWalkthroughStep);
-            if (tab) {
-                if (i === currentWalkthroughStep) {
-                    tab.className = 'py-1.5 border-b-2 border-gray-950 bg-white text-gray-950 font-bold focus:outline-none';
-                } else {
-                    tab.className = 'py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none';
-                }
-            }
+        // Switch pane visibility
+        for (let i = 0; i < totalTourSteps; i++) {
+            const pane = document.getElementById('tour-pane-' + i);
+            if (pane) pane.classList.toggle('hidden', i !== currentTourStep);
         }
 
-        const label = document.getElementById('wt-step-label');
-        if (label) label.textContent = `Step ${currentWalkthroughStep + 1} of ${totalWalkthroughSteps}`;
+        // Update header indicator and badge
+        const indicator = document.getElementById('tour-step-indicator');
+        if (indicator) indicator.textContent = `Tutorial ${currentTourStep + 1} of ${totalTourSteps}`;
 
-        const prevBtn = document.getElementById('wt-prev-btn');
-        if (prevBtn) prevBtn.disabled = (currentWalkthroughStep === 0);
+        const badge = document.getElementById('tour-element-badge');
+        if (badge && tourElementBadges[currentTourStep]) {
+            badge.textContent = tourElementBadges[currentTourStep];
+        }
 
-        const nextBtn = document.getElementById('wt-next-btn');
+        // Update footer buttons
+        const prevBtn = document.getElementById('tour-prev-btn');
+        if (prevBtn) prevBtn.disabled = (currentTourStep === 0);
+
+        const nextBtn = document.getElementById('tour-next-btn');
         if (nextBtn) {
-            if (currentWalkthroughStep === totalWalkthroughSteps - 1) {
+            if (currentTourStep === totalTourSteps - 1) {
                 nextBtn.textContent = 'Finish Tour';
                 nextBtn.onclick = closeWalkthroughModal;
             } else {
                 nextBtn.textContent = 'Next →';
-                nextBtn.onclick = nextWalkthroughStep;
+                nextBtn.onclick = nextTourStep;
+            }
+        }
+
+        // Spotlight target on the live page
+        positionSpotlightAndTooltip(tourStepTargets[currentTourStep]);
+    }
+
+    function nextTourStep() {
+        if (currentTourStep < totalTourSteps - 1) {
+            goToTourStep(currentTourStep + 1);
+        }
+    }
+
+    function prevTourStep() {
+        if (currentTourStep > 0) {
+            goToTourStep(currentTourStep - 1);
+        }
+    }
+
+    function positionSpotlightAndTooltip(selector) {
+        let targetEl = null;
+        if (selector) {
+            const parts = selector.split(',');
+            for (let part of parts) {
+                const found = document.querySelector(part.trim());
+                if (found && found.offsetParent !== null) {
+                    targetEl = found;
+                    break;
+                }
+            }
+        }
+
+        const cutout = document.getElementById('tour-cutout');
+        const border = document.getElementById('tour-spotlight-border');
+        const card = document.getElementById('tour-tooltip-card');
+        if (!cutout || !border || !card) return;
+
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const rect = targetEl.getBoundingClientRect();
+            const pad = 6;
+            const x = Math.max(0, rect.left - pad);
+            const y = Math.max(0, rect.top - pad);
+            const w = rect.width + (pad * 2);
+            const h = rect.height + (pad * 2);
+
+            cutout.setAttribute('x', x);
+            cutout.setAttribute('y', y);
+            cutout.setAttribute('width', w);
+            cutout.setAttribute('height', h);
+
+            border.style.display = 'block';
+            border.style.left = x + 'px';
+            border.style.top = y + 'px';
+            border.style.width = w + 'px';
+            border.style.height = h + 'px';
+
+            // Smart tooltip positioning
+            const cardWidth = Math.min(window.innerWidth * 0.94, 448);
+            const cardHeight = 310;
+            const spaceBelow = window.innerHeight - (y + h);
+            const spaceAbove = y;
+
+            let cardTop;
+            if (spaceBelow >= cardHeight || spaceBelow >= spaceAbove) {
+                cardTop = Math.min(window.innerHeight - cardHeight - 16, y + h + 12);
+            } else {
+                cardTop = Math.max(16, y - cardHeight - 12);
+            }
+
+            let cardLeft = Math.max(12, Math.min(window.innerWidth - cardWidth - 12, x));
+            card.style.top = cardTop + 'px';
+            card.style.left = cardLeft + 'px';
+            card.style.transform = 'none';
+        } else {
+            // If element not on current view, center tooltip and clear cutout
+            cutout.setAttribute('width', 0);
+            cutout.setAttribute('height', 0);
+            border.style.display = 'none';
+
+            card.style.top = '50%';
+            card.style.left = '50%';
+            card.style.transform = 'translate(-50%, -50%)';
+        }
+    }
+
+    // Interactive Demo 1: Shopping list tactile transition
+    let demoItemState = 'need';
+    function toggleDemoItemTransition() {
+        const row = document.getElementById('demo-item-row');
+        const title = document.getElementById('demo-item-title');
+        const btn = document.getElementById('demo-toggle-btn');
+        const note = document.getElementById('demo-transition-note');
+        if (!row || !btn || !title) return;
+
+        if (demoItemState === 'need') {
+            demoItemState = 'got';
+            row.className = 'item-row py-1.5 px-2.5 border border-emerald-300 bg-emerald-50 flex items-center justify-between text-xs transition-colors';
+            title.className = 'font-semibold text-emerald-900 text-sm line-through';
+            btn.textContent = '✓ Got';
+            btn.className = 'border border-emerald-700 bg-emerald-700 text-white font-bold px-2.5 py-0.5 text-xs';
+            if (note) {
+                note.innerHTML = '<span class="text-emerald-800 font-bold">✓ 0ms transition:</span> Marked as Got and broadcast in real time via Websockets.';
+            }
+        } else {
+            demoItemState = 'need';
+            row.className = 'item-row py-1.5 px-2.5 border border-gray-300 bg-white flex items-center justify-between text-xs transition-colors';
+            title.className = 'font-semibold text-gray-900 text-sm';
+            btn.textContent = 'Need';
+            btn.className = 'border border-gray-800 bg-gray-900 text-white font-bold px-2.5 py-0.5 text-xs';
+            if (note) {
+                note.textContent = 'Tap "Need" above to see the 0ms optimistic strikethrough transition.';
             }
         }
     }
 
-    function nextWalkthroughStep() {
-        if (currentWalkthroughStep < totalWalkthroughSteps - 1) {
-            goToWalkthroughStep(currentWalkthroughStep + 1);
+    // Interactive Demo 2: Priority sorting toggle
+    let demoPrioritySorted = false;
+    function toggleDemoPrioritySort() {
+        const list = document.getElementById('demo-priority-list');
+        const btn = document.getElementById('demo-priority-sort-btn');
+        if (!list || !btn) return;
+
+        demoPrioritySorted = !demoPrioritySorted;
+        if (demoPrioritySorted) {
+            list.innerHTML = `
+                <div class="py-1 px-2 bg-amber-50 border border-amber-300 text-amber-950 flex justify-between items-center text-xs">
+                    <span class="font-bold flex items-center gap-1"><span>🚩</span><span>Hass Avocados (Priority)</span></span>
+                    <span class="text-[10px] bg-amber-200 font-bold px-1.5 py-0.2">Top of Aisle</span>
+                </div>
+                <div class="py-1 px-2 bg-white border border-gray-200 text-gray-700 flex justify-between items-center text-xs">
+                    <span>Bananas</span>
+                    <span class="text-[10px] text-gray-500">Standard</span>
+                </div>
+            `;
+            btn.textContent = 'Standard Sort';
+        } else {
+            list.innerHTML = `
+                <div class="py-1 px-2 bg-white border border-gray-200 text-gray-700 flex justify-between items-center text-xs">
+                    <span>Bananas</span>
+                    <span class="text-[10px] text-gray-500">Standard</span>
+                </div>
+                <div class="py-1 px-2 bg-amber-50 border border-amber-300 text-amber-950 flex justify-between items-center text-xs">
+                    <span class="font-bold flex items-center gap-1"><span>🚩</span><span>Hass Avocados (Priority)</span></span>
+                    <span class="text-[10px] bg-amber-200 font-bold px-1.5 py-0.2">Priority Flag</span>
+                </div>
+            `;
+            btn.textContent = 'Sort by Priority';
         }
     }
 
-    function prevWalkthroughStep() {
-        if (currentWalkthroughStep > 0) {
-            goToWalkthroughStep(currentWalkthroughStep - 1);
+    // Reposition on window resize or scroll
+    window.addEventListener('resize', function() {
+        const modal = document.getElementById('walkthrough-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+            positionSpotlightAndTooltip(tourStepTargets[currentTourStep]);
         }
-    }
+    });
 
     // Keyboard navigation (Esc to close, Left/Right arrows to step)
     document.addEventListener('keydown', function(event) {
@@ -296,16 +502,16 @@
         if (event.key === 'Escape') {
             closeWalkthroughModal();
         } else if (event.key === 'ArrowRight') {
-            nextWalkthroughStep();
+            nextTourStep();
         } else if (event.key === 'ArrowLeft') {
-            prevWalkthroughStep();
+            prevTourStep();
         }
     });
 
-    // Close on backdrop click outside the dialog card
-    document.getElementById('walkthrough-modal')?.addEventListener('click', function(event) {
-        if (event.target === this) {
-            closeWalkthroughModal();
+    // Auto-launch if URL has ?tour=1
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.search.includes('tour=')) {
+            openWalkthroughModal();
         }
     });
 </script>

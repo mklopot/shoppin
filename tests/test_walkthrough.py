@@ -1,5 +1,5 @@
 """
-Tests for the first-time user walkthrough modal, avatar menu integration,
+Tests for the first-time user walkthrough overlay, avatar menu integration,
 and auto-launch session context processor.
 """
 
@@ -16,23 +16,31 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_walkthrough_modal_content_renders():
-    """Verify walkthrough modal partial renders all 6 steps with approved text."""
+    """Verify walkthrough overlay renders all tutorial steps with live demo controls and approved text."""
     html = render_to_string("core/partials/walkthrough_modal.html")
 
-    # Verify all 6 steps are present
+    # Verify all tutorial steps are present
+    assert "Shopping list with real-time transitions" in html
+    assert "the list updates in real time via Websockets" in html
+    assert "Sorting by priority and store aisle" in html
+    assert "Pantry check" in html
     assert "Search and filter recipes" in html
     assert "Import from a URL or create a recipe" in html
     assert "Organize with workspaces" in html
-    assert "Shopping list with store aisle sorting" in html
-    assert "the list updates in real time via Websockets" in html
-    assert "Pantry check" in html
     assert "Preset lists and recurring schedules" in html
 
-    # Verify modal controls
+    # Verify live interactive demo controls & spotlight mask
     assert 'id="walkthrough-modal"' in html
+    assert 'id="tour-backdrop-svg"' in html
+    assert 'id="tour-spotlight-mask"' in html
+    assert 'id="tour-cutout"' in html
+    assert 'id="tour-spotlight-border"' in html
+    assert 'id="demo-item-row"' in html
+    assert "toggleDemoItemTransition" in html
+    assert "toggleDemoPrioritySort" in html
     assert "openWalkthroughModal" in html
     assert "closeWalkthroughModal" in html
-    assert "goToWalkthroughStep" in html
+    assert "goToTourStep" in html
 
 
 @pytest.mark.django_db
@@ -47,7 +55,7 @@ def test_avatar_menu_contains_product_tour_item(db):
     content = response.content.decode("utf-8")
 
     assert "Product Tour" in content
-    assert "openWalkthroughModal()" in content
+    assert "startProductTour()" in content
 
 
 @pytest.mark.django_db

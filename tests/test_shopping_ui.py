@@ -1091,7 +1091,7 @@ def test_shopping_sync_js_syntax_integrity():
 def test_mobile_navigation_tabs_high_contrast(client, active_list):
     """
     Test that mobile navigation tabs provide high-contrast active styling,
-    aria-current accessibility indicators, and auto-scroll scripting.
+    aria-current accessibility indicators, and sticky navbar for deep vertical scrolling.
     """
     # 1. Shopping List is active on /
     res_shop = client.get(reverse("shopping:list"))
@@ -1102,7 +1102,11 @@ def test_mobile_navigation_tabs_high_contrast(client, active_list):
     # Active tab has high contrast bg-gray-950 text-white and aria-current="page"
     assert 'aria-current="page"' in html_shop
     assert "bg-gray-950 text-white" in html_shop
-    assert "scrollActiveNavTab" in html_shop
+
+    # Persistent sticky navbar prevents scrolling away
+    assert 'header[role="banner"]' in html_shop
+    assert "sticky" in html_shop
+    assert "min-h-screen" in html_shop
 
     # Verify Shopping List is the active tab in mobile nav
     mobile_nav_shop = html_shop.split('<nav id="mobile-nav-tabs"')[1].split("</nav>")[0]

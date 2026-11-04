@@ -299,7 +299,80 @@
     </div>
     {% endif %}
 
-    <!-- Approximate Nutritional Analysis Card -->
+    <!-- Two-Column Layout: Ingredients & Directions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <!-- Left: Ingredients List -->
+        <div class="bg-white border border-gray-300 p-4 space-y-3 md:col-span-1">
+            <div class="border-b border-gray-200 pb-2 flex items-center justify-between">
+                <h2 class="text-base font-bold text-gray-900 uppercase tracking-wider text-xs">Ingredients</h2>
+                <span class="text-xs text-gray-500 font-normal">({{ ingredients.count }} items)</span>
+            </div>
+
+            {% if ingredients %}
+            <ul class="divide-y divide-gray-100 text-xs">
+                {% for ing in ingredients %}
+                <li class="py-1.5 flex items-start justify-between space-x-2">
+                    <div>
+                        <span class="font-medium text-gray-900">{{ ing.name }}</span>
+                        {% if ing.optional %}
+                        <span class="italic text-gray-400 text-[10px] ml-1">[optional]</span>
+                        {% endif %}
+                        {% if ing.brand %}
+                        <span class="text-gray-500 text-[10px] block">Brand: {{ ing.brand }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="font-semibold text-gray-700 whitespace-nowrap">
+                        {{ ing.amount|floatformat:"-2" }}{% if ing.amount_unit %} {{ ing.amount_unit }}{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-xs text-gray-500 italic">No ingredients specified yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Right: Directions & Instructions -->
+        <div class="bg-white border border-gray-300 p-4 space-y-4 md:col-span-2">
+            <div class="border-b border-gray-200 pb-2">
+                <h2 class="text-base font-bold text-gray-900 uppercase tracking-wider text-xs">Directions & Preparation</h2>
+            </div>
+
+            {% if recipe.directions %}
+            <div class="text-xs text-gray-800 space-y-2 leading-relaxed">
+                {% for step in recipe.directions_steps %}
+                <div class="flex items-start space-x-2.5 py-1">
+                    <span class="font-bold text-gray-500 min-w-[20px] select-none text-[11px]">{{ forloop.counter }}.</span>
+                    <p class="flex-1">{{ step }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-500 italic">No step-by-step directions added yet.</p>
+            {% endif %}
+
+            <!-- Storage & Reheating Instructions -->
+            {% if recipe.storage_instructions or recipe.reheating_instructions %}
+            <div class="pt-3 border-t border-gray-200 space-y-3">
+                {% if recipe.storage_instructions %}
+                <div class="p-3 bg-blue-50/60 border border-blue-200 text-xs space-y-1">
+                    <span class="font-bold text-blue-900 block uppercase tracking-wider text-[10px]">🧊 Storage Instructions</span>
+                    <p class="text-blue-950">{{ recipe.storage_instructions }}</p>
+                </div>
+                {% endif %}
+
+                {% if recipe.reheating_instructions %}
+                <div class="p-3 bg-amber-50/60 border border-amber-200 text-xs space-y-1">
+                    <span class="font-bold text-amber-900 block uppercase tracking-wider text-[10px]">♨️ Reheating Instructions</span>
+                    <p class="text-amber-950">{{ recipe.reheating_instructions }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Approximate Nutritional Analysis Card (Moved Below Ingredients & Directions) -->
     {% if recipe.has_nutrition %}
     <div id="nutritional-analysis-card"
          class="bg-white border border-gray-300 p-5 space-y-4 shadow-sm"
@@ -509,79 +582,6 @@
         </p>
     </div>
     {% endif %}
-
-    <!-- Two-Column Layout: Ingredients & Directions -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-        <!-- Left: Ingredients List -->
-        <div class="bg-white border border-gray-300 p-4 space-y-3 md:col-span-1">
-            <div class="border-b border-gray-200 pb-2 flex items-center justify-between">
-                <h2 class="text-base font-bold text-gray-900 uppercase tracking-wider text-xs">Ingredients</h2>
-                <span class="text-xs text-gray-500 font-normal">({{ ingredients.count }} items)</span>
-            </div>
-
-            {% if ingredients %}
-            <ul class="divide-y divide-gray-100 text-xs">
-                {% for ing in ingredients %}
-                <li class="py-1.5 flex items-start justify-between space-x-2">
-                    <div>
-                        <span class="font-medium text-gray-900">{{ ing.name }}</span>
-                        {% if ing.optional %}
-                        <span class="italic text-gray-400 text-[10px] ml-1">[optional]</span>
-                        {% endif %}
-                        {% if ing.brand %}
-                        <span class="text-gray-500 text-[10px] block">Brand: {{ ing.brand }}</span>
-                        {% endif %}
-                    </div>
-                    <span class="font-semibold text-gray-700 whitespace-nowrap">
-                        {{ ing.amount|floatformat:"-2" }}{% if ing.amount_unit %} {{ ing.amount_unit }}{% endif %}
-                    </span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-xs text-gray-500 italic">No ingredients specified yet.</p>
-            {% endif %}
-        </div>
-
-        <!-- Right: Directions & Instructions -->
-        <div class="bg-white border border-gray-300 p-4 space-y-4 md:col-span-2">
-            <div class="border-b border-gray-200 pb-2">
-                <h2 class="text-base font-bold text-gray-900 uppercase tracking-wider text-xs">Directions & Preparation</h2>
-            </div>
-
-            {% if recipe.directions %}
-            <div class="text-xs text-gray-800 space-y-2 leading-relaxed">
-                {% for step in recipe.directions_steps %}
-                <div class="flex items-start space-x-2.5 py-1">
-                    <span class="font-bold text-gray-500 min-w-[20px] select-none text-[11px]">{{ forloop.counter }}.</span>
-                    <p class="flex-1">{{ step }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="text-xs text-gray-500 italic">No step-by-step directions added yet.</p>
-            {% endif %}
-
-            <!-- Storage & Reheating Instructions -->
-            {% if recipe.storage_instructions or recipe.reheating_instructions %}
-            <div class="pt-3 border-t border-gray-200 space-y-3">
-                {% if recipe.storage_instructions %}
-                <div class="p-3 bg-blue-50/60 border border-blue-200 text-xs space-y-1">
-                    <span class="font-bold text-blue-900 block uppercase tracking-wider text-[10px]">🧊 Storage Instructions</span>
-                    <p class="text-blue-950">{{ recipe.storage_instructions }}</p>
-                </div>
-                {% endif %}
-
-                {% if recipe.reheating_instructions %}
-                <div class="p-3 bg-amber-50/60 border border-amber-200 text-xs space-y-1">
-                    <span class="font-bold text-amber-900 block uppercase tracking-wider text-[10px]">♨️ Reheating Instructions</span>
-                    <p class="text-amber-950">{{ recipe.reheating_instructions }}</p>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
 
     <!-- Serve With Recommendations -->
     {% if serve_with_recipes %}

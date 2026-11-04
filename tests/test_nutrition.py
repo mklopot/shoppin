@@ -206,8 +206,12 @@ def test_recipe_view_page_renders_nutritional_analysis(client: Client, auth_user
     assert resp.status_code == 200
     html = resp.content.decode("utf-8")
 
-    # Check that the nutritional analysis section is present
+    # Check that the nutritional analysis section is present and positioned after ingredients and directions
     assert "Approximate Nutritional Analysis" in html
+    assert "Ingredients" in html
+    assert "Directions & Preparation" in html
+    assert html.index("Ingredients") < html.index("Approximate Nutritional Analysis")
+    assert html.index("Directions & Preparation") < html.index("Approximate Nutritional Analysis")
     assert "350" in html  # Calories
     assert "18.5" in html  # Protein
     assert "28.0" in html  # Carbs

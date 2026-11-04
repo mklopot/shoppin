@@ -1,0 +1,311 @@
+<div id="walkthrough-modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="walkthrough-modal-title"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
+    <div class="bg-white border border-gray-400 shadow-2xl w-full max-w-xl overflow-hidden rounded-none flex flex-col max-h-[90vh]">
+        <!-- Top Bar -->
+        <div class="bg-gray-900 text-white px-4 py-2.5 flex items-center justify-between flex-shrink-0">
+            <h2 id="walkthrough-modal-title" class="font-mono text-xs font-bold tracking-tight text-gray-100 flex items-center space-x-1.5">
+                <span aria-hidden="true">💡</span>
+                <span>Product Tour</span>
+            </h2>
+            <div class="flex items-center space-x-3 text-xs">
+                <span id="wt-step-label" class="text-gray-400 font-mono text-[11px]">Step 1 of 6</span>
+                <button type="button"
+                        onclick="closeWalkthroughModal()"
+                        aria-label="Close tour"
+                        class="text-gray-400 hover:text-white font-bold text-lg leading-none focus:outline-none">
+                    &times;
+                </button>
+            </div>
+        </div>
+
+        <!-- Step Tabs Strip -->
+        <nav aria-label="Tour navigation steps" class="grid grid-cols-6 border-b border-gray-200 text-center text-[11px] font-semibold bg-gray-50 flex-shrink-0">
+            <button type="button" onclick="goToWalkthroughStep(0)" id="wt-tab-0" class="py-1.5 border-b-2 border-gray-950 bg-white text-gray-950 font-bold focus:outline-none">1. Search</button>
+            <button type="button" onclick="goToWalkthroughStep(1)" id="wt-tab-1" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">2. Import</button>
+            <button type="button" onclick="goToWalkthroughStep(2)" id="wt-tab-2" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">3. Workspaces</button>
+            <button type="button" onclick="goToWalkthroughStep(3)" id="wt-tab-3" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">4. Shopping</button>
+            <button type="button" onclick="goToWalkthroughStep(4)" id="wt-tab-4" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">5. Pantry</button>
+            <button type="button" onclick="goToWalkthroughStep(5)" id="wt-tab-5" class="py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none">6. Presets</button>
+        </nav>
+
+        <!-- Step Panes Body -->
+        <div class="p-5 overflow-y-auto space-y-4 text-xs">
+            <!-- Step 1: Search -->
+            <div id="wt-pane-0" class="wt-pane space-y-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 1 of 6</span>
+                    <h3 class="text-sm font-bold text-gray-950">Search and filter recipes</h3>
+                </div>
+                <p class="text-gray-600 leading-normal">
+                    Search by keyword or filter by cuisine, meal type, diet, and equipment. You can include (<span class="font-mono font-bold text-gray-900">+</span>) or exclude (<span class="font-mono font-bold text-gray-900">-</span>) specific tags. Public recipes can be viewed and searched without logging in.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
+                    <div class="flex items-center space-x-2 bg-white border border-gray-300 px-2.5 py-1 text-gray-800">
+                        <span class="text-gray-400" aria-hidden="true">🔍</span>
+                        <span class="font-mono text-xs">casserole, -dairy</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        <span class="bg-gray-200 text-gray-800 text-[11px] px-2 py-0.5 rounded-none font-medium">+ Italian</span>
+                        <span class="bg-gray-200 text-gray-800 text-[11px] px-2 py-0.5 rounded-none font-medium">+ Vegetarian</span>
+                        <span class="bg-rose-100 text-rose-900 text-[11px] px-2 py-0.5 rounded-none font-medium">- Shellfish</span>
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <a href="{% url 'recipes:list' %}" class="text-blue-700 hover:underline font-semibold text-xs">
+                        Open Recipes directory &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step 2: Import / Create -->
+            <div id="wt-pane-1" class="wt-pane space-y-3 hidden">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 2 of 6</span>
+                    <h3 class="text-sm font-bold text-gray-950">Import from a URL or create a recipe</h3>
+                </div>
+                <p class="text-gray-600 leading-normal">
+                    Import an existing recipe by pasting a link from supported recipe websites, or enter ingredients, portions, and instructions manually in the recipe editor.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
+                    <div class="flex space-x-2">
+                        <div class="flex-1 bg-white border border-gray-300 px-2 py-1 text-xs text-gray-600 font-mono truncate">
+                            https://example.com/recipe
+                        </div>
+                        <span class="bg-gray-900 text-white font-semibold px-2.5 py-1 text-xs">Import</span>
+                    </div>
+                    <div class="bg-white border border-gray-200 p-2 text-[11px] text-gray-700">
+                        Extracted: title, portion yield, ingredients, instructions, and photo
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <a href="{% url 'recipes:create' %}" class="text-blue-700 hover:underline font-semibold text-xs">
+                        Create or import recipe &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step 3: Workspaces -->
+            <div id="wt-pane-2" class="wt-pane space-y-3 hidden">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 3 of 6</span>
+                    <h3 class="text-sm font-bold text-gray-950">Organize with workspaces</h3>
+                </div>
+                <p class="text-gray-600 leading-normal">
+                    Workspaces let you separate shopping lists, pantry checks, and meal plans for different households or occasions. You can invite members with editor or viewer access.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-1.5">
+                        <span class="font-bold text-gray-900">Workspace: Home Kitchen</span>
+                        <span class="text-blue-700 font-medium text-[11px]">+ New Workspace</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <div class="bg-white border border-gray-200 p-2 flex justify-between">
+                            <span class="font-medium text-gray-900">Alice</span>
+                            <span class="text-gray-500">Owner</span>
+                        </div>
+                        <div class="bg-white border border-gray-200 p-2 flex justify-between">
+                            <span class="font-medium text-gray-900">Bob</span>
+                            <span class="text-gray-700">Editor</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Shopping List -->
+            <div id="wt-pane-3" class="wt-pane space-y-3 hidden">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 4 of 6</span>
+                    <h3 class="text-sm font-bold text-gray-950">Shopping list with store aisle sorting</h3>
+                </div>
+                <p class="text-gray-600 leading-normal">
+                    Items are organized by store aisle. Tap an item to toggle between needed and completed. If another workspace member makes changes, the list updates in real time via Websockets.
+                </p>
+                <div class="border border-gray-300 bg-white p-3 space-y-2">
+                    <div class="bg-gray-100 text-gray-800 font-bold px-2 py-1 text-[11px]">Produce</div>
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between p-1.5 bg-gray-50 border border-gray-200">
+                            <span class="line-through text-gray-500">Fresh Cilantro (1 bunch)</span>
+                            <span class="text-[10px] text-gray-600 font-bold">Got</span>
+                        </div>
+                        <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200">
+                            <span class="text-gray-900">Hass Avocados (3 pack)</span>
+                            <span class="bg-gray-900 text-white text-[10px] px-2 py-0.5 font-bold">Need</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <a href="{% url 'shopping:list' %}" class="text-blue-700 hover:underline font-semibold text-xs">
+                        Open Shopping List &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step 5: Pantry Check -->
+            <div id="wt-pane-4" class="wt-pane space-y-3 hidden">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 5 of 6</span>
+                    <h3 class="text-sm font-bold text-gray-950">Pantry check</h3>
+                </div>
+                <p class="text-gray-600 leading-normal">
+                    Switch to pantry mode before shopping to review staple items. Mark what you have on hand, and send items you need directly to your shopping list.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
+                    <div class="font-bold text-gray-700 text-[11px] pb-1 border-b border-gray-200">Pantry Review</div>
+                    <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200 text-[11px]">
+                        <span>Olive Oil</span>
+                        <span class="bg-gray-900 text-white px-2 py-0.5 text-[10px] font-bold">Have</span>
+                    </div>
+                    <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200 text-[11px]">
+                        <span>Soy Sauce</span>
+                        <span class="bg-blue-700 text-white px-2 py-0.5 text-[10px] font-bold">Need &rarr; Added to list</span>
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <a href="{% url 'shopping:pantry_check' %}" class="text-blue-700 hover:underline font-semibold text-xs">
+                        Open Pantry Check &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step 6: Preset Lists -->
+            <div id="wt-pane-5" class="wt-pane space-y-3 hidden">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Step 6 of 6</span>
+                    <h3 class="text-sm font-bold text-gray-950">Preset lists and recurring schedules</h3>
+                </div>
+                <p class="text-gray-600 leading-normal">
+                    Save reusable lists of items for common routines. You can configure a schedule to load items into your active list at set days and times.
+                </p>
+                <div class="border border-gray-300 bg-gray-50 p-3 space-y-2">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-1">
+                        <span class="font-bold text-gray-900">Weekly Grocery Basics</span>
+                        <span class="text-[10px] bg-gray-200 text-gray-800 px-1.5 py-0.5 font-medium">Scheduled</span>
+                    </div>
+                    <div class="text-[11px] text-gray-600 bg-white p-2 border border-gray-200">
+                        Recurs every Sunday at 08:00 AM &bull; Loads into active shopping list
+                    </div>
+                </div>
+                <div class="pt-1">
+                    <a href="/preset-lists/" class="text-blue-700 hover:underline font-semibold text-xs">
+                        Open Preset Lists &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer Controls -->
+        <div class="bg-gray-50 border-t border-gray-200 px-4 py-2.5 flex items-center justify-between flex-shrink-0">
+            <button type="button"
+                    onclick="prevWalkthroughStep()"
+                    id="wt-prev-btn"
+                    class="px-3 py-1 text-xs font-semibold border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled>
+                &larr; Back
+            </button>
+
+            <div class="flex items-center space-x-2">
+                <button type="button"
+                        onclick="closeWalkthroughModal()"
+                        class="px-2.5 py-1 text-xs text-gray-600 hover:text-gray-900">
+                    Close
+                </button>
+                <button type="button"
+                        onclick="nextWalkthroughStep()"
+                        id="wt-next-btn"
+                        class="px-3 py-1 text-xs font-semibold bg-gray-900 hover:bg-black text-white">
+                    Next &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentWalkthroughStep = 0;
+    const totalWalkthroughSteps = 6;
+
+    function openWalkthroughModal(initialStep = 0) {
+        const modal = document.getElementById('walkthrough-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        goToWalkthroughStep(initialStep);
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeWalkthroughModal() {
+        const modal = document.getElementById('walkthrough-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    function goToWalkthroughStep(index) {
+        currentWalkthroughStep = Math.max(0, Math.min(totalWalkthroughSteps - 1, index));
+
+        for (let i = 0; i < totalWalkthroughSteps; i++) {
+            const pane = document.getElementById('wt-pane-' + i);
+            const tab = document.getElementById('wt-tab-' + i);
+            if (pane) pane.classList.toggle('hidden', i !== currentWalkthroughStep);
+            if (tab) {
+                if (i === currentWalkthroughStep) {
+                    tab.className = 'py-1.5 border-b-2 border-gray-950 bg-white text-gray-950 font-bold focus:outline-none';
+                } else {
+                    tab.className = 'py-1.5 border-b-2 border-transparent text-gray-600 hover:bg-gray-100 focus:outline-none';
+                }
+            }
+        }
+
+        const label = document.getElementById('wt-step-label');
+        if (label) label.textContent = `Step ${currentWalkthroughStep + 1} of ${totalWalkthroughSteps}`;
+
+        const prevBtn = document.getElementById('wt-prev-btn');
+        if (prevBtn) prevBtn.disabled = (currentWalkthroughStep === 0);
+
+        const nextBtn = document.getElementById('wt-next-btn');
+        if (nextBtn) {
+            if (currentWalkthroughStep === totalWalkthroughSteps - 1) {
+                nextBtn.textContent = 'Finish Tour';
+                nextBtn.onclick = closeWalkthroughModal;
+            } else {
+                nextBtn.textContent = 'Next →';
+                nextBtn.onclick = nextWalkthroughStep;
+            }
+        }
+    }
+
+    function nextWalkthroughStep() {
+        if (currentWalkthroughStep < totalWalkthroughSteps - 1) {
+            goToWalkthroughStep(currentWalkthroughStep + 1);
+        }
+    }
+
+    function prevWalkthroughStep() {
+        if (currentWalkthroughStep > 0) {
+            goToWalkthroughStep(currentWalkthroughStep - 1);
+        }
+    }
+
+    // Keyboard navigation (Esc to close, Left/Right arrows to step)
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('walkthrough-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+
+        if (event.key === 'Escape') {
+            closeWalkthroughModal();
+        } else if (event.key === 'ArrowRight') {
+            nextWalkthroughStep();
+        } else if (event.key === 'ArrowLeft') {
+            prevWalkthroughStep();
+        }
+    });
+
+    // Close on backdrop click outside the dialog card
+    document.getElementById('walkthrough-modal')?.addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeWalkthroughModal();
+        }
+    });
+</script>

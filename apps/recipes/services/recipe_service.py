@@ -912,3 +912,36 @@ def add_recipe_to_shopping_list(
     )
 
     return added_descriptions
+
+
+def get_featured_carousel_recipes(limit: int = 10) -> list[Recipe]:
+    """
+    Retrieve public, approved recipes that have valid photos for display in carousels.
+
+    Prioritizes recipes with photos, descriptions, and ratings.
+
+    Args:
+        limit: Maximum number of recipes to return.
+
+    Returns:
+        List of Recipe instances.
+    """
+    qs = (
+        Recipe.objects.filter(is_public=True, is_approved=True)
+        .exclude(photo_file="", photo_urls=[])
+        .annotate(avg_stars=Avg("ratings__stars"))
+    )
+
+    candidates = list(qs)
+    recipes_with_photos = [r for r in candidates if r.primary_photo_url]
+
+    recipes_with_photos.sort(
+        key=lambda r: (
+            1 if r.description else 0,
+            float(r.avg_stars or 0),
+            r.times_made,
+        ),
+        reverse=True,
+    )
+    return recipes_with_photos[:limit]
+

@@ -44,6 +44,9 @@ def workspace_context(request: HttpRequest) -> dict[str, Any]:
         {"username": "carol", "label": "Carol", "role": "External Guest"},
     ]
 
+    session = getattr(request, "session", None)
+    auto_launch_tour = session.pop("auto_launch_tour", False) if session else False
+
     return {
         "active_workspace": ws,
         "workspace_role": role,
@@ -53,4 +56,5 @@ def workspace_context(request: HttpRequest) -> dict[str, Any]:
         "dev_personas": personas,
         "debug_mode": settings.DEBUG,
         "known_ingredient_suggestions": get_known_ingredient_suggestions(),
+        "auto_launch_tour": auto_launch_tour,
     }

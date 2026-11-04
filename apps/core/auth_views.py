@@ -46,7 +46,10 @@ def login_view(request: HttpRequest) -> HttpResponse:
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
+            is_first_login = (user.last_login is None)
             login(request, user)
+            if is_first_login:
+                request.session["auto_launch_tour"] = True
             request.session.set_expiry(settings.SESSION_COOKIE_AGE)
             request.session.pop("guest_mode", None)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
@@ -57,12 +60,15 @@ def login_view(request: HttpRequest) -> HttpResponse:
         else:
             messages.error(request, "Invalid username or password.")
 
+    from apps.recipes.services.recipe_service import get_featured_carousel_recipes
+
     context: dict[str, Any] = {
         "form": form,
         "next": next_url,
         "is_google_configured": is_google_oauth_configured(),
         "google_login_url": reverse("core:google_login") + (f"?next={next_url}" if next_url else ""),
         "debug_mode": settings.DEBUG,
+        "featured_recipes": get_featured_carousel_recipes(limit=10),
     }
     return render(request, "core/login.html", context)
 
@@ -105,7 +111,10 @@ def google_callback_view(request: HttpRequest) -> HttpResponse:
         messages.error(request, error or "Could not authenticate with Google.")
         return redirect(reverse("core:login") + (f"?next={next_url}" if next_url else ""))
 
+    is_first_login = (user.last_login is None)
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    if is_first_login:
+        request.session["auto_launch_tour"] = True
     request.session.set_expiry(settings.SESSION_COOKIE_AGE)
     messages.success(request, f"Signed in as {user.email or user.username}.")
     target = next_url if next_url and next_url.startswith("/") else reverse("recipes:list")

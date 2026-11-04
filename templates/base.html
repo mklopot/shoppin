@@ -313,6 +313,15 @@
                                 <div class="text-[10px] text-gray-500 truncate">{{ request.user.email }}</div>
                                 {% endif %}
                             </div>
+                            <div class="py-1" role="none">
+                                <button type="button"
+                                        role="menuitem"
+                                        onclick="closeUserDropdown(); openWalkthroughModal();"
+                                        class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5 focus:outline-none">
+                                    <span aria-hidden="true">💡</span>
+                                    <span>Product Tour</span>
+                                </button>
+                            </div>
                             {% if request.user.is_staff %}
                             <div class="py-1" role="none">
                                 <a href="{% url 'admin:index' %}" role="menuitem" class="block px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-700 font-medium flex items-center space-x-1.5">
@@ -487,6 +496,19 @@
             </form>
         </div>
     </div>
+
+    <!-- Product Walkthrough Modal -->
+    {% include "core/partials/walkthrough_modal.html" %}
+
+    {% if auto_launch_tour %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof openWalkthroughModal === "function") {
+                openWalkthroughModal();
+            }
+        });
+    </script>
+    {% endif %}
 
     <script>
         function toggleWorkspaceDropdown() {

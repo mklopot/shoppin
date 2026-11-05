@@ -274,18 +274,18 @@
     {% if related_versions %}
     <div class="bg-amber-50/70 border border-amber-300 p-4 space-y-2.5">
         <div class="flex items-center justify-between">
-            <h3 class="font-bold text-xs text-amber-950 uppercase tracking-wider flex items-center space-x-1.5">
+            <h2 class="font-bold text-xs text-amber-950 uppercase tracking-wider flex items-center space-x-1.5">
                 <span>🍴</span>
                 <span>Other Versions in {{ workspace.name }} ({{ related_versions.count }})</span>
-            </h3>
+            </h2>
             <span class="text-[11px] text-amber-800">Compare variations & choose the best one for tonight</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
             {% for rel in related_versions %}
             <a href="{{ rel.get_absolute_url }}" class="block p-2.5 bg-white border border-amber-200 hover:border-amber-400 hover:shadow-sm transition-all group">
                 <div class="flex items-start justify-between">
-                    <h4 class="font-bold text-xs text-gray-900 group-hover:text-amber-800 line-clamp-1">{{ rel.name }}</h4>
-                    <span class="text-[10px] text-gray-400 font-mono">↗</span>
+                    <h3 class="font-bold text-xs text-gray-900 group-hover:text-amber-800 line-clamp-1">{{ rel.name }}</h3>
+                    <span class="text-[10px] text-gray-500 font-mono" aria-hidden="true">↗</span>
                 </div>
                 <div class="text-[11px] text-gray-500 mt-1 flex items-center space-x-2">
                     <span>By {{ rel.created_by.first_name|default:rel.created_by.username|default:"Community Cook" }}</span>
@@ -315,7 +315,7 @@
                     <div>
                         <span class="font-medium text-gray-900">{{ ing.name }}</span>
                         {% if ing.optional %}
-                        <span class="italic text-gray-400 text-[10px] ml-1">[optional]</span>
+                        <span class="italic text-gray-700 text-[10px] ml-1">[optional]</span>
                         {% endif %}
                         {% if ing.brand %}
                         <span class="text-gray-500 text-[10px] block">Brand: {{ ing.brand }}</span>
@@ -435,7 +435,7 @@
                     <span id="nutrition-cals" class="text-2xl font-black text-gray-900 tracking-tight">{{ recipe.calories_per_serving }}</span>
                     <span class="text-xs text-gray-500 ml-0.5">kcal</span>
                 </div>
-                <div class="text-[10px] text-gray-400 mt-1">
+                <div class="text-[10px] text-gray-700 mt-1">
                     Energy
                 </div>
             </div>

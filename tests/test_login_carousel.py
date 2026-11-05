@@ -102,6 +102,7 @@ def test_login_page_renders_carousel_and_guest_browse(carousel_recipes):
     assert "Browse Recipes (No Login Required)" in content
     assert "Free to use" in content
     assert "No ads" in content
+    assert "Open Source" in content
     assert "Recipes with Photos" not in content
     assert "Auto-advances every 5 seconds" not in content
     assert "Crêpes" in content

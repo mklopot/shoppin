@@ -42,7 +42,7 @@
             <button type="button"
                     onclick="closeWalkthroughModal()"
                     aria-label="Exit tutorial"
-                    class="text-gray-700 hover:text-gray-900 font-bold text-lg leading-none p-0.5 ml-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                    class="text-gray-700 hover:text-gray-950 font-bold text-lg leading-none p-0.5 ml-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
                 &times;
             </button>
         </div>
@@ -154,32 +154,95 @@
     let currentTourStep = 0;
     const totalTourSteps = 7;
 
-    // Element selectors for spotlighting actual places on the site
-    const tourStepTargets = [
-        // Step 1: Shopping list row / to-buy list
-        '#section-groups-container .item-row, #shopping-list-content, #main-content',
-        // Step 2: Store aisles & sorting controls
-        '[aria-label="Sort order"], #section-groups-container .section-group-block, #section-groups-container',
-        // Step 3: Pantry Check navigation tab
-        'header nav a[href*="pantry"], a[data-mode-switch="pantry"]',
-        // Step 4: Recipes navigation tab
-        'header nav a[href*="recipes"]',
-        // Step 5: Add item / import
-        '#add-item-name, header nav a[href*="recipes"]',
-        // Step 6: Workspace dropdown button
-        '#workspace-dropdown-container, #workspace-dropdown-btn',
-        // Step 7: Preset Lists navigation tab
-        'header nav a[href*="preset"]'
-    ];
-
-    const tourElementBadges = [
-        'Shopping List',
-        'Aisle & Sort Controls',
-        'Top Navigation: Pantry Check',
-        'Top Navigation: Recipes',
-        'Recipe Creation',
-        'Top Navigation: Workspaces',
-        'Top Navigation: Preset Lists'
+    // Navigation and target configurations for each step
+    const tourStepConfigs = [
+        // Step 0: Shopping List items & live sync
+        {
+            path: '{% url "shopping:list" %}',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) && !p.includes('/pantry') && !p.includes('/preset');
+            },
+            selector: '#section-groups-container .item-row, #shopping-list-content, #main-content',
+            badge: 'Shopping List',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 1: Store Aisles & Priority Sorting
+        {
+            path: '{% url "shopping:list" %}',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) && !p.includes('/pantry') && !p.includes('/preset');
+            },
+            selector: '[aria-label="Sort order"], #section-groups-container .section-group-block, #section-groups-container',
+            badge: 'Aisle & Sort Controls',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 2: Pantry Check (navigates to Pantry Check tab/view)
+        {
+            path: '{% url "shopping:pantry_check" %}',
+            pathCheck: function(p) {
+                return p.includes('/pantry');
+            },
+            selector: '#section-groups-container .item-row, #shopping-list-content, [data-mode-switch="pantry"], #main-content',
+            badge: 'Pantry Check Mode',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 3: Recipe Search & Filters (navigates to Recipes tab)
+        {
+            path: '{% url "recipes:list" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/recipes') && !p.includes('/create');
+            },
+            selector: '#recipe-filter-form, #recipe-search-input, #recipe-results-container',
+            badge: 'Recipe Search & Filters',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 4: Recipe Import & Creation (on Recipes tab, spotlights actions)
+        {
+            path: '{% url "recipes:list" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/recipes');
+            },
+            selector: '#recipe-action-buttons, button[onclick*="import-url-modal"], a[href*="recipes/create"], #recipe-filter-form',
+            badge: 'Import & Creation',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 5: Workspaces & Collaboration (opens the workspace dropdown menu)
+        {
+            path: null,
+            pathCheck: function() {
+                return true;
+            },
+            selector: '#workspace-dropdown-menu, #workspace-dropdown-container, #workspace-dropdown-btn',
+            badge: 'Workspace Collaboration',
+            onEnter: function() {
+                const menu = document.getElementById('workspace-dropdown-menu');
+                if (menu && menu.classList.contains('hidden') && typeof toggleWorkspaceDropdown === 'function') {
+                    toggleWorkspaceDropdown();
+                }
+            }
+        },
+        // Step 6: Preset Lists & Recurring Schedules (navigates to Preset Lists tab)
+        {
+            path: '{% url "shopping:preset_list_index" %}',
+            pathCheck: function(p) {
+                return p.includes('/preset');
+            },
+            selector: '#preset-index-grid-container, button[onclick*="create-preset-modal"], #main-content',
+            badge: 'Preset Lists & Schedules',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        }
     ];
 
     function openWalkthroughModal(initialStep = 0) {
@@ -196,7 +259,12 @@
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
 
-        // Remove tour=1 from URL without full reload
+        // Close workspace dropdown if open
+        if (typeof closeWorkspaceDropdown === 'function') {
+            closeWorkspaceDropdown();
+        }
+
+        // Remove tour query param without full reload
         if (window.location.search.includes('tour=')) {
             const url = new URL(window.location.href);
             url.searchParams.delete('tour');
@@ -206,6 +274,19 @@
 
     function goToTourStep(index) {
         currentTourStep = Math.max(0, Math.min(totalTourSteps - 1, index));
+        const config = tourStepConfigs[currentTourStep];
+
+        // Check if we need to open another navigation tab to highlight this concept
+        if (config.path && !config.pathCheck(window.location.pathname)) {
+            const separator = config.path.includes('?') ? '&' : '?';
+            window.location.href = config.path + separator + 'tour=' + currentTourStep;
+            return;
+        }
+
+        // Trigger onEnter hook (e.g. opening the workspace dropdown)
+        if (config.onEnter) {
+            config.onEnter();
+        }
 
         // Switch pane visibility
         for (let i = 0; i < totalTourSteps; i++) {
@@ -218,8 +299,8 @@
         if (indicator) indicator.textContent = `Tutorial ${currentTourStep + 1} of ${totalTourSteps}`;
 
         const badge = document.getElementById('tour-element-badge');
-        if (badge && tourElementBadges[currentTourStep]) {
-            badge.textContent = tourElementBadges[currentTourStep];
+        if (badge && config.badge) {
+            badge.textContent = config.badge;
         }
 
         // Update footer buttons
@@ -237,8 +318,15 @@
             }
         }
 
+        // Keep current tour step in URL
+        const url = new URL(window.location.href);
+        url.searchParams.set('tour', currentTourStep);
+        window.history.replaceState({}, '', url.toString());
+
         // Spotlight target on the live page
-        positionSpotlightAndTooltip(tourStepTargets[currentTourStep]);
+        setTimeout(function() {
+            positionSpotlightAndTooltip(config.selector);
+        }, 60);
     }
 
     function nextTourStep() {
@@ -372,8 +460,8 @@
     // Reposition on window resize or scroll
     window.addEventListener('resize', function() {
         const modal = document.getElementById('walkthrough-modal');
-        if (modal && !modal.classList.contains('hidden')) {
-            positionSpotlightAndTooltip(tourStepTargets[currentTourStep]);
+        if (modal && !modal.classList.contains('hidden') && tourStepConfigs[currentTourStep]) {
+            positionSpotlightAndTooltip(tourStepConfigs[currentTourStep].selector);
         }
     });
 
@@ -391,10 +479,14 @@
         }
     });
 
-    // Auto-launch if URL has ?tour=1
+    // Auto-launch if URL has ?tour=X
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.location.search.includes('tour=')) {
-            openWalkthroughModal();
+        const match = window.location.search.match(/[?&]tour=(\d+)/);
+        if (match) {
+            const step = parseInt(match[1], 10);
+            setTimeout(function() {
+                openWalkthroughModal(isNaN(step) ? 0 : step);
+            }, 80);
         }
     });
 </script>

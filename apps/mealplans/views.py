@@ -22,6 +22,7 @@ from apps.mealplans.services.mealplan_service import (
     compute_cooking_status,
     delete_meal_from_plan,
     get_active_meal_plan,
+    get_recipe_ingredients_status,
     remove_dish_from_meal,
     remove_recipe_from_meal,
     scale_meal_dish,
@@ -532,18 +533,26 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     """
     recipe = get_object_or_404(Recipe, id=recipe_id)
     shopping_list = get_active_list(request)
+    meal_id = request.GET.get("meal_id")
+    dish_id = request.GET.get("dish_id")
 
-    # Check ingredient statuses on shopping list
-    items_by_name = {it.name.lower(): it for it in shopping_list.items.all()} if shopping_list else {}
-    ingredients_with_status = []
-    for ing in recipe.ingredients.all():
-        item = items_by_name.get(ing.name.lower())
-        ingredients_with_status.append({
-            "ingredient": ing,
-            "on_list": item is not None,
-            "status": item.status if item else None,
-            "is_ready": item.status in ("GOT", "HAVE") if item else False,
-        })
+    meal = Meal.objects.filter(id=meal_id).first() if meal_id else None
+    meal_dish = MealDish.objects.filter(id=dish_id).first() if dish_id else None
+
+    # Check ingredient statuses on shopping list via centralized attribution resolver
+    ingredients_with_status = get_recipe_ingredients_status(
+        recipe=recipe,
+        shopping_list=shopping_list,
+        meal=meal,
+        meal_dish=meal_dish,
+    )
+
+    total_ingredients = len(ingredients_with_status)
+    need_count = sum(1 for row in ingredients_with_status if row["status_code"] in ("need", "missing"))
+    got_count = sum(1 for row in ingredients_with_status if row["status_code"] == "got")
+    have_count = sum(1 for row in ingredients_with_status if row["status_code"] == "have")
+    skipped_count = sum(1 for row in ingredients_with_status if row["status_code"] == "skipped")
+    ready_count = got_count + have_count
 
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
@@ -554,6 +563,12 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     context = {
         "recipe": recipe,
         "ingredients_with_status": ingredients_with_status,
+        "total_ingredients": total_ingredients,
+        "need_count": need_count,
+        "got_count": got_count,
+        "have_count": have_count,
+        "skipped_count": skipped_count,
+        "ready_count": ready_count,
         "meals": meals,
         "can_write": can_write,
     }

@@ -31,21 +31,56 @@
 
             <!-- Ingredients -->
             <div>
-                <h4 class="font-bold text-gray-900 uppercase tracking-wider text-xs border-b border-gray-200 pb-1 mb-2">Ingredients</h4>
+                <div class="flex items-center justify-between border-b border-gray-200 pb-1 mb-2">
+                    <h4 class="font-bold text-gray-900 uppercase tracking-wider text-xs">Ingredients</h4>
+                    <div class="text-[11px] font-medium">
+                        {% if need_count == 0 and total_ingredients > 0 %}
+                        <span class="text-emerald-900 font-bold bg-emerald-50 px-2 py-0.5 border border-emerald-300">
+                            ✓ Ready to cook! All ingredients available
+                        </span>
+                        {% elif need_count > 0 %}
+                        <span class="text-amber-950 font-bold bg-amber-50 px-2 py-0.5 border border-amber-300">
+                            🛒 {{ need_count }} of {{ total_ingredients }} need to buy
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
                 <div class="divide-y divide-gray-100 border border-gray-200 bg-gray-50/50">
                     {% for row in ingredients_with_status %}
-                    <div class="p-2 flex items-center justify-between text-xs">
+                    <div class="p-2 flex items-center justify-between text-xs {% if row.status_code == 'need' %}bg-amber-50/50{% elif row.status_code == 'missing' %}bg-amber-50/30{% endif %}">
                         <div class="flex items-center space-x-2">
-                            {% if row.is_ready %}
-                            <span class="text-emerald-700 font-bold" title="In cart or pantry">✓</span>
-                            {% elif row.on_list %}
-                            <span class="text-amber-600 font-bold" title="Needed on shopping list">🛒</span>
+                            {% if row.status_code == 'got' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="In cart / purchased">
+                                <span class="text-emerald-700 font-bold text-sm leading-none" aria-hidden="true">✓</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-none">Got</span>
+                            </span>
+                            {% elif row.status_code == 'have' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Already have at home in pantry">
+                                <span class="text-blue-800 font-bold text-sm leading-none" aria-hidden="true">🏠</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-blue-100 text-blue-900 border border-blue-300 rounded-none">Have</span>
+                            </span>
+                            {% elif row.status_code == 'skipped' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Skipped / not buying today">
+                                <span class="text-gray-600 font-bold text-sm leading-none" aria-hidden="true">⏭</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-none">Skipped</span>
+                            </span>
+                            {% elif row.status_code == 'need' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Still need to buy on shopping list">
+                                <span class="text-amber-700 font-bold text-sm leading-none" aria-hidden="true">🛒</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-none">Need</span>
+                            </span>
                             {% else %}
-                            <span class="text-gray-500" aria-hidden="true">-</span>
+                            <span class="inline-flex items-center space-x-1 select-none" title="Missing / not on shopping list">
+                                <span class="text-gray-500 font-bold text-sm leading-none" aria-hidden="true">-</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-gray-100 text-gray-700 border border-gray-300 rounded-none">Missing</span>
+                            </span>
                             {% endif %}
-                            <span class="font-medium text-gray-900">{{ row.ingredient.name }}</span>
+
+                            <span class="font-medium {% if row.status_code == 'skipped' %}line-through text-gray-500{% elif row.status_code == 'need' %}text-gray-900 font-semibold{% else %}text-gray-800{% endif %}">
+                                {{ row.ingredient.name }}
+                            </span>
                             {% if row.ingredient.optional %}
-                            <span class="italic text-gray-700 text-[10px]">(optional)</span>
+                            <span class="italic text-gray-500 text-[10px]">(optional)</span>
                             {% endif %}
                         </div>
 

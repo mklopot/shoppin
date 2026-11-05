@@ -128,7 +128,7 @@
                     {% if meal.id in meals_ready %}
                     <span class="inline-block w-3.5 h-3.5 rounded-full bg-emerald-500 border border-emerald-600 flex-shrink-0" role="img" aria-label="Status: Ready to cook. All ingredients in cart or at home." title="Ready to Cook! All ingredients in cart or at home."></span>
                     {% elif meal.id in meals_missing_optional %}
-                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-500 flex-shrink-0" role="img" aria-label="Status: Missing only optional ingredients." title="Missing only optional ingredients."></span>
+                    <span class="inline-block w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-500 flex-shrink-0" role="img" aria-label="Status: Missing only optional or skipped ingredients." title="Missing only optional or skipped ingredients."></span>
                     {% else %}
                     <span class="inline-block w-3.5 h-3.5 rounded-full bg-gray-200 border border-gray-300 flex-shrink-0" role="img" aria-label="Status: Ingredients needed on shopping list." title="Ingredients needed on shopping list."></span>
                     {% endif %}
@@ -171,13 +171,13 @@
                         {% if recipe.id in recipes_ready %}
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" role="img" aria-label="Status: Ready to cook" title="Ready to cook!"></span>
                         {% elif recipe.id in recipes_missing_optional %}
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" role="img" aria-label="Status: Missing only optional ingredients" title="Missing only optional ingredients"></span>
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" role="img" aria-label="Status: Missing only optional or skipped ingredients" title="Missing only optional or skipped ingredients"></span>
                         {% else %}
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300" role="img" aria-label="Status: Ingredients needed" title="Ingredients needed"></span>
                         {% endif %}
 
                         <div class="flex items-center space-x-1.5">
-                            <button type="button" hx-get="{% url 'mealplans:recipe_modal' recipe.id %}" hx-target="#modal-placeholder"
+                            <button type="button" hx-get="{% url 'mealplans:recipe_modal' recipe.id %}?meal_id={{ meal.id }}&dish_id={{ dish.id }}" hx-target="#modal-placeholder"
                                     class="font-medium text-gray-900 hover:text-blue-700 hover:underline text-left">
                                 {{ recipe.name }}
                             </button>

@@ -41,6 +41,34 @@ def test_walkthrough_modal_content_renders():
     assert "closeWalkthroughModal" in html
     assert "goToTourStep" in html
     assert "positionSpotlightAndTooltip" in html
+    assert "tourStepConfigs" in html
+
+
+@pytest.mark.django_db
+def test_tour_navigation_tab_destinations_and_elements(db):
+    """Verify that pages referenced by the tour contain valid target elements."""
+    user = User.objects.create_user(username="tourcheck", password="password123")
+    client = Client()
+    client.force_login(user)
+
+    # 1. Recipes page has recipe-filter-form and recipe-action-buttons
+    recipes_res = client.get(reverse("recipes:list"))
+    assert recipes_res.status_code == 200
+    recipes_html = recipes_res.content.decode("utf-8")
+    assert 'id="recipe-filter-form"' in recipes_html
+    assert 'id="recipe-action-buttons"' in recipes_html
+
+    # 2. Preset lists page has preset grid container
+    presets_res = client.get(reverse("shopping:preset_list_index"))
+    assert presets_res.status_code == 200
+    presets_html = presets_res.content.decode("utf-8")
+    assert 'id="preset-index-grid-container"' in presets_html
+
+    # 3. Pantry Check page renders pantry check mode
+    pantry_res = client.get(reverse("shopping:pantry_check"))
+    assert pantry_res.status_code == 200
+    pantry_html = pantry_res.content.decode("utf-8")
+    assert 'id="shopping-list-content"' in pantry_html
 
 
 @pytest.mark.django_db

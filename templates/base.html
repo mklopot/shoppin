@@ -545,12 +545,12 @@
 
     <script>
         function startProductTour() {
-            if (window.location.pathname.startsWith('/shopping') && !window.location.pathname.includes('/pantry')) {
+            if ((window.location.pathname === '/' || window.location.pathname.startsWith('/shopping')) && !window.location.pathname.includes('/pantry') && !window.location.pathname.includes('/preset')) {
                 if (typeof openWalkthroughModal === "function") {
-                    openWalkthroughModal();
+                    openWalkthroughModal(0);
                 }
             } else {
-                window.location.href = '{% url "shopping:list" %}?tour=1';
+                window.location.href = '{% url "shopping:list" %}?tour=0';
             }
         }
 

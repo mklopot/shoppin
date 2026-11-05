@@ -541,15 +541,149 @@ def broadcast_mealplan_update(
     )
 
 
-def compute_cooking_status(meal_plan: MealPlan, shopping_list: ShoppingList) -> dict[str, Any]:
+def get_recipe_ingredients_status(
+    recipe: Recipe,
+    shopping_list: ShoppingList | None,
+    meal: Meal | None = None,
+    meal_dish: MealDish | None = None,
+) -> list[dict[str, Any]]:
     """
-    Compute cooking readiness status (🟢 Ready, 🟡 Missing optional) for recipes and meals.
+    Resolve each ingredient of a recipe to its corresponding item and workflow status
+    on the active shopping list.
 
-    Matches legacy status_by_attribution logic:
-    - Recipe is Ready (🟢) if none of its shopping list ingredients are NEED.
-    - Recipe is Missing Optional (🟡) if only optional ingredients are NEED.
-    - Meal is Ready (🟢) if all its recipes are Ready.
-    - Meal is Missing Optional (🟡) if all its recipes are either Ready or Missing Optional.
+    Status resolution hierarchy:
+    1. Direct ShoppingListItemSource attribution (matching recipe and ingredient, optionally meal/dish).
+    2. Direct ShoppingListItem source link (source_recipe_id and source_ingredient_id).
+    3. Recipe-scoped name match (ShoppingListItemSource matching recipe and normalized ingredient name).
+    4. ShoppingList-wide normalized name match (singularized lowercase).
+
+    Returns:
+        List of ingredient status dictionaries with normalized status codes:
+        - "got": In Cart / Purchased (ItemStatus.GOT)
+        - "have": Already Have / In Pantry (ItemStatus.HAVE)
+        - "skipped": Skipped / Don't Need Today (ItemStatus.DONT_NEED)
+        - "need": Active item to buy (ItemStatus.NEED)
+        - "missing": Ingredient not found on shopping list
+    """
+    if not shopping_list:
+        return [
+            {
+                "ingredient": ing,
+                "item": None,
+                "on_list": False,
+                "status": None,
+                "status_code": "missing",
+                "status_display": "Missing",
+                "is_ready": False,
+                "is_available": False,
+                "is_skipped": False,
+                "is_need": False,
+                "is_missing": True,
+                "is_optional": bool(ing.optional),
+            }
+            for ing in recipe.ingredients.all()
+        ]
+
+    # Pre-fetch shopping items and attributions once for efficiency
+    shopping_items = list(shopping_list.items.prefetch_related("attributions").all())
+
+    # Build resolution lookup tables
+    source_by_ing_id: dict[int, ShoppingListItem] = {}
+    source_by_recipe_and_norm_name: dict[str, ShoppingListItem] = {}
+
+    for item in shopping_items:
+        for attr in item.attributions.all():
+            if attr.recipe_id == recipe.id:
+                if attr.ingredient_id:
+                    # Prefer exact dish occurrence if meal_dish specified
+                    if meal_dish and attr.meal_dish_id == meal_dish.id:
+                        source_by_ing_id[attr.ingredient_id] = item
+                    elif attr.ingredient_id not in source_by_ing_id:
+                        source_by_ing_id[attr.ingredient_id] = item
+
+                norm_attr_purpose = singularize(clean_purpose(attr.purpose).lower())
+                norm_item_name = singularize(item.name.strip().lower())
+                source_by_recipe_and_norm_name.setdefault(norm_attr_purpose, item)
+                source_by_recipe_and_norm_name.setdefault(norm_item_name, item)
+
+        if item.source_recipe_id == recipe.id:
+            if item.source_ingredient_id and item.source_ingredient_id not in source_by_ing_id:
+                source_by_ing_id[item.source_ingredient_id] = item
+            source_by_recipe_and_norm_name.setdefault(singularize(item.name.strip().lower()), item)
+
+    exact_name_map = {item.name.strip().lower(): item for item in shopping_items}
+    singular_name_map = {singularize(item.name.strip().lower()): item for item in shopping_items}
+
+    ingredients_with_status = []
+    for ing in recipe.ingredients.all():
+        raw_name = ing.name.strip().lower()
+        norm_name = singularize(raw_name)
+
+        item = (
+            source_by_ing_id.get(ing.id)
+            or source_by_recipe_and_norm_name.get(norm_name)
+            or exact_name_map.get(raw_name)
+            or singular_name_map.get(norm_name)
+        )
+
+        if item:
+            status = item.status
+            if status == ItemStatus.GOT:
+                status_code = "got"
+                status_display = "Got"
+            elif status == ItemStatus.HAVE:
+                status_code = "have"
+                status_display = "Have"
+            elif status == ItemStatus.DONT_NEED:
+                status_code = "skipped"
+                status_display = "Skipped"
+            else:
+                status_code = "need"
+                status_display = "Need"
+
+            is_available = status in (ItemStatus.GOT, ItemStatus.HAVE)
+            is_skipped = status == ItemStatus.DONT_NEED
+            is_need = status == ItemStatus.NEED
+            is_missing = False
+        else:
+            status = None
+            status_code = "missing"
+            status_display = "Missing"
+            is_available = False
+            is_skipped = False
+            is_need = False
+            is_missing = True
+
+        ingredients_with_status.append({
+            "ingredient": ing,
+            "item": item,
+            "on_list": item is not None,
+            "status": status,
+            "status_code": status_code,
+            "status_display": status_display,
+            "is_ready": is_available,
+            "is_available": is_available,
+            "is_skipped": is_skipped,
+            "is_need": is_need,
+            "is_missing": is_missing,
+            "is_optional": bool(ing.optional),
+        })
+
+    return ingredients_with_status
+
+
+def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingList | None) -> dict[str, Any]:
+    """
+    Compute cooking readiness status for recipes and meals:
+    - 🟢 Green (Ready): 100% of recipe's ingredients are available (GOT or HAVE).
+    - 🟡 Yellow (Missing optional or skipped): All non-optional, non-skipped ingredients are
+      available (GOT or HAVE). The only missing ingredients are optional or explicitly skipped.
+    - ⚪ Grey: One or more required non-skipped ingredients are still NEED or missing from list.
+
+    Meal status:
+    - 🟢 Green if all dishes in the meal are Green.
+    - 🟡 Yellow if all dishes in the meal are either Green or Yellow (and >=1 is Yellow).
+    - ⚪ Grey if any dish in the meal is Grey.
 
     Args:
         meal_plan: Target MealPlan.
@@ -564,50 +698,61 @@ def compute_cooking_status(meal_plan: MealPlan, shopping_list: ShoppingList) -> 
             'meals_missing_optional': set of meal ids,
         }
     """
+    empty_result = {
+        "recipes_ready": set(),
+        "recipes_missing_optional": set(),
+        "meals_ready": set(),
+        "meals_missing_optional": set(),
+    }
+    if not meal_plan or not shopping_list:
+        return empty_result
+
     recipes_ready = set()
     recipes_missing_optional = set()
 
-    # Fetch all items on shopping list once for efficiency
-    shopping_items = list(shopping_list.items.all())
-
     all_meals = list(meal_plan.meals.prefetch_related("recipes", "recipes__ingredients").all())
+
+    # Cache recipe status so we only calculate each recipe once across meals
+    recipe_status_cache: dict[int, str] = {}  # recipe_id -> "ready" | "missing_optional" | "grey"
 
     for meal in all_meals:
         for recipe in meal.recipes.all():
-            if recipe.id in recipes_ready or recipe.id in recipes_missing_optional:
+            if recipe.id in recipe_status_cache:
                 continue
 
-            # Find all shopping list items attributed to this recipe
-            attributed_items = [
-                item for item in shopping_items
-                if item.source_recipe_id == recipe.id or recipe.name.lower() in item.purpose.lower()
-            ]
-
-            if not attributed_items:
-                # If no ingredients on shopping list (all checked or not added), check recipe ingredients
+            ing_statuses = get_recipe_ingredients_status(recipe, shopping_list)
+            if not ing_statuses:
+                # Recipes with no ingredients listed are ready to cook
+                recipe_status_cache[recipe.id] = "ready"
                 recipes_ready.add(recipe.id)
                 continue
 
-            statuses = {item.status for item in attributed_items}
-            statuses_ignore_optional = {
-                item.status for item in attributed_items if not item.optional
-            }
+            all_available = all(row["is_available"] for row in ing_statuses)
+            all_but_optional_or_skipped = all(
+                row["is_available"] or row["is_optional"] or row["is_skipped"]
+                for row in ing_statuses
+            )
 
-            if ItemStatus.NEED not in statuses:
+            if all_available:
+                recipe_status_cache[recipe.id] = "ready"
                 recipes_ready.add(recipe.id)
-            elif ItemStatus.NEED not in statuses_ignore_optional:
+            elif all_but_optional_or_skipped:
+                recipe_status_cache[recipe.id] = "missing_optional"
                 recipes_missing_optional.add(recipe.id)
+            else:
+                recipe_status_cache[recipe.id] = "grey"
 
     meals_ready = set()
     meals_missing_optional = set()
 
     for meal in all_meals:
-        recipe_count = meal.recipes.count()
+        recipes = list(meal.recipes.all())
+        recipe_count = len(recipes)
         if recipe_count == 0:
             continue
 
-        num_ready = sum(1 for r in meal.recipes.all() if r.id in recipes_ready)
-        num_missing_opt = sum(1 for r in meal.recipes.all() if r.id in recipes_missing_optional)
+        num_ready = sum(1 for r in recipes if recipe_status_cache.get(r.id) == "ready")
+        num_missing_opt = sum(1 for r in recipes if recipe_status_cache.get(r.id) == "missing_optional")
 
         if num_ready == recipe_count:
             meals_ready.add(meal.id)

@@ -201,7 +201,8 @@
         }
 
         /* WCAG 2.1/2.2 AA Contrast Compliance (>= 4.5:1 ratio on light backgrounds; text-gray-700 gives 9.0:1) */
-        .text-gray-400 {
+        .text-gray-400,
+        .text-gray-500 {
             color: #374151 !important; /* text-gray-700 fallback: 9:1 contrast ratio against white */
         }
 
@@ -317,37 +318,37 @@
                                 class="h-8 inline-flex items-center space-x-1 sm:space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-1.5 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1">
                             <span aria-hidden="true">👤</span>
                             <span class="font-semibold max-w-[55px] xs:max-w-[75px] sm:max-w-[100px] truncate">{{ request.user.first_name|default:request.user.username }}</span>
-                            <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
+                            <span class="text-[9px] text-gray-700" aria-hidden="true">▼</span>
                         </button>
                         <div id="user-dropdown-menu"
                              role="menu"
                              aria-labelledby="user-dropdown-btn"
                              class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
-                            <div class="px-3 py-1.5 text-[11px] text-gray-600" role="presentation">
+                            <div class="px-3 py-1.5 text-[11px] text-gray-700" role="presentation">
                                 <div class="font-bold text-gray-900 truncate">{{ request.user.get_full_name|default:request.user.username }}</div>
                                 {% if request.user.email %}
-                                <div class="text-[10px] text-gray-500 truncate">{{ request.user.email }}</div>
+                                <div class="text-[10px] text-gray-700 truncate">{{ request.user.email }}</div>
                                 {% endif %}
                             </div>
                             <div class="py-1" role="none">
                                 <button type="button"
                                         role="menuitem"
                                         onclick="closeUserDropdown(); startProductTour();"
-                                        class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5 focus:outline-none">
+                                        class="w-full text-left px-3 py-1.5 hover:bg-emerald-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                                     <span aria-hidden="true">💡</span>
                                     <span>Product Tour</span>
                                 </button>
                             </div>
                             {% if request.user.is_staff %}
                             <div class="py-1" role="none">
-                                <a href="{% url 'admin:index' %}" role="menuitem" class="block px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-700 font-medium flex items-center space-x-1.5">
+                                <a href="{% url 'admin:index' %}" role="menuitem" class="block px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-700 font-medium flex items-center space-x-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                                     <span aria-hidden="true">⚙️</span>
                                     <span>Admin Panel</span>
                                 </a>
                             </div>
                             {% endif %}
                             <div class="py-1" role="none">
-                                <a href="{% url 'core:logout' %}" role="menuitem" class="block px-3 py-1.5 hover:bg-red-50 text-xs text-red-700 font-medium">
+                                <a href="{% url 'core:logout' %}" role="menuitem" class="block px-3 py-1.5 hover:bg-red-50 text-xs text-red-700 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:ring-inset">
                                     Sign Out
                                 </a>
                             </div>
@@ -392,29 +393,29 @@
                                 aria-expanded="false"
                                 aria-controls="persona-dropdown-menu"
                                 onclick="togglePersonaDropdown()"
-                                class="h-8 inline-flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 rounded-none text-gray-700 font-medium text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1"
+                                class="h-8 inline-flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 rounded-none text-gray-800 font-medium text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1"
                                 title="Switch developer test persona">
                             <span aria-hidden="true">🛠</span>
                             <span class="max-w-[65px] sm:max-w-[80px] truncate">{% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}</span>
-                            <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
+                            <span class="text-[9px] text-gray-700" aria-hidden="true">▼</span>
                         </button>
                         <div id="persona-dropdown-menu"
                              role="menu"
                              aria-labelledby="persona-dropdown-btn"
                              class="hidden absolute right-0 mt-1 w-48 bg-white border border-gray-300 shadow-lg z-40 py-1">
-                            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100" role="presentation">
+                            <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-700 border-b border-gray-100" role="presentation">
                                 Test Persona (Dev)
                             </div>
                             {% for p in dev_personas %}
                             <a href="{% url 'core:switch_persona' p.username %}"
                                role="menuitem"
-                               class="block px-3 py-1.5 hover:bg-gray-50 text-xs {% if request.user.username == p.username %}font-bold text-gray-950 bg-gray-100{% else %}text-gray-700{% endif %}">
+                               class="block px-3 py-1.5 hover:bg-gray-50 text-xs {% if request.user.username == p.username %}font-bold text-gray-950 bg-gray-100{% else %}text-gray-700{% endif %} focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                                 <div class="font-medium">{{ p.label }}</div>
-                                <div class="text-[10px] text-gray-500">{{ p.role }}</div>
+                                <div class="text-[10px] text-gray-700">{{ p.role }}</div>
                             </a>
                             {% endfor %}
                             <div class="border-t border-gray-100 mt-1 pt-1" role="none">
-                                <a href="{% url 'core:logout' %}" role="menuitem" class="block px-3 py-1 hover:bg-gray-50 text-[11px] text-gray-600">
+                                <a href="{% url 'core:logout' %}" role="menuitem" class="block px-3 py-1 hover:bg-gray-50 text-[11px] text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                                     Browse as Guest (Logged Out)
                                 </a>
                             </div>

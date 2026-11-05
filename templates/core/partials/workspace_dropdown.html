@@ -12,7 +12,7 @@
         <span class="hidden md:inline-block text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 leading-none {% if is_workspace_owner %}bg-gray-800 text-white{% elif workspace_role == 'editor' %}bg-indigo-100 text-indigo-800 border border-indigo-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
             {{ workspace_role|title }}
         </span>
-        <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
+        <span class="text-[9px] text-gray-700" aria-hidden="true">▼</span>
     </button>
 
     <!-- Dropdown Menu -->
@@ -20,7 +20,7 @@
          role="menu"
          aria-labelledby="workspace-dropdown-btn"
          class="hidden absolute right-0 mt-1 w-64 sm:w-72 bg-white border border-gray-300 shadow-lg z-40 py-1 divide-y divide-gray-100">
-        <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-500" role="presentation">
+        <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-700" role="presentation">
             Switch Workspace
         </div>
         <div class="py-1 max-h-48 overflow-y-auto" role="none">
@@ -28,9 +28,9 @@
             <a href="{% url 'core:switch_workspace' ws.id %}"
                role="menuitem"
                title="{{ ws.name }}"
-               class="flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-xs {% if active_workspace.id == ws.id %}bg-blue-50/60 font-semibold text-blue-900{% else %}text-gray-700{% endif %}">
+               class="flex items-center justify-between px-3 py-1.5 hover:bg-gray-50 text-xs {% if active_workspace.id == ws.id %}bg-blue-50/60 font-semibold text-blue-900{% else %}text-gray-700{% endif %} focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                 <span class="truncate" title="{{ ws.name }}">{{ ws.name }}</span>
-                <span class="text-[10px] text-gray-500 font-normal ml-2 flex-shrink-0">({{ ws.role_display }})</span>
+                <span class="text-[10px] text-gray-700 font-normal ml-2 flex-shrink-0">({{ ws.role_display }})</span>
             </a>
             {% endfor %}
         </div>
@@ -39,7 +39,7 @@
             <button type="button"
                     role="menuitem"
                     onclick="openNewWorkspaceModal()"
-                    class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                    class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                 <span aria-hidden="true">➕</span>
                 <span>New Workspace...</span>
             </button>
@@ -49,7 +49,7 @@
                     hx-get="{% url 'core:workspace_settings' active_workspace.id %}"
                     hx-target="#modal-placeholder"
                     onclick="closeWorkspaceDropdown()"
-                    class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                    class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                 <span aria-hidden="true">⚙️</span>
                 <span>Workspace Settings...</span>
             </button>
@@ -58,7 +58,7 @@
                     hx-get="{% url 'core:workspace_members' active_workspace.id %}"
                     hx-target="#modal-placeholder"
                     onclick="closeWorkspaceDropdown()"
-                    class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5">
+                    class="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-xs text-gray-800 font-medium flex items-center space-x-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-inset">
                 <span aria-hidden="true">👥</span>
                 <span>Share & Members...</span>
             </button>
@@ -67,7 +67,7 @@
                     hx-get="{% url 'core:workspace_settings' active_workspace.id %}?tab=settings"
                     hx-target="#modal-placeholder"
                     onclick="closeWorkspaceDropdown()"
-                    class="w-full text-left px-3 py-1.5 hover:bg-red-50 text-xs text-red-700 font-medium flex items-center space-x-1.5">
+                    class="w-full text-left px-3 py-1.5 hover:bg-red-50 text-xs text-red-700 font-medium flex items-center space-x-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:ring-inset">
                 <span aria-hidden="true">🗑️</span>
                 <span>Clear Workspace Data...</span>
             </button>

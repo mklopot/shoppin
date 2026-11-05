@@ -75,7 +75,7 @@
                             </span>
                             {% elif row.status_code == 'skipped' %}
                             <span class="inline-flex items-center space-x-1 select-none" title="Skipped / not buying today">
-                                <span class="text-gray-600 font-bold text-sm leading-none" aria-hidden="true">⏭</span>
+                                <span class="text-gray-700 font-bold text-sm leading-none" aria-hidden="true">⏭</span>
                                 <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-none">Skipped</span>
                             </span>
                             {% elif row.status_code == 'need' %}
@@ -85,12 +85,12 @@
                             </span>
                             {% else %}
                             <span class="inline-flex items-center space-x-1 select-none" title="Missing / not on shopping list">
-                                <span class="text-gray-500 font-bold text-sm leading-none" aria-hidden="true">-</span>
+                                <span class="text-gray-700 font-bold text-sm leading-none" aria-hidden="true">-</span>
                                 <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-gray-100 text-gray-700 border border-gray-300 rounded-none">Missing</span>
                             </span>
                             {% endif %}
 
-                            <span class="font-medium {% if row.status_code == 'skipped' %}line-through text-gray-500{% elif row.status_code == 'need' %}text-gray-900 font-semibold{% else %}text-gray-800{% endif %}">
+                            <span class="font-medium {% if row.status_code == 'skipped' %}line-through text-gray-700{% elif row.status_code == 'need' %}text-gray-900 font-semibold{% else %}text-gray-800{% endif %}">
                                 {{ row.ingredient.name }}
                             </span>
                             {% if row.ingredient.optional %}
@@ -98,7 +98,7 @@
                             {% endif %}
                         </div>
 
-                        <div class="text-gray-600 text-right">
+                        <div class="text-gray-700 text-right">
                             <span>{{ row.ingredient.amount }} {{ row.ingredient.amount_unit }}</span>
                             {% if row.ingredient.brand %}
                             <span class="text-gray-700 text-[10px] block">Brand: {{ row.ingredient.brand }}</span>

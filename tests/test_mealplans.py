@@ -231,6 +231,34 @@ def test_cooking_readiness_status(mealplan_setup):
     assert recipe.id in status["recipes_ready"]
     assert meal.id in status["meals_ready"]
 
+    # 4. Mark a required ingredient as DONT_NEED (Skipped) -> should now be Yellow (Missing optional or skipped)
+    tortillas.status = ItemStatus.DONT_NEED
+    tortillas.save(update_fields=["status"])
+
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert recipe.id not in status["recipes_ready"]
+    assert recipe.id in status["recipes_missing_optional"]
+    assert meal.id not in status["meals_ready"]
+    assert meal.id in status["meals_missing_optional"]
+
+    # 5. Mark optional Cilantro as DONT_NEED (Skipped) while required are GOT/HAVE -> Yellow
+    tortillas.status = ItemStatus.GOT
+    tortillas.save(update_fields=["status"])
+    cilantro.status = ItemStatus.DONT_NEED
+    cilantro.save(update_fields=["status"])
+
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert recipe.id not in status["recipes_ready"]
+    assert recipe.id in status["recipes_missing_optional"]
+
+    # 6. Mark required ingredient back to NEED while another is skipped -> Grey
+    beef.status = ItemStatus.NEED
+    beef.save(update_fields=["status"])
+
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert recipe.id not in status["recipes_ready"]
+    assert recipe.id not in status["recipes_missing_optional"]
+
 
 def test_mealplan_views_and_read_only_permissions(client, mealplan_setup):
     """Verify meal plan views and 403 Forbidden enforcement for read-only viewers."""
@@ -287,13 +315,56 @@ def test_mealplan_views_and_read_only_permissions(client, mealplan_setup):
 
 
 def test_recipe_modal_view(client, mealplan_setup):
-    """Verify recipe detail modal endpoint renders recipe info and ingredients."""
+    """Verify recipe detail modal endpoint renders recipe info, ingredients, and shopping statuses."""
+    ws = mealplan_setup["workspace"]
+    editor = mealplan_setup["editor"]
+    client.force_login(editor)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
     recipe = mealplan_setup["recipe"]
-    resp = client.get(reverse("mealplans:recipe_modal", args=[recipe.id]))
+    meal = add_meal_to_plan(meal_plan, "Fiesta Dinner")
+    add_recipe_to_meal(meal, recipe, shopping_list)
+
+    # Set distinct statuses for ingredients
+    # Tortillas -> GOT
+    tortillas = shopping_list.items.get(name="Tortillas")
+    tortillas.status = ItemStatus.GOT
+    tortillas.save(update_fields=["status"])
+
+    # Ground Beef -> HAVE
+    beef = shopping_list.items.get(name="Ground Beef")
+    beef.status = ItemStatus.HAVE
+    beef.save(update_fields=["status"])
+
+    # Cilantro -> DONT_NEED (Skipped)
+    cilantro = shopping_list.items.get(name="Cilantro")
+    cilantro.status = ItemStatus.DONT_NEED
+    cilantro.save(update_fields=["status"])
+
+    # Add extra ingredient to recipe not on list to verify Missing status
+    Ingredient.objects.create(
+        recipe=recipe,
+        name="Lime Wedges",
+        amount=Decimal("2.00"),
+        amount_unit="count",
+        optional=True,
+    )
+
+    resp = client.get(f"{reverse('mealplans:recipe_modal', args=[recipe.id])}?meal_id={meal.id}")
     assert resp.status_code == 200
     assert b"Fiesta Tacos" in resp.content
     assert b"Warm tortillas" in resp.content
     assert b"Tortillas" in resp.content
+    # Status badges
+    assert b"Got" in resp.content
+    assert b"Have" in resp.content
+    assert b"Skipped" in resp.content
+    assert b"Missing" in resp.content
+    assert b"Lime Wedges" in resp.content
 
 
 def test_dish_purpose_formatting_and_no_duplicate_for(client, mealplan_setup):

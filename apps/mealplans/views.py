@@ -539,6 +539,9 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     meal = Meal.objects.filter(id=meal_id).first() if meal_id else None
     meal_dish = MealDish.objects.filter(id=dish_id).first() if dish_id else None
 
+    if not shopping_list and meal and meal.meal_plan and meal.meal_plan.workspace:
+        shopping_list = meal.meal_plan.workspace.get_primary_list()
+
     # Check ingredient statuses on shopping list via centralized attribution resolver
     ingredients_with_status = get_recipe_ingredients_status(
         recipe=recipe,

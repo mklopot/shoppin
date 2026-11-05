@@ -629,14 +629,14 @@
     <div class="bg-gray-50 border border-gray-200 p-3.5 space-y-2 text-xs">
         <div class="flex items-center justify-between border-b border-gray-200 pb-1.5">
             <span class="font-bold uppercase tracking-wider text-[10px] text-gray-500">Recipe Provenance & Lineage</span>
-            <span class="text-[10px] text-gray-400">Recipes can be copied, adapted, and modified by members</span>
+            <span class="text-[10px] text-gray-700">Recipes can be copied, adapted, and modified by members</span>
         </div>
 
         {% if provenance_chain|length > 1 %}
         <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-600">
             {% for item in provenance_chain %}
                 {% if not forloop.first %}
-                <span class="text-gray-400 text-xs">&larr; adapted from</span>
+                <span class="text-gray-700 text-xs">&larr; adapted from</span>
                 {% endif %}
                 <span class="{% if item.is_current %}font-bold text-gray-900 bg-white px-2 py-0.5 border border-gray-300 shadow-2xs{% else %}text-gray-600{% endif %}">
                     {% if item.slug and not item.is_current %}
@@ -644,7 +644,7 @@
                     {% else %}
                     {{ item.name }}
                     {% endif %}
-                    <span class="text-gray-400 font-normal">({{ item.author }}{% if item.created_at %}, {{ item.created_at|date:"M Y" }}{% endif %})</span>
+                    <span class="text-gray-700 font-normal">({{ item.author }}{% if item.created_at %}, {{ item.created_at|date:"M Y" }}{% endif %})</span>
                 </span>
             {% endfor %}
         </div>

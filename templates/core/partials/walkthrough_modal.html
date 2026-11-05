@@ -261,6 +261,11 @@
         if (demoTag) demoTag.remove();
         const demoPriorityTag = document.getElementById('tour-demo-priority-tag');
         if (demoPriorityTag) demoPriorityTag.remove();
+        const tourBtn = document.querySelector('[data-tour-highlighted="true"]');
+        if (tourBtn) {
+            tourBtn.classList.remove('bg-emerald-100/70', 'ring-1', 'ring-emerald-400');
+            tourBtn.removeAttribute('data-tour-highlighted');
+        }
         const count = document.getElementById('got-items-count');
         if (count && count.getAttribute('data-tour-demo') === 'true') {
             count.textContent = '(0)';
@@ -871,7 +876,7 @@
             pathCheck: function() {
                 return true;
             },
-            selector: '#user-dropdown-menu button[onclick*="startProductTour"], #user-dropdown-menu, #user-dropdown-container, #user-dropdown-btn',
+            selector: '#user-dropdown-menu, #user-dropdown-container, #user-dropdown-btn',
             badge: 'Re-run Product Tour',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
@@ -881,10 +886,20 @@
                     if (menu && menu.classList.contains('hidden') && typeof toggleUserDropdown === 'function') {
                         toggleUserDropdown();
                     }
-                    positionSpotlight('#user-dropdown-menu button[onclick*="startProductTour"], #user-dropdown-menu');
+                    const tourBtn = menu ? menu.querySelector('button[onclick*="startProductTour"]') : null;
+                    if (tourBtn) {
+                        tourBtn.classList.add('bg-emerald-100/70', 'ring-1', 'ring-emerald-400');
+                        tourBtn.setAttribute('data-tour-highlighted', 'true');
+                    }
+                    positionSpotlight('#user-dropdown-menu');
                 }, 80);
             },
             onLeave: function() {
+                const tourBtn = document.querySelector('[data-tour-highlighted="true"]');
+                if (tourBtn) {
+                    tourBtn.classList.remove('bg-emerald-100/70', 'ring-1', 'ring-emerald-400');
+                    tourBtn.removeAttribute('data-tour-highlighted');
+                }
                 if (typeof closeUserDropdown === 'function') closeUserDropdown();
             }
         }
@@ -1125,7 +1140,26 @@
                     window.scrollBy({ top: -diff, behavior: 'auto' });
                 }
             }
-            const rect = targetEl.getBoundingClientRect();
+            let rect = targetEl.getBoundingClientRect();
+
+            // When highlighting the user dropdown menu, expand to include the avatar button directly above it
+            const userBtn = document.getElementById('user-dropdown-btn');
+            if (targetEl.id === 'user-dropdown-menu' && userBtn && userBtn.offsetParent !== null) {
+                const btnRect = userBtn.getBoundingClientRect();
+                const unionTop = Math.min(rect.top, btnRect.top);
+                const unionLeft = Math.min(rect.left, btnRect.left);
+                const unionRight = Math.max(rect.right, btnRect.right);
+                const unionBottom = Math.max(rect.bottom, btnRect.bottom);
+                rect = {
+                    top: unionTop,
+                    left: unionLeft,
+                    right: unionRight,
+                    bottom: unionBottom,
+                    width: unionRight - unionLeft,
+                    height: unionBottom - unionTop
+                };
+            }
+
             const pad = 6;
             const x = Math.max(0, rect.left - pad);
             const y = Math.max(0, rect.top - pad);

@@ -5,7 +5,7 @@
     {% for msg in toast_messages %}
     <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[280px] max-w-sm rounded-none">
         <span class="font-medium pr-2">{{ msg }}</span>
-        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" class="text-gray-400 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">&times;</button>
     </div>
     {% endfor %}
 </div>

@@ -418,7 +418,7 @@
                                 {% if not item.priority and mode != 'pantry' %}
                                 <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="item-priority-toggle-btn text-gray-400 hover:text-[#800020] px-1 py-0.5 transition-colors" aria-label="Flag {{ item.name }} as High Priority" title="Flag as High Priority">
+                                    <button type="submit" class="item-priority-toggle-btn text-gray-700 hover:text-[#800020] min-w-[24px] min-h-[24px] inline-flex items-center justify-center p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#800020]" aria-label="Flag {{ item.name }} as High Priority" title="Flag as High Priority">
                                         <span aria-hidden="true">🚩</span>
                                     </button>
                                 </form>

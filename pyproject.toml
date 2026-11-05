@@ -43,6 +43,7 @@ exclude = [
     ".venv",
     "legacy",
     "migrations",
+    "scratch",
 ]
 
 [tool.ruff.lint]

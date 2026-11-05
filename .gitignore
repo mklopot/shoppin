@@ -175,6 +175,9 @@ cython_debug/
 # Django static files
 staticfiles/
 
+# Local scratch directory
+scratch/
+
 # Uploaded user media (development test recipes, photos, and uploads are never committed)
 media/*
 !media/.gitkeep

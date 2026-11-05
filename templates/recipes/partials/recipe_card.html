@@ -126,8 +126,8 @@
             <button type="button"
                     hx-get="{% url 'recipes:prompt_add_to_mealplan' recipe.id %}"
                     hx-target="#modal-placeholder"
-                    class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-2.5 py-1 text-xs whitespace-nowrap shadow-sm flex items-center space-x-1"
-                    aria-label="Add {{ recipe.name }} to meal plan"
+                    class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-2.5 py-1 text-xs whitespace-nowrap shadow-sm flex items-center space-x-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+                    aria-label="Meal Plan: Add {{ recipe.name }} to meal plan"
                     title="Add {{ recipe.name }} to Meal Plan">
                 <span aria-hidden="true">➕</span>
                 <span>Meal Plan</span>

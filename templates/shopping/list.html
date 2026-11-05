@@ -31,6 +31,36 @@
         openStorePickerModal();
     }
 
+    function triggerSectionReorder() {
+        const sectionsContainer = document.getElementById('section-groups-container');
+        if (!sectionsContainer) return;
+        const groupNames = Array.from(sectionsContainer.querySelectorAll('.section-group-block'))
+            .map(el => el.getAttribute('data-group-name'));
+        const groupBy = sectionsContainer.getAttribute('data-group-by') || 'category';
+
+        htmx.ajax('POST', '{% url "shopping:reorder_sections" %}', {
+            swap: 'none',
+            values: {
+                'group_names[]': groupNames,
+                'group_by': groupBy,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            }
+        });
+    }
+
+    function triggerItemReorder() {
+        const itemIds = Array.from(document.querySelectorAll('.sortable-group [data-item-id]'))
+            .map(el => el.getAttribute('data-item-id'));
+
+        htmx.ajax('POST', '{% url "shopping:reorder" %}', {
+            swap: 'none',
+            values: {
+                'item_ids[]': itemIds,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            }
+        });
+    }
+
     // 2. SortableJS Drag-and-Drop Reordering Initialization
     function initSortables() {
         {% if not can_write %}
@@ -46,18 +76,7 @@
                 ghostClass: 'bg-gray-100',
                 chosenClass: 'opacity-70',
                 onEnd: function(evt) {
-                    const groupNames = Array.from(sectionsContainer.querySelectorAll('.section-group-block'))
-                        .map(el => el.getAttribute('data-group-name'));
-                    const groupBy = sectionsContainer.getAttribute('data-group-by') || 'category';
-
-                    htmx.ajax('POST', '{% url "shopping:reorder_sections" %}', {
-                        swap: 'none',
-                        values: {
-                            'group_names[]': groupNames,
-                            'group_by': groupBy,
-                            csrfmiddlewaretoken: '{{ csrf_token }}'
-                        }
-                    });
+                    triggerSectionReorder();
                 }
             });
         }
@@ -71,20 +90,53 @@
                 animation: 120,
                 ghostClass: 'bg-gray-100',
                 onEnd: function(evt) {
-                    const itemIds = Array.from(document.querySelectorAll('.sortable-group [data-item-id]'))
-                        .map(el => el.getAttribute('data-item-id'));
-
-                    htmx.ajax('POST', '{% url "shopping:reorder" %}', {
-                        swap: 'none',
-                        values: {
-                            'item_ids[]': itemIds,
-                            csrfmiddlewaretoken: '{{ csrf_token }}'
-                        }
-                    });
+                    triggerItemReorder();
                 }
             });
         });
     }
+
+    // Keyboard-accessible reordering (Alt+ArrowUp / Alt+ArrowDown)
+    document.addEventListener('keydown', function(evt) {
+        if (!evt.altKey || (evt.key !== 'ArrowUp' && evt.key !== 'ArrowDown')) return;
+
+        const itemHandle = evt.target.closest('.drag-handle');
+        if (itemHandle) {
+            const row = itemHandle.closest('.item-row');
+            if (!row) return;
+            const parent = row.parentElement;
+            if (evt.key === 'ArrowUp' && row.previousElementSibling) {
+                evt.preventDefault();
+                parent.insertBefore(row, row.previousElementSibling);
+                itemHandle.focus();
+                triggerItemReorder();
+            } else if (evt.key === 'ArrowDown' && row.nextElementSibling) {
+                evt.preventDefault();
+                parent.insertBefore(row.nextElementSibling, row);
+                itemHandle.focus();
+                triggerItemReorder();
+            }
+            return;
+        }
+
+        const secHandle = evt.target.closest('.section-drag-handle');
+        if (secHandle) {
+            const secBlock = secHandle.closest('.section-group-block');
+            if (!secBlock) return;
+            const parent = secBlock.parentElement;
+            if (evt.key === 'ArrowUp' && secBlock.previousElementSibling) {
+                evt.preventDefault();
+                parent.insertBefore(secBlock, secBlock.previousElementSibling);
+                secHandle.focus();
+                triggerSectionReorder();
+            } else if (evt.key === 'ArrowDown' && secBlock.nextElementSibling) {
+                evt.preventDefault();
+                parent.insertBefore(secBlock.nextElementSibling, secBlock);
+                secHandle.focus();
+                triggerSectionReorder();
+            }
+        }
+    });
 
     function syncCardState() {
         if (typeof applyPresetListsCardState === 'function') {

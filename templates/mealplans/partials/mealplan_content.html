@@ -3,7 +3,7 @@
     {% for msg in toast_messages %}
     <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[280px] max-w-sm rounded-none">
         <span class="font-medium pr-2">{{ msg }}</span>
-        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"><span aria-hidden="true">&times;</span></button>
     </div>
     {% endfor %}
 </div>
@@ -11,7 +11,7 @@
 <div id="toast-container" hx-swap-oob="beforeend">
     <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[280px] max-w-sm rounded-none">
         <span class="font-medium pr-2">{{ toast_message }}</span>
-        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-900 font-bold text-base ml-2 leading-none focus:outline-none"><span aria-hidden="true">&times;</span></button>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"><span aria-hidden="true">&times;</span></button>
     </div>
 </div>
 {% endif %}
@@ -97,7 +97,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="text-gray-500 italic text-[11px] py-1 bg-gray-50 border border-gray-200 px-2.5">
+            <div class="text-gray-700 italic text-[11px] py-1 bg-gray-50 border border-gray-200 px-2.5">
                 No active guidelines set yet. Try adding <em>"each dinner should have a vegetarian protein"</em> below!
             </div>
             {% endif %}
@@ -107,7 +107,7 @@
             <form hx-post="{% url 'mealplans:add_rule' %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-1.5 pt-1">
                 {% csrf_token %}
                 <input type="text" name="rule_text" placeholder="e.g. 'each dinner should have a vegetarian protein' or 'low carb'..." required
-                       aria-label="Add meal guideline rule text"
+                       aria-label="Add meal guideline rule text" autocomplete="off"
                        class="border border-gray-300 px-2 py-1 bg-white text-gray-900 text-xs rounded-none focus:outline-none focus:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-600 flex-1 min-w-[240px]">
                 <button type="submit" class="border border-indigo-700 bg-indigo-700 hover:bg-indigo-800 text-white font-medium px-3 py-1">
                     + Add Guideline
@@ -145,7 +145,7 @@
                         {% csrf_token %}
                         <button type="submit"
                                 class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 flex items-center space-x-1"
-                                aria-label="Mark meal {{ meal.name }} as made"
+                                aria-label="Meal Made: {{ meal.name }}"
                                 title="Mark entire meal '{{ meal.name }}' as made">
                             <span aria-hidden="true">✓</span>
                             <span>Meal Made</span>
@@ -215,7 +215,7 @@
                             {% csrf_token %}
                             <button type="submit"
                                     class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 flex items-center space-x-1"
-                                    aria-label="Mark this {{ recipe.name }} as made"
+                                    aria-label="Made: {{ recipe.name }}"
                                     title="Mark this occurrence of '{{ recipe.name }}' as made">
                                 <span aria-hidden="true">✓</span>
                                 <span>Made</span>
@@ -292,8 +292,8 @@
             </div>
         </div>
         {% empty %}
-        <div class="border border-dashed border-gray-300 p-8 text-center text-gray-500 text-xs space-y-2 bg-gray-50">
-            <p class="font-semibold text-gray-700 text-sm">No meals planned yet</p>
+        <div class="border border-dashed border-gray-400 p-8 text-center text-gray-700 text-xs space-y-2 bg-gray-50">
+            <p class="font-semibold text-gray-900 text-sm">No meals planned yet</p>
             <p>Add meals like "Monday Dinner", "Taco Tuesday", or "Sunday Brunch" below.</p>
         </div>
         {% endfor %}

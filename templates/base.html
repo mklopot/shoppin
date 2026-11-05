@@ -462,19 +462,19 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-200 bg-gray-50 py-3 text-center text-xs text-gray-500">
+    <footer class="border-t border-gray-200 bg-gray-50 py-3 text-center text-xs text-gray-700">
         <div class="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2 text-[11px]">
             <span>&copy; 2024&ndash;{% now "Y" %} Waldorf Wellington. All Rights Reserved.</span>
             <div class="flex items-center space-x-3">
                 {% block footer_terms_link %}
-                <a href="{% url 'core:terms' %}" class="text-gray-600 hover:text-black underline font-medium">Terms</a>
-                <span class="text-gray-300" aria-hidden="true">&bull;</span>
+                <a href="{% url 'core:terms' %}" class="text-gray-700 hover:text-black underline font-medium">Terms</a>
+                <span class="text-gray-400" aria-hidden="true">&bull;</span>
                 {% endblock %}
-                <a href="{% url 'core:privacy' %}" class="text-gray-600 hover:text-black underline font-medium">Privacy</a>
-                <span class="text-gray-300" aria-hidden="true">&bull;</span>
-                <a href="{% url 'core:dmca' %}" class="text-gray-600 hover:text-black underline font-medium">DMCA</a>
-                <span class="text-gray-300" aria-hidden="true">&bull;</span>
-                <a href="mailto:support@recipe.klopot.tech" class="text-gray-600 hover:text-black underline font-medium">Contact</a>
+                <a href="{% url 'core:privacy' %}" class="text-gray-700 hover:text-black underline font-medium">Privacy</a>
+                <span class="text-gray-400" aria-hidden="true">&bull;</span>
+                <a href="{% url 'core:dmca' %}" class="text-gray-700 hover:text-black underline font-medium">DMCA</a>
+                <span class="text-gray-400" aria-hidden="true">&bull;</span>
+                <a href="mailto:support@recipe.klopot.tech" class="text-gray-700 hover:text-black underline font-medium">Contact</a>
             </div>
         </div>
     </footer>
@@ -485,7 +485,7 @@
             {% for message in messages %}
             <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer" onclick="dismissToast(this)">
                 <span class="font-medium pr-2">{{ message }}</span>
-                <button type="button" aria-label="Dismiss notification" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" onclick="event.stopPropagation(); dismissToast(this.closest('.toast-item'))">
+                <button type="button" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900" onclick="event.stopPropagation(); dismissToast(this.closest('.toast-item'))">
                     <span class="sr-only">Dismiss</span>
                     <span aria-hidden="true">&times;</span>
                 </button>

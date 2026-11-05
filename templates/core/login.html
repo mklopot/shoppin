@@ -55,7 +55,7 @@
                                 <span class="bg-black/60 px-1.5 py-0.5 font-medium border border-white/20">{{ recipe.dish_type }}</span>
                                 {% endif %}
                                 {% if recipe.prep_time_minutes or recipe.cook_time_minutes %}
-                                <span class="text-gray-300 font-mono">{{ recipe.prep_time_minutes|add:recipe.cook_time_minutes }}m</span>
+                                <span class="text-gray-200 font-mono">{{ recipe.prep_time_minutes|add:recipe.cook_time_minutes }}m</span>
                                 {% endif %}
                             </div>
                             <h2 class="text-base sm:text-lg font-bold text-white leading-snug drop-shadow-md">

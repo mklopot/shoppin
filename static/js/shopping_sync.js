@@ -90,7 +90,7 @@
             if (!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer';
-            toast.innerHTML = `<span class="font-medium pr-2">${message}</span><button type="button" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none">&times;</button>`;
+            toast.innerHTML = `<span class="font-medium pr-2">${message}</span><button type="button" class="text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none" aria-label="Dismiss notification">&times;</button>`;
             toast.onclick = function() { toast.remove(); };
             container.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 3500);
@@ -231,7 +231,7 @@
             targetBlock.innerHTML = `
                 <div class="bg-gray-100 hover:bg-gray-200/80 px-2.5 py-1 text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center justify-between border-y border-gray-200 select-none group/header">
                     <div class="flex items-center space-x-1.5">
-                        <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 font-mono text-sm leading-none opacity-0 group-hover/header:opacity-100 transition-opacity" title="Drag section to reorder" aria-hidden="true">⋮⋮</span>
+                        <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-800 font-mono text-sm leading-none opacity-0 group-hover/header:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900" role="button" tabindex="0" title="Drag section to reorder" aria-label="Reorder section: press Alt+Up or Alt+Down to move">⋮⋮</span>
                         <span>${groupName}</span>
                     </div>
                 </div>
@@ -296,7 +296,7 @@
         if (leftWrap) {
             const icon = leftWrap.querySelector('.status-icon, .drag-handle');
             if (icon) {
-                icon.outerHTML = '<span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 select-none text-sm font-mono" aria-hidden="true">⋮⋮</span>';
+                icon.outerHTML = '<span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 select-none text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900" role="button" tabindex="0" title="Drag to rearrange item" aria-label="Reorder item: press Alt+Up or Alt+Down to move">⋮⋮</span>';
             }
         }
 

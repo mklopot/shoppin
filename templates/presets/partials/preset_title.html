@@ -5,7 +5,7 @@
     {% if can_write %}
     <button type="button"
             onclick="document.getElementById('preset-edit-title-form').classList.remove('hidden'); document.getElementById('preset-title-container').classList.add('hidden'); document.getElementById('preset-title-input').focus();"
-            class="text-gray-700 hover:text-gray-950 text-xs font-medium px-2.5 py-1 border border-gray-300 bg-gray-50 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+            class="text-gray-700 hover:text-gray-950 text-xs font-medium px-2.5 py-1 border border-gray-400 bg-gray-50 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
         Rename
     </button>
     {% endif %}
@@ -20,6 +20,7 @@
            name="name"
            value="{{ preset_list.name }}"
            required
+           autocomplete="off"
            aria-label="Preset list title"
            class="border border-indigo-500 px-3 py-1 text-xl font-bold text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
     <button type="submit" class="px-3 py-1 bg-indigo-600 text-white text-xs font-semibold shadow-sm hover:bg-indigo-700">
@@ -27,7 +28,7 @@
     </button>
     <button type="button"
             onclick="document.getElementById('preset-edit-title-form').classList.add('hidden'); document.getElementById('preset-title-container').classList.remove('hidden');"
-            class="px-2 py-1 border border-gray-300 text-gray-600 text-xs hover:bg-gray-50">
+            class="px-2 py-1 border border-gray-400 text-gray-700 text-xs hover:bg-gray-50">
         Cancel
     </button>
 </form>

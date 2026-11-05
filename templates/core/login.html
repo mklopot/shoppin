@@ -38,7 +38,7 @@
                          data-index="{{ forloop.counter0 }}">
                         <!-- Photo Base Layer (no negative z-index) -->
                         <img src="{{ recipe.primary_photo_url }}"
-                             alt="{{ recipe.name }}"
+                             alt="Photo of {{ recipe.name }}"
                              loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
                              class="absolute inset-0 w-full h-full object-cover">
                         
@@ -68,6 +68,7 @@
                             {% endif %}
                             <div class="pt-1">
                                 <a href="{{ recipe.get_absolute_url }}"
+                                   aria-label="View recipe: {{ recipe.name }}"
                                    class="inline-block text-xs text-emerald-300 hover:text-white hover:underline font-semibold">
                                     View recipe &rarr;
                                 </a>
@@ -110,10 +111,10 @@
         </div>
 
         <!-- Right Column: Sign In Card (5 cols) -->
-        <div id="sign-in-card" class="md:col-span-5 bg-white border border-gray-300 p-5 sm:p-6 shadow-sm space-y-4 scroll-mt-6">
+        <div id="sign-in-card" class="md:col-span-5 bg-white border border-gray-400 p-5 sm:p-6 shadow-sm space-y-4 scroll-mt-6">
             <div class="space-y-1.5 pb-3 border-b border-gray-200">
                 <div class="flex items-center space-x-2">
-                    <img src="{% static 'images/icon.svg' %}?v=8" alt="" class="w-7 h-7">
+                    <img src="{% static 'images/icon.svg' %}?v=8" alt="" aria-hidden="true" role="presentation" class="w-7 h-7">
                     <h2 class="text-base font-bold text-gray-900 tracking-tight">Sign In</h2>
                 </div>
                 <p class="text-xs text-gray-700">
@@ -124,7 +125,7 @@
             <!-- Google OAuth Sign-In Button -->
             <div class="space-y-2">
                 <a href="{{ google_login_url }}"
-                   class="w-full flex items-center justify-center space-x-2.5 py-2.5 px-4 border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 text-xs font-semibold shadow-sm transition-colors rounded-none focus:outline-none">
+                   class="w-full flex items-center justify-center space-x-2.5 py-2.5 px-4 border border-gray-500 bg-gray-50 hover:bg-gray-100 text-gray-900 text-xs font-semibold shadow-sm transition-colors rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -155,8 +156,9 @@
                            name="username"
                            id="id_username"
                            required
+                           autocomplete="username"
                            placeholder="e.g. admin"
-                           class="w-full border border-gray-300 p-2 text-xs text-gray-900 rounded-none focus:outline-none focus:border-gray-800">
+                           class="w-full border border-gray-500 p-2 text-xs text-gray-900 rounded-none focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900">
                 </div>
 
                 <div>
@@ -165,7 +167,8 @@
                            name="password"
                            id="id_password"
                            required
-                           class="w-full border border-gray-300 p-2 text-xs text-gray-900 rounded-none focus:outline-none focus:border-gray-800">
+                           autocomplete="current-password"
+                           class="w-full border border-gray-500 p-2 text-xs text-gray-900 rounded-none focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900">
                 </div>
 
                 <button type="submit"

@@ -1,184 +1,179 @@
 """
-Generate multi-resolution favicon.ico and accompanying web icons for Shoppin.
+Generate multi-resolution favicon.ico, standard web icons, and Android adaptive maskable icons for Shoppin.
 
 Produces:
-- static/favicon.ico (multi-resolution container: 16x16, 32x32, 48x48, 64x64)
+- static/images/icon-maskable.svg (Adaptive SVG with 80% safe zone compliance and edge-to-edge solid background)
+- static/android-chrome-maskable-192x192.png (purpose: maskable)
+- static/android-chrome-maskable-512x512.png (purpose: maskable)
+- static/android-chrome-192x192.png (purpose: any)
+- static/android-chrome-512x512.png (purpose: any)
+- static/apple-touch-icon.png (180x180, solid background to prevent black iOS corners)
 - static/favicon-16x16.png
 - static/favicon-32x32.png
 - static/favicon-48x48.png
-- static/apple-touch-icon.png (180x180)
-- static/android-chrome-192x192.png (192x192)
-- static/android-chrome-512x512.png (512x512)
+- static/favicon.ico (multi-resolution container: 16x16, 32x32, 48x48)
 - static/site.webmanifest
 """
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image
+from playwright.sync_api import sync_playwright
 
+STATIC_DIR = Path("static")
+IMAGES_DIR = STATIC_DIR / "images"
 
-def create_master_icon(size: int = 1024) -> Image.Image:
-    """
-    Render a high-resolution 1024x1024 master icon for Shoppin.
-    Features an emerald squircle badge with a crisp white shopping cart
-    and fresh grocery produce peaking out of the basket.
-    """
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-
-    # 1. Background Badge: Smooth Squircle (Rounded Rectangle)
-    pad = 48
-    radius = 210
-    badge_rect = [pad, pad, size - pad, size - pad]
-
-    # Create gradient background
-    bg = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    bg_draw = ImageDraw.Draw(bg)
-
-    # Vertical gradient: #10b981 (top) to #047857 (bottom)
-    for y in range(pad, size - pad):
-        factor = (y - pad) / float(size - 2 * pad)
-        r = int(16 * (1 - factor) + 4 * factor)
-        g = int(185 * (1 - factor) + 120 * factor)
-        b = int(129 * (1 - factor) + 87 * factor)
-        bg_draw.line([(pad, y), (size - pad, y)], fill=(r, g, b, 255))
-
-    # Mask with rounded rectangle
-    mask = Image.new("L", (size, size), 0)
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.rounded_rectangle(badge_rect, radius=radius, fill=255)
-
-    # Composite gradient badge onto canvas
-    img.paste(bg, (0, 0), mask)
-
-    draw = ImageDraw.Draw(img)
-
-    # Inner subtle rim highlight
-    draw.rounded_rectangle(badge_rect, radius=radius, outline=(255, 255, 255, 60), width=6)
-
-    # 2. Grocery Produce in Basket (Peaking out from top)
-    # Carrot (Orange #f97316) tilted diagonally
-    carrot_body = [
-        (480, 420),
-        (540, 310),
-        (575, 330),
-        (510, 430),
-    ]
-    draw.polygon(carrot_body, fill=(249, 115, 22, 255))
-    # Carrot leaves (Bright Green #4ade80)
-    draw.line([(550, 315), (570, 260)], fill=(74, 222, 128, 255), width=12)
-    draw.line([(560, 320), (595, 275)], fill=(74, 222, 128, 255), width=12)
-    draw.line([(540, 315), (540, 265)], fill=(74, 222, 128, 255), width=10)
-
-    # Golden Citrus Fruit / Apple (Yellow-Gold #fbbf24)
-    fruit_bbox = [390, 340, 490, 440]
-    draw.ellipse(fruit_bbox, fill=(251, 191, 36, 255))
-    # Fruit leaf
-    draw.ellipse([435, 320, 465, 345], fill=(34, 197, 94, 255))
-
-    # Fresh Leafy Sprout (Emerald-Green #22c55e) on the right
-    draw.ellipse([580, 360, 670, 440], fill=(239, 68, 68, 255))  # Red apple / tomato
-    draw.ellipse([620, 340, 645, 365], fill=(74, 222, 128, 255))
-
-    # 3. Shopping Cart Wireframe
-    white = (255, 255, 255, 255)
-    cart_line_width = 46
-
-    # Cart Handle & Spine
-    # Handle grip
-    draw.line([(220, 330), (280, 410)], fill=white, width=cart_line_width)
-    # Back diagonal spine
-    draw.line([(280, 410), (345, 635)], fill=white, width=cart_line_width)
-    # Bottom chassis support bar
-    draw.line([(345, 635), (745, 635)], fill=white, width=cart_line_width)
-
-    # Basket Outer Frame
-    # Top rim
-    draw.line([(310, 430), (795, 430)], fill=white, width=cart_line_width)
-    # Front angled slope
-    draw.line([(795, 430), (725, 615)], fill=white, width=cart_line_width)
-    # Bottom basket floor
-    draw.line([(725, 615), (360, 615)], fill=white, width=cart_line_width)
-
-    # Basket Grid Lines (Horizontal & Vertical)
-    grid_width = 24
-    # Horizontal wire
-    draw.line([(340, 520), (760, 520)], fill=white, width=grid_width)
-    # Vertical wires
-    draw.line([(450, 430), (450, 615)], fill=white, width=grid_width)
-    draw.line([(555, 430), (555, 615)], fill=white, width=grid_width)
-    draw.line([(660, 430), (660, 615)], fill=white, width=grid_width)
-
-    # 4. Cart Wheels (Two solid white wheels with center cutout)
-    wheel_radius = 58
-    hub_radius = 20
-
-    wheel_centers = [(415, 745), (675, 745)]
-    for cx, cy in wheel_centers:
-        # Outer wheel rim
-        draw.ellipse(
-            [cx - wheel_radius, cy - wheel_radius, cx + wheel_radius, cy + wheel_radius],
-            fill=white,
-        )
-        # Inner hub cutout (showing background color for realism)
-        draw.ellipse(
-            [cx - hub_radius, cy - hub_radius, cx + hub_radius, cy + hub_radius],
-            fill=(4, 120, 87, 255),
-        )
-
-    return img
+# Canonical Maskable SVG:
+# Features a full-bleed white background (#ffffff) and the 4-row recipe checklist
+# + clean-line metal shopping cart scaled and centered within the 80% Safe Zone circle (radius 204.8px)
+MASKABLE_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#ffffff"/>
+  <g transform="translate(55.5, 51.5) scale(8.0)">
+    <!-- Checklist -->
+    <rect x="5" y="11" width="3" height="3" fill="#059669"/>
+    <rect x="9.5" y="11.5" width="9.5" height="2" fill="#0f172a"/>
+    <rect x="5" y="17.5" width="3" height="3" fill="#059669"/>
+    <rect x="9.5" y="18" width="9.5" height="2" fill="#0f172a"/>
+    <rect x="5" y="24" width="3" height="3" fill="#059669"/>
+    <rect x="9.5" y="24.5" width="11" height="2" fill="#0f172a"/>
+    <rect x="5" y="30.5" width="3" height="3" fill="#059669"/>
+    <rect x="9.5" y="31" width="8.5" height="2" fill="#0f172a"/>
+    <!-- Cart -->
+    <path d="M21 17h3l2.8 11.5a1.2 1.2 0 0 0 1.2.9h10.5a1.2 1.2 0 0 0 1.2-.9l2.5-8.5H24.5" 
+          stroke="#0f172a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <line x1="29" y1="19" x2="29" y2="27" stroke="#0f172a" stroke-width="1.2" stroke-linecap="butt"/>
+    <line x1="33" y1="19" x2="33" y2="27" stroke="#0f172a" stroke-width="1.2" stroke-linecap="butt"/>
+    <line x1="37" y1="19" x2="37" y2="26.5" stroke="#0f172a" stroke-width="1.2" stroke-linecap="butt"/>
+    <circle cx="29" cy="36" r="2.2" fill="#0f172a"/>
+    <circle cx="37" cy="36" r="2.2" fill="#0f172a"/>
+  </g>
+</svg>"""
 
 
 def generate_all_icons():
-    """Build all icon variants and output to static/."""
-    static_dir = Path("static")
-    static_dir.mkdir(parents=True, exist_ok=True)
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-    master = create_master_icon(1024)
+    # 1. Write the canonical maskable SVG
+    maskable_svg_path = IMAGES_DIR / "icon-maskable.svg"
+    maskable_svg_path.write_text(MASKABLE_SVG.strip() + "\n", encoding="utf-8")
+    print(f"  -> Created {maskable_svg_path}")
 
-    # Target PNG sizes
-    png_sizes = {
-        "favicon-16x16.png": 16,
-        "favicon-32x32.png": 32,
-        "favicon-48x48.png": 48,
-        "apple-touch-icon.png": 180,
-        "android-chrome-192x192.png": 192,
-        "android-chrome-512x512.png": 512,
-    }
+    # Read the canonical standard SVG
+    standard_svg_path = IMAGES_DIR / "icon.svg"
+    if not standard_svg_path.exists():
+        raise FileNotFoundError(f"Missing {standard_svg_path}")
+    standard_svg = standard_svg_path.read_text(encoding="utf-8")
 
-    print("Generating PNG icons...")
-    for filename, px in png_sizes.items():
-        out_path = static_dir / filename
-        resized = master.resize((px, px), Image.Resampling.LANCZOS)
-        resized.save(out_path, format="PNG", optimize=True)
-        print(f"  -> Created {out_path} ({px}x{px})")
+    # Render PNGs using Chromium for high-fidelity vector rasterization
+    with sync_playwright() as p:
+        browser = p.chromium.launch(channel="chrome")
 
-    # Generate multi-resolution favicon.ico container
-    # Standard ICO sizes: 16x16, 32x32, 48x48, 64x64, 128x128, 256x256
-    ico_sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
-    ico_path = static_dir / "favicon.ico"
-    master.save(ico_path, format="ICO", sizes=ico_sizes)
-    print(f"  -> Created multi-resolution {ico_path} with sizes: {ico_sizes}")
+        # Render standard icons (512x512 master)
+        page_std = browser.new_page(viewport={"width": 512, "height": 512})
+        page_std.set_content(
+            f"<html><body style='margin:0;padding:0;background:transparent;overflow:hidden;'>{standard_svg}</body></html>"
+        )
+        std_512_path = STATIC_DIR / "android-chrome-512x512.png"
+        page_std.screenshot(path=str(std_512_path), omit_background=True)
 
-    # Generate site.webmanifest
-    manifest_path = static_dir / "site.webmanifest"
+        # Render maskable icons (512x512 master with solid #ffffff background)
+        page_mask = browser.new_page(viewport={"width": 512, "height": 512})
+        page_mask.set_content(
+            f"<html><body style='margin:0;padding:0;background:#ffffff;overflow:hidden;'>{MASKABLE_SVG}</body></html>"
+        )
+        mask_512_path = STATIC_DIR / "android-chrome-maskable-512x512.png"
+        page_mask.screenshot(path=str(mask_512_path))
+
+        browser.close()
+
+    print(f"  -> Created {std_512_path} (512x512 standard)")
+    print(f"  -> Created {mask_512_path} (512x512 maskable)")
+
+    # 2. Generate resized variants
+    master_std = Image.open(std_512_path).convert("RGBA")
+    master_mask = Image.open(mask_512_path).convert("RGBA")
+
+    # android-chrome-192x192.png (standard)
+    std_192_path = STATIC_DIR / "android-chrome-192x192.png"
+    master_std.resize((192, 192), Image.Resampling.LANCZOS).save(std_192_path, format="PNG", optimize=True)
+    print(f"  -> Created {std_192_path}")
+
+    # android-chrome-maskable-192x192.png (maskable)
+    mask_192_path = STATIC_DIR / "android-chrome-maskable-192x192.png"
+    master_mask.resize((192, 192), Image.Resampling.LANCZOS).save(mask_192_path, format="PNG", optimize=True)
+    print(f"  -> Created {mask_192_path}")
+
+    # apple-touch-icon.png (180x180, on solid white background to prevent black iOS corners)
+    apple_path = STATIC_DIR / "apple-touch-icon.png"
+    apple_img = Image.new("RGBA", (180, 180), (255, 255, 255, 255))
+    resized_std_180 = master_std.resize((180, 180), Image.Resampling.LANCZOS)
+    apple_img.alpha_composite(resized_std_180)
+    apple_img.save(apple_path, format="PNG", optimize=True)
+    print(f"  -> Created {apple_path} (180x180 solid background)")
+
+    # Favicons (16, 32, 48)
+    for px in [16, 32, 48]:
+        fav_path = STATIC_DIR / f"favicon-{px}x{px}.png"
+        master_std.resize((px, px), Image.Resampling.LANCZOS).save(fav_path, format="PNG", optimize=True)
+        print(f"  -> Created {fav_path}")
+
+    # Multi-resolution favicon.ico container
+    ico_path = STATIC_DIR / "favicon.ico"
+    ico_sizes = [(16, 16), (32, 32), (48, 48)]
+    master_std.save(ico_path, format="ICO", sizes=ico_sizes)
+    print(f"  -> Created {ico_path} with sizes: {ico_sizes}")
+
+    # 3. Generate site.webmanifest with separate "any" and "maskable" icons
+    manifest_path = STATIC_DIR / "site.webmanifest"
     manifest_content = """{
-    "name": "Shoppin",
-    "short_name": "Shoppin",
-    "icons": [
-        {
-            "src": "/static/android-chrome-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "/static/android-chrome-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ],
+    "name": "recipe.klopot.tech",
+    "short_name": "Recipe",
+    "description": "Fast recipe manager, meal planning, and grocery lists by Waldorf Wellington.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
     "theme_color": "#059669",
     "background_color": "#ffffff",
-    "display": "standalone"
+    "icons": [
+        {
+            "src": "/static/images/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/static/android-chrome-192x192.png?v=8",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/static/android-chrome-512x512.png?v=8",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/static/images/icon-maskable.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/static/android-chrome-maskable-192x192.png?v=8",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/static/android-chrome-maskable-512x512.png?v=8",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
 }
 """
     manifest_path.write_text(manifest_content.strip() + "\n", encoding="utf-8")

@@ -19,11 +19,12 @@ def test_walkthrough_modal_content_renders():
     """Verify walkthrough overlay renders all tutorial steps with unblurred spotlight and informational text."""
     html = render_to_string("core/partials/walkthrough_modal.html")
 
-    # Verify all 13 tutorial steps are present
+    # Verify all 15 tutorial steps are present
     assert "Shopping list with real-time transitions" in html
     assert "High Priority toggle on shopping list items" in html
     assert "Setting store location & populating aisles" in html
     assert "Sorting by priority and store aisle" in html
+    assert 'The "Got" section & 7-day clearing' in html
     assert "Pantry check & confirming needed items" in html
     assert "Search and filter recipes" in html
     assert "All Cuisines filter pulldown" in html
@@ -33,7 +34,8 @@ def test_walkthrough_modal_content_renders():
     assert "Organize with workspaces" in html
     assert "Preset lists and reusable templates" in html
     assert "Automated recurring schedules" in html
-    assert "totalTourSteps = 13" in html
+    assert "Re-run the product tour anytime" in html
+    assert "totalTourSteps = 15" in html
 
     # Verify unblurred spotlight quadrants & green spotlight border
     assert 'id="walkthrough-modal"' in html
@@ -48,6 +50,15 @@ def test_walkthrough_modal_content_renders():
     assert "goToTourStep" in html
     assert "positionSpotlight" in html
     assert "tourStepConfigs" in html
+
+    # Verify ADA / WCAG compliance attributes
+    assert 'aria-labelledby="tour-step-indicator"' in html
+    assert 'id="tour-live-announcer"' in html
+    assert 'role="region"' in html
+    assert 'aria-label="Tutorial Card"' in html
+    assert 'aria-hidden="true"' in html
+    assert "tourTriggerElement" in html
+    assert "text-gray-700" in html
 
 
 @pytest.mark.django_db
@@ -151,8 +162,8 @@ def test_tour_pantry_check_does_not_mutate_session_mode(db):
     assert res.status_code == 200
     assert client.session.get("shopping_mode") == "shopping"
 
-    # 2. Tour navigates to Step 5 (pantry-check with ?tour=4)
-    tour_pantry_res = client.get(f"{reverse('shopping:pantry_check')}?tour=4")
+    # 2. Tour navigates to Step 6 (pantry-check with ?tour=5)
+    tour_pantry_res = client.get(f"{reverse('shopping:pantry_check')}?tour=5")
     assert tour_pantry_res.status_code == 200
 
     # 3. Session shopping_mode remains "shopping", NOT overwritten to "pantry"

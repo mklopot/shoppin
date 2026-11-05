@@ -65,7 +65,7 @@
             {% if rules %}
             <div class="space-y-1.5">
                 {% for rule in rules %}
-                <div class="flex items-center justify-between p-2 border {% if rule.is_active %}border-emerald-200 bg-emerald-50/40{% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
+                <div class="flex items-center justify-between p-2 border {% if rule.is_active %}border-emerald-200 bg-emerald-50/40{% else %}border-gray-200 bg-gray-50 text-gray-700{% endif %}">
                     <div class="flex items-center space-x-2">
                         <span class="text-xs" aria-hidden="true">{% if rule.is_active %}🥬{% else %}⏸{% endif %}</span>
                         <span class="{% if rule.is_active %}font-medium text-gray-900{% else %}line-through text-gray-500{% endif %}">
@@ -87,7 +87,7 @@
                         </form>
                         <form hx-post="{% url 'mealplans:delete_rule' rule.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="text-gray-400 hover:text-red-600 font-bold px-1.5 leading-none" aria-label="Delete rule" title="Delete rule">
+                            <button type="submit" class="text-gray-700 hover:text-red-600 font-bold px-1.5 leading-none" aria-label="Delete rule" title="Delete rule">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </form>
@@ -201,7 +201,7 @@
                                        hx-trigger="change"
                                        aria-label="Scale factor for {{ recipe.name }}"
                                        class="w-7 text-center font-bold bg-transparent focus:outline-none p-0 text-[11px]">
-                                <span class="font-bold select-none text-[10px] text-gray-400">x</span>
+                                <span class="font-bold select-none text-[10px] text-gray-700" aria-hidden="true">x</span>
                             </div>
                         </form>
                         <form hx-post="{% url 'mealplans:mark_dish_made' meal.id dish.id %}" hx-target="#modal-placeholder" class="inline">

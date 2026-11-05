@@ -190,15 +190,29 @@
             animation: toastSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* ADA Compliance & WCAG 2.1 AA Focus Accessibility */
+        /* ADA Title III & WCAG 2.1/2.2 AA Focus Accessibility */
         :focus-visible {
             outline: 2px solid #111827 !important;
             outline-offset: 2px !important;
         }
+        [tabindex="-1"]:focus:not(:focus-visible),
+        [tabindex="-1"]:focus-visible:not(button):not(a):not(input):not(select):not(textarea) {
+            outline: none !important;
+        }
 
-        /* WCAG 2.1 AA Contrast Compliance (>= 4.5:1 ratio on light backgrounds) */
+        /* WCAG 2.1/2.2 AA Contrast Compliance (>= 4.5:1 ratio on light backgrounds; text-gray-700 gives 9.0:1) */
         .text-gray-400 {
-            color: #4b5563 !important; /* Meets 7:1 contrast ratio against white */
+            color: #374151 !important; /* text-gray-700 fallback: 9:1 contrast ratio against white */
+        }
+
+        /* WCAG 2.2.2 & 2.3.3 Reduced Motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, ::before, ::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
         }
 
         /* Screen reader utility fallbacks */
@@ -300,7 +314,7 @@
                                 aria-expanded="false"
                                 aria-controls="user-dropdown-menu"
                                 onclick="toggleUserDropdown()"
-                                class="h-8 inline-flex items-center space-x-1 sm:space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-1.5 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none">
+                                class="h-8 inline-flex items-center space-x-1 sm:space-x-1.5 border border-gray-300 bg-gray-50 hover:bg-gray-100 px-1.5 sm:px-2.5 rounded-none text-gray-800 font-medium text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1">
                             <span aria-hidden="true">👤</span>
                             <span class="font-semibold max-w-[55px] xs:max-w-[75px] sm:max-w-[100px] truncate">{{ request.user.first_name|default:request.user.username }}</span>
                             <span class="text-[9px] text-gray-500" aria-hidden="true">▼</span>
@@ -378,7 +392,7 @@
                                 aria-expanded="false"
                                 aria-controls="persona-dropdown-menu"
                                 onclick="togglePersonaDropdown()"
-                                class="h-8 inline-flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 rounded-none text-gray-700 font-medium text-xs focus:outline-none"
+                                class="h-8 inline-flex items-center space-x-1 border border-dashed border-gray-400 bg-gray-50 hover:bg-gray-100 px-2 rounded-none text-gray-700 font-medium text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-1"
                                 title="Switch developer test persona">
                             <span aria-hidden="true">🛠</span>
                             <span class="max-w-[65px] sm:max-w-[80px] truncate">{% if request.user.is_authenticated %}{{ request.user.username }}{% else %}Guest{% endif %}</span>
@@ -1130,6 +1144,164 @@
             }
             document.addEventListener('htmx:responseError', clearOptimistic);
             document.addEventListener('htmx:sendError', clearOptimistic);
+        })();
+
+        // Centralized Accessible Modal Dialog Manager (WCAG 2.1.2, 2.4.3, 4.1.2)
+        (function() {
+            let lastActiveElement = null;
+
+            function getOpenModals() {
+                const selector = '[role="dialog"]:not(.hidden), [role="alertdialog"]:not(.hidden), #modal-placeholder > *:not(.hidden), #terms-modal:not(.hidden)';
+                return Array.from(document.querySelectorAll(selector)).filter(el => {
+                    if (el.hasAttribute('data-no-trap')) return false;
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetWidth > 0 && el.offsetHeight > 0;
+                });
+            }
+
+            function getFocusableElements(container) {
+                if (!container) return [];
+                const focusableSelector = 'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+                return Array.from(container.querySelectorAll(focusableSelector)).filter(el => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden';
+                });
+            }
+
+            function onModalOpened(modal) {
+                if (!modal || modal.hasAttribute('data-no-trap')) return;
+                if (!modal.contains(document.activeElement)) {
+                    lastActiveElement = document.activeElement;
+                    const focusables = getFocusableElements(modal);
+                    const autoFocusEl = modal.querySelector('[autofocus]') || focusables[0];
+                    if (autoFocusEl) {
+                        autoFocusEl.focus();
+                    } else {
+                        modal.setAttribute('tabindex', '-1');
+                        modal.focus();
+                    }
+                }
+            }
+
+            function onModalClosed() {
+                if (lastActiveElement && typeof lastActiveElement.focus === 'function' && document.body.contains(lastActiveElement)) {
+                    try { lastActiveElement.focus(); } catch (err) {}
+                    lastActiveElement = null;
+                }
+            }
+
+            function closeModal(modal) {
+                if (!modal) return;
+                // Look for accessible close / cancel buttons
+                const closeBtn = modal.querySelector('button[aria-label*="Close" i], button[aria-label*="Exit" i], button[aria-label*="Skip" i], button.close, [data-modal-close], button:has(span.sr-only)');
+                if (closeBtn && typeof closeBtn.click === 'function') {
+                    closeBtn.click();
+                    onModalClosed();
+                    return;
+                }
+                if (modal.id === 'new-workspace-modal' && typeof closeNewWorkspaceModal === 'function') {
+                    closeNewWorkspaceModal();
+                } else if (modal.id === 'walkthrough-modal' && typeof closeWalkthroughModal === 'function') {
+                    closeWalkthroughModal();
+                } else if (modal.id === 'terms-modal' && typeof closeTermsModal === 'function') {
+                    closeTermsModal();
+                } else if (modal.id === 'create-preset-modal') {
+                    modal.classList.add('hidden');
+                    onModalClosed();
+                } else if (modal.id === 'import-url-modal') {
+                    modal.classList.add('hidden');
+                    onModalClosed();
+                } else if (typeof closeStorePickerModal === 'function' && modal.querySelector('#store-search-form')) {
+                    closeStorePickerModal();
+                } else if (modal.parentElement && modal.parentElement.id === 'modal-placeholder') {
+                    modal.parentElement.innerHTML = '';
+                    onModalClosed();
+                } else {
+                    if (modal.remove) { modal.remove(); } else { modal.classList.add('hidden'); }
+                    onModalClosed();
+                }
+            }
+
+            // Keyboard Focus Trapping & Escape dismissal
+            document.addEventListener('keydown', function(e) {
+                const openModals = getOpenModals();
+                if (!openModals.length) return;
+                const topModal = openModals[openModals.length - 1];
+
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeModal(topModal);
+                    return;
+                }
+
+                if (e.key === 'Tab') {
+                    const focusables = getFocusableElements(topModal);
+                    if (!focusables.length) {
+                        e.preventDefault();
+                        return;
+                    }
+                    const firstEl = focusables[0];
+                    const lastEl = focusables[focusables.length - 1];
+
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstEl || !topModal.contains(document.activeElement)) {
+                            e.preventDefault();
+                            lastEl.focus();
+                        }
+                    } else {
+                        if (document.activeElement === lastEl || !topModal.contains(document.activeElement)) {
+                            e.preventDefault();
+                            firstEl.focus();
+                        }
+                    }
+                }
+            });
+
+            // HTMX integration
+            document.addEventListener('htmx:afterSwap', function(e) {
+                if (e.target && (e.target.id === 'modal-placeholder' || e.target.closest('#modal-placeholder'))) {
+                    const openModals = getOpenModals();
+                    if (openModals.length) {
+                        onModalOpened(openModals[openModals.length - 1]);
+                    } else {
+                        onModalClosed();
+                    }
+                }
+            });
+
+            // MutationObserver for dynamic class or child changes
+            const modalObserver = new MutationObserver(function(mutations) {
+                for (const m of mutations) {
+                    if (m.type === 'attributes' && m.attributeName === 'class') {
+                        const target = m.target;
+                        if (target.getAttribute && (target.getAttribute('role') === 'dialog' || target.id === 'new-workspace-modal')) {
+                            if (!target.classList.contains('hidden')) {
+                                onModalOpened(target);
+                            } else {
+                                onModalClosed();
+                            }
+                        }
+                    }
+                    if (m.addedNodes.length) {
+                        const openModals = getOpenModals();
+                        if (openModals.length) {
+                            onModalOpened(openModals[openModals.length - 1]);
+                        }
+                    }
+                    if (m.removedNodes.length) {
+                        const openModals = getOpenModals();
+                        if (!openModals.length) {
+                            onModalClosed();
+                        }
+                    }
+                }
+            });
+            modalObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+
+            window.closeActiveModal = function() {
+                const openModals = getOpenModals();
+                if (openModals.length) closeModal(openModals[openModals.length - 1]);
+            };
         })();
     </script>
 

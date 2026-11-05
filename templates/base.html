@@ -545,7 +545,9 @@
 
     <script>
         function startProductTour() {
+            const isPantry = window.location.pathname.includes('/pantry') || window.location.search.includes('mode=pantry');
             sessionStorage.setItem('tour_origin_url', window.location.pathname + window.location.search);
+            sessionStorage.setItem('tour_origin_mode', isPantry ? 'pantry' : 'shopping');
             const isShoppingTab = (window.location.pathname === '/' || window.location.pathname.startsWith('/shopping')) &&
                                   !window.location.pathname.includes('/pantry') &&
                                   !window.location.pathname.includes('/preset') &&

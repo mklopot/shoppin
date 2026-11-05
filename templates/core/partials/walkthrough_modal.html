@@ -4,7 +4,7 @@
      aria-modal="true"
      data-no-trap="true"
      aria-labelledby="tour-step-title"
-     class="hidden fixed inset-0 z-50 overflow-hidden">
+     class="hidden fixed inset-0 z-[60] overflow-hidden pointer-events-none">
 
     <!-- 4-Quadrant Backdrop: Blurs & dims surrounding areas only; leaves the framed target 100% crisp and unblurred -->
     <div id="tour-backdrop-top"
@@ -26,7 +26,7 @@
 
     <!-- Dynamically Positioned Tutorial Card: Center-aligned, flips top/bottom so highlighted content is NEVER obscured -->
     <div id="tour-tooltip-card"
-         class="fixed bottom-3 sm:bottom-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 bg-white border border-gray-400 shadow-2xl p-3 sm:p-4 w-auto sm:w-[500px] max-w-[calc(100vw-24px)] text-xs text-gray-900 flex flex-col space-y-2.5 transition-all duration-150">
+         class="fixed pointer-events-auto bottom-3 sm:bottom-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 bg-white border border-gray-400 shadow-2xl p-3 sm:p-4 w-auto sm:w-[500px] max-w-[calc(100vw-24px)] text-xs text-gray-900 flex flex-col space-y-2.5 transition-all duration-150">
         
         <!-- Header -->
         <div class="flex items-center justify-between pb-1.5 border-b border-gray-200">
@@ -126,7 +126,7 @@
                     Import from a URL or create a recipe
                 </h3>
                 <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
-                    Paste a web URL from cooking websites to automatically import ingredients and instructions, or write custom dishes in the recipe editor.
+                    Paste any recipe webpage URL (Allrecipes, Serious Eats, NYT Cooking, blogs, etc.) into the <strong>Webpage URL</strong> input to scrape ingredients and directions automatically, or write custom dishes in the recipe editor.
                 </p>
             </div>
 
@@ -299,9 +299,9 @@
                     <span class="text-xs text-gray-500">(4 servings)</span>
                 </div>
             `;
-            const addContainer = document.getElementById('add-meal-container');
-            if (addContainer) {
-                addContainer.before(demoCard);
+            const mealsList = content.querySelector('.space-y-3');
+            if (mealsList) {
+                mealsList.prepend(demoCard);
             } else {
                 content.prepend(demoCard);
             }
@@ -368,41 +368,49 @@
         if (grid && !grid.querySelector('.preset-card')) {
             const demoCard = document.createElement('div');
             demoCard.setAttribute('data-tour-demo', 'true');
-            demoCard.className = 'preset-card bg-white border border-gray-200 shadow-sm flex flex-col justify-between p-5 space-y-4 mb-4 max-w-md';
+            demoCard.className = 'preset-card bg-white border border-gray-300 shadow-md flex flex-col justify-between p-5 space-y-4 mb-4 max-w-md';
             demoCard.innerHTML = `
-                <div class="flex items-start justify-between gap-2">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-900">Weekly Essentials</h2>
-                        <div class="mt-1 text-xs text-gray-500">
-                            <span>📋 4 items</span>
+                <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-2">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Weekly Essentials</h2>
+                            <div class="mt-1 text-xs text-gray-500">
+                                <span>📋 4 items</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                            Inactive
+                        </span>
+                    </div>
+                    <div class="preset-items-container pt-1">
+                        <p class="text-[10px] uppercase font-bold text-gray-600 tracking-wider mb-1.5">Preset Items</p>
+                        <div class="flex flex-wrap gap-1">
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Whole Milk (1 gal)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Sourdough Bread (1 loaf)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Eggs (1 dozen)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Bananas (2 lbs)</span>
                         </div>
                     </div>
-                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                        Inactive
-                    </span>
-                </div>
-                <div class="preset-schedule-block p-3 bg-gray-50 border border-gray-200 text-xs space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-gray-800 uppercase text-[10px] tracking-wider flex items-center space-x-1">
-                            <span>⏱ Recurring Schedule:</span>
-                        </span>
-                        <span class="inline-flex items-center px-2 py-0.2 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                            ● Active (Every 7d)
-                        </span>
-                    </div>
-                    <div class="flex justify-between text-gray-600 text-[11px]">
-                        <span>Next occurrence:</span>
-                        <span class="font-semibold text-gray-900">Sunday 9:00 AM</span>
+                    <div class="preset-schedule-block p-3 bg-gray-50 border border-gray-200 text-xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-gray-800 uppercase text-[10px] tracking-wider flex items-center space-x-1">
+                                <span>⏱ Recurring Schedule:</span>
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.2 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                                ● Active (Every 7d)
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 text-[11px]">
+                            <span>Next occurrence:</span>
+                            <span class="font-semibold text-gray-900">Sunday 9:00 AM</span>
+                        </div>
                     </div>
                 </div>
-                <div class="preset-items-container pt-3 border-t border-gray-100">
-                    <p class="text-[10px] uppercase font-bold text-gray-600 tracking-wider mb-1.5">Preset Items</p>
-                    <div class="flex flex-wrap gap-1">
-                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Whole Milk (1 gal)</span>
-                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Sourdough Bread (1 loaf)</span>
-                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Eggs (1 dozen)</span>
-                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Bananas (2 lbs)</span>
-                    </div>
+                <div class="pt-3 border-t border-gray-200 flex items-center justify-between text-xs">
+                    <span class="font-medium text-indigo-600">Edit Items &rarr;</span>
+                    <button type="button" class="preset-load-btn px-2.5 py-1 bg-indigo-600 font-medium text-white shadow-sm">
+                        Load to Shopping List
+                    </button>
                 </div>
             `;
             grid.prepend(demoCard);
@@ -552,12 +560,19 @@
             pathCheck: function(p) {
                 return p.startsWith('/recipes') && !p.includes('/create');
             },
-            selector: '#recipe-filter-form, #recipe-search-input, #recipe-results-container',
+            selector: '#recipe-search-input, #recipe-search-bar, #recipe-filter-form',
             badge: 'Recipe Search & Filters',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
                 cleanupTourDemoData();
+                setTimeout(function() {
+                    const searchInput = document.getElementById('recipe-search-input');
+                    if (searchInput) {
+                        searchInput.focus({ preventScroll: true });
+                        positionSpotlight(searchInput);
+                    }
+                }, 80);
             }
         },
         // Step 6: "All Cuisines" Pulldown Menu (actively pulls down the Cuisine menu)
@@ -588,18 +603,35 @@
                 if (btn) btn.setAttribute('aria-expanded', 'false');
             }
         },
-        // Step 7: Recipe Import & Creation (on Recipes tab, spotlights action buttons)
+        // Step 7: Recipe Import & Creation (opens import modal and focuses URL input)
         {
             path: '{% url "recipes:list" %}',
             pathCheck: function(p) {
-                return p.startsWith('/recipes');
+                return p.startsWith('/recipes') && !p.includes('/create');
             },
-            selector: '#recipe-action-buttons, button[onclick*="import-url-modal"], a[href*="recipes/create"], #recipe-filter-form',
-            badge: 'Import & Creation',
+            selector: '#import-url-input, #import-url-modal .bg-white, #recipe-action-buttons',
+            badge: 'Import from URL',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
                 cleanupTourDemoData();
+                const modal = document.getElementById('import-url-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    setTimeout(function() {
+                        const input = document.getElementById('import-url-input');
+                        if (input) {
+                            input.focus({ preventScroll: true });
+                            positionSpotlight(input);
+                        } else {
+                            positionSpotlight('#import-url-modal .bg-white');
+                        }
+                    }, 100);
+                }
+            },
+            onLeave: function() {
+                const modal = document.getElementById('import-url-modal');
+                if (modal) modal.classList.add('hidden');
             }
         },
         // Step 8: Meal Plans & Adding Dishes (navigates to Meal Plans tab)
@@ -608,12 +640,20 @@
             pathCheck: function(p) {
                 return p.startsWith('/mealplans');
             },
-            selector: '#mealplan-content form[action*="add_dish"], #add-meal-container, .meal-card, #mealplan-content, #main-content',
+            selector: '.meal-card, #add-meal-container, #mealplan-content',
             badge: 'Weekly Meal Plans',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 cleanupTourDemoData();
                 ensureDemoMealPlanData();
+                setTimeout(function() {
+                    const card = document.querySelector('.meal-card');
+                    if (card) {
+                        positionSpotlight(card);
+                    } else {
+                        positionSpotlight('#mealplan-content');
+                    }
+                }, 80);
             }
         },
         // Step 9: Recipe Ingredients & Cooking Readiness (opens recipe modal with ingredient checklist)
@@ -658,18 +698,26 @@
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
             }
         },
-        // Step 11: Preset Lists & Reusable Templates (focusing on the preset items list)
+        // Step 11: Preset Lists & Reusable Templates (focusing on the preset list card)
         {
             path: '{% url "shopping:preset_list_index" %}',
             pathCheck: function(p) {
                 return p.includes('/preset');
             },
-            selector: '.preset-items-container, .preset-card, #preset-index-grid-container',
+            selector: '.preset-card, .preset-items-container, #preset-index-grid-container',
             badge: 'Preset Lists',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 cleanupTourDemoData();
                 ensureDemoPresetData();
+                setTimeout(function() {
+                    const card = document.querySelector('.preset-card');
+                    if (card) {
+                        positionSpotlight(card);
+                    } else {
+                        positionSpotlight('#preset-index-grid-container');
+                    }
+                }, 80);
             }
         },
         // Step 12: Automated Recurring Schedules (focusing specifically on the recurrence schedule block)
@@ -678,12 +726,20 @@
             pathCheck: function(p) {
                 return p.includes('/preset');
             },
-            selector: '.preset-schedule-block, [class*="Recurring Schedule"], .preset-card',
+            selector: '.preset-schedule-block, .preset-card',
             badge: 'Recurring Schedules',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 cleanupTourDemoData();
                 ensureDemoPresetData();
+                setTimeout(function() {
+                    const block = document.querySelector('.preset-schedule-block');
+                    if (block) {
+                        positionSpotlight(block);
+                    } else {
+                        positionSpotlight('.preset-card');
+                    }
+                }, 80);
             }
         }
     ];
@@ -692,9 +748,11 @@
         const modal = document.getElementById('walkthrough-modal');
         if (!modal) return;
 
-        // Save starting page if not already recorded
+        // Save starting page & mode if not already recorded
         if (!sessionStorage.getItem('tour_origin_url')) {
+            const isPantry = window.location.pathname.includes('/pantry') || window.location.search.includes('mode=pantry');
             sessionStorage.setItem('tour_origin_url', window.location.pathname + window.location.search);
+            sessionStorage.setItem('tour_origin_mode', isPantry ? 'pantry' : 'shopping');
         }
 
         modal.classList.remove('hidden');
@@ -718,14 +776,29 @@
         if (typeof closeFacetMenu === 'function') {
             closeFacetMenu('cuisine');
         }
+        const importModal = document.getElementById('import-url-modal');
+        if (importModal) {
+            importModal.classList.add('hidden');
+        }
 
         // Return user to the exact navigation tab where they started the tour
         const originUrl = sessionStorage.getItem('tour_origin_url');
+        const originMode = sessionStorage.getItem('tour_origin_mode') || 'shopping';
         sessionStorage.removeItem('tour_origin_url');
+        sessionStorage.removeItem('tour_origin_mode');
 
         if (returnToOrigin && originUrl) {
-            // Strip any tour parameter from origin URL so tour does not reopen
-            const cleanOrigin = originUrl.replace(/[?&]tour=\d+/, '').replace(/\?$/, '');
+            let cleanOrigin = originUrl.replace(/[?&]tour=\d+/, '').replace(/\?$/, '');
+            const isShoppingOrigin = cleanOrigin === '/' || cleanOrigin.startsWith('/shopping');
+            if (isShoppingOrigin && !cleanOrigin.includes('/pantry') && !cleanOrigin.includes('/preset')) {
+                if (originMode === 'shopping') {
+                    if (!cleanOrigin.includes('mode=')) {
+                        cleanOrigin += (cleanOrigin.includes('?') ? '&' : '?') + 'mode=shopping';
+                    } else {
+                        cleanOrigin = cleanOrigin.replace(/mode=pantry/, 'mode=shopping');
+                    }
+                }
+            }
             if (cleanOrigin && cleanOrigin !== (window.location.pathname + window.location.search)) {
                 window.location.href = cleanOrigin;
                 return;
@@ -839,7 +912,7 @@
 
     // Positions the unblurred spotlight quadrants & border around the target element,
     // and flips the card between top and bottom so highlighted content is NEVER obscured.
-    function positionSpotlight(selector) {
+    function positionSpotlight(selector, shouldScroll = true) {
         let targetEl = null;
         if (selector && typeof selector === 'object' && selector.nodeType) {
             targetEl = selector;
@@ -863,8 +936,10 @@
         if (!topBackdrop || !bottomBackdrop || !leftBackdrop || !rightBackdrop || !border) return;
 
         if (targetEl) {
-            // Smoothly scroll target element towards center of viewport so it is never clipped
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Instantly center target in viewport so getBoundingClientRect() is immediately accurate
+            if (shouldScroll) {
+                targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+            }
             const rect = targetEl.getBoundingClientRect();
             const pad = 6;
             const x = Math.max(0, rect.left - pad);
@@ -936,13 +1011,20 @@
         }
     }
 
-    // Reposition spotlight on window resize
+    // Reposition spotlight on window resize & scroll
     window.addEventListener('resize', function() {
         const modal = document.getElementById('walkthrough-modal');
         if (modal && !modal.classList.contains('hidden') && tourStepConfigs[currentTourStep]) {
-            positionSpotlight(tourStepConfigs[currentTourStep].selector);
+            positionSpotlight(tourStepConfigs[currentTourStep].selector, false);
         }
     });
+
+    window.addEventListener('scroll', function() {
+        const modal = document.getElementById('walkthrough-modal');
+        if (modal && !modal.classList.contains('hidden') && tourStepConfigs[currentTourStep]) {
+            positionSpotlight(tourStepConfigs[currentTourStep].selector, false);
+        }
+    }, { passive: true });
 
     // Keyboard navigation (Esc to close, Left/Right arrows to step)
     document.addEventListener('keydown', function(event) {

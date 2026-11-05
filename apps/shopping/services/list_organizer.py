@@ -154,7 +154,7 @@ class ShoppingListOrganizer:
         if mode not in (ListMode.SHOPPING, ListMode.PANTRY):
             mode = ListMode.SHOPPING
 
-        if request:
+        if request and not request.GET.get("tour"):
             request.session["shopping_mode"] = mode
 
         return mode

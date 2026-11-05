@@ -61,6 +61,27 @@
                     {% endif %}
                 </div>
 
+                <!-- Preview of Items -->
+                <div class="preset-items-container">
+                    <p class="text-[10px] uppercase font-bold text-gray-600 tracking-wider mb-1.5">Preset Items</p>
+                    {% if preset.items.all %}
+                    <div class="flex flex-wrap gap-1">
+                        {% for it in preset.items.all|slice:":5" %}
+                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">
+                            {{ it.name }}{% if it.amount_display %} ({{ it.amount_display }}){% endif %}
+                        </span>
+                        {% endfor %}
+                        {% if preset.items.count > 5 %}
+                        <span class="inline-flex items-center px-1.5 py-0.5 text-gray-600 text-xs">
+                            +{{ preset.items.count|add:"-5" }} more
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-gray-600 italic">No items added yet</p>
+                    {% endif %}
+                </div>
+
                 <!-- Prominent Recurring Schedule Feature Block -->
                 <div class="preset-schedule-block p-3 bg-gray-50 border border-gray-200 text-xs space-y-2">
                     <div class="flex items-center justify-between">
@@ -128,27 +149,6 @@
                         </form>
                         {% endif %}
                     </div>
-                </div>
-
-                <!-- Preview of Items -->
-                <div class="preset-items-container">
-                    <p class="text-[10px] uppercase font-bold text-gray-600 tracking-wider mb-1.5">Preset Items</p>
-                    {% if preset.items.all %}
-                    <div class="flex flex-wrap gap-1">
-                        {% for it in preset.items.all|slice:":5" %}
-                        <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">
-                            {{ it.name }}{% if it.amount_display %} ({{ it.amount_display }}){% endif %}
-                        </span>
-                        {% endfor %}
-                        {% if preset.items.count > 5 %}
-                        <span class="inline-flex items-center px-1.5 py-0.5 text-gray-600 text-xs">
-                            +{{ preset.items.count|add:"-5" }} more
-                        </span>
-                        {% endif %}
-                    </div>
-                    {% else %}
-                    <p class="text-xs text-gray-600 italic">No items added yet</p>
-                    {% endif %}
                 </div>
             </div>
 

@@ -131,3 +131,30 @@ def test_workspace_context_pops_auto_launch_tour():
     # Second call receives False
     ctx2 = workspace_context(request)
     assert ctx2["auto_launch_tour"] is False
+
+
+@pytest.mark.django_db
+def test_tour_pantry_check_does_not_mutate_session_mode(db):
+    """Verify that visiting pantry check during the walkthrough tour does not persist pantry mode to session."""
+    user = User.objects.create_user(username="tourmodetest", password="password123")
+    client = Client()
+    client.force_login(user)
+
+    from apps.core.models import Workspace, WorkspaceMember
+    from apps.shopping.models import ShoppingList
+    ws = Workspace.objects.create(name="Tour Mode WS", owner=user)
+    WorkspaceMember.objects.create(workspace=ws, user=user, role="editor")
+    ShoppingList.objects.create(workspace=ws, name="Groceries")
+
+    # 1. User starts on shopping list in shopping mode
+    res = client.get(reverse("shopping:list"))
+    assert res.status_code == 200
+    assert client.session.get("shopping_mode") == "shopping"
+
+    # 2. Tour navigates to Step 5 (pantry-check with ?tour=4)
+    tour_pantry_res = client.get(f"{reverse('shopping:pantry_check')}?tour=4")
+    assert tour_pantry_res.status_code == 200
+
+    # 3. Session shopping_mode remains "shopping", NOT overwritten to "pantry"
+    assert client.session.get("shopping_mode") == "shopping"
+

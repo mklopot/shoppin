@@ -382,6 +382,29 @@ def test_privacy_policy_page_renders_with_brand_disclosures(client: Client):
 
 
 @pytest.mark.django_db
+def test_guest_and_user_can_view_accessibility_statement(client: Client, normal_user):
+    """Guest and authenticated users can view the Accessibility Statement page."""
+    for url in [reverse("core:accessibility"), "/accessibility/"]:
+        response = client.get(url)
+        assert response.status_code == 200
+        content = response.content.decode()
+
+        assert "Accessibility Statement" in content
+        assert "Conformance Status" in content
+        assert "WCAG 2.1" in content
+        assert "WCAG 2.2" in content
+        assert "Keyboard Drag-and-Drop Alternative" in content
+        assert "Alt+ArrowUp" in content
+        assert "support@recipe.klopot.tech" in content
+
+    # Authenticated user can also access
+    client.force_login(normal_user)
+    response = client.get(reverse("core:accessibility"))
+    assert response.status_code == 200
+    assert "Accessibility Statement" in response.content.decode()
+
+
+@pytest.mark.django_db
 def test_footer_renders_dynamic_copyright_and_brand_links(client: Client):
     """Base template footer and navbar include dynamic copyright year, Waldorf Wellington, and brand links."""
     response = client.get(reverse("recipes:list"))
@@ -391,6 +414,7 @@ def test_footer_renders_dynamic_copyright_and_brand_links(client: Client):
     assert "Waldorf Wellington. All Rights Reserved." in content
     assert 'href="/terms/"' in content or reverse("core:terms") in content
     assert 'href="/privacy/"' in content or reverse("core:privacy") in content
+    assert 'href="/accessibility/"' in content or reverse("core:accessibility") in content
     assert "mailto:support@recipe.klopot.tech" in content
     assert "recipe" in content
     assert ".klopot.tech" in content

@@ -14,6 +14,7 @@ urlpatterns = [
     path("terms/accept/", tos_views.terms_accept_view, name="terms_accept"),
     path("privacy/", tos_views.privacy_view, name="privacy"),
     path("dmca/", tos_views.dmca_view, name="dmca"),
+    path("accessibility/", tos_views.accessibility_view, name="accessibility"),
     path("login/", auth_views.login_view, name="login"),
     path("logout/", auth_views.logout_view, name="logout"),
     path("google/login/", auth_views.google_login_view, name="google_login"),

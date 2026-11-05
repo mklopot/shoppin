@@ -18,6 +18,8 @@ urlpatterns = [
     path('terms/', tos_views.terms_view, name='terms_root'),
     path('terms/accept/', tos_views.terms_accept_view, name='terms_accept_root'),
     path('privacy/', tos_views.privacy_view, name='privacy_root'),
+    path('dmca/', tos_views.dmca_view, name='dmca_root'),
+    path('accessibility/', tos_views.accessibility_view, name='accessibility_root'),
     # Authentication & Google OAuth
     path('accounts/login/', auth_views.login_view, name='login'),
     path('accounts/logout/', auth_views.logout_view, name='logout'),

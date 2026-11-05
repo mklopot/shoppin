@@ -1,0 +1,127 @@
+<div class="space-y-6 text-xs text-gray-700 leading-relaxed font-sans">
+    <div class="border-b border-gray-300 pb-4 mb-6">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">Accessibility Statement</h1>
+        <p class="text-xs text-gray-500 mt-1">Last Updated: {{ last_updated|default:"November 2026" }}</p>
+    </div>
+
+    <!-- 1. Commitment -->
+    <div class="space-y-2">
+        <h2 class="font-bold text-sm text-gray-900">1. Our Commitment</h2>
+        <p>
+            At <strong>recipe.klopot.tech</strong> ("Shoppin," "the Service," "we," "us," or "our"), we believe culinary management, meal planning, and grocery shopping should be accessible, inclusive, and barrier-free for everyone, including individuals with visual, auditory, motor, cognitive, or neurological disabilities.
+        </p>
+        <p>
+            We are dedicated to continually auditing, improving, and optimizing the accessibility of our web platform to adhere to internationally recognized standards and ensure that every user can independently browse recipes, plan meals, manage pantry staples, and execute in-store shopping trips.
+        </p>
+    </div>
+
+    <!-- 2. Conformance Standards -->
+    <div class="space-y-2">
+        <h2 class="font-bold text-sm text-gray-900">2. Conformance Status &amp; Standards</h2>
+        <p>
+            The Web Content Accessibility Guidelines (<a href="https://www.w3.org/WAI/standards-guidelines/wcag/" target="_blank" rel="noopener noreferrer" class="text-gray-900 underline font-semibold hover:text-black">WCAG</a>) define technical requirements for designers and developers to improve web accessibility for people with disabilities. It defines three levels of conformance: Level A, Level AA, and Level AAA.
+        </p>
+        <p>
+            <strong>recipe.klopot.tech is designed and actively audited to conform with WCAG 2.1 and WCAG 2.2 Level AA standards.</strong>
+        </p>
+    </div>
+
+    <!-- 3. Key Measures Implemented -->
+    <div class="space-y-3">
+        <h2 class="font-bold text-sm text-gray-900">3. Accessibility Measures &amp; Features Implemented</h2>
+        <p>
+            We have integrated accessibility directly into the architecture, design systems, and interaction patterns of Shoppin:
+        </p>
+        <ul class="list-disc list-inside space-y-2 pl-2 text-gray-700">
+            <li>
+                <strong>Visual Contrast &amp; Boundary Visibility (WCAG 1.4.3 &amp; 1.4.11):</strong>
+                Body text and interactive labels maintain a contrast ratio of at least 4.5:1 against light backgrounds (with standard text achieving a 9.0:1 ratio). All interactive controls, quick-action buttons (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">Got</code>, <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">Need</code>, <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">Have</code>, <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">Skip</code>), form fields, and checkboxes feature visual boundaries with at least a 3:1 luminosity contrast ratio (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">border-gray-400</code>).
+            </li>
+            <li>
+                <strong>Accessible Names &amp; Label in Name (WCAG 2.5.3):</strong>
+                All interactive buttons, quick toggles, and modal controls have accessible names that match or begin with their visually presented text, ensuring seamless voice-control and screen-reader usability.
+            </li>
+            <li>
+                <strong>Keyboard Navigation &amp; Focus Indicators (WCAG 2.1.1 &amp; 2.4.7):</strong>
+                All application functions are fully operable via a keyboard without requiring a mouse. High-contrast focus rings (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">focus-visible:ring-2 focus-visible:ring-gray-900</code>) clearly delineate the currently focused element. A skip link is provided at the top of every page to bypass repetitive navigation landmarks.
+            </li>
+            <li>
+                <strong>Keyboard Drag-and-Drop Alternative (WCAG 2.1.1 &amp; 2.5.7):</strong>
+                In addition to touch and mouse drag-and-drop reordering, all shopping list and category drag handles are keyboard focusable (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">role="button" tabindex="0"</code>). Users can reorder items and sections directly using the <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 font-mono text-[10px]">Alt+ArrowUp</kbd> and <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 font-mono text-[10px]">Alt+ArrowDown</kbd> hotkeys.
+            </li>
+            <li>
+                <strong>Live Regions &amp; Dynamic Hypermedia Notifications (WCAG 4.1.2 &amp; 4.1.3):</strong>
+                Real-time WebSocket and HTMX toast notifications are announced via an ARIA live region (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">aria-live="polite"</code>), informing assistive technology users of cart and status updates without interrupting active reading flow.
+            </li>
+            <li>
+                <strong>Modal Dialog Trapping &amp; ARIA Semantics (WCAG 1.3.1 &amp; 4.1.2):</strong>
+                Modal overlays (store picker, recipe editor, workspace settings) utilize standard WAI-ARIA dialog specifications (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">role="dialog" aria-modal="true"</code>) with proper heading labels, keyboard focus traps, and <kbd class="px-1 py-0.5 bg-gray-100 border border-gray-300 font-mono text-[10px]">Escape</kbd> key dismissal.
+            </li>
+            <li>
+                <strong>Input Purpose &amp; Autocomplete (WCAG 1.3.5):</strong>
+                Form inputs feature standard HTML5 input types and browser autocomplete attributes to assist users with password managers, screen magnifiers, and assistive autofill technology.
+            </li>
+            <li>
+                <strong>Text Resizing &amp; Responsive Layout (WCAG 1.4.4 &amp; 1.4.10):</strong>
+                The interface supports browser zoom up to 200% without horizontal scroll traps, clipping, or loss of content. CSS media queries honor user preferences for reduced motion (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">prefers-reduced-motion</code>).
+            </li>
+            <li>
+                <strong>Non-Text Content &amp; Map Pins (WCAG 1.1.1):</strong>
+                Informational images include descriptive alternative text (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">alt="..."</code>). Purely decorative elements and dynamic Leaflet GPS map markers are explicitly designated as <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">aria-hidden="true"</code> to prevent auditory clutter for screen-reader users.
+            </li>
+        </ul>
+    </div>
+
+    <!-- 4. Technical Specifications -->
+    <div class="space-y-2">
+        <h2 class="font-bold text-sm text-gray-900">4. Technical Specifications</h2>
+        <p>
+            The accessibility of recipe.klopot.tech relies on the following technologies to work with user web browsers and assistive technologies or plugins installed on your computer:
+        </p>
+        <ul class="list-disc list-inside space-y-1 pl-2 text-gray-700">
+            <li>HTML5 Semantic Landmarks (<code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">&lt;nav&gt;</code>, <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">&lt;main&gt;</code>, <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">&lt;footer&gt;</code>, <code class="bg-gray-100 px-1 py-0.5 text-gray-900 font-mono text-[11px]">&lt;header&gt;</code>)</li>
+            <li>WAI-ARIA (Accessible Rich Internet Applications) 1.2</li>
+            <li>CSS3 / Modern Tailwind CSS</li>
+            <li>JavaScript &amp; HTMX 2.0</li>
+        </ul>
+    </div>
+
+    <!-- 5. Evaluation & Testing Methods -->
+    <div class="space-y-2">
+        <h2 class="font-bold text-sm text-gray-900">5. Assessment &amp; Testing Methodology</h2>
+        <p>
+            We test recipe.klopot.tech through multiple evaluation methods:
+        </p>
+        <ul class="list-disc list-inside space-y-1 pl-2 text-gray-700">
+            <li><strong>Automated Accessibility Scanning:</strong> Regular scans using industry-standard tools (including AudioEye and axe-core) to identify contrast, attribute mismatches, and semantic defects.</li>
+            <li><strong>Fine-Grained DOM Inspections:</strong> Automated testing scripts verifying heading hierarchy, ARIA label consistency, and form control associations.</li>
+            <li><strong>Manual Keyboard &amp; Assistive Tech Testing:</strong> Testing without a mouse across desktop and mobile browsers, validating focus order, tab sequence, and screen-reader announcements.</li>
+        </ul>
+    </div>
+
+    <!-- 6. Known Limitations -->
+    <div class="space-y-2">
+        <h2 class="font-bold text-sm text-gray-900">6. Known Limitations &amp; Third-Party Content</h2>
+        <p>
+            Despite our rigorous efforts to ensure accessibility across all pages, there may be temporary limitations in specific contexts:
+        </p>
+        <ul class="list-disc list-inside space-y-1 pl-2 text-gray-700">
+            <li><strong>User-Submitted Recipe Photography &amp; Notes:</strong> Community-submitted or externally imported recipes may reference photographs or descriptions provided by third-party authors where descriptive alt text is limited.</li>
+            <li><strong>Third-Party Geolocation Map Tiles:</strong> When using the "Near Me" supermarket store locator, interactive map tiles are provided by OpenStreetMap / Leaflet. While store selection controls and lists are fully accessible, the interactive visual map tile canvas may be difficult to navigate with screen readers; all store choices and details remain accessible via standard text lists.</li>
+        </ul>
+    </div>
+
+    <!-- 7. Feedback & Contact -->
+    <div class="space-y-2">
+        <h2 class="font-bold text-sm text-gray-900">7. Feedback &amp; Contact Information</h2>
+        <p>
+            We welcome your feedback on the accessibility of recipe.klopot.tech. If you encounter accessibility barriers, experience difficulty accessing any part of the site, or have recommendations for improvement, please let us know:
+        </p>
+        <div class="bg-gray-50 border border-gray-200 rounded p-4 text-xs space-y-1">
+            <p><strong>Primary Accessibility Contact:</strong> Accessibility &amp; Support Team</p>
+            <p><strong>Email:</strong> <a href="mailto:{{ support_email|default:'support@recipe.klopot.tech' }}" class="text-blue-600 hover:underline">{{ support_email|default:"support@recipe.klopot.tech" }}</a></p>
+            <p><strong>Website:</strong> <a href="https://recipe.klopot.tech" class="text-blue-600 hover:underline">recipe.klopot.tech</a></p>
+            <p><strong>Response Time:</strong> We strive to respond to all accessibility feedback within two (2) business days.</p>
+        </div>
+    </div>
+</div>

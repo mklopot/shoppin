@@ -83,6 +83,12 @@ class TermsOfServiceEnforcementMiddleware:
             exempt_prefixes = (
                 "/terms/",
                 "/core/terms/",
+                "/privacy/",
+                "/core/privacy/",
+                "/dmca/",
+                "/core/dmca/",
+                "/accessibility/",
+                "/core/accessibility/",
                 "/accounts/logout/",
                 "/logout/",
                 "/core/logout/",

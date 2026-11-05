@@ -78,6 +78,18 @@ def dmca_view(request: HttpRequest) -> HttpResponse:
     return render(request, "core/dmca.html", context)
 
 
+def accessibility_view(request: HttpRequest) -> HttpResponse:
+    """
+    Render public Accessibility Statement page.
+    Accessible to both authenticated users and anonymous guests.
+    """
+    context: dict[str, Any] = {
+        "support_email": "support@recipe.klopot.tech",
+        "last_updated": "November 2026",
+    }
+    return render(request, "core/accessibility.html", context)
+
+
 
 
 @login_required
@@ -92,6 +104,12 @@ def terms_accept_view(request: HttpRequest) -> HttpResponse:
     disallowed_prefixes = (
         "/terms",
         "/core/terms",
+        "/privacy",
+        "/core/privacy",
+        "/dmca",
+        "/core/dmca",
+        "/accessibility",
+        "/core/accessibility",
         "/login",
         "/accounts/login",
         "/core/login",

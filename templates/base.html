@@ -474,6 +474,10 @@
                 <span class="text-gray-400" aria-hidden="true">&bull;</span>
                 <a href="{% url 'core:dmca' %}" class="text-gray-700 hover:text-black underline font-medium">DMCA</a>
                 <span class="text-gray-400" aria-hidden="true">&bull;</span>
+                {% block footer_accessibility_link %}
+                <a href="{% url 'core:accessibility' %}" class="text-gray-700 hover:text-black underline font-medium">Accessibility</a>
+                <span class="text-gray-400" aria-hidden="true">&bull;</span>
+                {% endblock %}
                 <a href="mailto:support@recipe.klopot.tech" class="text-gray-700 hover:text-black underline font-medium">Contact</a>
             </div>
         </div>

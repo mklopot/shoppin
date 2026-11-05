@@ -415,6 +415,14 @@
                                     </button>
                                 </form>
                                 {% endif %}
+                                {% if not item.priority and mode != 'pantry' %}
+                                <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="item-priority-toggle-btn text-gray-400 hover:text-[#800020] px-1 py-0.5 transition-colors" aria-label="Flag {{ item.name }} as High Priority" title="Flag as High Priority">
+                                        <span aria-hidden="true">🚩</span>
+                                    </button>
+                                </form>
+                                {% endif %}
                                 <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                                     <span aria-hidden="true">✏️</span>
                                 </button>

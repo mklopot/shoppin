@@ -546,12 +546,18 @@
     <script>
         function startProductTour() {
             sessionStorage.setItem('tour_origin_url', window.location.pathname + window.location.search);
-            if ((window.location.pathname === '/' || window.location.pathname.startsWith('/shopping')) && !window.location.pathname.includes('/pantry') && !window.location.pathname.includes('/preset') && !window.location.pathname.includes('/mealplans') && !window.location.pathname.includes('/recipes')) {
+            const isShoppingTab = (window.location.pathname === '/' || window.location.pathname.startsWith('/shopping')) &&
+                                  !window.location.pathname.includes('/pantry') &&
+                                  !window.location.pathname.includes('/preset') &&
+                                  !window.location.pathname.includes('/mealplans') &&
+                                  !window.location.pathname.includes('/recipes') &&
+                                  !window.location.search.includes('mode=pantry');
+            if (isShoppingTab) {
                 if (typeof openWalkthroughModal === "function") {
                     openWalkthroughModal(0);
                 }
             } else {
-                window.location.href = '{% url "shopping:list" %}?tour=0';
+                window.location.href = '{% url "shopping:list" %}?mode=shopping&tour=0';
             }
         }
 
@@ -661,6 +667,7 @@
         });
 
         document.addEventListener('click', function(e) {
+            if (e.target.closest('#walkthrough-modal')) return;
             const wsContainer = document.getElementById('workspace-dropdown-container');
             const personaContainer = document.getElementById('persona-dropdown-container');
             const userContainer = document.getElementById('user-dropdown-container');

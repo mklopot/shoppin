@@ -19,21 +19,21 @@ def test_walkthrough_modal_content_renders():
     """Verify walkthrough overlay renders all tutorial steps with unblurred spotlight and informational text."""
     html = render_to_string("core/partials/walkthrough_modal.html")
 
-    # Verify all 12 tutorial steps are present
+    # Verify all 13 tutorial steps are present
     assert "Shopping list with real-time transitions" in html
-    assert "the list updates in real time via Websockets" in html
-    assert "Marking items as High Priority" in html
+    assert "High Priority toggle on shopping list items" in html
     assert "Setting store location & populating aisles" in html
     assert "Sorting by priority and store aisle" in html
-    assert "Pantry check before you shop" in html
+    assert "Pantry check & confirming needed items" in html
     assert "Search and filter recipes" in html
     assert "All Cuisines filter pulldown" in html
     assert "Import from a URL or create a recipe" in html
     assert "Weekly meal plans & adding dishes" in html
-    assert "Ingredient availability for each dish" in html
+    assert "Recipe ingredients & cooking readiness" in html
     assert "Organize with workspaces" in html
-    assert "Preset lists and recurring schedules" in html
-    assert "totalTourSteps = 12" in html
+    assert "Preset lists and reusable templates" in html
+    assert "Automated recurring schedules" in html
+    assert "totalTourSteps = 13" in html
 
     # Verify unblurred spotlight quadrants & green spotlight border
     assert 'id="walkthrough-modal"' in html
@@ -82,6 +82,16 @@ def test_tour_navigation_tab_destinations_and_elements(db):
     list_html = list_res.content.decode("utf-8")
     assert 'id="store-select-container"' in list_html
     assert 'id="add-item-priority-label"' in list_html
+
+    # Check item-priority-toggle-btn renders on active items
+    from apps.core.models import Workspace, WorkspaceMember
+    from apps.shopping.models import ShoppingList, ShoppingListItem
+    ws = Workspace.objects.create(name="Tour Test WS", owner=user)
+    WorkspaceMember.objects.create(workspace=ws, user=user, role="editor")
+    primary_list = ShoppingList.objects.create(workspace=ws, name="Groceries")
+    ShoppingListItem.objects.create(shopping_list=primary_list, name="Apples", amount="1")
+    item_list_res = client.get(reverse("shopping:list"))
+    assert "item-priority-toggle-btn" in item_list_res.content.decode("utf-8")
 
     # 5. Meal plan detail page has add-meal-container
     mealplan_res = client.get(reverse("mealplans:detail"))

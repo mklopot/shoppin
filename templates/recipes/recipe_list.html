@@ -308,6 +308,7 @@
     }
 
     document.addEventListener('click', function(e) {
+        if (e.target.closest('#walkthrough-modal')) return;
         if (!e.target.closest('.facet-dropdown')) {
             closeAllFacetMenus();
         }

@@ -400,8 +400,8 @@ def test_recipe_updated_after_added_to_meal_plan_warning(client, mealplan_setup)
     assert b"This recipe was updated in your catalog after it was added to this meal plan" not in resp_modal.content
 
     # 2. Simulate updating the recipe after it was added to the meal plan
-    recipe.updated_at = timezone.now() + timedelta(minutes=10)
-    recipe.save(update_fields=["updated_at"])
+    Recipe.objects.filter(id=recipe.id).update(updated_at=timezone.now() + timedelta(hours=1))
+    recipe.refresh_from_db()
     dish.refresh_from_db()
 
     assert dish.is_recipe_updated_since_added

@@ -120,7 +120,7 @@
     <!-- Meals List -->
     <div class="space-y-3">
         {% for meal in meals %}
-        <div class="border border-gray-300 bg-white p-3.5 space-y-2.5">
+        <div class="meal-card border border-gray-300 bg-white p-3.5 space-y-2.5">
             <!-- Meal Header -->
             <div class="flex items-center justify-between border-b border-gray-200 pb-2">
                 <div class="flex items-center space-x-2">
@@ -176,11 +176,18 @@
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-gray-300" role="img" aria-label="Status: Ingredients needed" title="Ingredients needed"></span>
                         {% endif %}
 
-                        <div class="flex items-center space-x-1.5">
+                        <div class="flex items-center space-x-1.5 flex-wrap">
                             <button type="button" hx-get="{% url 'mealplans:recipe_modal' recipe.id %}?meal_id={{ meal.id }}&dish_id={{ dish.id }}" hx-target="#modal-placeholder"
                                     class="font-medium text-gray-900 hover:text-blue-700 hover:underline text-left">
                                 {{ recipe.name }}
                             </button>
+                            {% if dish.is_recipe_updated_since_added %}
+                            <span class="inline-flex items-center gap-0.5 px-1 py-0.2 text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-300 rounded-none cursor-help select-none"
+                                  title="Recipe was updated on {{ recipe.updated_at|date:'M j, Y' }} after being added to this meal plan on {{ dish.created_at|date:'M j, Y' }}.">
+                                <span aria-hidden="true">⚠️</span>
+                                <span>Updated</span>
+                            </span>
+                            {% endif %}
                             {% if not can_write and dish.scale_display %}
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-none"
                                   title="Scaled {{ dish.scale_display }} ({{ dish.scaled_portions }} servings)">
@@ -294,7 +301,7 @@
 
     {% if can_write %}
     <!-- Add New Meal Form -->
-    <div class="border border-gray-300 bg-gray-50 p-3">
+    <div id="add-meal-container" class="border border-gray-300 bg-gray-50 p-3">
         <form hx-post="{% url 'mealplans:add_meal' %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="flex flex-wrap items-center gap-2 text-xs">
             {% csrf_token %}
             <label for="new-meal-plan-name" class="font-bold text-gray-700">Add Meal:</label>

@@ -188,7 +188,7 @@
     <!-- Secondary Controls Bar: Store Selector, Sort Order -->
     <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">
         <!-- Store Selector with Integrated Map Action -->
-        <div class="flex items-center">
+        <div id="store-select-container" class="flex items-center">
             <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline-flex items-center">
                 {% csrf_token %}
                 <div class="inline-flex border border-gray-400 items-stretch bg-white">
@@ -246,7 +246,7 @@
                    class="flex-1 min-w-[85px] sm:w-[110px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none text-xs">
             <input type="text" name="purpose" id="add-item-purpose" aria-label="Item purpose (optional)" placeholder="Purpose (opt)"
                    class="flex-1 min-w-[95px] sm:w-[115px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none text-xs">
-            <label class="inline-flex items-center space-x-1 cursor-pointer select-none px-2 py-1 border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] h-[26px]" title="Flag as High Priority">
+            <label id="add-item-priority-label" class="inline-flex items-center space-x-1 cursor-pointer select-none px-2 py-1 border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] h-[26px]" title="Flag as High Priority">
                 <input type="checkbox" name="priority" value="true" class="h-3.5 w-3.5 text-[#800020] border-[#800020]/40 rounded-none cursor-pointer focus:ring-0">
                 <span class="text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 leading-none">
                     <span aria-hidden="true">🚩</span>

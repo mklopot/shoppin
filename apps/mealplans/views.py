@@ -538,6 +538,10 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
 
     meal = Meal.objects.filter(id=meal_id).first() if meal_id else None
     meal_dish = MealDish.objects.filter(id=dish_id).first() if dish_id else None
+    if not meal_dish and meal:
+        meal_dish = MealDish.objects.filter(meal=meal, recipe=recipe).order_by("-created_at").first()
+
+    is_recipe_updated_since_added = meal_dish.is_recipe_updated_since_added if meal_dish else False
 
     if not shopping_list and meal and meal.meal_plan and meal.meal_plan.workspace:
         shopping_list = meal.meal_plan.workspace.get_primary_list()
@@ -572,6 +576,8 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
         "have_count": have_count,
         "skipped_count": skipped_count,
         "ready_count": ready_count,
+        "is_recipe_updated_since_added": is_recipe_updated_since_added,
+        "meal_dish": meal_dish,
         "meals": meals,
         "can_write": can_write,
     }

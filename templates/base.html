@@ -545,7 +545,8 @@
 
     <script>
         function startProductTour() {
-            if ((window.location.pathname === '/' || window.location.pathname.startsWith('/shopping')) && !window.location.pathname.includes('/pantry') && !window.location.pathname.includes('/preset')) {
+            sessionStorage.setItem('tour_origin_url', window.location.pathname + window.location.search);
+            if ((window.location.pathname === '/' || window.location.pathname.startsWith('/shopping')) && !window.location.pathname.includes('/pantry') && !window.location.pathname.includes('/preset') && !window.location.pathname.includes('/mealplans') && !window.location.pathname.includes('/recipes')) {
                 if (typeof openWalkthroughModal === "function") {
                     openWalkthroughModal(0);
                 }

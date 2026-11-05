@@ -367,6 +367,58 @@ def test_recipe_modal_view(client, mealplan_setup):
     assert b"Lime Wedges" in resp.content
 
 
+def test_recipe_updated_after_added_to_meal_plan_warning(client, mealplan_setup):
+    """Verify discrete warning when a recipe was updated after being added to a meal plan."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    ws = mealplan_setup["workspace"]
+    editor = mealplan_setup["editor"]
+    client.force_login(editor)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+    meal = add_meal_to_plan(meal_plan, "Taco Night")
+    add_recipe_to_meal(meal, recipe, shopping_list)
+
+    dish = meal.dishes.get(recipe=recipe)
+
+    # 1. Initially, dish was just created, recipe was not updated after
+    assert not dish.is_recipe_updated_since_added
+
+    resp = client.get(reverse("mealplans:detail"))
+    assert resp.status_code == 200
+    assert b"Recipe was updated on" not in resp.content
+
+    resp_modal = client.get(f"{reverse('mealplans:recipe_modal', args=[recipe.id])}?meal_id={meal.id}&dish_id={dish.id}")
+    assert resp_modal.status_code == 200
+    assert b"This recipe was updated in your catalog after it was added to this meal plan" not in resp_modal.content
+
+    # 2. Simulate updating the recipe after it was added to the meal plan
+    recipe.updated_at = timezone.now() + timedelta(minutes=10)
+    recipe.save(update_fields=["updated_at"])
+    dish.refresh_from_db()
+
+    assert dish.is_recipe_updated_since_added
+
+    # Check meal plan view has the discrete warning badge
+    resp = client.get(reverse("mealplans:detail"))
+    assert resp.status_code == 200
+    assert b"Updated" in resp.content
+    assert b"Recipe was updated on" in resp.content
+
+    # Check recipe modal has the discrete warning note
+    resp_modal = client.get(f"{reverse('mealplans:recipe_modal', args=[recipe.id])}?meal_id={meal.id}&dish_id={dish.id}")
+    assert resp_modal.status_code == 200
+    assert b"Recipe updated" in resp_modal.content
+    assert b"This recipe was updated in your catalog after it was added to this meal plan" in resp_modal.content
+
+
 def test_dish_purpose_formatting_and_no_duplicate_for(client, mealplan_setup):
     """
     Verify that item purposes originating from recipes do not contain duplicate 'For '

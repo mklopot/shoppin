@@ -182,3 +182,12 @@ class MealDish(models.Model):
         if scaled == scaled.to_integral():
             return int(scaled)
         return float(scaled.normalize())
+
+    @property
+    def is_recipe_updated_since_added(self) -> bool:
+        """
+        Check if the underlying recipe was updated after this dish was planned in the meal.
+        """
+        if not self.created_at or not self.recipe or not self.recipe.updated_at:
+            return False
+        return (self.recipe.updated_at - self.created_at).total_seconds() > 1

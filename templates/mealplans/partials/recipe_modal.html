@@ -23,6 +23,20 @@
             <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" aria-label="Close dialog" class="text-gray-500 hover:text-gray-900 text-2xl font-bold leading-none"><span aria-hidden="true">&times;</span></button>
         </div>
 
+        {% if is_recipe_updated_since_added %}
+        <div class="p-2.5 bg-amber-50 border border-amber-300 text-amber-950 text-xs flex items-center justify-between gap-2 flex-shrink-0" role="alert">
+            <div class="flex items-center space-x-2">
+                <span class="text-amber-800 text-sm leading-none select-none" aria-hidden="true">⚠️</span>
+                <span><strong>Recipe updated:</strong> This recipe was updated in your catalog after it was added to this meal plan.</span>
+            </div>
+            {% if meal_dish and meal_dish.created_at %}
+            <span class="text-[10px] text-amber-800 select-none whitespace-nowrap">
+                Added: {{ meal_dish.created_at|date:"M j" }} &bull; Updated: {{ recipe.updated_at|date:"M j" }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Scrollable Content -->
         <div class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
             {% if recipe.description %}

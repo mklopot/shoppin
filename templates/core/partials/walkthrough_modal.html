@@ -1,4 +1,4 @@
-<!-- Guided In-App Site Tutorial Overlay with Dynamic Spotlight (Unblurred Target) -->
+<!-- Guided In-App Site Tutorial Overlay with Dynamic Spotlight & Consistent Bottom Card -->
 <div id="walkthrough-modal"
      role="dialog"
      aria-modal="true"
@@ -24,18 +24,18 @@
     <div id="tour-spotlight-border"
          class="fixed pointer-events-none border-2 border-emerald-400 ring-4 ring-emerald-500/30 rounded transition-all duration-150 z-50 hidden"></div>
 
-    <!-- Floating Tutorial Card: Compact, purely informational, unobtrusive on mobile -->
+    <!-- Consistently Located Bottom Tutorial Card: Anchored at the bottom center of the screen -->
     <div id="tour-tooltip-card"
-         class="fixed z-50 bg-white border border-gray-400 shadow-xl p-3 sm:p-4 w-[92vw] max-w-sm transition-all duration-150 text-xs text-gray-900 flex flex-col space-y-2.5">
+         class="fixed bottom-3 sm:bottom-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 bg-white border border-gray-400 shadow-2xl p-3 sm:p-4 w-auto sm:w-[480px] max-w-[calc(100vw-24px)] text-xs text-gray-900 flex flex-col space-y-2.5">
         
         <!-- Header -->
         <div class="flex items-center justify-between pb-1.5 border-b border-gray-200">
             <div class="flex items-center space-x-1.5 min-w-0">
                 <span class="inline-block w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0"></span>
                 <span id="tour-step-indicator" class="font-mono text-[11px] font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    Tutorial 1 of 7
+                    Tutorial 1 of 12
                 </span>
-                <span id="tour-element-badge" class="bg-gray-100 text-gray-600 font-medium text-[10px] px-1.5 py-0.2 truncate">
+                <span id="tour-element-badge" class="bg-gray-100 text-gray-700 font-medium text-[10px] px-1.5 py-0.2 truncate border border-gray-200">
                     Shopping List
                 </span>
             </div>
@@ -48,7 +48,7 @@
         </div>
 
         <!-- Dynamic Step Content Panes (Purely Informational) -->
-        <div class="min-h-[58px]">
+        <div class="min-h-[54px]">
             
             <!-- Step 1: Shopping List -->
             <div id="tour-pane-0" class="tour-pane space-y-1">
@@ -60,18 +60,38 @@
                 </p>
             </div>
 
-            <!-- Step 2: Sorting by Priority & Aisle -->
+            <!-- Step 2: Marking Items as High Priority -->
             <div id="tour-pane-1" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
+                    Marking items as High Priority
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Flag urgent or essential items with Priority (🚩) when adding them or directly from any item row. Priority items are visually highlighted with a crimson tag.
+                </p>
+            </div>
+
+            <!-- Step 3: Setting Store Location & Populating Aisles -->
+            <div id="tour-pane-2" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
+                    Setting store location & populating aisles
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Select your supermarket from the dropdown or click Near Me / Map to locate nearby stores. Setting a store automatically queries store directory data to populate exact aisle and bay locations for your list items.
+                </p>
+            </div>
+
+            <!-- Step 4: Sorting by Priority & Store Aisle -->
+            <div id="tour-pane-3" class="tour-pane space-y-1 hidden">
                 <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Sorting by priority and store aisle
                 </h3>
                 <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
-                    Items are automatically grouped by aisle so you can move smoothly through the store. Flagging an item with Priority elevates it to the top of its section.
+                    Items are automatically grouped by aisle so you can move smoothly through the store. Choosing Priority sort elevates all flagged items to the top of each section.
                 </p>
             </div>
 
-            <!-- Step 3: Pantry Check -->
-            <div id="tour-pane-2" class="tour-pane space-y-1 hidden">
+            <!-- Step 5: Pantry Check -->
+            <div id="tour-pane-4" class="tour-pane space-y-1 hidden">
                 <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Pantry check before you shop
                 </h3>
@@ -80,8 +100,8 @@
                 </p>
             </div>
 
-            <!-- Step 4: Recipe Search -->
-            <div id="tour-pane-3" class="tour-pane space-y-1 hidden">
+            <!-- Step 6: Recipe Search -->
+            <div id="tour-pane-5" class="tour-pane space-y-1 hidden">
                 <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Search and filter recipes
                 </h3>
@@ -90,8 +110,18 @@
                 </p>
             </div>
 
-            <!-- Step 5: Import / Create Recipes -->
-            <div id="tour-pane-4" class="tour-pane space-y-1 hidden">
+            <!-- Step 7: "All Cuisines" Pulldown Menu -->
+            <div id="tour-pane-6" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
+                    All Cuisines filter pulldown
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Pull down All Cuisines to explore dishes by culinary tradition (e.g. Italian, Mexican, Asian). Tap any cuisine to include it (+), or tap minus (-) to exclude specific culinary traditions.
+                </p>
+            </div>
+
+            <!-- Step 8: Import / Create Recipes -->
+            <div id="tour-pane-7" class="tour-pane space-y-1 hidden">
                 <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Import from a URL or create a recipe
                 </h3>
@@ -100,8 +130,28 @@
                 </p>
             </div>
 
-            <!-- Step 6: Workspaces & Collaboration -->
-            <div id="tour-pane-5" class="tour-pane space-y-1 hidden">
+            <!-- Step 9: Meal Plans & Adding Dishes -->
+            <div id="tour-pane-8" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
+                    Weekly meal plans & adding dishes
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Plan your meals for the week (e.g. Monday Dinner, Taco Tuesday). Type any recipe into a meal to add dishes and automatically send required ingredients to your shopping list.
+                </p>
+            </div>
+
+            <!-- Step 10: Ingredient Availability -->
+            <div id="tour-pane-9" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
+                    Ingredient availability for each dish
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Color-coded status dots show if dish ingredients are ready to cook: green (✓) when all ingredients are in your pantry or cart, and amber or gray when items still need to be bought.
+                </p>
+            </div>
+
+            <!-- Step 11: Workspaces & Collaboration -->
+            <div id="tour-pane-10" class="tour-pane space-y-1 hidden">
                 <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Organize with workspaces
                 </h3>
@@ -110,8 +160,8 @@
                 </p>
             </div>
 
-            <!-- Step 7: Preset Lists & Schedules -->
-            <div id="tour-pane-6" class="tour-pane space-y-1 hidden">
+            <!-- Step 12: Preset Lists & Schedules -->
+            <div id="tour-pane-11" class="tour-pane space-y-1 hidden">
                 <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Preset lists and recurring schedules
                 </h3>
@@ -122,7 +172,7 @@
 
         </div>
 
-        <!-- Controls -->
+        <!-- Controls: Fixed at bottom of card -->
         <div class="pt-2 border-t border-gray-200 flex items-center justify-between">
             <button type="button"
                     onclick="prevTourStep()"
@@ -152,7 +202,7 @@
 
 <script>
     let currentTourStep = 0;
-    const totalTourSteps = 7;
+    const totalTourSteps = 12;
 
     // Navigation and target configurations for each step
     const tourStepConfigs = [
@@ -168,7 +218,31 @@
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
             }
         },
-        // Step 1: Store Aisles & Priority Sorting
+        // Step 1: Marking Items as High Priority (🚩)
+        {
+            path: '{% url "shopping:list" %}',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) && !p.includes('/pantry') && !p.includes('/preset');
+            },
+            selector: '#add-item-priority-label, button[title*="High Priority"], label:has(input[name="priority"]), #section-groups-container .item-row',
+            badge: 'High Priority Items',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 2: Setting Store Location & Populating Aisles
+        {
+            path: '{% url "shopping:list" %}',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) && !p.includes('/pantry') && !p.includes('/preset');
+            },
+            selector: '#store-select-container, #store-selector-select, button[onclick*="openStorePickerModal"]',
+            badge: 'Store Location & Aisles',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 3: Store Aisles & Priority Sorting
         {
             path: '{% url "shopping:list" %}',
             pathCheck: function(p) {
@@ -180,7 +254,7 @@
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
             }
         },
-        // Step 2: Pantry Check (navigates to Pantry Check tab/view)
+        // Step 4: Pantry Check (navigates to Pantry Check tab/view)
         {
             path: '{% url "shopping:pantry_check" %}',
             pathCheck: function(p) {
@@ -192,7 +266,7 @@
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
             }
         },
-        // Step 3: Recipe Search & Filters (navigates to Recipes tab)
+        // Step 5: Recipe Search & Filters (navigates to Recipes tab)
         {
             path: '{% url "recipes:list" %}',
             pathCheck: function(p) {
@@ -202,9 +276,26 @@
             badge: 'Recipe Search & Filters',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
             }
         },
-        // Step 4: Recipe Import & Creation (on Recipes tab, spotlights actions)
+        // Step 6: "All Cuisines" Pulldown Menu (opens and explains cuisine filter)
+        {
+            path: '{% url "recipes:list" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/recipes') && !p.includes('/create');
+            },
+            selector: '#facet-menu-cuisine, [data-facet="cuisine"], #facet-btn-cuisine',
+            badge: 'All Cuisines Pulldown',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                const menu = document.getElementById('facet-menu-cuisine');
+                if (menu && menu.classList.contains('hidden') && typeof toggleFacetMenu === 'function') {
+                    toggleFacetMenu('cuisine');
+                }
+            }
+        },
+        // Step 7: Recipe Import & Creation (on Recipes tab, spotlights action buttons)
         {
             path: '{% url "recipes:list" %}',
             pathCheck: function(p) {
@@ -214,9 +305,34 @@
             badge: 'Import & Creation',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
             }
         },
-        // Step 5: Workspaces & Collaboration (opens the workspace dropdown menu)
+        // Step 8: Meal Plans & Adding Dishes (navigates to Meal Plans tab)
+        {
+            path: '{% url "mealplans:detail" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/mealplans');
+            },
+            selector: '#mealplan-content form[action*="add_dish"], #add-meal-container, .meal-card, #mealplan-content, #main-content',
+            badge: 'Weekly Meal Plans',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 9: Ingredient Availability for Each Dish (on Meal Plans tab)
+        {
+            path: '{% url "mealplans:detail" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/mealplans');
+            },
+            selector: '[role="img"][aria-label*="Status:"], .meal-card, #mealplan-content',
+            badge: 'Ingredient Readiness',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 10: Workspaces & Collaboration (opens the workspace dropdown menu)
         {
             path: null,
             pathCheck: function() {
@@ -231,7 +347,7 @@
                 }
             }
         },
-        // Step 6: Preset Lists & Recurring Schedules (navigates to Preset Lists tab)
+        // Step 11: Preset Lists & Recurring Schedules (navigates to Preset Lists tab)
         {
             path: '{% url "shopping:preset_list_index" %}',
             pathCheck: function(p) {
@@ -248,12 +364,18 @@
     function openWalkthroughModal(initialStep = 0) {
         const modal = document.getElementById('walkthrough-modal');
         if (!modal) return;
+
+        // Save starting page if not already recorded
+        if (!sessionStorage.getItem('tour_origin_url')) {
+            sessionStorage.setItem('tour_origin_url', window.location.pathname + window.location.search);
+        }
+
         modal.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
         goToTourStep(initialStep);
     }
 
-    function closeWalkthroughModal() {
+    function closeWalkthroughModal(returnToOrigin = true) {
         const modal = document.getElementById('walkthrough-modal');
         if (!modal) return;
         modal.classList.add('hidden');
@@ -262,6 +384,23 @@
         // Close workspace dropdown if open
         if (typeof closeWorkspaceDropdown === 'function') {
             closeWorkspaceDropdown();
+        }
+        // Close cuisine facet menu if open
+        if (typeof closeFacetMenu === 'function') {
+            closeFacetMenu('cuisine');
+        }
+
+        // Return user to the exact navigation tab where they started the tour
+        const originUrl = sessionStorage.getItem('tour_origin_url');
+        sessionStorage.removeItem('tour_origin_url');
+
+        if (returnToOrigin && originUrl) {
+            // Strip any tour parameter from origin URL so tour does not reopen
+            const cleanOrigin = originUrl.replace(/[?&]tour=\d+/, '').replace(/\?$/, '');
+            if (cleanOrigin && cleanOrigin !== (window.location.pathname + window.location.search)) {
+                window.location.href = cleanOrigin;
+                return;
+            }
         }
 
         // Remove tour query param without full reload
@@ -283,7 +422,7 @@
             return;
         }
 
-        // Trigger onEnter hook (e.g. opening the workspace dropdown)
+        // Trigger onEnter hook (e.g. opening dropdowns)
         if (config.onEnter) {
             config.onEnter();
         }
@@ -325,8 +464,8 @@
 
         // Spotlight target on the live page
         setTimeout(function() {
-            positionSpotlightAndTooltip(config.selector);
-        }, 60);
+            positionSpotlight(config.selector);
+        }, 70);
     }
 
     function nextTourStep() {
@@ -341,7 +480,8 @@
         }
     }
 
-    function positionSpotlightAndTooltip(selector) {
+    // Positions the unblurred spotlight quadrants & green border around the target element
+    function positionSpotlight(selector) {
         let targetEl = null;
         if (selector) {
             const parts = selector.split(',');
@@ -359,14 +499,10 @@
         const leftBackdrop = document.getElementById('tour-backdrop-left');
         const rightBackdrop = document.getElementById('tour-backdrop-right');
         const border = document.getElementById('tour-spotlight-border');
-        const card = document.getElementById('tour-tooltip-card');
-        if (!topBackdrop || !bottomBackdrop || !leftBackdrop || !rightBackdrop || !border || !card) return;
-
-        const isMobile = window.innerWidth < 640;
-        const cardWidth = Math.min(window.innerWidth * 0.92, 384);
-        const cardHeight = card.offsetHeight || 140;
+        if (!topBackdrop || !bottomBackdrop || !leftBackdrop || !rightBackdrop || !border) return;
 
         if (targetEl) {
+            // Scroll target element towards center of viewport so it is never covered by the bottom banner
             targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
             const rect = targetEl.getBoundingClientRect();
             const pad = 6;
@@ -403,38 +539,6 @@
             border.style.top = y + 'px';
             border.style.width = w + 'px';
             border.style.height = h + 'px';
-
-            // Smart tooltip positioning: compact card never obscures the green framed element
-            if (isMobile) {
-                card.style.left = '50%';
-                card.style.transform = 'translateX(-50%)';
-                card.style.width = cardWidth + 'px';
-
-                // If spotlight is in upper portion of screen, place card at bottom
-                if ((y + h) < (window.innerHeight * 0.55)) {
-                    card.style.top = 'auto';
-                    card.style.bottom = '16px';
-                } else {
-                    card.style.top = '16px';
-                    card.style.bottom = 'auto';
-                }
-            } else {
-                // Desktop: anchor neatly below or above the target element
-                const spaceBelow = window.innerHeight - (y + h);
-                let cardTop;
-                if (spaceBelow >= cardHeight + 20 || spaceBelow >= y) {
-                    cardTop = Math.min(window.innerHeight - cardHeight - 16, y + h + 10);
-                } else {
-                    cardTop = Math.max(16, y - cardHeight - 10);
-                }
-
-                let cardLeft = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, x));
-                card.style.top = cardTop + 'px';
-                card.style.bottom = 'auto';
-                card.style.left = cardLeft + 'px';
-                card.style.transform = 'none';
-                card.style.width = cardWidth + 'px';
-            }
         } else {
             // Fallback when element is not present on current page
             topBackdrop.style.top = '0px';
@@ -448,20 +552,14 @@
 
             border.classList.add('hidden');
             border.style.display = 'none';
-
-            card.style.top = '50%';
-            card.style.bottom = 'auto';
-            card.style.left = '50%';
-            card.style.transform = 'translate(-50%, -50%)';
-            card.style.width = cardWidth + 'px';
         }
     }
 
-    // Reposition on window resize or scroll
+    // Reposition spotlight on window resize
     window.addEventListener('resize', function() {
         const modal = document.getElementById('walkthrough-modal');
         if (modal && !modal.classList.contains('hidden') && tourStepConfigs[currentTourStep]) {
-            positionSpotlightAndTooltip(tourStepConfigs[currentTourStep].selector);
+            positionSpotlight(tourStepConfigs[currentTourStep].selector);
         }
     });
 

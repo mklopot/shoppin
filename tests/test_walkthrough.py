@@ -19,15 +19,21 @@ def test_walkthrough_modal_content_renders():
     """Verify walkthrough overlay renders all tutorial steps with unblurred spotlight and informational text."""
     html = render_to_string("core/partials/walkthrough_modal.html")
 
-    # Verify all tutorial steps are present
+    # Verify all 12 tutorial steps are present
     assert "Shopping list with real-time transitions" in html
     assert "the list updates in real time via Websockets" in html
+    assert "Marking items as High Priority" in html
+    assert "Setting store location & populating aisles" in html
     assert "Sorting by priority and store aisle" in html
-    assert "Pantry check" in html
+    assert "Pantry check before you shop" in html
     assert "Search and filter recipes" in html
+    assert "All Cuisines filter pulldown" in html
     assert "Import from a URL or create a recipe" in html
+    assert "Weekly meal plans & adding dishes" in html
+    assert "Ingredient availability for each dish" in html
     assert "Organize with workspaces" in html
     assert "Preset lists and recurring schedules" in html
+    assert "totalTourSteps = 12" in html
 
     # Verify unblurred spotlight quadrants & green spotlight border
     assert 'id="walkthrough-modal"' in html
@@ -40,7 +46,7 @@ def test_walkthrough_modal_content_renders():
     assert "openWalkthroughModal" in html
     assert "closeWalkthroughModal" in html
     assert "goToTourStep" in html
-    assert "positionSpotlightAndTooltip" in html
+    assert "positionSpotlight" in html
     assert "tourStepConfigs" in html
 
 
@@ -69,6 +75,19 @@ def test_tour_navigation_tab_destinations_and_elements(db):
     assert pantry_res.status_code == 200
     pantry_html = pantry_res.content.decode("utf-8")
     assert 'id="shopping-list-content"' in pantry_html
+
+    # 4. Shopping list page has store selector container and priority label
+    list_res = client.get(reverse("shopping:list"))
+    assert list_res.status_code == 200
+    list_html = list_res.content.decode("utf-8")
+    assert 'id="store-select-container"' in list_html
+    assert 'id="add-item-priority-label"' in list_html
+
+    # 5. Meal plan detail page has add-meal-container
+    mealplan_res = client.get(reverse("mealplans:detail"))
+    assert mealplan_res.status_code == 200
+    mealplan_html = mealplan_res.content.decode("utf-8")
+    assert 'id="add-meal-container"' in mealplan_html
 
 
 @pytest.mark.django_db

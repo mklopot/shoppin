@@ -1,234 +1,132 @@
-<!-- Guided In-App Site Tutorial Overlay with Dynamic Spotlight & Backdrop Blur -->
+<!-- Guided In-App Site Tutorial Overlay with Dynamic Spotlight (Unblurred Target) -->
 <div id="walkthrough-modal"
      role="dialog"
      aria-modal="true"
      aria-labelledby="tour-step-title"
      class="hidden fixed inset-0 z-50 overflow-hidden">
 
-    <!-- SVG Mask Backdrop: blurs and dims everything outside the active spotlight element -->
-    <svg id="tour-backdrop-svg"
-         class="fixed inset-0 w-full h-full pointer-events-auto"
-         style="backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);">
-        <defs>
-            <mask id="tour-spotlight-mask">
-                <!-- White reveals the blurred dark overlay -->
-                <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                <!-- Black cuts out the spotlight window over the real site element -->
-                <rect id="tour-cutout" x="0" y="0" width="0" height="0" rx="4" fill="black" />
-            </mask>
-        </defs>
-        <rect x="0" y="0" width="100%" height="100%" fill="rgba(0, 0, 0, 0.65)" mask="url(#tour-spotlight-mask)" />
-    </svg>
+    <!-- 4-Quadrant Backdrop: Blurs & dims surrounding areas only; leaves the framed target 100% crisp and unblurred -->
+    <div id="tour-backdrop-top"
+         class="fixed top-0 left-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         onclick="closeWalkthroughModal()"></div>
+    <div id="tour-backdrop-bottom"
+         class="fixed left-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         onclick="closeWalkthroughModal()"></div>
+    <div id="tour-backdrop-left"
+         class="fixed left-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         onclick="closeWalkthroughModal()"></div>
+    <div id="tour-backdrop-right"
+         class="fixed bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         onclick="closeWalkthroughModal()"></div>
 
-    <!-- Glowing Accent Spotlight Border around the active element -->
+    <!-- Glowing Accent Spotlight Border around the active element (Green Frame) -->
     <div id="tour-spotlight-border"
-         class="fixed pointer-events-none border-2 border-emerald-400 ring-4 ring-emerald-500/30 rounded transition-all duration-200 z-50 hidden"></div>
+         class="fixed pointer-events-none border-2 border-emerald-400 ring-4 ring-emerald-500/30 rounded transition-all duration-150 z-50 hidden"></div>
 
-    <!-- Floating Tutorial Card: Anchored directly next to the highlighted element -->
+    <!-- Floating Tutorial Card: Compact, purely informational, unobtrusive on mobile -->
     <div id="tour-tooltip-card"
-         class="fixed z-50 bg-white border border-gray-400 shadow-2xl p-4 sm:p-5 w-[94vw] max-w-md transition-all duration-200 text-xs text-gray-900 flex flex-col space-y-3.5">
+         class="fixed z-50 bg-white border border-gray-400 shadow-xl p-3 sm:p-4 w-[92vw] max-w-sm transition-all duration-150 text-xs text-gray-900 flex flex-col space-y-2.5">
         
         <!-- Header -->
-        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
-            <div class="flex items-center space-x-2">
-                <span class="inline-block w-2 h-2 rounded-full bg-emerald-600"></span>
-                <span id="tour-step-indicator" class="font-mono text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+        <div class="flex items-center justify-between pb-1.5 border-b border-gray-200">
+            <div class="flex items-center space-x-1.5 min-w-0">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                <span id="tour-step-indicator" class="font-mono text-[11px] font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">
                     Tutorial 1 of 7
                 </span>
-                <span id="tour-element-badge" class="bg-gray-100 text-gray-600 font-medium text-[10px] px-1.5 py-0.5 rounded-none">
+                <span id="tour-element-badge" class="bg-gray-100 text-gray-600 font-medium text-[10px] px-1.5 py-0.2 truncate">
                     Shopping List
                 </span>
             </div>
             <button type="button"
                     onclick="closeWalkthroughModal()"
                     aria-label="Exit tutorial"
-                    class="text-gray-400 hover:text-gray-900 font-bold text-base leading-none focus:outline-none">
+                    class="text-gray-400 hover:text-gray-900 font-bold text-lg leading-none p-0.5 ml-2 focus:outline-none">
                 &times;
             </button>
         </div>
 
-        <!-- Dynamic Step Content Panes -->
-        <div class="space-y-3 min-h-[140px]">
+        <!-- Dynamic Step Content Panes (Purely Informational) -->
+        <div class="min-h-[58px]">
             
-            <!-- Step 1: Shopping List Transitions -->
-            <div id="tour-pane-0" class="tour-pane space-y-2.5">
-                <h3 id="tour-step-title" class="text-sm font-bold text-gray-950">
+            <!-- Step 1: Shopping List -->
+            <div id="tour-pane-0" class="tour-pane space-y-1">
+                <h3 id="tour-step-title" class="text-xs sm:text-sm font-bold text-gray-950">
                     Shopping list with real-time transitions
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Tap an item to toggle between needed and completed. If another workspace member makes changes, the list updates in real time via Websockets.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Tap items to mark them as bought or needed. When anyone in your workspace makes changes, the list updates in real time via Websockets.
                 </p>
-                
-                <!-- Live Interactive Transition Demonstration -->
-                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-2">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Try the tactile response:</div>
-                    <div id="demo-item-row" class="item-row py-1.5 px-2.5 border border-gray-300 bg-white flex items-center justify-between text-xs transition-colors">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-gray-400 font-mono select-none" aria-hidden="true">⋮⋮</span>
-                            <span id="demo-item-title" class="font-semibold text-gray-900 text-sm">Hass Avocados (3 pack)</span>
-                        </div>
-                        <button type="button"
-                                id="demo-toggle-btn"
-                                onclick="toggleDemoItemTransition()"
-                                class="border border-gray-800 bg-gray-900 text-white font-bold px-2.5 py-0.5 text-xs">
-                            Need
-                        </button>
-                    </div>
-                    <div id="demo-transition-note" class="text-[11px] text-gray-500">
-                        Tap "Need" above to see the 0ms optimistic strikethrough transition.
-                    </div>
-                </div>
             </div>
 
             <!-- Step 2: Sorting by Priority & Aisle -->
-            <div id="tour-pane-1" class="tour-pane space-y-2.5 hidden">
-                <h3 class="text-sm font-bold text-gray-950">
+            <div id="tour-pane-1" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Sorting by priority and store aisle
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Items are grouped by store aisle so you can move smoothly through the store. Flagging an item with Priority elevates it to the top of its section.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Items are automatically grouped by aisle so you can move smoothly through the store. Flagging an item with Priority elevates it to the top of its section.
                 </p>
-
-                <!-- Interactive Priority Sorting Demonstration -->
-                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Produce Aisle</span>
-                        <button type="button"
-                                id="demo-priority-sort-btn"
-                                onclick="toggleDemoPrioritySort()"
-                                class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 px-2 py-0.5 text-[11px] font-semibold">
-                            Sort by Priority
-                        </button>
-                    </div>
-                    <div id="demo-priority-list" class="space-y-1">
-                        <div class="py-1 px-2 bg-white border border-gray-200 text-gray-700 flex justify-between items-center text-xs">
-                            <span>Bananas</span>
-                            <span class="text-[10px] text-gray-500">Standard</span>
-                        </div>
-                        <div class="py-1 px-2 bg-amber-50 border border-amber-300 text-amber-950 flex justify-between items-center text-xs">
-                            <span class="font-bold flex items-center gap-1"><span>🚩</span><span>Hass Avocados (Priority)</span></span>
-                            <span class="text-[10px] bg-amber-200 font-bold px-1.5 py-0.2">Priority Flag</span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 3: Pantry Check -->
-            <div id="tour-pane-2" class="tour-pane space-y-2.5 hidden">
-                <h3 class="text-sm font-bold text-gray-950">
+            <div id="tour-pane-2" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Pantry check before you shop
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Switch to Pantry Check in the top bar before leaving home. Tap <strong>Have</strong> for ingredients you already have, and <strong>Need</strong> to send missing items directly to your shopping list.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Switch to Pantry Check before leaving home to audit your pantry. Mark items as Have to keep them in storage, or Need to add them to your shopping list.
                 </p>
-                <div class="border border-blue-200 bg-blue-50/60 p-2.5 space-y-1.5">
-                    <div class="text-[11px] font-bold text-blue-950">Pantry Audit:</div>
-                    <div class="flex items-center justify-between p-1.5 bg-white border border-gray-200 text-xs">
-                        <span class="font-medium text-gray-800">Olive Oil</span>
-                        <span class="bg-gray-800 text-white font-bold text-[10px] px-2 py-0.5">Have</span>
-                    </div>
-                    <div class="flex items-center justify-between p-1.5 bg-white border border-blue-300 text-xs">
-                        <span class="font-medium text-gray-800">Soy Sauce</span>
-                        <span class="bg-blue-700 text-white font-bold text-[10px] px-2 py-0.5">Need &rarr; In Cart</span>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 4: Recipe Search -->
-            <div id="tour-pane-3" class="tour-pane space-y-2.5 hidden">
-                <h3 class="text-sm font-bold text-gray-950">
+            <div id="tour-pane-3" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Search and filter recipes
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Filter recipes by cuisine, meal type, diet, and equipment. You can include (<span class="font-mono font-bold text-gray-900">+</span>) or exclude (<span class="font-mono font-bold text-gray-900">-</span>) specific tags. Public recipes can be viewed and searched without logging in.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Filter recipes by cuisine, meal type, diet, and equipment. Use (+) to require tags or (-) to exclude ingredients. Recipes can be browsed without logging in.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5">
-                    <div class="flex items-center space-x-1.5 bg-white border border-gray-300 px-2 py-1 text-xs">
-                        <span class="text-gray-400">🔍</span>
-                        <span class="font-mono text-gray-800">casserole, -dairy</span>
-                    </div>
-                    <div class="flex flex-wrap gap-1 pt-1">
-                        <span class="bg-gray-200 text-gray-800 text-[10px] px-1.5 py-0.5 font-medium">+ Italian</span>
-                        <span class="bg-gray-200 text-gray-800 text-[10px] px-1.5 py-0.5 font-medium">+ Vegetarian</span>
-                        <span class="bg-rose-100 text-rose-900 text-[10px] px-1.5 py-0.5 font-medium">- Shellfish</span>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 5: Import / Create Recipes -->
-            <div id="tour-pane-4" class="tour-pane space-y-2.5 hidden">
-                <h3 class="text-sm font-bold text-gray-950">
+            <div id="tour-pane-4" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Import from a URL or create a recipe
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Paste a link from supported recipe websites to automatically extract ingredients, portions, instructions, and photo, or write custom dishes in the editor.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Paste a web URL from cooking websites to automatically import ingredients and instructions, or write custom dishes in the recipe editor.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5 text-xs">
-                    <div class="flex space-x-1.5">
-                        <div class="flex-1 bg-white border border-gray-300 px-2 py-1 text-gray-600 truncate font-mono text-[11px]">
-                            https://example.com/recipe
-                        </div>
-                        <span class="bg-gray-900 text-white font-semibold px-2 py-1 text-xs">Import</span>
-                    </div>
-                    <div class="bg-white border border-gray-200 p-1.5 text-[11px] text-gray-600">
-                        Extracts: portions, ingredients, instructions, and photo
-                    </div>
-                </div>
             </div>
 
             <!-- Step 6: Workspaces & Collaboration -->
-            <div id="tour-pane-5" class="tour-pane space-y-2.5 hidden">
-                <h3 class="text-sm font-bold text-gray-950">
+            <div id="tour-pane-5" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Organize with workspaces
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Workspaces separate shopping lists, pantry checks, and meal plans for different households or contexts (e.g. Home, Cabin, Office). Invite collaborators with owner, editor, or viewer access.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Workspaces separate lists for home, work, or different households. Share your workspace with family members or roommates to collaborate on shopping in real time.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5 text-xs">
-                    <div class="flex items-center justify-between border-b border-gray-200 pb-1">
-                        <span class="font-bold text-gray-900">Home Kitchen</span>
-                        <span class="text-blue-700 font-medium text-[11px]">+ New Workspace</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-                        <div class="bg-white border border-gray-200 p-1.5 flex justify-between">
-                            <span>Alice</span>
-                            <span class="text-gray-500 font-medium">Owner</span>
-                        </div>
-                        <div class="bg-white border border-gray-200 p-1.5 flex justify-between">
-                            <span>Bob</span>
-                            <span class="text-gray-800 font-bold">Editor</span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 7: Preset Lists & Schedules -->
-            <div id="tour-pane-6" class="tour-pane space-y-2.5 hidden">
-                <h3 class="text-sm font-bold text-gray-950">
+            <div id="tour-pane-6" class="tour-pane space-y-1 hidden">
+                <h3 class="text-xs sm:text-sm font-bold text-gray-950">
                     Preset lists and recurring schedules
                 </h3>
-                <p class="text-gray-600 leading-normal">
-                    Save reusable lists of items for common routines. You can configure a recurrence schedule to load items into your active list at set days and times.
+                <p class="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                    Save reusable lists for recurring routines. Configure automated recurrence schedules to reload preset items into your list on set days and times.
                 </p>
-                <div class="border border-gray-300 bg-gray-50 p-2.5 space-y-1.5 text-xs">
-                    <div class="flex items-center justify-between border-b border-gray-200 pb-1">
-                        <span class="font-bold text-gray-900">Weekly Grocery Basics</span>
-                        <span class="text-[10px] bg-gray-200 text-gray-800 px-1.5 py-0.2 font-medium">Scheduled</span>
-                    </div>
-                    <div class="text-[11px] text-gray-600 bg-white p-1.5 border border-gray-200">
-                        Recurs every Sunday at 08:00 AM &bull; Loads into active shopping list
-                    </div>
-                </div>
             </div>
 
         </div>
 
         <!-- Controls -->
-        <div class="bg-gray-50 -mx-4 -mb-4 sm:-mx-5 sm:-mb-5 p-3 sm:p-3.5 border-t border-gray-200 flex items-center justify-between">
+        <div class="pt-2 border-t border-gray-200 flex items-center justify-between">
             <button type="button"
                     onclick="prevTourStep()"
                     id="tour-prev-btn"
-                    class="px-3 py-1.5 text-xs font-semibold border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    class="px-2.5 py-1 text-xs font-semibold border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
                     disabled>
                 &larr; Back
             </button>
@@ -236,13 +134,13 @@
             <div class="flex items-center space-x-2">
                 <button type="button"
                         onclick="closeWalkthroughModal()"
-                        class="px-2.5 py-1.5 text-xs text-gray-600 hover:text-gray-900 font-medium">
-                    Exit Tour
+                        class="px-2 py-1 text-xs text-gray-500 hover:text-gray-900 font-medium">
+                    Exit
                 </button>
                 <button type="button"
                         onclick="nextTourStep()"
                         id="tour-next-btn"
-                        class="px-3.5 py-1.5 text-xs font-semibold bg-gray-900 hover:bg-black text-white shadow-sm">
+                        class="px-3 py-1 text-xs font-semibold bg-gray-900 hover:bg-black text-white shadow-sm">
                     Next &rarr;
                 </button>
             </div>
@@ -260,9 +158,9 @@
         // Step 1: Shopping list row / to-buy list
         '#section-groups-container .item-row, #shopping-list-content, #main-content',
         // Step 2: Store aisles & sorting controls
-        '#section-groups-container .section-group-block, [aria-label="Sort order"], #section-groups-container',
+        '[aria-label="Sort order"], #section-groups-container .section-group-block, #section-groups-container',
         // Step 3: Pantry Check navigation tab
-        'header nav a[href*="pantry"]',
+        'header nav a[href*="pantry"], a[data-mode-switch="pantry"]',
         // Step 4: Recipes navigation tab
         'header nav a[href*="recipes"]',
         // Step 5: Add item / import
@@ -367,122 +265,106 @@
             }
         }
 
-        const cutout = document.getElementById('tour-cutout');
+        const topBackdrop = document.getElementById('tour-backdrop-top');
+        const bottomBackdrop = document.getElementById('tour-backdrop-bottom');
+        const leftBackdrop = document.getElementById('tour-backdrop-left');
+        const rightBackdrop = document.getElementById('tour-backdrop-right');
         const border = document.getElementById('tour-spotlight-border');
         const card = document.getElementById('tour-tooltip-card');
-        if (!cutout || !border || !card) return;
+        if (!topBackdrop || !bottomBackdrop || !leftBackdrop || !rightBackdrop || !border || !card) return;
+
+        const isMobile = window.innerWidth < 640;
+        const cardWidth = Math.min(window.innerWidth * 0.92, 384);
+        const cardHeight = card.offsetHeight || 140;
 
         if (targetEl) {
-            targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
             const rect = targetEl.getBoundingClientRect();
             const pad = 6;
             const x = Math.max(0, rect.left - pad);
             const y = Math.max(0, rect.top - pad);
-            const w = rect.width + (pad * 2);
-            const h = rect.height + (pad * 2);
+            const w = Math.min(window.innerWidth - x, rect.width + (pad * 2));
+            const h = Math.min(window.innerHeight - y, rect.height + (pad * 2));
 
-            cutout.setAttribute('x', x);
-            cutout.setAttribute('y', y);
-            cutout.setAttribute('width', w);
-            cutout.setAttribute('height', h);
+            // Position 4 backdrop quadrants around the spotlight rectangle (cutout is completely unblurred)
+            topBackdrop.style.top = '0px';
+            topBackdrop.style.left = '0px';
+            topBackdrop.style.width = '100vw';
+            topBackdrop.style.height = y + 'px';
 
+            bottomBackdrop.style.top = (y + h) + 'px';
+            bottomBackdrop.style.left = '0px';
+            bottomBackdrop.style.width = '100vw';
+            bottomBackdrop.style.height = Math.max(0, window.innerHeight - (y + h)) + 'px';
+
+            leftBackdrop.style.top = y + 'px';
+            leftBackdrop.style.left = '0px';
+            leftBackdrop.style.width = x + 'px';
+            leftBackdrop.style.height = h + 'px';
+
+            rightBackdrop.style.top = y + 'px';
+            rightBackdrop.style.left = (x + w) + 'px';
+            rightBackdrop.style.width = Math.max(0, window.innerWidth - (x + w)) + 'px';
+            rightBackdrop.style.height = h + 'px';
+
+            // Green spotlight frame around the crisp, unblurred element
+            border.classList.remove('hidden');
             border.style.display = 'block';
             border.style.left = x + 'px';
             border.style.top = y + 'px';
             border.style.width = w + 'px';
             border.style.height = h + 'px';
 
-            // Smart tooltip positioning
-            const cardWidth = Math.min(window.innerWidth * 0.94, 448);
-            const cardHeight = 310;
-            const spaceBelow = window.innerHeight - (y + h);
-            const spaceAbove = y;
+            // Smart tooltip positioning: compact card never obscures the green framed element
+            if (isMobile) {
+                card.style.left = '50%';
+                card.style.transform = 'translateX(-50%)';
+                card.style.width = cardWidth + 'px';
 
-            let cardTop;
-            if (spaceBelow >= cardHeight || spaceBelow >= spaceAbove) {
-                cardTop = Math.min(window.innerHeight - cardHeight - 16, y + h + 12);
+                // If spotlight is in upper portion of screen, place card at bottom
+                if ((y + h) < (window.innerHeight * 0.55)) {
+                    card.style.top = 'auto';
+                    card.style.bottom = '16px';
+                } else {
+                    card.style.top = '16px';
+                    card.style.bottom = 'auto';
+                }
             } else {
-                cardTop = Math.max(16, y - cardHeight - 12);
-            }
+                // Desktop: anchor neatly below or above the target element
+                const spaceBelow = window.innerHeight - (y + h);
+                let cardTop;
+                if (spaceBelow >= cardHeight + 20 || spaceBelow >= y) {
+                    cardTop = Math.min(window.innerHeight - cardHeight - 16, y + h + 10);
+                } else {
+                    cardTop = Math.max(16, y - cardHeight - 10);
+                }
 
-            let cardLeft = Math.max(12, Math.min(window.innerWidth - cardWidth - 12, x));
-            card.style.top = cardTop + 'px';
-            card.style.left = cardLeft + 'px';
-            card.style.transform = 'none';
+                let cardLeft = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, x));
+                card.style.top = cardTop + 'px';
+                card.style.bottom = 'auto';
+                card.style.left = cardLeft + 'px';
+                card.style.transform = 'none';
+                card.style.width = cardWidth + 'px';
+            }
         } else {
-            // If element not on current view, center tooltip and clear cutout
-            cutout.setAttribute('width', 0);
-            cutout.setAttribute('height', 0);
+            // Fallback when element is not present on current page
+            topBackdrop.style.top = '0px';
+            topBackdrop.style.left = '0px';
+            topBackdrop.style.width = '100vw';
+            topBackdrop.style.height = '100vh';
+
+            bottomBackdrop.style.height = '0px';
+            leftBackdrop.style.width = '0px';
+            rightBackdrop.style.width = '0px';
+
+            border.classList.add('hidden');
             border.style.display = 'none';
 
             card.style.top = '50%';
+            card.style.bottom = 'auto';
             card.style.left = '50%';
             card.style.transform = 'translate(-50%, -50%)';
-        }
-    }
-
-    // Interactive Demo 1: Shopping list tactile transition
-    let demoItemState = 'need';
-    function toggleDemoItemTransition() {
-        const row = document.getElementById('demo-item-row');
-        const title = document.getElementById('demo-item-title');
-        const btn = document.getElementById('demo-toggle-btn');
-        const note = document.getElementById('demo-transition-note');
-        if (!row || !btn || !title) return;
-
-        if (demoItemState === 'need') {
-            demoItemState = 'got';
-            row.className = 'item-row py-1.5 px-2.5 border border-emerald-300 bg-emerald-50 flex items-center justify-between text-xs transition-colors';
-            title.className = 'font-semibold text-emerald-900 text-sm line-through';
-            btn.textContent = '✓ Got';
-            btn.className = 'border border-emerald-700 bg-emerald-700 text-white font-bold px-2.5 py-0.5 text-xs';
-            if (note) {
-                note.innerHTML = '<span class="text-emerald-800 font-bold">✓ 0ms transition:</span> Marked as Got and broadcast in real time via Websockets.';
-            }
-        } else {
-            demoItemState = 'need';
-            row.className = 'item-row py-1.5 px-2.5 border border-gray-300 bg-white flex items-center justify-between text-xs transition-colors';
-            title.className = 'font-semibold text-gray-900 text-sm';
-            btn.textContent = 'Need';
-            btn.className = 'border border-gray-800 bg-gray-900 text-white font-bold px-2.5 py-0.5 text-xs';
-            if (note) {
-                note.textContent = 'Tap "Need" above to see the 0ms optimistic strikethrough transition.';
-            }
-        }
-    }
-
-    // Interactive Demo 2: Priority sorting toggle
-    let demoPrioritySorted = false;
-    function toggleDemoPrioritySort() {
-        const list = document.getElementById('demo-priority-list');
-        const btn = document.getElementById('demo-priority-sort-btn');
-        if (!list || !btn) return;
-
-        demoPrioritySorted = !demoPrioritySorted;
-        if (demoPrioritySorted) {
-            list.innerHTML = `
-                <div class="py-1 px-2 bg-amber-50 border border-amber-300 text-amber-950 flex justify-between items-center text-xs">
-                    <span class="font-bold flex items-center gap-1"><span>🚩</span><span>Hass Avocados (Priority)</span></span>
-                    <span class="text-[10px] bg-amber-200 font-bold px-1.5 py-0.2">Top of Aisle</span>
-                </div>
-                <div class="py-1 px-2 bg-white border border-gray-200 text-gray-700 flex justify-between items-center text-xs">
-                    <span>Bananas</span>
-                    <span class="text-[10px] text-gray-500">Standard</span>
-                </div>
-            `;
-            btn.textContent = 'Standard Sort';
-        } else {
-            list.innerHTML = `
-                <div class="py-1 px-2 bg-white border border-gray-200 text-gray-700 flex justify-between items-center text-xs">
-                    <span>Bananas</span>
-                    <span class="text-[10px] text-gray-500">Standard</span>
-                </div>
-                <div class="py-1 px-2 bg-amber-50 border border-amber-300 text-amber-950 flex justify-between items-center text-xs">
-                    <span class="font-bold flex items-center gap-1"><span>🚩</span><span>Hass Avocados (Priority)</span></span>
-                    <span class="text-[10px] bg-amber-200 font-bold px-1.5 py-0.2">Priority Flag</span>
-                </div>
-            `;
-            btn.textContent = 'Sort by Priority';
+            card.style.width = cardWidth + 'px';
         }
     }
 

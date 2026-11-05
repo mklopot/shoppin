@@ -16,7 +16,7 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_walkthrough_modal_content_renders():
-    """Verify walkthrough overlay renders all tutorial steps with live demo controls and approved text."""
+    """Verify walkthrough overlay renders all tutorial steps with unblurred spotlight and informational text."""
     html = render_to_string("core/partials/walkthrough_modal.html")
 
     # Verify all tutorial steps are present
@@ -29,18 +29,18 @@ def test_walkthrough_modal_content_renders():
     assert "Organize with workspaces" in html
     assert "Preset lists and recurring schedules" in html
 
-    # Verify live interactive demo controls & spotlight mask
+    # Verify unblurred spotlight quadrants & green spotlight border
     assert 'id="walkthrough-modal"' in html
-    assert 'id="tour-backdrop-svg"' in html
-    assert 'id="tour-spotlight-mask"' in html
-    assert 'id="tour-cutout"' in html
+    assert 'id="tour-backdrop-top"' in html
+    assert 'id="tour-backdrop-bottom"' in html
+    assert 'id="tour-backdrop-left"' in html
+    assert 'id="tour-backdrop-right"' in html
     assert 'id="tour-spotlight-border"' in html
-    assert 'id="demo-item-row"' in html
-    assert "toggleDemoItemTransition" in html
-    assert "toggleDemoPrioritySort" in html
+    assert 'id="tour-tooltip-card"' in html
     assert "openWalkthroughModal" in html
     assert "closeWalkthroughModal" in html
     assert "goToTourStep" in html
+    assert "positionSpotlightAndTooltip" in html
 
 
 @pytest.mark.django_db

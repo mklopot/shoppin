@@ -134,7 +134,8 @@
                             <span class="font-bold text-[11px] uppercase tracking-wider text-gray-700">{{ f.label }} Filters</span>
                             <button type="button"
                                     onclick="closeFacetMenu('{{ f.key }}')"
-                                    class="text-gray-400 hover:text-gray-700 font-bold text-sm leading-none">&times;</button>
+                                    aria-label="Close {{ f.label }} filter menu"
+                                    class="text-gray-700 hover:text-gray-950 font-bold text-sm leading-none">&times;</button>
                         </div>
 
                         <!-- Search within facet options if > 5 options -->
@@ -142,8 +143,9 @@
                         <div class="p-1.5 border-b border-gray-100 bg-white">
                             <input type="text"
                                    placeholder="Filter {{ f.label }}..."
+                                   aria-label="Filter {{ f.label }} options"
                                    oninput="filterFacetList('{{ f.key }}', this.value)"
-                                   class="w-full px-2 py-1 text-xs border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-400">
+                                   class="w-full px-2 py-1 text-xs border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-gray-400 focus-visible:ring-2 focus-visible:ring-gray-900">
                         </div>
                         {% endif %}
 
@@ -204,9 +206,6 @@
     <!-- Results Grid Container -->
     {% include "recipes/partials/recipe_grid.html" %}
 </div>
-
-<!-- Modal Dialog Container -->
-<div id="modal-placeholder"></div>
 
 <!-- Modal: Import Recipe from Webpage URL -->
 <div id="import-url-modal" role="dialog" aria-modal="true" aria-labelledby="import-url-modal-title" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">

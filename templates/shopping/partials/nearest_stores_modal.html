@@ -22,7 +22,7 @@
                 </h3>
                 <p class="text-[11px] text-gray-600 mt-0.5">Click anywhere on the map, or type a city, ZIP, or address to find your store.</p>
             </div>
-            <button type="button" onclick="closeStorePickerModal()" aria-label="Close dialog" class="text-gray-400 hover:text-black font-bold text-2xl leading-none px-1 focus:outline-none cursor-pointer">
+            <button type="button" onclick="closeStorePickerModal()" aria-label="Close dialog" class="text-gray-700 hover:text-black font-bold text-2xl leading-none px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 cursor-pointer">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -34,7 +34,8 @@
                        id="store-search-query-input"
                        value="{{ query }}"
                        placeholder="Type city, ZIP code, street address, or store name (e.g. 80120, Littleton, Cap Hill, Safeway)..."
-                       class="flex-1 px-3 py-1.5 border border-gray-400 text-xs text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:border-black rounded-none">
+                       aria-label="Search stores by city, ZIP, or address"
+                       class="flex-1 px-3 py-1.5 border border-gray-400 text-xs text-gray-900 bg-white placeholder-gray-500 focus:outline-none focus:border-black focus-visible:ring-2 focus-visible:ring-gray-900 rounded-none">
                 <button type="submit"
                         class="px-3.5 py-1.5 bg-gray-900 hover:bg-black text-white font-semibold text-xs tracking-tight rounded-none cursor-pointer flex-shrink-0 select-none">
                     Search

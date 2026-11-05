@@ -4,7 +4,7 @@
         {% for item in items %}
         <div class="flex items-center justify-between p-3.5 hover:bg-gray-50 transition-colors {% if not item.is_active %}bg-gray-50/70{% endif %}" id="preset-item-{{ item.id }}">
             <div class="flex items-start space-x-3">
-                <div class="pt-0.5 text-gray-400">
+                <div class="pt-0.5 text-gray-500" aria-hidden="true">
                     •
                 </div>
                 <div>

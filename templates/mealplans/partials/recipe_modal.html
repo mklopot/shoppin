@@ -41,23 +41,23 @@
                             {% elif row.on_list %}
                             <span class="text-amber-600 font-bold" title="Needed on shopping list">🛒</span>
                             {% else %}
-                            <span class="text-gray-400">-</span>
+                            <span class="text-gray-500" aria-hidden="true">-</span>
                             {% endif %}
                             <span class="font-medium text-gray-900">{{ row.ingredient.name }}</span>
                             {% if row.ingredient.optional %}
-                            <span class="italic text-gray-400 text-[10px]">(optional)</span>
+                            <span class="italic text-gray-700 text-[10px]">(optional)</span>
                             {% endif %}
                         </div>
 
                         <div class="text-gray-600 text-right">
                             <span>{{ row.ingredient.amount }} {{ row.ingredient.amount_unit }}</span>
                             {% if row.ingredient.brand %}
-                            <span class="text-gray-400 text-[10px] block">Brand: {{ row.ingredient.brand }}</span>
+                            <span class="text-gray-700 text-[10px] block">Brand: {{ row.ingredient.brand }}</span>
                             {% endif %}
                         </div>
                     </div>
                     {% empty %}
-                    <div class="p-3 text-gray-400 italic">No ingredients listed.</div>
+                    <div class="p-3 text-gray-700 italic">No ingredients listed.</div>
                     {% endfor %}
                 </div>
             </div>
@@ -78,8 +78,8 @@
             {% if can_write and meals %}
             <form class="flex flex-wrap items-center gap-1.5 text-xs">
                 {% csrf_token %}
-                <span class="text-gray-600 font-medium">Add to Meal:</span>
-                <select name="meal_id" class="border border-gray-400 px-2 py-1 bg-white text-xs rounded-none focus:outline-none">
+                <label for="modal-target-meal" class="text-gray-700 font-medium">Add to Meal:</label>
+                <select id="modal-target-meal" name="meal_id" aria-label="Select meal to add dish to" class="border border-gray-400 px-2 py-1 bg-white text-xs rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
                     {% for m in meals %}
                     <option value="{{ m.id }}">{{ m.name }}{% if m.emoji %} {{ m.emoji }}{% endif %}</option>
                     {% endfor %}

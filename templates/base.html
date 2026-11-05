@@ -61,7 +61,7 @@
     </script>
 
     <!-- HTMX + Extensions -->
-    <meta name="htmx-config" content='{"globalViewTransitions": true}'>
+    <meta name="htmx-config" content='{"globalViewTransitions": false, "getCacheBusterParam": true}'>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
 
@@ -666,6 +666,46 @@
         window.CLIENT_ID = 'tab_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
         try { sessionStorage.removeItem('shoppin_client_id'); } catch (_) {}
 
+        function getModeScrollAnchor() {
+            const y = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0;
+            const header = document.querySelector('header[role="banner"]');
+            const headerHeight = (header ? header.offsetHeight : 0) + 10;
+            let anchorItemId = null;
+            let anchorOffset = 0;
+
+            const rows = document.querySelectorAll('.item-row');
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const rect = row.getBoundingClientRect();
+                if (rect.bottom > headerHeight && rect.top < window.innerHeight) {
+                    anchorItemId = row.getAttribute('data-item-id');
+                    anchorOffset = rect.top;
+                    break;
+                }
+            }
+            return { scrollY: y, anchorItemId: anchorItemId, anchorOffset: anchorOffset };
+        }
+
+        function applyModeScrollAnchor(anchor) {
+            if (!anchor) return;
+            if (anchor.anchorItemId) {
+                const esc = window.CSS && window.CSS.escape ? window.CSS.escape(anchor.anchorItemId) : anchor.anchorItemId;
+                const targetRow = document.querySelector('.item-row[data-item-id="' + esc + '"]');
+                if (targetRow) {
+                    const currentRect = targetRow.getBoundingClientRect();
+                    const delta = currentRect.top - anchor.anchorOffset;
+                    const newY = Math.max(0, (window.scrollY || window.pageYOffset || 0) + delta);
+                    window.scrollTo({ top: newY, behavior: 'instant' });
+                    if (document.documentElement) document.documentElement.scrollTop = newY;
+                    if (document.body) document.body.scrollTop = newY;
+                    return;
+                }
+            }
+            window.scrollTo({ top: anchor.scrollY, behavior: 'instant' });
+            if (document.documentElement) document.documentElement.scrollTop = anchor.scrollY;
+            if (document.body) document.body.scrollTop = anchor.scrollY;
+        }
+
         // Early mode switch scroll and quick add draft safeguard
         document.addEventListener('click', function(e) {
             const link = e.target && e.target.closest && e.target.closest('[data-mode-switch]');
@@ -673,8 +713,9 @@
             const listContent = document.getElementById('shopping-list-content');
             if (!listContent) return;
             try {
-                const y = window.scrollY || window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0;
-                sessionStorage.setItem('shoppin_mode_scroll', String(y));
+                const anchor = getModeScrollAnchor();
+                sessionStorage.setItem('shoppin_mode_anchor', JSON.stringify(anchor));
+                sessionStorage.setItem('shoppin_mode_scroll', String(anchor.scrollY));
                 const nameEl = document.getElementById('add-item-name');
                 if (nameEl) {
                     const draft = {
@@ -692,24 +733,30 @@
 
         function restoreSavedModeScroll() {
             try {
-                const saved = sessionStorage.getItem('shoppin_mode_scroll');
-                if (saved !== null) {
-                    const y = parseInt(saved, 10);
-                    if (!isNaN(y) && y > 0) {
-                        const restore = function() {
-                            window.scrollTo({ top: y, behavior: 'instant' });
-                            if (document.documentElement) document.documentElement.scrollTop = y;
-                            if (document.body) document.body.scrollTop = y;
-                        };
-                        restore();
-                        requestAnimationFrame(restore);
-                        setTimeout(restore, 40);
-                        setTimeout(restore, 120);
-                        setTimeout(function() {
-                            restore();
-                            sessionStorage.removeItem('shoppin_mode_scroll');
-                        }, 300);
+                let anchor = null;
+                const rawAnchor = sessionStorage.getItem('shoppin_mode_anchor');
+                if (rawAnchor) {
+                    try { anchor = JSON.parse(rawAnchor); } catch (_) {}
+                }
+                if (!anchor) {
+                    const saved = sessionStorage.getItem('shoppin_mode_scroll');
+                    if (saved !== null) {
+                        const y = parseInt(saved, 10);
+                        if (!isNaN(y)) anchor = { scrollY: y };
                     }
+                }
+                if (anchor) {
+                    const restore = function() { applyModeScrollAnchor(anchor); };
+                    restore();
+                    requestAnimationFrame(restore);
+                    setTimeout(restore, 35);
+                    setTimeout(restore, 90);
+                    setTimeout(restore, 200);
+                    setTimeout(function() {
+                        restore();
+                        sessionStorage.removeItem('shoppin_mode_anchor');
+                        sessionStorage.removeItem('shoppin_mode_scroll');
+                    }, 500);
                 }
             } catch (_) {}
         }

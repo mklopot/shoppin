@@ -15,6 +15,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonRe
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from apps.core.categorizer import categorizer
@@ -250,11 +251,17 @@ def render_list_response(
         and not request.headers.get("HX-Boosted")
         and (not target or target == "shopping-list-content")
     ):
-        return render(request, "shopping/partials/list_content.html", context)
+        response = render(request, "shopping/partials/list_content.html", context)
+    else:
+        response = render(request, "shopping/list.html", context)
 
-    return render(request, "shopping/list.html", context)
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
 
 
+@never_cache
 def shopping_list_view(request: HttpRequest) -> HttpResponse:
     """
     Render the main shopping list page, or return an HTMX partial replacement.
@@ -287,6 +294,7 @@ def shopping_list_view(request: HttpRequest) -> HttpResponse:
     return render_list_response(request, context, force_partial=False)
 
 
+@never_cache
 def pantry_check_view(request: HttpRequest) -> HttpResponse:
     """
     Render the shopping list in Pantry Check mode.

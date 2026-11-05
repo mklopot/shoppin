@@ -489,11 +489,15 @@
                        !p.includes('/recipes') &&
                        !window.location.search.includes('mode=pantry');
             },
-            selector: '#store-select-container, #store-selector-select, button[onclick*="openStorePickerModal"]',
+            selector: '#store-select-container .inline-flex, #store-select-container, #store-selector-select, button[onclick*="openStorePickerModal"]',
             badge: 'Store Location & Aisles',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 cleanupTourDemoData();
+                ensureDemoShoppingData();
+                setTimeout(function() {
+                    positionSpotlight('#store-select-container .inline-flex, #store-select-container');
+                }, 80);
             }
         },
         // Step 3: Store Aisles & Priority Sorting
@@ -560,17 +564,19 @@
             pathCheck: function(p) {
                 return p.startsWith('/recipes') && !p.includes('/create');
             },
-            selector: '#recipe-search-input, #recipe-search-bar, #recipe-filter-form',
+            selector: '#recipe-search-bar, #recipe-filter-form',
             badge: 'Recipe Search & Filters',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
                 cleanupTourDemoData();
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
                 setTimeout(function() {
-                    const searchInput = document.getElementById('recipe-search-input');
-                    if (searchInput) {
-                        searchInput.focus({ preventScroll: true });
-                        positionSpotlight(searchInput);
+                    const searchBar = document.getElementById('recipe-search-bar') || document.getElementById('recipe-filter-form');
+                    if (searchBar) {
+                        positionSpotlight(searchBar);
                     }
                 }, 80);
             }
@@ -603,28 +609,30 @@
                 if (btn) btn.setAttribute('aria-expanded', 'false');
             }
         },
-        // Step 7: Recipe Import & Creation (opens import modal and focuses URL input)
+        // Step 7: Recipe Import & Creation (opens import modal without focusing input)
         {
             path: '{% url "recipes:list" %}',
             pathCheck: function(p) {
                 return p.startsWith('/recipes') && !p.includes('/create');
             },
-            selector: '#import-url-input, #import-url-modal .bg-white, #recipe-action-buttons',
+            selector: '#import-url-modal .bg-white, #import-url-modal form, #recipe-action-buttons',
             badge: 'Import from URL',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
                 cleanupTourDemoData();
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
                 const modal = document.getElementById('import-url-modal');
                 if (modal) {
                     modal.classList.remove('hidden');
                     setTimeout(function() {
-                        const input = document.getElementById('import-url-input');
-                        if (input) {
-                            input.focus({ preventScroll: true });
-                            positionSpotlight(input);
+                        const modalDialog = modal.querySelector('.bg-white') || modal.querySelector('form');
+                        if (modalDialog) {
+                            positionSpotlight(modalDialog);
                         } else {
-                            positionSpotlight('#import-url-modal .bg-white');
+                            positionSpotlight('#import-url-modal');
                         }
                     }, 100);
                 }
@@ -756,7 +764,6 @@
         }
 
         modal.classList.remove('hidden');
-        document.body.classList.add('overflow-hidden');
         goToTourStep(initialStep);
     }
 
@@ -764,7 +771,6 @@
         const modal = document.getElementById('walkthrough-modal');
         if (!modal) return;
         modal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
 
         // Clean up any simulated tour demo items and modals
         cleanupTourDemoData();
@@ -939,6 +945,14 @@
             // Instantly center target in viewport so getBoundingClientRect() is immediately accurate
             if (shouldScroll) {
                 targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+                // Account for sticky header (height ~85px on mobile) so targetEl is never behind the navbar
+                const header = document.querySelector('header');
+                const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+                const r = targetEl.getBoundingClientRect();
+                if (r.top < headerBottom + 16) {
+                    const diff = (headerBottom + 20) - r.top;
+                    window.scrollBy({ top: -diff, behavior: 'auto' });
+                }
             }
             const rect = targetEl.getBoundingClientRect();
             const pad = 6;
@@ -1050,7 +1064,6 @@
             const modal = document.getElementById('walkthrough-modal');
             if (modal) {
                 modal.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {

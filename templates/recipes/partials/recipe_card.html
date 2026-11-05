@@ -146,8 +146,8 @@
             <!-- Ratings & Thumbs Up -->
             <div class="flex items-center space-x-2">
                 {% if recipe.average_rating %}
-                <span class="text-amber-500 font-bold flex items-center space-x-0.5" title="Average rating">
-                    <span>★</span>
+                <span class="text-amber-500 font-bold flex items-center space-x-0.5" title="Average rating" aria-label="Average rating: {{ recipe.average_rating }} out of 5 stars">
+                    <span aria-hidden="true">★</span>
                     <span class="text-gray-800 font-semibold">{{ recipe.average_rating }}</span>
                 </span>
                 {% endif %}

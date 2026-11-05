@@ -122,7 +122,7 @@
                                   class="{% if not f.included and not f.excluded %}hidden{% endif %} px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-600 text-white leading-tight">
                                 {% if f.included %}+{{ f.included|length }}{% endif %}{% if f.excluded %}-{{ f.excluded|length }}{% endif %}
                             </span>
-                            <span class="text-gray-400 text-[10px]">▼</span>
+                            <span class="text-gray-500 text-[10px]" aria-hidden="true">▼</span>
                         </span>
                     </button>
 
@@ -165,8 +165,9 @@
                                             data-value="{{ opt.value }}"
                                             data-type="include"
                                             onclick="toggleFacetOption('{{ f.key }}', '{{ opt.value|escapejs }}', 'include')"
+                                            aria-label="Include {{ opt.label }}"
                                             title="Include {{ opt.label }} (+)"
-                                            class="facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors {% if opt.value in f.included %}bg-emerald-600 text-white border-emerald-600{% else %}border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50{% endif %}">
+                                            class="facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors {% if opt.value in f.included %}bg-emerald-600 text-white border-emerald-600{% else %}border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50{% endif %}">
                                         +
                                     </button>
                                     <button type="button"
@@ -174,8 +175,9 @@
                                             data-value="{{ opt.value }}"
                                             data-type="exclude"
                                             onclick="toggleFacetOption('{{ f.key }}', '{{ opt.value|escapejs }}', 'exclude')"
+                                            aria-label="Exclude {{ opt.label }}"
                                             title="Exclude {{ opt.label }} (−)"
-                                            class="facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors {% if opt.value in f.excluded %}bg-rose-600 text-white border-rose-600{% else %}border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50{% endif %}">
+                                            class="facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors {% if opt.value in f.excluded %}bg-rose-600 text-white border-rose-600{% else %}border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50{% endif %}">
                                         −
                                     </button>
                                 </div>
@@ -382,13 +384,13 @@
             if ((incBtn.getAttribute('data-value') || '').toLowerCase() === value.toLowerCase()) {
                 if (action === 'include') {
                     incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-emerald-600 text-white border-emerald-600';
-                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
                 } else if (action === 'exclude') {
-                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
                     excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-rose-600 text-white border-rose-600';
                 } else {
-                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
-                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                    incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                    excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
                 }
             }
         });
@@ -429,10 +431,10 @@
         const list = document.getElementById(`facet-list-${facet}`);
         if (list) {
             list.querySelectorAll('.facet-inc-btn').forEach(btn => {
-                btn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 rounded-sm transition-colors';
+                btn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 rounded-sm transition-colors';
             });
             list.querySelectorAll('.facet-exc-btn').forEach(btn => {
-                btn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50 rounded-sm transition-colors';
+                btn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50 rounded-sm transition-colors';
             });
         }
         updateFacetBadge(facet);
@@ -487,10 +489,10 @@
             const list = document.getElementById(`facet-list-${facet}`);
             if (list) {
                 list.querySelectorAll('.facet-inc-btn').forEach(btn => {
-                    btn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 rounded-sm transition-colors';
+                    btn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50 rounded-sm transition-colors';
                 });
                 list.querySelectorAll('.facet-exc-btn').forEach(btn => {
-                    btn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50 rounded-sm transition-colors';
+                    btn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50 rounded-sm transition-colors';
                 });
             }
             updateFacetBadge(facet);
@@ -529,13 +531,13 @@
 
                     if (incValues.includes(val)) {
                         incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-emerald-600 text-white border-emerald-600';
-                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
                     } else if (excValues.includes(val)) {
-                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
                         excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors bg-rose-600 text-white border-rose-600';
                     } else {
-                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
-                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-400 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
+                        incBtn.className = 'facet-inc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-emerald-700 hover:border-emerald-400 hover:bg-emerald-50';
+                        excBtn.className = 'facet-exc-btn text-[11px] px-1.5 py-0.5 font-bold border rounded-sm transition-colors border-gray-200 text-gray-700 hover:text-rose-700 hover:border-rose-400 hover:bg-rose-50';
                     }
                 });
             }

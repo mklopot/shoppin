@@ -8,7 +8,7 @@
             <input type="hidden" name="stars" value="{{ forloop.counter }}">
             <input type="hidden" name="thumbs_up" value="{% if user_rating %}{{ user_rating.thumbs_up|yesno:'true,false' }}{% else %}true{% endif %}">
             <button type="submit"
-                    class="text-sm focus:outline-none transition-transform hover:scale-125"
+                    class="text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded p-0.5 transition-transform hover:scale-125 min-w-[24px] min-h-[24px] inline-flex items-center justify-center"
                     aria-label="Rate {{ forloop.counter }} of 5 stars for {{ recipe.name }}"
                     title="Rate {{ forloop.counter }} stars">
                 {% if user_rating and user_rating.stars >= forloop.counter %}

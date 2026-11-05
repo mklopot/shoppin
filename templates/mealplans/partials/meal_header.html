@@ -10,7 +10,7 @@
             hx-get="{% url 'mealplans:edit_meal' meal.id %}"
             hx-target="#meal-header-{{ meal.id }}"
             hx-swap="outerHTML"
-            class="text-gray-400 hover:text-gray-800 text-xs px-1 leading-none focus:outline-none"
+            class="text-gray-700 hover:text-gray-950 text-xs min-w-[24px] min-h-[24px] inline-flex items-center justify-center p-1 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 rounded-none"
             aria-label="Edit meal name for {{ meal.name }}"
             title="Edit meal name">
         <span aria-hidden="true">✎</span>

@@ -492,8 +492,8 @@ def test_item_status_changed_at_timestamp_display(client, active_list):
     # When workspace is not shared, attribution field must be empty
     assert f"unknown {expected_past_date_str}" not in content
     assert f"You {expected_past_date_str}" not in content
-    # Verify non-fixed-width and italics styling
-    assert 'class="ml-1.5 text-gray-400 italic text-xs select-none"' in content
+    # Verify non-fixed-width and italics styling with WCAG AA contrast (text-gray-700)
+    assert 'class="ml-1.5 text-gray-700 italic text-xs select-none"' in content
 
     # 2. Changing status as authenticated admin user in unshared workspace shows only date
     res_got = client.post(reverse("shopping:set_status", args=[item.id, "GOT"]))

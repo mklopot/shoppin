@@ -80,25 +80,27 @@
                     <button type="button"
                             onclick="prevCarouselSlide()"
                             aria-label="Previous recipe"
-                            class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center text-sm font-bold opacity-80 hover:opacity-100 transition-opacity focus:outline-none">
+                            class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center text-sm font-bold opacity-80 hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
                         &larr;
                     </button>
                     <button type="button"
                             onclick="nextCarouselSlide()"
                             aria-label="Next recipe"
-                            class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center text-sm font-bold opacity-80 hover:opacity-100 transition-opacity focus:outline-none">
+                            class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center text-sm font-bold opacity-80 hover:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
                         &rarr;
                     </button>
                 </div>
 
                 <!-- Carousel Dots Navigation (Clean, no text) -->
                 <div class="bg-gray-900 py-1.5 px-3 flex items-center justify-center">
-                    <div class="flex space-x-1.5" id="carousel-dots-list">
+                    <div class="flex space-x-1" id="carousel-dots-list">
                         {% for recipe in featured_recipes %}
                         <button type="button"
                                 onclick="setCarouselSlide({{ forloop.counter0 }})"
                                 aria-label="Slide {{ forloop.counter }}"
-                                class="w-2 h-2 rounded-full {% if forloop.first %}bg-white{% else %}bg-gray-600{% endif %} hover:bg-gray-400 transition-colors focus:outline-none"></button>
+                                class="w-6 h-6 flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                            <span class="carousel-dot-inner w-2 h-2 rounded-full {% if forloop.first %}bg-white{% else %}bg-gray-600{% endif %} hover:bg-gray-400 transition-colors"></span>
+                        </button>
                         {% endfor %}
                     </div>
                 </div>
@@ -231,10 +233,13 @@
             });
 
             dots.forEach((dot, i) => {
+                const inner = dot.querySelector('.carousel-dot-inner') || dot;
                 if (i === currentSlideIndex) {
-                    dot.className = 'w-2 h-2 rounded-full bg-white focus:outline-none';
+                    inner.className = 'carousel-dot-inner w-2 h-2 rounded-full bg-white';
+                    dot.setAttribute('aria-current', 'true');
                 } else {
-                    dot.className = 'w-2 h-2 rounded-full bg-gray-600 hover:bg-gray-400 focus:outline-none';
+                    inner.className = 'carousel-dot-inner w-2 h-2 rounded-full bg-gray-600 hover:bg-gray-400';
+                    dot.removeAttribute('aria-current');
                 }
             });
         }

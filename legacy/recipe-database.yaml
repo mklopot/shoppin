@@ -47,6 +47,11 @@
     
 
 'sloppy joes':
+  directions: |
+    Brown the beef: In a large skillet over medium-high heat, cook the ground beef for 6 to 8 minutes, breaking it into crumbles with a wooden spoon until no pink remains. Drain off any excess fat.
+    Build the sauce: Stir in the Sloppy Joe seasoning packet, the 6 oz can of tomato paste, and 1 1/4 cups of water until smoothly combined and the beef is evenly coated.
+    Simmer to thicken: Bring the mixture to a gentle boil, then reduce the heat to low and simmer uncovered for 3 to 5 minutes, stirring occasionally, until heated through and thickened.
+    Serve on buns: Lightly toast the hamburger buns if desired, then spoon the warm Sloppy Joe mixture generously onto the bottom buns, cap with the top buns, and serve hot.
   ingredients:
     - 'ground beef':
         amount: '1 lb'

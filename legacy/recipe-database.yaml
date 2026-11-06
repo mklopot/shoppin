@@ -362,6 +362,12 @@
 
 
 'smashburgers':
+  directions: |
+    Portion the beef and prep toppings: Loosely divide the cold ground beef into 4 equal balls (about 4 oz each) without packing them tightly. Very thinly slice the onion.
+    Toast the buns: Warm a large cast-iron skillet or griddle over medium heat. Toast the hamburger buns cut-sides down for 1 to 2 minutes until lightly golden, then set aside.
+    Heat the skillet and smash: Crank the heat up to medium-high until the skillet is smoking hot. Place the beef balls into the pan (working in batches so they aren't crowded), top each with a small handful of sliced onions, and press down firmly with a stiff metal spatula to flatten as thin as possible. Season with salt and black pepper.
+    Sear, flip, and melt cheese: Cook undisturbed for about 2 minutes until the edges are lacy, dark brown, and crisp. Scrape underneath with the spatula to release the crust, flip, and immediately top with the sliced cheese. Cook for 1 more minute until the cheese melts.
+    Assemble and serve: Transfer the cheesy patties to the toasted bottom buns, top with pickles (and Burger Sauce if desired), cap with the top buns, and serve hot.
   ingredients:
     - 'hamburger buns':
         amount: '4 buns'

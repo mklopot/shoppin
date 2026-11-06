@@ -267,6 +267,30 @@
                 </button>
             </div>
         </form>
+
+        <!-- Bookmarklet Helper Section -->
+        <div class="pt-3 border-t border-gray-200">
+            <div class="bg-gray-50 border border-gray-300 p-3 space-y-1.5">
+                <div class="flex items-center space-x-1.5">
+                    <span class="text-sm" aria-hidden="true">📌</span>
+                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">One-Click Bookmarklet</h3>
+                </div>
+                <p class="text-[11px] text-gray-600 leading-relaxed">
+                    Import recipes with a single click while browsing any site (including sites protected by anti-bot firewalls).
+                    Drag this button to your browser's <strong>Bookmarks bar</strong>:
+                </p>
+                <div class="pt-1 flex flex-wrap items-center gap-2">
+                    <a href="javascript:(function(){var u=window.location.href,h='{{ request.scheme }}://{{ request.get_host }}';try{var f=document.createElement('form');f.method='POST';f.action=h+'{% url 'recipes:import_bookmarklet' %}';f.target='_blank';var i1=document.createElement('input');i1.type='hidden';i1.name='url';i1.value=u;f.appendChild(i1);var i2=document.createElement('input');i2.type='hidden';i2.name='html';i2.value=document.documentElement.outerHTML;f.appendChild(i2);document.body.appendChild(f);f.submit();setTimeout(function(){document.body.removeChild(f);},1000);}catch(e){window.open(h+'{% url 'recipes:create' %}?import_url='+encodeURIComponent(u),'_blank');}})();"
+                       onclick="event.preventDefault(); alert('Drag this button to your browser Bookmarks or Favorites bar (press Ctrl+Shift+B or Cmd+Shift+B to display the bar). When reading any recipe online, click the bookmark to import it instantly!');"
+                       class="inline-flex items-center space-x-1 border border-indigo-500 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold text-xs px-2.5 py-1.5 cursor-grab active:cursor-grabbing shadow-sm"
+                       title="Drag to your Bookmarks Bar">
+                        <span>📌</span>
+                        <span>+ Save Recipe</span>
+                    </a>
+                    <span class="text-[11px] text-gray-500 italic">Drag to bookmarks bar (Ctrl+Shift+B / Cmd+Shift+B)</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from apps.core.services.workspace_service import get_active_workspace
@@ -404,6 +405,7 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
 
     url = (request.POST.get("url") or "").strip()
     action = request.POST.get("action", "direct").strip()
+    raw_html = (request.POST.get("html") or "").strip() or None
 
     if not url:
         messages.error(request, "Please enter a valid recipe webpage URL.")
@@ -415,7 +417,7 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
         return redirect(f"{reverse('recipes:create')}?{urlencode({'import_url': url})}")
 
     try:
-        recipe = import_recipe_from_url(url=url, user=user)
+        recipe = import_recipe_from_url(url=url, user=user, html=raw_html)
         messages.success(request, f"Recipe '{recipe.name}' successfully imported!")
         return redirect(recipe.get_absolute_url())
     except ValueError as ve:
@@ -424,6 +426,76 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
     except Exception as exc:
         messages.error(request, f"Could not import recipe from '{url}': {exc}")
         return redirect("recipes:list")
+
+
+@csrf_exempt
+def recipe_bookmarklet_import_view(request: HttpRequest) -> HttpResponse:
+    """
+    Handle one-click bookmarklet imports from any external webpage.
+
+    Accepts POST with 'url' and optionally 'html' captured directly by the user's browser,
+    completely bypassing any anti-bot or paywall protections. Parses the recipe data
+    and renders the recipe create form pre-filled for the user to review and confirm.
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        messages.info(request, "Please sign in to save recipes to your collection.")
+        return redirect(f"{reverse('core:login')}?next={reverse('recipes:list')}")
+
+    workspace = get_active_workspace(request)
+    if workspace and not workspace.can_write(user):
+        return HttpResponseForbidden("You have read-only access to this workspace.")
+
+    if request.method == "POST":
+        url = (request.POST.get("url") or "").strip()
+        raw_html = (request.POST.get("html") or "").strip() or None
+    else:
+        url = (request.GET.get("url") or "").strip()
+        raw_html = None
+
+    if not url:
+        messages.error(request, "No recipe webpage URL received from the bookmarklet.")
+        return redirect("recipes:create")
+
+    try:
+        data = scrape_recipe_data(url=url, html=raw_html)
+        recipe = Recipe(
+            name=data["name"],
+            description=data["description"],
+            directions=data["directions"],
+            portions=data["portions"],
+            prep_time_minutes=data["prep_time_minutes"],
+            cook_time_minutes=data["cook_time_minutes"],
+            cuisine=data["cuisine"],
+            dish_type=data["dish_type"],
+            photo_urls=[data["photo_url"]] if data["photo_url"] else [],
+            bibliography=[data["source_url"]],
+            is_public=False,
+            is_approved=False,
+            is_web_imported=True,
+            copyright_cleared=False,
+        )
+        ingredients = data["ingredients"]
+        domain = data.get("domain") or "the webpage"
+        messages.info(
+            request,
+            f"Pre-filled recipe from {domain} via bookmarklet! Review details below and click Save Recipe.",
+        )
+        filter_options = get_filter_options()
+        all_recipes = Recipe.objects.all().order_by("name")
+        context: dict[str, Any] = {
+            "workspace": workspace,
+            "filter_options": filter_options,
+            "all_recipes": all_recipes,
+            "recipe": recipe,
+            "ingredients": ingredients,
+            "import_url": url,
+            "is_edit": False,
+        }
+        return render(request, "recipes/recipe_form.html", context)
+    except Exception as exc:
+        messages.error(request, f"Could not import recipe via bookmarklet: {exc}")
+        return redirect(f"{reverse('recipes:create')}?import_url={url}")
 
 
 def recipe_edit_view(

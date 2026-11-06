@@ -10,6 +10,7 @@ from apps.recipes.services.nutrition_service import (
     update_recipe_nutrition,
 )
 from apps.recipes.services.recipe_scraper import (
+    fetch_recipe_html,
     import_recipe_from_url,
     parse_ingredient_line,
     scrape_recipe_data,
@@ -30,6 +31,7 @@ __all__ = [
     "filter_recipes_by_nutrition",
     "suggest_recipes_by_macro_goal",
     "update_recipe_nutrition",
+    "fetch_recipe_html",
     "import_recipe_from_url",
     "parse_ingredient_line",
     "scrape_recipe_data",

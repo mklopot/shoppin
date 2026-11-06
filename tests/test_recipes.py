@@ -1406,5 +1406,100 @@ def test_web_imported_recipe_clean_model_invariant():
     assert "Web-imported recipes cannot be made public" in str(exc.value)
 
 
+def test_fetch_recipe_html_handles_403_gracefully(monkeypatch):
+    """Verify that fetch_recipe_html provides a descriptive error guiding user to the bookmarklet on 403."""
+    from unittest.mock import MagicMock
+
+    import requests
+
+    from apps.recipes.services.recipe_scraper import fetch_recipe_html
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 403
+    mock_resp.is_redirect = False
+    monkeypatch.setattr(requests.Session, "get", lambda *args, **kwargs: mock_resp)
+
+    with pytest.raises(ValueError) as exc:
+        fetch_recipe_html("https://sallysbakingaddiction.com/easy-homemade-soft-pretzels/")
+
+    assert "HTTP 403 Forbidden: anti-bot protection" in str(exc.value)
+    assert "Save Recipe" in str(exc.value)
+    assert "bookmarklet" in str(exc.value)
+
+
+@pytest.mark.django_db
+def test_recipe_bookmarklet_import_view_authenticated(client: Client, auth_user):
+    """Verify that posting URL and HTML from the bookmarklet pre-fills recipe_create form."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    url = "https://www.allrecipes.com/recipe/158968/classic-guacamole/"
+    resp = client.post(
+        reverse("recipes:import_bookmarklet"),
+        {
+            "url": url,
+            "html": MOCK_RECIPE_HTML,
+        },
+    )
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "Classic Guacamole" in html
+    assert "Authentic homemade fresh guacamole." in html
+    assert "Pre-filled recipe from www.allrecipes.com via bookmarklet!" in html
+
+
+@pytest.mark.django_db
+def test_recipe_bookmarklet_import_view_unauthenticated(client: Client):
+    """Verify that an unauthenticated request to the bookmarklet endpoint redirects to login."""
+    resp = client.post(
+        reverse("recipes:import_bookmarklet"),
+        {"url": "https://example.com/recipe"},
+    )
+    assert resp.status_code == 302
+    assert reverse("core:login") in resp.url
+
+
+@pytest.mark.django_db
+def test_recipe_bookmarklet_import_view_readonly_workspace(client: Client, auth_user):
+    """Verify that a user with read-only workspace access receives 403 Forbidden."""
+    from apps.core.models import WorkspaceMember, WorkspaceRole
+
+    _, workspace = auth_user
+    viewer = User.objects.create_user(username="viewer_user", password="testpassword123")
+    WorkspaceMember.objects.create(workspace=workspace, user=viewer, role=WorkspaceRole.VIEWER)
+
+    client.force_login(viewer)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    resp = client.post(
+        reverse("recipes:import_bookmarklet"),
+        {"url": "https://example.com/recipe"},
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
+    """Verify that the recipe list modal renders the one-click bookmarklet with correct JavaScript."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    resp = client.get(reverse("recipes:list"))
+    assert resp.status_code == 200
+    content = resp.content.decode("utf-8")
+    assert "+ Save Recipe" in content
+    assert "One-Click Bookmarklet" in content
+    assert "import-bookmarklet" in content
+
+
+
 
 

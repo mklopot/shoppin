@@ -425,6 +425,12 @@
 
 
 'buckwheat':
+  directions: |
+    Rinse the groats: Place the buckwheat in a fine-mesh strainer and rinse thoroughly under cool running water until clear. Drain well.
+    Combine and bring to a boil: In a medium saucepan, combine the rinsed buckwheat, 2 cups of water, a pinch of salt, and 1 tablespoon of the butter. Bring to a boil over medium-high heat.
+    Cover and simmer: Once boiling, cover the saucepan tightly with a lid and immediately lower the heat to low. Simmer undisturbed for 12 to 15 minutes without stirring or lifting the lid, until the liquid is fully absorbed.
+    Rest off heat: Remove the saucepan from the heat and let it rest, covered, for 5 minutes to steam through.
+    Butter and fluff: Uncover, drop in the remaining 1 tablespoon of butter, and gently fluff the buckwheat with a fork until melted and evenly dispersed. Serve warm.
   ingredients:
     - 'buckwheat':
         amount: '1 cup'

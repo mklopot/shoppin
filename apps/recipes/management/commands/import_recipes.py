@@ -142,6 +142,8 @@ class Command(BaseCommand):
                 target_slug = slugify(clean_name)
                 description = (details.get("description", "") or "").strip()
                 directions = (details.get("directions", "") or "").strip()
+                storage_instructions = (details.get("storage_instructions", "") or "").strip()
+                reheating_instructions = (details.get("reheating_instructions", "") or "").strip()
 
                 existing = existing_recipes.get(norm_key) or existing_by_slug.get(target_slug)
 
@@ -165,8 +167,21 @@ class Command(BaseCommand):
                             if directions and existing.directions != directions:
                                 existing.directions = directions
                                 changed = True
+                            if storage_instructions and existing.storage_instructions != storage_instructions:
+                                existing.storage_instructions = storage_instructions
+                                changed = True
+                            if reheating_instructions and existing.reheating_instructions != reheating_instructions:
+                                existing.reheating_instructions = reheating_instructions
+                                changed = True
                             if changed:
-                                existing.save(update_fields=["description", "directions"])
+                                existing.save(
+                                    update_fields=[
+                                        "description",
+                                        "directions",
+                                        "storage_instructions",
+                                        "reheating_instructions",
+                                    ]
+                                )
                         updated_recipes += 1
                         self.stdout.write(f"  • Updated existing: {clean_name}")
                     else:
@@ -183,6 +198,8 @@ class Command(BaseCommand):
                         name=clean_name,
                         description=description,
                         directions=directions,
+                        storage_instructions=storage_instructions,
+                        reheating_instructions=reheating_instructions,
                         is_public=True,
                         is_approved=True,
                     )

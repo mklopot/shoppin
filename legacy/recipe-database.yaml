@@ -365,6 +365,11 @@
   description: |
     Ian's Burger Sauce
     
+  directions: |
+    Combine the base: In a small mixing bowl, whisk together the mayonnaise, ketchup, mustard, and pickle juice until smooth and evenly combined.
+    Season: Add the salt, black pepper, and paprika. If using, mix in the steak sauce for savory depth and the sriracha for gentle heat.
+    Whisk until uniform: Whisk briskly until all seasonings are fully dissolved and the sauce achieves a smooth, consistent pinkish hue.
+    Chill to blend flavors: Cover and refrigerate for at least 15 to 30 minutes before serving to let the flavors meld together. Spread generously on burger buns or serve as a dipping sauce for fries.
   ingredients:
     - 'ketchup':
         amount: '2 oz'

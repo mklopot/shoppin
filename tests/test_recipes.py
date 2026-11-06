@@ -1453,13 +1453,14 @@ def test_recipe_bookmarklet_import_view_authenticated(client: Client, auth_user)
 
 @pytest.mark.django_db
 def test_recipe_bookmarklet_import_view_unauthenticated(client: Client):
-    """Verify that an unauthenticated request to the bookmarklet endpoint redirects to login."""
-    resp = client.post(
-        reverse("recipes:import_bookmarklet"),
-        {"url": "https://example.com/recipe"},
+    """Verify that an unauthenticated request to the bookmarklet endpoint redirects to login and preserves url."""
+    resp = client.get(
+        reverse("recipes:import_bookmarklet") + "?url=https://example.com/recipe",
     )
     assert resp.status_code == 302
     assert reverse("core:login") in resp.url
+    assert "import-bookmarklet" in resp.url
+    assert "example.com" in resp.url
 
 
 @pytest.mark.django_db
@@ -1485,7 +1486,7 @@ def test_recipe_bookmarklet_import_view_readonly_workspace(client: Client, auth_
 
 @pytest.mark.django_db
 def test_recipe_bookmarklet_import_view_get_bridge(client: Client, auth_user):
-    """Verify that GET to bookmarklet endpoint renders the bridge HTML with postMessage listener."""
+    """Verify that GET to bookmarklet endpoint renders the bridge HTML with COOP unsafe-none and postMessage/hash listeners."""
     user, workspace = auth_user
     client.force_login(user)
     session = client.session
@@ -1494,9 +1495,11 @@ def test_recipe_bookmarklet_import_view_get_bridge(client: Client, auth_user):
 
     resp = client.get(reverse("recipes:import_bookmarklet") + "?url=https://www.allrecipes.com/recipe/158968/")
     assert resp.status_code == 200
+    assert resp.headers.get("Cross-Origin-Opener-Policy") == "unsafe-none"
     html = resp.content.decode("utf-8")
     assert "Importing Recipe from Browser Tab..." in html
     assert "READY_FOR_RECIPE_PAYLOAD" in html
+    assert "window.location.hash" in html
     assert "bridge-form" in html
 
 

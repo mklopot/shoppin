@@ -6,7 +6,7 @@
 <div class="max-w-md mx-auto my-16 p-8 bg-white border border-gray-300 shadow-sm text-center space-y-4">
     <div class="text-4xl animate-bounce" aria-hidden="true">🍲</div>
     <h1 class="text-base font-bold text-gray-900 tracking-tight">Importing Recipe from Browser Tab...</h1>
-    <p class="text-xs text-gray-500 leading-relaxed">
+    <p id="bridge-status" class="text-xs text-gray-500 leading-relaxed">
         Transferring ingredients, timings, and directions directly from your active webpage.
     </p>
 
@@ -26,25 +26,59 @@
     (function() {
         var received = false;
         var targetUrl = "{{ url|escapejs }}";
+        var expectedOrigin = null;
+        try { expectedOrigin = new URL(targetUrl).origin; } catch (err) {}
+
+        function submitHtml(html) {
+            received = true;
+            document.getElementById('bridge-status').textContent = 'Recipe received. Parsing...';
+            document.getElementById('bridge-html').value = html;
+            document.getElementById('bridge-form').submit();
+        }
+
+        // Fast path: if the bookmarklet passed extracted JSON-LD in the URL fragment (#html=...),
+        // submit immediately without waiting for cross-window postMessage.
+        if (window.location.hash && window.location.hash.indexOf('#html=') === 0) {
+            try {
+                var hashHtml = decodeURIComponent(window.location.hash.substring(6));
+                if (hashHtml) {
+                    submitHtml(hashHtml);
+                    return;
+                }
+            } catch (err) {}
+        }
+
+        // Shrink full page HTML before upload: drop executable scripts, styles, and
+        // media while keeping JSON-LD (Schema.org Recipe) and microdata markup intact.
+        function slimHtml(html) {
+            try {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                doc.querySelectorAll('script:not([type="application/ld+json"]), style, link, svg, iframe, noscript, video, audio, canvas, template')
+                    .forEach(function(el) { el.remove(); });
+                return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+            } catch (err) {
+                return html;
+            }
+        }
 
         function handlePayload(e) {
             if (received) return;
-            if (e.data && e.data.type === 'RECIPE_PAYLOAD_RESPONSE' && e.data.html) {
-                received = true;
-                document.getElementById('bridge-html').value = e.data.html;
-                document.getElementById('bridge-form').submit();
+            // Only accept the payload from the recipe site the user is importing
+            if (!expectedOrigin || e.origin !== expectedOrigin) return;
+            if (e.data && e.data.type === 'RECIPE_PAYLOAD_RESPONSE' && typeof e.data.html === 'string' && e.data.html) {
+                submitHtml(slimHtml(e.data.html));
             }
         }
         window.addEventListener('message', handlePayload);
 
-        // Signal to opener tab that we are ready to receive the payload
-        if (window.opener) {
+        // Signal to the opener (recipe site) tab that we are ready to receive the payload
+        if (window.opener && expectedOrigin) {
             try {
-                window.opener.postMessage({ type: 'READY_FOR_RECIPE_PAYLOAD' }, '*');
-            } catch(err) {}
+                window.opener.postMessage({ type: 'READY_FOR_RECIPE_PAYLOAD' }, expectedOrigin);
+            } catch (err) {}
         }
 
-        // If payload not received via postMessage within 3.5s, fall back to server fetch
+        // If no payload arrives (e.g. bookmarklet opened after sign-in), fall back to server fetch
         setTimeout(function() {
             if (!received) {
                 window.location.href = "{% url 'recipes:create' %}?import_url=" + encodeURIComponent(targetUrl);

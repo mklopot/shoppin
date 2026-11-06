@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Importing Recipe – recipe.klopot.tech{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto my-16 p-8 bg-white border border-gray-300 shadow-sm text-center space-y-4">
+    <div class="text-4xl animate-bounce" aria-hidden="true">🍲</div>
+    <h1 class="text-base font-bold text-gray-900 tracking-tight">Importing Recipe from Browser Tab...</h1>
+    <p class="text-xs text-gray-500 leading-relaxed">
+        Transferring ingredients, timings, and directions directly from your active webpage.
+    </p>
+
+    <div class="w-full bg-gray-200 h-1.5 overflow-hidden rounded-full">
+        <div class="bg-indigo-600 h-1.5 w-full animate-pulse"></div>
+    </div>
+
+    <!-- Hidden form that POSTs client HTML with session & CSRF -->
+    <form id="bridge-form" method="post" action="{% url 'recipes:import_bookmarklet' %}" class="hidden">
+        {% csrf_token %}
+        <input type="hidden" name="url" value="{{ url }}">
+        <textarea name="html" id="bridge-html"></textarea>
+    </form>
+</div>
+
+<script>
+    (function() {
+        var received = false;
+        var targetUrl = "{{ url|escapejs }}";
+
+        function handlePayload(e) {
+            if (received) return;
+            if (e.data && e.data.type === 'RECIPE_PAYLOAD_RESPONSE' && e.data.html) {
+                received = true;
+                document.getElementById('bridge-html').value = e.data.html;
+                document.getElementById('bridge-form').submit();
+            }
+        }
+        window.addEventListener('message', handlePayload);
+
+        // Signal to opener tab that we are ready to receive the payload
+        if (window.opener) {
+            try {
+                window.opener.postMessage({ type: 'READY_FOR_RECIPE_PAYLOAD' }, '*');
+            } catch(err) {}
+        }
+
+        // If payload not received via postMessage within 3.5s, fall back to server fetch
+        setTimeout(function() {
+            if (!received) {
+                window.location.href = "{% url 'recipes:create' %}?import_url=" + encodeURIComponent(targetUrl);
+            }
+        }, 3500);
+    })();
+</script>
+{% endblock %}

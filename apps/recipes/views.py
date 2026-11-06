@@ -449,13 +449,15 @@ def recipe_bookmarklet_import_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         url = (request.POST.get("url") or "").strip()
         raw_html = (request.POST.get("html") or "").strip() or None
+        if not url:
+            messages.error(request, "No recipe webpage URL received from the bookmarklet.")
+            return redirect("recipes:create")
     else:
         url = (request.GET.get("url") or "").strip()
-        raw_html = None
-
-    if not url:
-        messages.error(request, "No recipe webpage URL received from the bookmarklet.")
-        return redirect("recipes:create")
+        if not url:
+            messages.error(request, "No recipe webpage URL received from the bookmarklet.")
+            return redirect("recipes:create")
+        return render(request, "recipes/bookmarklet_bridge.html", {"url": url})
 
     try:
         data = scrape_recipe_data(url=url, html=raw_html)

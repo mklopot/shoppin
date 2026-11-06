@@ -1484,6 +1484,23 @@ def test_recipe_bookmarklet_import_view_readonly_workspace(client: Client, auth_
 
 
 @pytest.mark.django_db
+def test_recipe_bookmarklet_import_view_get_bridge(client: Client, auth_user):
+    """Verify that GET to bookmarklet endpoint renders the bridge HTML with postMessage listener."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    resp = client.get(reverse("recipes:import_bookmarklet") + "?url=https://www.allrecipes.com/recipe/158968/")
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "Importing Recipe from Browser Tab..." in html
+    assert "READY_FOR_RECIPE_PAYLOAD" in html
+    assert "bridge-form" in html
+
+
+@pytest.mark.django_db
 def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
     """Verify that the recipe list modal renders the one-click bookmarklet with correct JavaScript."""
     user, workspace = auth_user
@@ -1497,7 +1514,8 @@ def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
     content = resp.content.decode("utf-8")
     assert "+ Save Recipe" in content
     assert "One-Click Bookmarklet" in content
-    assert "import_url=" in content
+    assert "import-bookmarklet" in content
+    assert "READY_FOR_RECIPE_PAYLOAD" in content
 
 
 

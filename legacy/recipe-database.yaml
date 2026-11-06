@@ -818,6 +818,11 @@
 
 
 'veggie nuggets':
+  directions: |
+    Preheat: Preheat your oven or air fryer to the temperature specified on the package (or use 400°F for an oven / 390°F for an air fryer if the packaging is unavailable), and line a baking sheet with parchment paper if baking.
+    Arrange in a single layer: Spread the frozen veggie nuggets across the baking sheet or air fryer basket with space between each piece so hot air circulates evenly.
+    Cook according to package directions: Follow your specific brand's recommended cooking time, flipping halfway through until golden and crisp. As a fallback if the package is missing, bake for 12 to 15 minutes at 400°F or air-fry for 8 to 10 minutes at 390°F.
+    Rest and serve: Let cool for 1 to 2 minutes so the coating sets, then serve warm with your favorite dipping sauces.
   ingredients:
     - 'veggie nuggets':
         amount: '1 package'

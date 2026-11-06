@@ -459,7 +459,7 @@ def import_recipe_from_url(
         final_name = f"{base_name} ({counter})"
         counter += 1
 
-    recipe = Recipe.objects.create(
+    recipe = Recipe(
         name=final_name,
         description=data["description"],
         directions=data["directions"],
@@ -476,6 +476,8 @@ def import_recipe_from_url(
         copyright_cleared=False,
         created_by=user if (user and user.is_authenticated) else None,
     )
+    recipe.full_clean()
+    recipe.save()
 
     for i, ing_data in enumerate(data["ingredients"]):
         Ingredient.objects.create(

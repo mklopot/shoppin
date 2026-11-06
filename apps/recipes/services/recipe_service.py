@@ -599,13 +599,12 @@ def create_or_update_recipe(
                 recipe.copyright_cleared = str(data.get("copyright_cleared")).lower() in ("1", "true", "yes", "on")
 
             if recipe.is_web_imported and not recipe.copyright_cleared:
-                if has_public_toggle and is_public and not is_staff_or_super:
+                if has_public_toggle and is_public:
                     raise ValidationError(
                         "Web-imported recipes cannot be made public until verified as re-worded and non-infringing by an administrator."
                     )
-                if not is_staff_or_super:
-                    is_public = False
-                    recipe.is_public = False
+                is_public = False
+                recipe.is_public = False
 
             if has_public_toggle:
                 recipe.is_public = is_public
@@ -627,6 +626,7 @@ def create_or_update_recipe(
             elif files and "photo_file" in files and files["photo_file"]:
                 recipe.photo_file = files["photo_file"]
 
+            recipe.full_clean()
             recipe.save()
     else:
         is_staff_or_super = user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False))
@@ -639,19 +639,18 @@ def create_or_update_recipe(
             copyright_cleared = str(data.get("copyright_cleared")).lower() in ("1", "true", "yes", "on")
 
         if is_web_imported and not copyright_cleared:
-            if has_public_toggle and is_public and not is_staff_or_super:
+            if has_public_toggle and is_public:
                 raise ValidationError(
                     "Web-imported recipes cannot be made public until verified as re-worded and non-infringing by an administrator."
                 )
-            if not is_staff_or_super:
-                is_public = False
+            is_public = False
 
         if has_public_toggle:
             is_approved = is_public and (is_staff_or_super or user is None)
         else:
             is_approved = True
 
-        recipe = Recipe.objects.create(
+        recipe = Recipe(
             name=name,
             description=description,
             directions=directions,
@@ -677,6 +676,8 @@ def create_or_update_recipe(
             created_by=user if user and user.is_authenticated else None,
             last_shared_by=user if user and user.is_authenticated else None,
         )
+        recipe.full_clean()
+        recipe.save()
 
     # Process ingredients if provided in data
     if ingredient_names:

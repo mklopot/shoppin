@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 from django.urls import reverse
@@ -1341,6 +1342,68 @@ def test_recipe_dietary_restriction_icons(client: Client, auth_user):
     assert "🥛 Kosher (Dairy)" in html_dairy
     assert "🌿 Kosher (Dairy)" not in html_dairy
     assert "🌿 Vegetarian" in html_dairy
+
+
+@pytest.mark.django_db
+def test_web_imported_recipe_cannot_be_public_without_copyright_clearance():
+    """Verify that web-imported recipes cannot be made public without copyright clearance, even by staff."""
+    admin = User.objects.create_user(username="superadmin", is_staff=True, is_superuser=True)
+    regular_user = User.objects.create_user(username="regularuser")
+
+    # Regular user attempting to create public web-imported recipe fails
+    with pytest.raises(ValidationError) as exc:
+        create_or_update_recipe(
+            {
+                "name": "Web Scraped Stew",
+                "is_web_imported": "1",
+                "is_public": "1",
+                "has_public_toggle": "1",
+            },
+            user=regular_user,
+        )
+    assert "Web-imported recipes cannot be made public" in str(exc.value)
+
+    # Superuser attempting to create public web-imported recipe without clearance fails
+    with pytest.raises(ValidationError) as exc_admin:
+        create_or_update_recipe(
+            {
+                "name": "Admin Web Scraped Stew",
+                "is_web_imported": "1",
+                "is_public": "1",
+                "has_public_toggle": "1",
+            },
+            user=admin,
+        )
+    assert "Web-imported recipes cannot be made public" in str(exc_admin.value)
+
+    # Superuser with copyright_cleared succeeds
+    cleared_recipe = create_or_update_recipe(
+        {
+            "name": "Admin Web Scraped Stew (Cleared)",
+            "is_web_imported": "1",
+            "copyright_cleared": "1",
+            "is_public": "1",
+            "has_public_toggle": "1",
+        },
+        user=admin,
+    )
+    assert cleared_recipe.is_web_imported is True
+    assert cleared_recipe.copyright_cleared is True
+    assert cleared_recipe.is_public is True
+
+
+@pytest.mark.django_db
+def test_web_imported_recipe_clean_model_invariant():
+    """Verify model-level full_clean invariant for web-imported public recipes."""
+    recipe = Recipe(
+        name="Invariant Violation Recipe",
+        is_web_imported=True,
+        copyright_cleared=False,
+        is_public=True,
+    )
+    with pytest.raises(ValidationError) as exc:
+        recipe.full_clean()
+    assert "Web-imported recipes cannot be made public" in str(exc.value)
 
 
 

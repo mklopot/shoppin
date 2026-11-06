@@ -1497,7 +1497,7 @@ def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
     content = resp.content.decode("utf-8")
     assert "+ Save Recipe" in content
     assert "One-Click Bookmarklet" in content
-    assert "import-bookmarklet" in content
+    assert "import_url=" in content
 
 
 

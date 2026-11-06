@@ -24,8 +24,8 @@ rm -rf "$APP_DIR"/.venv/lib*/python*/site-packages/~* 2>/dev/null || true
 echo "==> Applying database migrations..."
 "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" migrate --noinput
 
-echo "==> Checking for new recipe database additions..."
-"$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" import_recipes
+echo "==> Checking for new recipe database additions and updating existing directions..."
+"$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" import_recipes --update-existing
 
 echo "==> Collecting static assets..."
 "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" collectstatic --noinput

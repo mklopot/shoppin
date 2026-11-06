@@ -146,8 +146,10 @@ class Command(BaseCommand):
                 existing = existing_recipes.get(norm_key) or existing_by_slug.get(target_slug)
 
                 if existing:
-                    # Ensure legacy catalog recipes are always public and approved
-                    if not existing.is_public or not existing.is_approved:
+                    # Ensure legacy catalog recipes are public and approved (unless awaiting copyright clearance)
+                    if (not existing.is_public or not existing.is_approved) and not (
+                        existing.is_web_imported and not existing.copyright_cleared
+                    ):
                         if not dry_run:
                             existing.is_public = True
                             existing.is_approved = True

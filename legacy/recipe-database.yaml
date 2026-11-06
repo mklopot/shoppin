@@ -397,6 +397,11 @@
 
 
 'black bean burger':
+  directions: |
+    Prep toppings: Thinly slice the onion. Lightly toast the hamburger bun if desired.
+    Microwave the patty: Place the black bean patty on a microwave-safe plate and microwave on high for 1 minute.
+    Melt the cheese: Place the cheddar cheese on top of the warm patty and microwave for another 10 seconds until melted.
+    Assemble the burger: Spread the ketchup and mustard onto the bottom bun. Transfer the hot, cheesy patty onto the bun, top with the sliced onions and pickle, and cap with the top bun.
   ingredients:
     - 'black bean patty'
 

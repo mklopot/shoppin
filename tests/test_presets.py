@@ -606,3 +606,105 @@ def test_scheduled_refresh_combines_matching_items_from_multiple_presets(preset_
     assert "Preset: Snack Packs" in combined_kix.purpose
 
 
+@pytest.mark.django_db
+def test_scheduled_refresh_copies_pantry_check_status_of_matching_to_buy_items(preset_setup):
+    """
+    When a preset list gets loaded onto the shopping list on a schedule, if there are matching
+    items in the 'To Buy' (NEED) section, the newly loaded item must copy the old item's
+    pantry check (locked) status — whether someone did or did not mark it as 'Need'.
+    Items that were NOT in the 'To Buy' section (e.g. GOT, HAVE, DONT_NEED, or newly added)
+    default to locked=False ('pantry check needed').
+    """
+    ws = preset_setup["workspace"]
+    primary_list = preset_setup["primary_list"]
+
+    preset = create_preset_list(ws, "Weekly Groceries", interval_days=7, is_schedule_enabled=True)
+    add_preset_item(preset, "Milk", amount="1", amount_unit="gallon")
+    add_preset_item(preset, "Eggs", amount="12", amount_unit="count")
+    add_preset_item(preset, "Bread", amount="1", amount_unit="loaf")
+    add_preset_item(preset, "Butter", amount="1", amount_unit="lb")
+
+    # Initial scheduled run puts all 4 items in To Buy (NEED) with locked=False
+    apply_preset_scheduled_refresh(preset, target_list=primary_list)
+
+    milk = primary_list.items.get(name="Milk")
+    eggs = primary_list.items.get(name="Eggs")
+    bread = primary_list.items.get(name="Bread")
+    butter = primary_list.items.get(name="Butter")
+
+    # 1. Milk stays in 'To Buy' (NEED) and someone marks it as 'Need' (locked=True)
+    milk.locked = True
+    milk.save(update_fields=["locked"])
+
+    # 2. Eggs stays in 'To Buy' (NEED) and is NOT marked as 'Need' (locked=False)
+    assert eggs.status == ItemStatus.NEED
+    assert eggs.locked is False
+
+    # 3. Bread is moved to 'Got' (purchased)
+    bread.status = ItemStatus.GOT
+    bread.locked = True
+    bread.save(update_fields=["status", "locked"])
+
+    # 4. Butter is moved to 'Already Have'
+    butter.status = ItemStatus.HAVE
+    butter.locked = True
+    butter.save(update_fields=["status", "locked"])
+
+    # Also add an independent item in 'To Buy' (e.g. from a recipe or manual add)
+    # that matches a new preset item 'Apples' (marked as 'Need' / locked=True)
+    # and 'Bananas' (in 'To Buy' but not marked as 'Need' / locked=False)
+    add_preset_item(preset, "Apples", amount="4", amount_unit="")
+    add_preset_item(preset, "Bananas", amount="6", amount_unit="")
+    ShoppingListItem.objects.create(
+        shopping_list=primary_list,
+        name="Apples",
+        amount=Decimal("2.00"),
+        amount_unit="",
+        status=ItemStatus.NEED,
+        locked=True,
+    )
+    ShoppingListItem.objects.create(
+        shopping_list=primary_list,
+        name="Bananas",
+        amount=Decimal("3.00"),
+        amount_unit="",
+        status=ItemStatus.NEED,
+        locked=False,
+    )
+
+    # Execute scheduled refresh again
+    apply_preset_scheduled_refresh(preset, target_list=primary_list)
+
+    # Verify Milk copied old 'To Buy' item's locked=True status
+    new_milk = primary_list.items.get(name="Milk")
+    assert new_milk.status == ItemStatus.NEED
+    assert new_milk.locked is True
+
+    # Verify Eggs copied old 'To Buy' item's locked=False status
+    new_eggs = primary_list.items.get(name="Eggs")
+    assert new_eggs.status == ItemStatus.NEED
+    assert new_eggs.locked is False
+
+    # Verify Bread and Butter (which were NOT in 'To Buy') came in with locked=False
+    new_bread = primary_list.items.get(name="Bread")
+    assert new_bread.status == ItemStatus.NEED
+    assert new_bread.locked is False
+
+    new_butter = primary_list.items.get(name="Butter")
+    assert new_butter.status == ItemStatus.NEED
+    assert new_butter.locked is False
+
+    # Verify Apples (combined with existing 'To Buy' item that had locked=True) kept locked=True
+    new_apples = primary_list.items.get(name="Apples")
+    assert new_apples.status == ItemStatus.NEED
+    assert new_apples.amount == Decimal("6.00")
+    assert new_apples.locked is True
+
+    # Verify Bananas (combined with existing 'To Buy' item that had locked=False) kept locked=False
+    new_bananas = primary_list.items.get(name="Bananas")
+    assert new_bananas.status == ItemStatus.NEED
+    assert new_bananas.amount == Decimal("9.00")
+    assert new_bananas.locked is False
+
+
+

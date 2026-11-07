@@ -224,6 +224,36 @@ def update_preset_schedule(
     return preset_list
 
 
+def _find_matching_to_buy_locked(
+    prior_to_buy_items: list[dict[str, Any]],
+    item: ShoppingListItem,
+) -> bool | None:
+    """
+    Find the pantry check (locked) status of a matching item that was in the 'To Buy'
+    section prior to a scheduled preset refresh.
+    """
+    normalized_name = singularize(item.name.lower().strip())
+    item_brand = item.brand.lower().strip()
+
+    for cand in prior_to_buy_items:
+        if (
+            cand["normalized_name"] == normalized_name
+            and can_combine_units(cand["amount_unit"], item.amount_unit)
+            and cand["brand"] == item_brand
+        ):
+            return cand["locked"]
+
+    for cand in prior_to_buy_items:
+        if cand["normalized_name"] == normalized_name and cand["brand"] == item_brand:
+            return cand["locked"]
+
+    for cand in prior_to_buy_items:
+        if cand["normalized_name"] == normalized_name:
+            return cand["locked"]
+
+    return None
+
+
 def _add_or_combine_preset_item(
     target_list: ShoppingList,
     preset_list: ShoppingList,
@@ -231,11 +261,13 @@ def _add_or_combine_preset_item(
     is_scheduled: bool = False,
     actual_user: Any = None,
     actor_name: str = "",
+    prior_to_buy_locked: bool | None = None,
 ) -> ShoppingListItem:
     """
     Add or combine an item from a preset list onto the target shopping list.
     Combines with an existing NEED item if normalized name, brand, and compatible units match.
-    Items added via scheduled runs are marked with locked=False ("pantry check needed").
+    Items added via scheduled runs copy the pantry check (locked) status of any matching item
+    already in the 'To Buy' (NEED) section, or default to locked=False ("pantry check needed").
     """
     store = target_list.active_store
     aisle = item.aisle
@@ -247,6 +279,7 @@ def _add_or_combine_preset_item(
     normalized_name = singularize(item.name.lower().strip())
 
     existing: ShoppingListItem | None = None
+    existing_in_to_buy = False
     for candidate in target_list.items.filter(status=ItemStatus.NEED):
         if (
             singularize(candidate.name.lower().strip()) == normalized_name
@@ -254,6 +287,7 @@ def _add_or_combine_preset_item(
             and candidate.brand.lower().strip() == item.brand.lower().strip()
         ):
             existing = candidate
+            existing_in_to_buy = True
             break
 
     if not existing:
@@ -273,8 +307,11 @@ def _add_or_combine_preset_item(
             target_item.status = ItemStatus.NEED
             target_item.save(update_fields=["status", "updated_at"])
         if is_scheduled:
-            # Request 1: items loaded via scheduled run require pantry check confirmation
-            target_item.locked = False
+            if prior_to_buy_locked is not None:
+                target_item.locked = prior_to_buy_locked
+            elif not existing_in_to_buy:
+                # Item was not in the 'To Buy' section, so require pantry check confirmation
+                target_item.locked = False
         if not target_item.attributions.exists() and target_item.amount > Decimal("0.00"):
             ShoppingListItemSource.objects.create(
                 item=target_item,
@@ -287,6 +324,10 @@ def _add_or_combine_preset_item(
             target_item.status_changed_by = actual_user
             target_item.status_changed_by_name = actor_name
     else:
+        if is_scheduled:
+            initial_locked = prior_to_buy_locked if prior_to_buy_locked is not None else False
+        else:
+            initial_locked = True
         target_item = ShoppingListItem.objects.create(
             shopping_list=target_list,
             name=item.name,
@@ -299,7 +340,7 @@ def _add_or_combine_preset_item(
             purpose="",
             optional=item.optional,
             status=ItemStatus.NEED,
-            locked=False if is_scheduled else True,
+            locked=initial_locked,
             source_preset=preset_list,
             status_changed_at=timezone.now(),
             status_changed_by=actual_user,
@@ -462,6 +503,18 @@ def apply_preset_scheduled_refresh(
                 is_preset=False,
             )
 
+    # Snapshot current "To Buy" (NEED) items before removing previous preset entries,
+    # so any newly loaded matching item preserves its prior pantry check (locked) status.
+    prior_to_buy_items = [
+        {
+            "normalized_name": singularize(it.name.lower().strip()),
+            "amount_unit": it.amount_unit,
+            "brand": it.brand.lower().strip(),
+            "locked": bool(it.locked),
+        }
+        for it in target_list.items.filter(status=ItemStatus.NEED)
+    ]
+
     # 1. Remove ALL previous entries from this preset list regardless of status
     sources = ShoppingListItemSource.objects.filter(preset_list=preset_list, item__shopping_list=target_list)
     affected_item_ids = list(sources.values_list("item_id", flat=True).distinct())
@@ -482,6 +535,7 @@ def apply_preset_scheduled_refresh(
     store = target_list.active_store
 
     for item in active_items:
+        prior_to_buy_locked = _find_matching_to_buy_locked(prior_to_buy_items, item)
         processed_item = _add_or_combine_preset_item(
             target_list=target_list,
             preset_list=preset_list,
@@ -489,6 +543,7 @@ def apply_preset_scheduled_refresh(
             is_scheduled=True,
             actual_user=None,
             actor_name="system",
+            prior_to_buy_locked=prior_to_buy_locked,
         )
         added_items.append(processed_item)
 

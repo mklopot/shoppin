@@ -461,6 +461,8 @@ def recipe_bookmarklet_import_view(request: HttpRequest) -> HttpResponse:
         url = (request.POST.get("url") or "").strip()
         raw_html = (request.POST.get("html") or "").strip() or None
         if not url:
+            if request.POST.get("name"):
+                return recipe_create_view(request)
             messages.error(request, "No recipe webpage URL received from the bookmarklet.")
             return redirect("recipes:create")
     else:

@@ -1535,6 +1535,30 @@ def test_recipe_bookmarklet_import_view_get_with_inline_ld(client: Client, auth_
     assert "Android Bookmarklet Guacamole" in html
     assert "Fast query-param import for mobile browsers." in html
     assert "Pre-filled recipe from www.allrecipes.com via bookmarklet!" in html
+    assert f'action="{reverse("recipes:create")}"' in html
+
+    # Verify that submitting the recipe creation form (even if POSTed to import_bookmarklet) saves the recipe
+    save_resp = client.post(
+        reverse("recipes:import_bookmarklet"),
+        {
+            "name": "Android Bookmarklet Guacamole",
+            "description": "Fast query-param import for mobile browsers.",
+            "directions": "Mash avocados with lime and salt.",
+            "portions": "4",
+            "prep_time_minutes": "10",
+            "cook_time_minutes": "0",
+            "cuisine": "Mexican",
+            "dish_type": "Dip",
+            "is_web_imported": "1",
+            "ingredient_name[]": ["avocados", "lime", "salt"],
+            "ingredient_amount[]": ["3", "1", "1 tsp"],
+            "ingredient_unit[]": ["", "", ""],
+            "ingredient_brand[]": ["", "", ""],
+            "ingredient_vendor[]": ["", "", ""],
+        },
+    )
+    assert save_resp.status_code == 302
+    assert Recipe.objects.filter(name="Android Bookmarklet Guacamole", created_by=user).exists()
 
 
 @pytest.mark.django_db

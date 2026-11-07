@@ -68,7 +68,7 @@
     </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" class="space-y-6">
+    <form method="post" {% if not is_edit %}action="{% url 'recipes:create' %}"{% endif %} enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
         <input type="hidden" name="has_public_toggle" value="1">
         {% if recipe.is_web_imported or import_url %}

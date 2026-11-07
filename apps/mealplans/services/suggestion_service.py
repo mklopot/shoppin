@@ -238,6 +238,8 @@ def calculate_current_meal_nutrition(meal: Meal) -> dict[str, Any]:
 
     for dish in meal.dishes_list:
         r = dish.recipe
+        if not r:
+            continue
         scale = dish.scale_factor or Decimal("1.00")
         cals += int(r.calories_per_serving * scale)
         protein += Decimal(str(r.protein_per_serving_g)) * scale

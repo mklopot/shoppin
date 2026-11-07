@@ -130,7 +130,8 @@ class Meal(models.Model):
 
 class MealDish(models.Model):
     """
-    An individual recipe dish planned within a meal, tracking portion scaling.
+    An individual planned entry within a meal: either a Recipe dish (tracking portion scaling)
+    or a standalone single ingredient / shopping list item (when recipe is None).
     """
     meal = models.ForeignKey(
         Meal,
@@ -140,7 +141,27 @@ class MealDish(models.Model):
     recipe = models.ForeignKey(
         "recipes.Recipe",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="meal_dishes",
+    )
+    item_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Name of standalone ingredient or shopping item when not a recipe dish",
+    )
+    amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("1.00"),
+        help_text="Base quantity for standalone single item",
+    )
+    amount_unit = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        help_text="Unit of measurement for standalone single item",
     )
     scale_factor = models.DecimalField(
         max_digits=5,
@@ -154,8 +175,59 @@ class MealDish(models.Model):
     class Meta:
         ordering = ["order", "created_at", "id"]
 
+    def clean(self) -> None:
+        """Validate that single item fields are free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
+
+    @property
+    def is_single_item(self) -> bool:
+        """Return True if this meal entry is a standalone single shopping item rather than a recipe."""
+        return self.recipe_id is None
+
+    @property
+    def display_name(self) -> str:
+        """Return the human-readable name of the recipe dish or single item."""
+        if self.recipe_id and self.recipe:
+            return self.recipe.name
+        return self.item_name
+
+    @property
+    def effective_amount(self) -> Decimal:
+        """Return the scaled quantity for a standalone single item."""
+        base = self.amount if self.amount is not None else Decimal("1.00")
+        factor = self.scale_factor if self.scale_factor is not None else Decimal("1.00")
+        return (base * factor).quantize(Decimal("0.01"))
+
+    @property
+    def amount_display(self) -> str:
+        """Return formatted quantity string for a standalone single item."""
+        from apps.core.utils import format_amount
+        return format_amount(self.effective_amount)
+
+    @property
+    def unit_display(self) -> str:
+        """Return singularized or pluralized unit for a standalone single item."""
+        from apps.core.utils import pluralize_unit, singularize_unit
+        if not self.amount_unit:
+            return ""
+        eff = self.effective_amount
+        if eff == Decimal("1.00") or eff == 1:
+            return singularize_unit(self.amount_unit)
+        return pluralize_unit(self.amount_unit)
+
+    @property
+    def quantity_display(self) -> str:
+        """Return combined formatted amount and unit for a standalone single item."""
+        unit_str = self.unit_display
+        return f"{self.amount_display} {unit_str}".strip() if unit_str else self.amount_display
+
     def __str__(self) -> str:
-        """Return formatted dish name with scale factor if scaled."""
+        """Return formatted dish or single item name with scale factor if scaled."""
+        if self.is_single_item:
+            qty = self.quantity_display
+            return f"{self.item_name} ({qty})" if qty else self.item_name
         factor_str = f"{self.scale_factor.normalize():f}x" if self.scale_factor != Decimal("1.00") else ""
         return f"{self.recipe.name}{f' ({factor_str})' if factor_str else ''}"
 
@@ -177,6 +249,11 @@ class MealDish(models.Model):
     @property
     def scaled_portions(self) -> int | float:
         """Return portions adjusted by the scaling factor."""
+        if not self.recipe:
+            eff = self.effective_amount
+            if eff == eff.to_integral():
+                return int(eff)
+            return float(eff.normalize())
         base = self.recipe.portions or 4
         scaled = Decimal(str(base)) * self.scale_factor
         if scaled == scaled.to_integral():

@@ -496,14 +496,12 @@ class ShoppingListItem(models.Model):
             self.source_meal = last_dish_attr.meal
             self.source_ingredient = last_dish_attr.ingredient
         else:
+            last_meal_attr = next((a for a in reversed(attributions) if a.meal_id), None)
             last_preset_attr = next((a for a in reversed(attributions) if a.preset_list_id), None)
-            if last_preset_attr:
-                self.source_preset = last_preset_attr.preset_list
-            else:
-                self.source_recipe = None
-                self.source_meal = None
-                self.source_ingredient = None
-                self.source_preset = None
+            self.source_recipe = None
+            self.source_ingredient = None
+            self.source_meal = last_meal_attr.meal if last_meal_attr else None
+            self.source_preset = last_preset_attr.preset_list if last_preset_attr else None
 
         if save:
             self.save(update_fields=[

@@ -14,11 +14,14 @@ from apps.core.services.workspace_service import create_workspace, share_workspa
 from apps.mealplans.models import Meal, MealDish
 from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.mealplans.services.mealplan_service import (
+    add_item_to_meal,
     add_meal_to_plan,
     add_recipe_to_meal,
     compute_cooking_status,
     delete_meal_from_plan,
+    remove_dish_from_meal,
     remove_recipe_from_meal,
+    scale_meal_dish,
     update_meal_name,
 )
 from apps.recipes.models import Ingredient, Recipe
@@ -928,3 +931,226 @@ def test_view_endpoints_add_dish_twice_scale_and_delete_separately(client, mealp
     # Tortillas now 3x (8 * 3 = 24)
     tortillas.refresh_from_db()
     assert tortillas.amount == Decimal("24.00")
+
+
+def test_add_single_item_to_meal_service_and_remove(mealplan_setup):
+    """
+    Verify adding a single ingredient/item in place of a dish sets the meal name as
+    purpose on the shopping list, supports scaling and meal renaming, and removes
+    the item from the shopping list when deleted.
+    """
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+
+    meal = add_meal_to_plan(meal_plan, "Wednesday Quick Dinner")
+    dish1, item1 = add_item_to_meal(
+        meal=meal,
+        raw_item_input="Rotisserie Chicken",
+        shopping_list=shopping_list,
+        amount_override="1",
+    )
+    dish2, item2 = add_item_to_meal(
+        meal=meal,
+        raw_item_input="Bagged Salad",
+        shopping_list=shopping_list,
+        amount_override="2 bags",
+    )
+
+    assert dish1.is_single_item is True
+    assert dish1.recipe is None
+    assert dish1.display_name == "Rotisserie Chicken"
+    assert dish1.quantity_display == "1"
+
+    assert dish2.is_single_item is True
+    assert dish2.display_name == "Bagged Salad"
+    assert dish2.quantity_display == "2 bags"
+
+    item1.refresh_from_db()
+    item2.refresh_from_db()
+    assert item1.purpose == "Wednesday Quick Dinner"
+    assert item1.source_meal == meal
+    assert item1.amount == Decimal("1.00")
+
+    assert item2.purpose == "Wednesday Quick Dinner"
+    assert item2.source_meal == meal
+    assert item2.amount == Decimal("2.00")
+    assert item2.amount_unit == "bags"
+
+    # Renaming the meal updates the purpose on the shopping list items
+    update_meal_name(meal, "Thursday Easy Dinner")
+    item1.refresh_from_db()
+    item2.refresh_from_db()
+    assert item1.purpose == "Thursday Easy Dinner"
+    assert item2.purpose == "Thursday Easy Dinner"
+
+    # Scaling a single-item dish updates the shopping list amount
+    scale_meal_dish(dish2, Decimal("1.50"), shopping_list)
+    item2.refresh_from_db()
+    assert item2.amount == Decimal("3.00")
+
+    # Removing dish1 removes Rotisserie Chicken from the shopping list
+    remove_dish_from_meal(dish1, shopping_list)
+    assert not shopping_list.items.filter(name__iexact="Rotisserie Chicken").exists()
+    assert shopping_list.items.filter(name__iexact="Bagged Salad").exists()
+
+    # Deleting the meal removes the remaining single item from the shopping list
+    delete_meal_from_plan(meal, shopping_list)
+    assert not shopping_list.items.filter(name__iexact="Bagged Salad").exists()
+
+
+def test_single_item_combines_with_recipe_ingredient_and_cleans_up(mealplan_setup):
+    """
+    Verify a single item on a meal combines with a matching recipe ingredient on the
+    shopping list, includes the meal name in purpose, and deducts cleanly when removed.
+    """
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal1 = add_meal_to_plan(meal_plan, "Tuesday Tacos")
+    add_recipe_to_meal(meal1, recipe, shopping_list)
+
+    meal2 = add_meal_to_plan(meal_plan, "Friday Quesadillas")
+    single_dish, combined_item = add_item_to_meal(
+        meal=meal2,
+        raw_item_input="Tortillas",
+        shopping_list=shopping_list,
+        amount_override="4 count",
+    )
+
+    combined_item.refresh_from_db()
+    assert combined_item.amount == Decimal("12.00")  # 8 from Fiesta Tacos + 4 from Friday Quesadillas
+    assert "Fiesta Tacos" in combined_item.purpose
+    assert "Friday Quesadillas" in combined_item.purpose
+
+    # Removing the single item leaves the recipe's 8 Tortillas intact
+    remove_dish_from_meal(single_dish, shopping_list)
+    combined_item.refresh_from_db()
+    assert combined_item.amount == Decimal("8.00")
+    assert combined_item.purpose == "Fiesta Tacos"
+
+
+def test_single_item_cooking_readiness_status(mealplan_setup):
+    """
+    Verify compute_cooking_status tracks readiness for single-item dishes and incorporates
+    them into the parent meal's readiness status.
+    """
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Combo Meal")
+    add_recipe_to_meal(meal, recipe, shopping_list)
+    single_dish, single_item = add_item_to_meal(
+        meal=meal,
+        raw_item_input="Corn on the Cob",
+        shopping_list=shopping_list,
+        amount_override="4",
+    )
+
+    # Mark all recipe ingredients as GOT, leave single_item as NEED
+    for item in shopping_list.items.exclude(id=single_item.id):
+        item.status = ItemStatus.GOT
+        item.save()
+
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert recipe.id in status["recipes_ready"]
+    assert single_dish.id not in status["dishes_ready"]
+    assert meal.id not in status["meals_ready"]
+
+    # Mark single_item as DONT_NEED (skipped) -> yellow (missing_optional)
+    single_item.status = ItemStatus.DONT_NEED
+    single_item.save()
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert single_dish.id in status["dishes_missing_optional"]
+    assert meal.id in status["meals_missing_optional"]
+
+    # Mark single_item as GOT -> green (ready)
+    single_item.status = ItemStatus.GOT
+    single_item.save()
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert single_dish.id in status["dishes_ready"]
+    assert meal.id in status["meals_ready"]
+
+
+def test_single_item_dedicated_entry_view_and_exempt_from_ratings(client, mealplan_setup):
+    """
+    Verify the dedicated add_single_item endpoint, visual distinction in HTML,
+    and exemption from ratings/feedback when marked as made individually or as part of a meal.
+    """
+    owner = mealplan_setup["owner"]
+    ws = mealplan_setup["workspace"]
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Italian Night")
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # 1. Add a single item via dedicated endpoint
+    resp_add = client.post(
+        reverse("mealplans:add_single_item", args=[meal.id]),
+        {"item_name": "Garlic Bread", "amount": "2 loaves"},
+    )
+    assert resp_add.status_code == 200
+    html = resp_add.content.decode("utf-8")
+    assert "Single Item" in html
+    assert "Garlic Bread" in html
+    assert "Qty: 2 loaves" in html
+
+    single_dish = MealDish.objects.get(meal=meal, item_name="Garlic Bread")
+    assert single_dish.is_single_item is True
+
+    sl_item = shopping_list.items.get(name="Garlic Bread")
+    assert sl_item.purpose == "Italian Night"
+    assert sl_item.amount == Decimal("2.00")
+    assert sl_item.amount_unit == "loaves"
+
+    # 2. Mark single item as made individually -> removed from meal & shopping list, NO rating modal
+    resp_made_single = client.post(
+        reverse("mealplans:mark_dish_made", args=[meal.id, single_dish.id]),
+    )
+    assert resp_made_single.status_code == 200
+    made_html = resp_made_single.content.decode("utf-8")
+    assert "recipe-rating-modal" not in made_html
+    assert resp_made_single.context["recipes"] == []
+    assert not MealDish.objects.filter(id=single_dish.id).exists()
+    assert not shopping_list.items.filter(name="Garlic Bread").exists()
+
+    # 3. Meal with BOTH a recipe dish and a single item -> mark_meal_made only prompts rating for the recipe
+    add_recipe_to_meal(meal, recipe, shopping_list)
+    add_item_to_meal(meal, "Caesar Salad Kit", shopping_list, amount_override="1 bag")
+    initial_times_made = recipe.times_made
+
+    resp_meal_made = client.post(
+        reverse("mealplans:mark_meal_made", args=[meal.id]),
+    )
+    assert resp_meal_made.status_code == 200
+    meal_made_html = resp_meal_made.content.decode("utf-8")
+    assert "recipe-rating-modal" in meal_made_html
+    assert resp_meal_made.context["recipes"] == [recipe]
+    assert "Fiesta Tacos" in meal_made_html
+    assert "Caesar Salad Kit" not in meal_made_html
+    recipe.refresh_from_db()
+    assert recipe.times_made == initial_times_made + 1
+    assert shopping_list.items.count() == 0
+
+    # 4. Meal with ONLY a single item -> mark_meal_made removes meal & shopping item and shows NO rating modal
+    solo_meal = add_meal_to_plan(meal_plan, "Bagel Breakfast")
+    add_item_to_meal(solo_meal, "Everything Bagels", shopping_list, amount_override="6")
+    assert shopping_list.items.filter(name="Everything Bagels", purpose="Bagel Breakfast").exists()
+
+    resp_solo_made = client.post(
+        reverse("mealplans:mark_meal_made", args=[solo_meal.id]),
+    )
+    assert resp_solo_made.status_code == 200
+    solo_made_html = resp_solo_made.content.decode("utf-8")
+    assert "recipe-rating-modal" not in solo_made_html
+    assert resp_solo_made.context["recipes"] == []
+    assert not Meal.objects.filter(id=solo_meal.id).exists()
+    assert not shopping_list.items.filter(name="Everything Bagels").exists()
+

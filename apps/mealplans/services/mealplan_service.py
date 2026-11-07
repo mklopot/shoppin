@@ -15,6 +15,8 @@ from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import (
     can_combine_units,
     clean_purpose,
+    parse_amount_and_unit,
+    parse_ingredient_line,
     singularize,
 )
 from apps.mealplans.models import Meal, MealDish, MealPlan
@@ -74,13 +76,24 @@ def add_meal_to_plan(meal_plan: MealPlan, meal_name: str) -> Meal:
 
 def update_meal_name(meal: Meal, new_name: str) -> Meal:
     """
-    Update a meal's name and recompute its culinary emoji.
+    Update a meal's name, recompute its culinary emoji, and update the purpose
+    of any single-item shopping list attributions bound to this meal.
     """
     cleaned_name = new_name.strip()
     if cleaned_name:
         meal.name = cleaned_name
         meal.emoji = get_meal_emoji(cleaned_name)
         meal.save(update_fields=["name", "emoji"])
+
+        meal_purpose = clean_purpose(cleaned_name)
+        single_item_sources = ShoppingListItemSource.objects.filter(meal=meal, recipe__isnull=True)
+        affected_item_ids = list(single_item_sources.values_list("item_id", flat=True).distinct())
+        if affected_item_ids:
+            single_item_sources.update(purpose=meal_purpose)
+            for item_id in affected_item_ids:
+                item = ShoppingListItem.objects.filter(id=item_id).first()
+                if item:
+                    item.recalculate_from_attributions()
     return meal
 
 
@@ -299,6 +312,158 @@ def add_recipe_to_meal(
     return added_descriptions
 
 
+def add_item_to_meal(
+    meal: Meal,
+    raw_item_input: str,
+    shopping_list: ShoppingList,
+    request: HttpRequest | None = None,
+    amount_override: Decimal | float | str | None = None,
+    unit_override: str | None = None,
+    scale_factor: Decimal | float | str = Decimal("1.00"),
+) -> tuple[MealDish, ShoppingListItem]:
+    """
+    Add a single ingredient or shopping list item directly to a meal in place of a recipe dish,
+    and populate it onto the shopping list with the meal's name as its purpose.
+
+    Args:
+        meal: Target Meal.
+        raw_item_input: Item name or free-form quantity + item string (e.g. 'Rotisserie Chicken', '2 lbs Watermelon').
+        shopping_list: Workspace active ShoppingList.
+        request: Optional HttpRequest for attribution / WebSocket sender client ID.
+        amount_override: Optional explicit quantity / unit string from a dedicated quantity input.
+        unit_override: Optional explicit unit string.
+        scale_factor: Portion scaling factor (default 1.00).
+
+    Returns:
+        Tuple of (created MealDish, created or updated ShoppingListItem).
+    """
+    raw_clean = (raw_item_input or "").strip()
+    if not raw_clean:
+        raise ValidationError("Item name is required.")
+
+    parsed_name, line_amt, line_unit = parse_ingredient_line(raw_clean)
+    raw_amt_str = str(amount_override).strip() if amount_override is not None else ""
+
+    if raw_amt_str and raw_amt_str not in ("1", "1.0", "1.00"):
+        override_amt, override_unit = parse_amount_and_unit(raw_amt_str)
+        clean_name = raw_clean
+        base_amount = override_amt
+        unit_val = (unit_override or override_unit or "").strip()
+    elif unit_override and unit_override.strip():
+        override_amt, _ = parse_amount_and_unit(raw_amt_str or "1")
+        clean_name = raw_clean
+        base_amount = override_amt
+        unit_val = unit_override.strip()
+    else:
+        clean_name = parsed_name or raw_clean
+        base_amount = line_amt
+        unit_val = line_unit
+
+    try:
+        factor = Decimal(str(scale_factor)).quantize(Decimal("0.01"))
+        if factor <= Decimal("0"):
+            factor = Decimal("1.00")
+    except Exception:
+        factor = Decimal("1.00")
+
+    max_order = meal.dishes.aggregate(models.Max("order"))["order__max"]
+    next_order = (max_order + 1) if max_order is not None else 0
+    dish = MealDish.objects.create(
+        meal=meal,
+        recipe=None,
+        item_name=clean_name,
+        amount=base_amount,
+        amount_unit=unit_val,
+        scale_factor=factor,
+        order=next_order,
+    )
+
+    if not meal.emoji:
+        meal.emoji = get_meal_emoji(f"{meal.name} {clean_name}")
+        meal.save(update_fields=["emoji"])
+
+    meal_purpose_name = clean_purpose(meal.name)
+    scaled_amount = (base_amount * factor).quantize(Decimal("0.01"))
+    normalized_name = singularize(clean_name.lower())
+
+    amount_raw = f"{scaled_amount.normalize():f}"
+    amount_fmt = amount_raw.rstrip("0").rstrip(".") if "." in amount_raw else amount_raw
+    unit_str = f" {unit_val}" if unit_val else ""
+
+    existing = None
+    for candidate in shopping_list.items.filter(status=ItemStatus.NEED):
+        if (
+            singularize(candidate.name.lower()) == normalized_name
+            and can_combine_units(candidate.amount_unit, unit_val)
+            and not candidate.brand
+        ):
+            existing = candidate
+            break
+
+    if existing:
+        target_item = existing
+        target_item.locked = False
+        if not target_item.attributions.exists() and target_item.amount > Decimal("0.00"):
+            ShoppingListItemSource.objects.create(
+                item=target_item,
+                is_one_time=True,
+                amount=target_item.amount,
+                amount_unit=target_item.amount_unit,
+                purpose=clean_purpose(target_item.purpose) or "one-time purchase",
+            )
+        desc = f"{amount_fmt}{unit_str} {clean_name} (combined)"
+    else:
+        cat = categorizer.get_category(clean_name)
+        aisle = ""
+        if shopping_list.active_store:
+            aisle_info = resolve_store_aisle(shopping_list.active_store, clean_name, db_only=True)
+            aisle = aisle_info.get("aisle_name", "") if aisle_info else ""
+
+        target_item = ShoppingListItem.objects.create(
+            shopping_list=shopping_list,
+            name=clean_name,
+            amount=Decimal("0.00"),
+            amount_unit=unit_val,
+            category=cat,
+            aisle=aisle,
+            purpose=meal_purpose_name,
+            status=ItemStatus.NEED,
+            source_meal=meal,
+        )
+        desc = f"{amount_fmt}{unit_str} {clean_name}".strip()
+
+    ShoppingListItemSource.objects.create(
+        item=target_item,
+        meal=meal,
+        meal_dish=dish,
+        recipe=None,
+        ingredient=None,
+        amount=scaled_amount,
+        amount_unit=unit_val,
+        purpose=meal_purpose_name,
+    )
+    target_item.recalculate_from_attributions()
+
+    if shopping_list.active_store:
+        warm_store_aisles_async(shopping_list)
+
+    actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
+    sender_id = request.headers.get("X-Client-Id") if request else ""
+    scale_tag = f" ({factor.normalize():f}x)" if factor != Decimal("1.00") else ""
+    broadcast_messages = [
+        f"🛒 Added single item '{clean_name}'{scale_tag} to {meal.name}",
+        f"🛒 Added {desc} to shopping list (for {meal.name})",
+    ]
+    broadcast_shopping_list_update(
+        shopping_list=shopping_list,
+        toast_message=f"Added '{clean_name}' to {meal.name} and shopping list",
+        toast_messages=broadcast_messages,
+        actor_name=actor_name,
+        sender_client_id=sender_id,
+    )
+    return dish, target_item
+
+
 def remove_dish_from_meal(
     dish: MealDish,
     shopping_list: ShoppingList | None = None,
@@ -314,6 +479,7 @@ def remove_dish_from_meal(
     """
     meal = dish.meal
     recipe = dish.recipe
+    dish_name = dish.display_name
     factor = dish.scale_factor or Decimal("1.00")
 
     if not shopping_list:
@@ -332,7 +498,7 @@ def remove_dish_from_meal(
                 item.recalculate_from_attributions()
 
         # 2. Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
-        if not affected_item_ids:
+        if not affected_item_ids and recipe:
             recipe_purpose_name = clean_purpose(recipe.name)
             for ingredient in recipe.ingredients.all():
                 scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
@@ -369,7 +535,7 @@ def remove_dish_from_meal(
     dish.delete()
 
     # 4. Only disassociate recipe from meal M2M if no other MealDish for this recipe remains
-    if not meal.dishes.filter(recipe=recipe).exists():
+    if recipe and not meal.dishes.filter(recipe=recipe).exists():
         meal.recipes.remove(recipe)
 
     # Broadcast WebSocket update
@@ -378,7 +544,7 @@ def remove_dish_from_meal(
     if shopping_list:
         broadcast_shopping_list_update(
             shopping_list=shopping_list,
-            toast_message=f"Removed '{recipe.name}' from {meal.name}",
+            toast_message=f"Removed '{dish_name}' from {meal.name}",
             actor_name=actor_name,
             sender_client_id=sender_id,
         )
@@ -459,37 +625,70 @@ def scale_meal_dish(
         shopping_list = dish.meal.meal_plan.workspace.get_primary_list() if (dish.meal.meal_plan and dish.meal.meal_plan.workspace) else None
 
     if shopping_list:
-        recipe_purpose_name = clean_purpose(dish.recipe.name)
         affected_items = set()
-        for ingredient in dish.recipe.ingredients.all():
-            scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
-            source = ShoppingListItemSource.objects.filter(meal_dish=dish, ingredient=ingredient).first()
+        if dish.recipe:
+            recipe_purpose_name = clean_purpose(dish.recipe.name)
+            for ingredient in dish.recipe.ingredients.all():
+                scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
+                source = ShoppingListItemSource.objects.filter(meal_dish=dish, ingredient=ingredient).first()
+                if source:
+                    source.amount = scaled_amount
+                    source.save(update_fields=["amount"])
+                    affected_items.add(source.item)
+                else:
+                    # If source didn't exist yet, link to or create shopping list item
+                    item = shopping_list.items.filter(name__iexact=ingredient.name).first()
+                    if not item:
+                        item = ShoppingListItem.objects.create(
+                            shopping_list=shopping_list,
+                            name=ingredient.name,
+                            amount=scaled_amount,
+                            amount_unit=ingredient.amount_unit,
+                            purpose=recipe_purpose_name,
+                            category=ingredient.category or "Produce",
+                            status=ItemStatus.NEED,
+                        )
+                    ShoppingListItemSource.objects.create(
+                        item=item,
+                        meal=dish.meal,
+                        meal_dish=dish,
+                        recipe=dish.recipe,
+                        ingredient=ingredient,
+                        amount=scaled_amount,
+                        amount_unit=ingredient.amount_unit,
+                        purpose=recipe_purpose_name,
+                    )
+                    affected_items.add(item)
+        else:
+            meal_purpose_name = clean_purpose(dish.meal.name)
+            scaled_amount = (dish.amount * factor).quantize(Decimal("0.01"))
+            source = ShoppingListItemSource.objects.filter(meal_dish=dish).first()
             if source:
                 source.amount = scaled_amount
                 source.save(update_fields=["amount"])
                 affected_items.add(source.item)
             else:
-                # If source didn't exist yet, link to or create shopping list item
-                item = shopping_list.items.filter(name__iexact=ingredient.name).first()
+                item = shopping_list.items.filter(name__iexact=dish.item_name).first()
                 if not item:
                     item = ShoppingListItem.objects.create(
                         shopping_list=shopping_list,
-                        name=ingredient.name,
+                        name=dish.item_name,
                         amount=scaled_amount,
-                        amount_unit=ingredient.amount_unit,
-                        purpose=recipe_purpose_name,
-                        category=ingredient.category or "Produce",
+                        amount_unit=dish.amount_unit,
+                        purpose=meal_purpose_name,
+                        category=categorizer.get_category(dish.item_name),
                         status=ItemStatus.NEED,
+                        source_meal=dish.meal,
                     )
                 ShoppingListItemSource.objects.create(
                     item=item,
                     meal=dish.meal,
                     meal_dish=dish,
-                    recipe=dish.recipe,
-                    ingredient=ingredient,
+                    recipe=None,
+                    ingredient=None,
                     amount=scaled_amount,
-                    amount_unit=ingredient.amount_unit,
-                    purpose=recipe_purpose_name,
+                    amount_unit=dish.amount_unit,
+                    purpose=meal_purpose_name,
                 )
                 affected_items.add(item)
 
@@ -500,7 +699,7 @@ def scale_meal_dish(
         sender_id = request.headers.get("X-Client-Id") if request else ""
         broadcast_shopping_list_update(
             shopping_list=shopping_list,
-            toast_message=f"Scaled '{dish.recipe.name}' to {factor.normalize():f}x",
+            toast_message=f"Scaled '{dish.display_name}' to {factor.normalize():f}x",
             actor_name=actor_name,
             sender_client_id=sender_id,
         )
@@ -674,8 +873,8 @@ def get_recipe_ingredients_status(
 
 def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingList | None) -> dict[str, Any]:
     """
-    Compute cooking readiness status for recipes and meals:
-    - 🟢 Green (Ready): 100% of recipe's ingredients are available (GOT or HAVE).
+    Compute cooking readiness status for recipes, dishes, and meals:
+    - 🟢 Green (Ready): 100% of recipe's ingredients (or the single item) are available (GOT or HAVE).
     - 🟡 Yellow (Missing optional or skipped): All non-optional, non-skipped ingredients are
       available (GOT or HAVE). The only missing ingredients are optional or explicitly skipped.
     - ⚪ Grey: One or more required non-skipped ingredients are still NEED or missing from list.
@@ -694,6 +893,8 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
         {
             'recipes_ready': set of recipe ids,
             'recipes_missing_optional': set of recipe ids,
+            'dishes_ready': set of MealDish ids,
+            'dishes_missing_optional': set of MealDish ids,
             'meals_ready': set of meal ids,
             'meals_missing_optional': set of meal ids,
         }
@@ -701,6 +902,8 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
     empty_result = {
         "recipes_ready": set(),
         "recipes_missing_optional": set(),
+        "dishes_ready": set(),
+        "dishes_missing_optional": set(),
         "meals_ready": set(),
         "meals_missing_optional": set(),
     }
@@ -709,59 +912,122 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
 
     recipes_ready = set()
     recipes_missing_optional = set()
+    dishes_ready = set()
+    dishes_missing_optional = set()
 
-    all_meals = list(meal_plan.meals.prefetch_related("recipes", "recipes__ingredients").all())
+    all_meals = list(
+        meal_plan.meals.prefetch_related(
+            "recipes",
+            "recipes__ingredients",
+            "dishes",
+            "dishes__recipe",
+            "dishes__recipe__ingredients",
+        ).all()
+    )
+
+    shopping_items = list(shopping_list.items.prefetch_related("attributions").all())
+    item_by_dish_id: dict[int, ShoppingListItem] = {}
+    for item in shopping_items:
+        for attr in item.attributions.all():
+            if attr.meal_dish_id and attr.recipe_id is None:
+                item_by_dish_id[attr.meal_dish_id] = item
+    exact_name_map = {item.name.strip().lower(): item for item in shopping_items}
+    singular_name_map = {singularize(item.name.strip().lower()): item for item in shopping_items}
 
     # Cache recipe status so we only calculate each recipe once across meals
     recipe_status_cache: dict[int, str] = {}  # recipe_id -> "ready" | "missing_optional" | "grey"
 
+    def _resolve_recipe_status(recipe: Recipe) -> str:
+        if recipe.id in recipe_status_cache:
+            return recipe_status_cache[recipe.id]
+
+        ing_statuses = get_recipe_ingredients_status(recipe, shopping_list)
+        if not ing_statuses:
+            recipe_status_cache[recipe.id] = "ready"
+            recipes_ready.add(recipe.id)
+            return "ready"
+
+        all_available = all(row["is_available"] for row in ing_statuses)
+        all_but_optional_or_skipped = all(
+            row["is_available"] or row["is_optional"] or row["is_skipped"]
+            for row in ing_statuses
+        )
+
+        if all_available:
+            recipe_status_cache[recipe.id] = "ready"
+            recipes_ready.add(recipe.id)
+            return "ready"
+        if all_but_optional_or_skipped:
+            recipe_status_cache[recipe.id] = "missing_optional"
+            recipes_missing_optional.add(recipe.id)
+            return "missing_optional"
+        recipe_status_cache[recipe.id] = "grey"
+        return "grey"
+
+    def _resolve_single_item_dish_status(dish: MealDish) -> str:
+        raw_name = (dish.item_name or "").strip().lower()
+        norm_name = singularize(raw_name)
+        item = (
+            item_by_dish_id.get(dish.id)
+            or exact_name_map.get(raw_name)
+            or singular_name_map.get(norm_name)
+        )
+        if not item:
+            return "grey"
+        if item.status in (ItemStatus.GOT, ItemStatus.HAVE):
+            return "ready"
+        if item.status == ItemStatus.DONT_NEED:
+            return "missing_optional"
+        return "grey"
+
     for meal in all_meals:
         for recipe in meal.recipes.all():
-            if recipe.id in recipe_status_cache:
-                continue
-
-            ing_statuses = get_recipe_ingredients_status(recipe, shopping_list)
-            if not ing_statuses:
-                # Recipes with no ingredients listed are ready to cook
-                recipe_status_cache[recipe.id] = "ready"
-                recipes_ready.add(recipe.id)
-                continue
-
-            all_available = all(row["is_available"] for row in ing_statuses)
-            all_but_optional_or_skipped = all(
-                row["is_available"] or row["is_optional"] or row["is_skipped"]
-                for row in ing_statuses
-            )
-
-            if all_available:
-                recipe_status_cache[recipe.id] = "ready"
-                recipes_ready.add(recipe.id)
-            elif all_but_optional_or_skipped:
-                recipe_status_cache[recipe.id] = "missing_optional"
-                recipes_missing_optional.add(recipe.id)
-            else:
-                recipe_status_cache[recipe.id] = "grey"
+            _resolve_recipe_status(recipe)
 
     meals_ready = set()
     meals_missing_optional = set()
 
     for meal in all_meals:
-        recipes = list(meal.recipes.all())
-        recipe_count = len(recipes)
-        if recipe_count == 0:
-            continue
+        dishes = list(meal.dishes.all())
+        if dishes:
+            dish_statuses: list[str] = []
+            for dish in dishes:
+                if dish.recipe:
+                    st = _resolve_recipe_status(dish.recipe)
+                else:
+                    st = _resolve_single_item_dish_status(dish)
+                if st == "ready":
+                    dishes_ready.add(dish.id)
+                elif st == "missing_optional":
+                    dishes_missing_optional.add(dish.id)
+                dish_statuses.append(st)
 
-        num_ready = sum(1 for r in recipes if recipe_status_cache.get(r.id) == "ready")
-        num_missing_opt = sum(1 for r in recipes if recipe_status_cache.get(r.id) == "missing_optional")
+            total = len(dish_statuses)
+            num_ready = sum(1 for st in dish_statuses if st == "ready")
+            num_missing_opt = sum(1 for st in dish_statuses if st == "missing_optional")
+            if num_ready == total:
+                meals_ready.add(meal.id)
+            elif (num_ready + num_missing_opt) == total:
+                meals_missing_optional.add(meal.id)
+        else:
+            recipes = list(meal.recipes.all())
+            recipe_count = len(recipes)
+            if recipe_count == 0:
+                continue
 
-        if num_ready == recipe_count:
-            meals_ready.add(meal.id)
-        elif (num_ready + num_missing_opt) == recipe_count:
-            meals_missing_optional.add(meal.id)
+            num_ready = sum(1 for r in recipes if recipe_status_cache.get(r.id) == "ready")
+            num_missing_opt = sum(1 for r in recipes if recipe_status_cache.get(r.id) == "missing_optional")
+
+            if num_ready == recipe_count:
+                meals_ready.add(meal.id)
+            elif (num_ready + num_missing_opt) == recipe_count:
+                meals_missing_optional.add(meal.id)
 
     return {
         "recipes_ready": recipes_ready,
         "recipes_missing_optional": recipes_missing_optional,
+        "dishes_ready": dishes_ready,
+        "dishes_missing_optional": dishes_missing_optional,
         "meals_ready": meals_ready,
         "meals_missing_optional": meals_missing_optional,
     }

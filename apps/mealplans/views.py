@@ -16,6 +16,7 @@ from apps.core.services.moderation_service import contains_obscene_language
 from apps.core.services.workspace_service import get_active_workspace
 from apps.mealplans.models import Meal, MealDish, MealPlanRule
 from apps.mealplans.services.mealplan_service import (
+    add_item_to_meal,
     add_meal_to_plan,
     add_recipe_to_meal,
     broadcast_mealplan_update,
@@ -84,6 +85,8 @@ def meal_plan_view(
         "rules": rules,
         "recipes_ready": status_info["recipes_ready"],
         "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
         "meals_ready": status_info["meals_ready"],
         "meals_missing_optional": status_info["meals_missing_optional"],
         "available_recipes": available_recipes,
@@ -234,6 +237,56 @@ def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
 
 
 @require_POST
+def add_single_item(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Handle POST request from the dedicated Single Item entry form on a meal card.
+    Adds a single ingredient or shopping list item directly to the meal and onto
+    the shopping list with the meal's name as its purpose.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+
+    item_name = (request.POST.get("item_name") or request.POST.get("item") or "").strip()
+    amount_raw = request.POST.get("amount", "").strip()
+    unit_raw = request.POST.get("amount_unit", "").strip()
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        scale_factor = Decimal(scale_raw)
+        if scale_factor <= Decimal("0"):
+            scale_factor = Decimal("1.00")
+    except Exception:
+        scale_factor = Decimal("1.00")
+
+    toast_messages: list[str] = []
+    if item_name:
+        is_obscene, _ = contains_obscene_language(f"{item_name} {amount_raw} {unit_raw}")
+        if is_obscene:
+            msg = "Cannot add item: Obscene or hurtful language is not permitted."
+            messages.error(request, msg)
+            toast_messages.append(f"❌ {msg}")
+            return meal_plan_view(request, toast_messages=toast_messages)
+
+        dish, _ = add_item_to_meal(
+            meal=meal,
+            raw_item_input=item_name,
+            shopping_list=shopping_list,
+            request=request,
+            amount_override=amount_raw if amount_raw else None,
+            unit_override=unit_raw if unit_raw else None,
+            scale_factor=scale_factor,
+        )
+        toast_messages.append(
+            f"🛒 Added single item '{dish.display_name}' ({dish.quantity_display}) to {meal.name} & shopping list"
+        )
+
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
 def scale_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
     """
     Update portion scaling factor for an individual planned dish.
@@ -262,11 +315,12 @@ def scale_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse
     scale_meal_dish(dish, new_scale, shopping_list, request)
 
     scale_tag = f"{new_scale.normalize():f}x"
-    toast_messages = [f"⚖️ Scaled '{dish.recipe.name}' to {scale_tag}"]
+    dish_name = dish.display_name
+    toast_messages = [f"⚖️ Scaled '{dish_name}' to {scale_tag}"]
     actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
     broadcast_mealplan_update(
         request,
-        toast_message=f"⚖️ {actor} scaled '{dish.recipe.name}' to {scale_tag}",
+        toast_message=f"⚖️ {actor} scaled '{dish_name}' to {scale_tag}",
         shopping_list=shopping_list,
     )
     return meal_plan_view(request, toast_messages=toast_messages)
@@ -275,7 +329,7 @@ def scale_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse
 @require_POST
 def delete_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
     """
-    Handle POST request to remove a recipe dish from a meal.
+    Handle POST request to remove a recipe dish or single item from a meal.
     Accepts dish_id (targeting a specific occurrence) or recipe_id for backward compatibility.
     """
     forbidden = _check_mealplan_write(request)
@@ -290,18 +344,18 @@ def delete_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpRespons
         dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
 
     if dish:
-        recipe_name = dish.recipe.name
+        dish_name = dish.display_name
         remove_dish_from_meal(dish, shopping_list, request)
     else:
         recipe = get_object_or_404(Recipe, id=dish_id)
-        recipe_name = recipe.name
+        dish_name = recipe.name
         remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
-    toast_messages = [f"🗑 Removed '{recipe_name}' from {meal.name} (ingredients updated on shopping list)"]
+    toast_messages = [f"🗑 Removed '{dish_name}' from {meal.name} (ingredients updated on shopping list)"]
     actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
     broadcast_mealplan_update(
         request,
-        toast_message=f"🗑 {actor} removed '{recipe_name}' from {meal.name}",
+        toast_message=f"🗑 {actor} removed '{dish_name}' from {meal.name}",
         shopping_list=shopping_list,
     )
     return meal_plan_view(request, toast_messages=toast_messages)
@@ -310,9 +364,11 @@ def delete_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpRespons
 @require_POST
 def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
     """
-    Mark an individual recipe dish occurrence in a meal as made.
-    Increments recipe times_made counter, logs cooking event, removes that specific dish
-    from the meal plan (updating shopping list ingredients), and prompts for recipe rating.
+    Mark an individual recipe dish or single-item occurrence in a meal as made.
+    For recipe dishes: increments recipe times_made counter, logs cooking event, removes
+    that specific dish from the meal plan, and prompts for recipe rating.
+    For single items: removes the item from the meal plan and shopping list without
+    prompting for ratings or feedback.
     """
     forbidden = _check_mealplan_write(request)
     if forbidden:
@@ -323,15 +379,53 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
     if not dish:
         dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
 
-    if dish:
-        recipe = dish.recipe
-    else:
-        recipe = get_object_or_404(Recipe, id=dish_id)
-
     shopping_list = get_active_list(request)
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     user = getattr(request, "user", None)
+
+    if dish and dish.is_single_item:
+        item_name = dish.display_name
+        remove_dish_from_meal(dish, shopping_list, request)
+        toast_messages = [f"✓ Marked '{item_name}' as made and removed from meal plan"]
+        actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+        broadcast_mealplan_update(
+            request,
+            toast_message=f"✓ {actor} marked '{item_name}' as made",
+            shopping_list=shopping_list,
+        )
+        status_info = compute_cooking_status(meal_plan, shopping_list)
+        available_recipes = Recipe.objects.all().order_by("name")
+        can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+        meals = meal_plan.meals.prefetch_related("recipes").all()
+        rules = meal_plan.rules.all() if meal_plan else []
+        context = {
+            "recipes": [],
+            "recipe": None,
+            "existing_ratings": {},
+            "meal_name": meal.name,
+            "is_entire_meal": False,
+            "workspace": workspace,
+            "shopping_list": shopping_list,
+            "meal_plan": meal_plan,
+            "meals": meals,
+            "rules": rules,
+            "recipes_ready": status_info["recipes_ready"],
+            "recipes_missing_optional": status_info["recipes_missing_optional"],
+            "dishes_ready": status_info["dishes_ready"],
+            "dishes_missing_optional": status_info["dishes_missing_optional"],
+            "meals_ready": status_info["meals_ready"],
+            "meals_missing_optional": status_info["meals_missing_optional"],
+            "available_recipes": available_recipes,
+            "can_write": can_write,
+            "toast_messages": toast_messages,
+        }
+        return render(request, "mealplans/partials/recipe_rating_modal.html", context)
+
+    if dish:
+        recipe = dish.recipe
+    else:
+        recipe = get_object_or_404(Recipe, id=dish_id)
 
     # 1. Record recipe made & increment counter
     record_recipe_made(recipe, user=user)
@@ -358,6 +452,7 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
     available_recipes = Recipe.objects.all().order_by("name")
     can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.prefetch_related("recipes").all()
+    rules = meal_plan.rules.all() if meal_plan else []
 
     # Check for existing user rating
     existing_rating = None
@@ -374,8 +469,11 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
         "shopping_list": shopping_list,
         "meal_plan": meal_plan,
         "meals": meals,
+        "rules": rules,
         "recipes_ready": status_info["recipes_ready"],
         "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
         "meals_ready": status_info["meals_ready"],
         "meals_missing_optional": status_info["meals_missing_optional"],
         "available_recipes": available_recipes,
@@ -389,8 +487,9 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
 def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     """
     Mark an entire meal as made.
-    Increments recipe times_made counter for each dish in the meal, logs cooking events,
-    removes the meal and all dishes from the meal plan, and prompts for recipe ratings.
+    Increments recipe times_made counter for each recipe dish in the meal, logs cooking events,
+    removes the meal and all dishes (including single items) from the meal plan, and prompts
+    for recipe ratings only on actual recipe dishes (single items are exempt).
     """
     forbidden = _check_mealplan_write(request)
     if forbidden:
@@ -409,8 +508,9 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
 
     # 1. Record made & remove ingredients for all dish occurrences in the meal
     for dish in dishes:
-        recipes.append(dish.recipe)
-        record_recipe_made(dish.recipe, user=user)
+        if dish.recipe:
+            recipes.append(dish.recipe)
+            record_recipe_made(dish.recipe, user=user)
         remove_dish_from_meal(dish, shopping_list, request)
 
     # Fallback for any legacy recipes in M2M without MealDish
@@ -436,6 +536,7 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     available_recipes = Recipe.objects.all().order_by("name")
     can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.prefetch_related("recipes").all()
+    rules = meal_plan.rules.all() if meal_plan else []
 
     # Check for existing user ratings
     existing_ratings = {}
@@ -454,8 +555,11 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
         "shopping_list": shopping_list,
         "meal_plan": meal_plan,
         "meals": meals,
+        "rules": rules,
         "recipes_ready": status_info["recipes_ready"],
         "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
         "meals_ready": status_info["meals_ready"],
         "meals_missing_optional": status_info["meals_missing_optional"],
         "available_recipes": available_recipes,

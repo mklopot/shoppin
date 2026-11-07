@@ -36,8 +36,17 @@
             document.getElementById('bridge-form').submit();
         }
 
-        // Fast path: if the bookmarklet passed extracted JSON-LD in the URL fragment (#html=...),
+        // Fast path: if the bookmarklet passed extracted JSON-LD in the URL fragment (#ld=... or #html=...),
         // submit immediately without waiting for cross-window postMessage.
+        if (window.location.hash && window.location.hash.indexOf('#ld=') === 0) {
+            try {
+                var hashLd = decodeURIComponent(window.location.hash.substring(4));
+                if (hashLd) {
+                    submitHtml('<!DOCTYPE html><html><head><script type="application/ld+json">' + hashLd + '<\/script></head><body></body></html>');
+                    return;
+                }
+            } catch (err) {}
+        }
         if (window.location.hash && window.location.hash.indexOf('#html=') === 0) {
             try {
                 var hashHtml = decodeURIComponent(window.location.hash.substring(6));

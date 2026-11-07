@@ -1504,6 +1504,40 @@ def test_recipe_bookmarklet_import_view_get_bridge(client: Client, auth_user):
 
 
 @pytest.mark.django_db
+def test_recipe_bookmarklet_import_view_get_with_inline_ld(client: Client, auth_user):
+    """Verify that GET with inline &ld= query parameter directly pre-fills recipe_form without bridge redirect."""
+    import json
+    from urllib.parse import urlencode
+
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    ld_payload = json.dumps(
+        {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Android Bookmarklet Guacamole",
+            "description": "Fast query-param import for mobile browsers.",
+            "recipeYield": "4 servings",
+            "prepTime": "PT10M",
+            "cookTime": "PT0M",
+            "recipeIngredient": ["3 avocados", "1 lime, juiced", "1 tsp salt"],
+            "recipeInstructions": [{"@type": "HowToStep", "text": "Mash avocados with lime and salt."}],
+        }
+    )
+    query = urlencode({"url": "https://www.allrecipes.com/recipe/158968/classic-guacamole/", "ld": ld_payload})
+    resp = client.get(f"{reverse('recipes:import_bookmarklet')}?{query}")
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "Android Bookmarklet Guacamole" in html
+    assert "Fast query-param import for mobile browsers." in html
+    assert "Pre-filled recipe from www.allrecipes.com via bookmarklet!" in html
+
+
+@pytest.mark.django_db
 def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
     """Verify that the recipe list modal renders the one-click bookmarklet with correct JavaScript."""
     user, workspace = auth_user
@@ -1516,6 +1550,7 @@ def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
     assert resp.status_code == 200
     content = resp.content.decode("utf-8")
     assert "+ Save Recipe" in content
+    assert "Copy Code for Mobile" in content
     assert "One-Click Bookmarklet" in content
     assert "import-bookmarklet" in content
     assert "READY_FOR_RECIPE_PAYLOAD" in content

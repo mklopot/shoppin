@@ -442,11 +442,15 @@ def recipe_bookmarklet_import_view(request: HttpRequest) -> HttpResponse:
     user = getattr(request, "user", None)
     if not (user and user.is_authenticated):
         messages.info(request, "Please sign in to save recipes to your collection.")
-        # Preserve the recipe URL through login so the import resumes afterwards
+        # Preserve the recipe URL (and any inline JSON-LD payload) through login so the import resumes afterwards
         next_url = reverse("recipes:list")
         pending_url = (request.GET.get("url") or request.POST.get("url") or "").strip()
+        pending_ld = (request.GET.get("ld") or "").strip()
         if pending_url:
-            next_url = f"{reverse('recipes:import_bookmarklet')}?{urlencode({'url': pending_url})}"
+            params = {"url": pending_url}
+            if pending_ld:
+                params["ld"] = pending_ld
+            next_url = f"{reverse('recipes:import_bookmarklet')}?{urlencode(params)}"
         return redirect(f"{reverse('core:login')}?{urlencode({'next': next_url})}")
 
     workspace = get_active_workspace(request)
@@ -461,16 +465,23 @@ def recipe_bookmarklet_import_view(request: HttpRequest) -> HttpResponse:
             return redirect("recipes:create")
     else:
         url = (request.GET.get("url") or "").strip()
+        ld = (request.GET.get("ld") or "").strip()
         if not url:
             messages.error(request, "No recipe webpage URL received from the bookmarklet.")
             return redirect("recipes:create")
-        response = render(request, "recipes/bookmarklet_bridge.html", {"url": url})
-        # The bridge tab is opened by the recipe site's tab and must keep its window.opener
-        # link to receive the page HTML via postMessage. Django's default COOP of
-        # 'same-origin' severs that link, so relax it for this response only.
-        # SecurityMiddleware uses setdefault, so this value is preserved.
-        response["Cross-Origin-Opener-Policy"] = "unsafe-none"
-        return response
+        if ld:
+            raw_html = (
+                f'<!DOCTYPE html><html><head><script type="application/ld+json">{ld}</script></head>'
+                "<body></body></html>"
+            )
+        else:
+            response = render(request, "recipes/bookmarklet_bridge.html", {"url": url})
+            # The bridge tab is opened by the recipe site's tab and must keep its window.opener
+            # link to receive the page HTML via postMessage. Django's default COOP of
+            # 'same-origin' severs that link, so relax it for this response only.
+            # SecurityMiddleware uses setdefault, so this value is preserved.
+            response["Cross-Origin-Opener-Policy"] = "unsafe-none"
+            return response
 
     try:
         data = scrape_recipe_data(url=url, html=raw_html)

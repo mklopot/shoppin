@@ -1,0 +1,62 @@
+food to have at home:
+  - milk:
+      amount: 2 half-gallons
+  - eggs
+  - yoghurt:
+      amount: 4
+  - apples:
+      amount: 5
+  - bananas
+  - tangerines
+  - lemons
+  - sardines:
+      vendor: Safeway
+  - Spicy Bean Patties:
+      brand: Morningstar Farms 
+  - chocolate bar, dark 
+  - chocolate bar, milk
+  - celery
+
+home lunches:
+  - ramen, shrimp flavor:
+      brand: Maruchan
+  - Mac-n-cheese:
+      brand: Annie's
+
+breakfasts:
+  - eggs
+  - Instant Oatmeal Packets, apple cinnamon
+
+Beth's lunches:
+  - Amy's Frozen Meals
+
+vitamins:
+  - vitamin C gummies
+  - vitamin D3 gummies
+  - elderberry gummies
+
+spices:
+  - turmeric
+  - cumin
+  - salt
+  - pepper
+  - smoked paprika
+  - italian seasoning
+
+non-food items:
+  - dish soap
+  - dishwasher detergent
+  - laundry detergent
+  - trash bags
+  - compost bags
+  - sandwich bags
+  - toilet paper:
+      brand: Cottonelle
+  - parchment paper
+  - sunscreen:
+      brand: Babyganics
+
+tea collection:
+  - black tea
+  - green tea
+  - Sleepytime Vanilla

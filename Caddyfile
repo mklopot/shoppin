@@ -1,0 +1,85 @@
+# ==============================================================================
+# Shoppin Production Caddyfile
+# Automatic Let's Encrypt TLS, HTTP/2 & HTTP/3, Static Files, & Daphne WebSockets
+# ==============================================================================
+
+{$DOMAIN_NAME:localhost} {
+    # Automatic HTTPS: Let's Encrypt / ZeroSSL certificate provisioning and auto-renewal
+    # For production, define DOMAIN_NAME in .env.prod (e.g. DOMAIN_NAME=shoppin.app)
+    # If DOMAIN_NAME is localhost, Caddy provisions a local self-signed certificate.
+
+    # Compression
+    encode gzip zstd
+
+    # Security Headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+    }
+
+    # Serve collected static files directly from shared volume
+    handle /static/* {
+        root * /var/www
+        file_server
+        header Cache-Control "public, max-age=31536000, immutable"
+    }
+
+    # Serve uploaded user recipe media files directly from shared volume
+    handle /media/* {
+        root * /var/www
+        file_server
+        header Cache-Control "public, max-age=86400"
+    }
+
+    # Health check passthrough (short retry window for rapid health checking)
+    handle /health* {
+        reverse_proxy web:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            lb_try_duration 1s
+            lb_try_interval 200ms
+            transport http {
+                dial_timeout 500ms
+            }
+        }
+    }
+
+    # Reverse proxy all dynamic HTTP traffic and /ws/* WebSockets to Daphne
+    handle {
+        reverse_proxy web:8000 {
+            # Daphne runs on port 8000 inside the Docker network
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+
+            # Seamless zero-downtime reload: Hold in-flight requests and retry for up to 20s while Daphne restarts
+            # Note: Never set fail_duration with a single upstream; omitting it ensures Caddy retries every
+            # 250ms instead of blacklisting the only upstream and aborting immediately with 502!
+            lb_try_duration 20s
+            lb_try_interval 250ms
+
+            # Fast dial timeout & extended buffer for WebSockets
+            transport http {
+                dial_timeout 1s
+                read_buffer 4096
+            }
+        }
+    }
+
+    # Automatic maintenance placeholder page when backend is restarting or unavailable
+    handle_errors 5xx {
+        header Retry-After "3"
+        header Cache-Control "no-store, no-cache, must-revalidate"
+        rewrite * /maintenance.html
+        file_server {
+            root /var/www/static
+            status 503
+        }
+    }
+}

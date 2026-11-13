@@ -1,0 +1,4018 @@
+'tacos and burritos':
+  description: |
+    A Taco Tuesday favorite!
+    
+  directions: |
+    make it at home
+    
+  ingredients:
+    - 'onion'
+
+    - 'bell pepper'
+
+    - 'tortillas, large':
+        brand: 'Mission'
+
+    - 'taco sauce':
+        brand: 'Ortega'
+
+    - 'seasoned beans':
+        brand: 'Rosarita'
+        vendor: 'Safeway'
+
+    - 'avocados':
+        amount: '2'
+
+    - 'ground beef':
+        amount: '1 lb'
+
+    - 'shredded cheese':
+        amount: '8 oz'
+
+    - 'cilantro'
+
+    - 'lime'
+
+    - 'sour cream':
+        amount: '4 oz'
+
+    - 'Rice'
+
+    - 'Corn tortillas '
+
+
+'take-out':
+  directions: |
+    order from Chipotle, Dominos, or Taste of Thailand
+    
+
+'sloppy joes':
+  directions: |
+    Brown the beef: In a large skillet over medium-high heat, cook the ground beef for 6 to 8 minutes, breaking it into crumbles with a wooden spoon until no pink remains. Drain off any excess fat.
+    Build the sauce: Stir in the Sloppy Joe seasoning packet, the 6 oz can of tomato paste, and 1 1/4 cups of water until smoothly combined and the beef is evenly coated.
+    Simmer to thicken: Bring the mixture to a gentle boil, then reduce the heat to low and simmer uncovered for 3 to 5 minutes, stirring occasionally, until heated through and thickened.
+    Serve on buns: Lightly toast the hamburger buns if desired, then spoon the warm Sloppy Joe mixture generously onto the bottom buns, cap with the top buns, and serve hot.
+  ingredients:
+    - 'ground beef':
+        amount: '1 lb'
+
+    - 'hamburger buns':
+        amount: '5 buns'
+
+    - 'Sloppy Joe Seasoning Packet'
+
+    - 'tomato paste':
+        amount: '1 can'
+
+
+'tofu joe':
+  directions: |
+    Prep vegetables and tofu: Drain and press the tofu dry with paper towels, then crumble it by hand or with a fork into bite-sized crumbles. Finely dice the onion, celery ribs, carrot, and half bell pepper.
+    Brown the crumbled tofu: Warm a drizzle of oil in a large skillet over medium-high heat. Add the crumbled tofu and cook for 5 to 7 minutes, stirring occasionally, until the moisture evaporates and the edges turn lightly golden and chewy.
+    Sauté the vegetables: Add the diced onion, celery, carrot, and bell pepper to the skillet and sauté for 5 minutes until softened.
+    Build the sauce and simmer: Stir in the Sloppy Joe seasoning packet, the 6 oz can of tomato paste, and 1 to 1 1/4 cups of water until smoothly combined. Bring to a gentle boil, reduce heat to low, and simmer uncovered for 3 to 5 minutes until heated through and thickened so the tofu absorbs the rich sauce.
+    Serve on buns: Lightly toast the hamburger buns if desired, spoon the warm Tofu Joe mixture generously onto the bottom buns, cap with the top buns, and serve hot.
+  ingredients:
+    - 'Sloppy Joe Seasoning Packet'
+
+    - 'tofu':
+        amount: '1 lb'
+
+    - 'onion'
+
+    - 'celery':
+        amount: '2 ribs'
+
+    - 'carrot'
+
+    - 'bell pepper':
+        amount: '0.5'
+
+    - 'hamburger buns':
+        amount: '2 buns'
+
+    - 'tomato paste':
+        amount: '1 can'
+
+
+'stir fry':
+  description: |
+    My interpretation of 炒蔬菜
+    
+  directions: |
+    The night before, freeze the tofu to get a spongy texture.
+    Following day, defrost the tofu, I use a Sous Vide circulator at 95F for 1 hr.
+    
+    Cook rice in Instant Pot per usual directions (1 cup rice to 1.5 cups water, cook on rice setting, release pressure after 2 min after completion, open and cool slightly, gently transfer to serving bowl. 
+    
+    Chop vegetables. Preheat a wok on high heat. Add oil, ginger, peeled garlic, hot pepper (optional), let fry for ~30 seconds.
+    
+    Add vegetables to wok (in batches, if desired). Stir vigorously to prevent sticking and burning.
+    
+    When vegetables reach desired doneness, sprinkle with soy sauce, add ketchup and stir-fry sauce. Cook while stirring for one more minute. Transfer to service bowl, sprinkle with sesame oil, cilantro leaves and sesame seeds.
+    
+  ingredients:
+    - 'rice':
+        amount: '1 cup'
+
+    - 'onion'
+
+    - 'ginger':
+        amount: '1 small piece'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'bell pepper'
+
+    - 'carrot':
+        optional: True
+
+    - 'shiitake mushrooms':
+        amount: '8 oz'
+        optional: True
+
+    - 'eggs':
+        amount: '4'
+        optional: True
+
+    - 'canned pineapple':
+        optional: True
+
+    - 'broccoli':
+        amount: '1 head'
+        optional: True
+
+    - 'stir fry sauce':
+        amount: '6 oz'
+        optional: True
+
+    - 'ketchup':
+        amount: '1 cup'
+        optional: True
+
+    - 'tofu':
+        amount: '1 lb'
+        optional: True
+
+    - 'soy sauce':
+        amount: '2 oz'
+        optional: True
+
+    - 'sesame oil':
+        amount: '1 tsp'
+        optional: True
+
+
+'taco soup':
+  description: |
+    Beth's invention. Hearty flavors of Mexican cuisine, in soup form.
+    
+    Maybe it's just tortilla soup. By any name, good eatin'!
+    
+  directions: |
+    Saute the vegetables, add beans, tomato paste and green chili, cover with boiling water.
+    
+    Cook for 10 min in the Instant Pot.
+    
+    Top each serving with tortilla chips, cheese, sour cream, and cilantro. Serve with diced avocado and radishes on the side.
+    
+  ingredients:
+    - 'tomato paste':
+        amount: '8 oz'
+
+    - 'frozen corn':
+        amount: '8 oz'
+
+    - 'cannellini beans':
+        amount: '1 can'
+
+    - 'shredded cheese':
+        amount: '4 oz'
+
+    - 'avocado'
+
+    - 'lime'
+
+    - 'onion'
+
+    - 'carrots':
+        amount: '3'
+
+    - 'canned green chili':
+        amount: '7 oz'
+
+    - 'sour cream':
+        amount: '2 oz'
+
+    - 'cilantro':
+        amount: '0.5 bunch'
+
+    - 'tortilla chips':
+        amount: '0.25 bag'
+
+    - 'radishes':
+        optional: True
+
+
+'meatloaf':
+  description: |
+    Traditional simple meatloaf
+    
+  directions: |
+    Whip the egg (I use an immersion blender), mix all ingredients well.
+    
+    Bake at 350F in an oiled loaf pan for 30 min, or until internal temp reaches 140F. 
+    
+    Optionally, glaze with BBQ sauce or ketchup 5 minutes before removing from the oven.
+    
+    Allow to cool just a few minutes, and serve.
+    
+    
+    Or https://natashaskitchen.com/meatloaf-recipe/
+    
+  ingredients:
+    - 'ground beef':
+        amount: '1 lb'
+
+    - 'onion':
+        amount: '0.25'
+
+    - 'garlic':
+        amount: '3 cloves'
+        optional: True
+
+    - 'Ketchup':
+        optional: True
+
+    - 'Eggs'
+
+    - 'Barbecue sauce':
+        optional: True
+
+    - 'Milk':
+        amount: '.25 cup'
+
+    - 'Italian bread crumbs':
+        amount: '.5 cup'
+
+    - 'Chopped parsley':
+        optional: True
+
+    - 'Parmesano cheese':
+        optional: True
+
+
+'mashed potatoes':
+  directions: |
+    Prep for the Instant Pot: Scrub the unpeeled Russet potatoes clean under running water. Pour 1 cup of water into the bottom of the Instant Pot, insert the metal trivet or steamer basket, and arrange the whole potatoes on top.
+    Pressure cook: Secure the lid, set the valve to sealing, and cook on High Pressure for 25 minutes. Allow the pressure to release naturally for 10 minutes, then carefully vent any remaining steam.
+    Peel and cut: Remove the potatoes and let them cool for a few minutes until safe to handle while still warm. Slip or peel off the loosened skins, then cut the warm potatoes into chunks.
+    Mash and enrich: Place the potato chunks into a large bowl (or the drained, dry inner pot) and mash until smooth. Add the butter, warm milk, and garlic powder (if using), then fold and mash gently until rich and creamy without overworking the starch.
+    Season and serve: Season with salt and black pepper to taste and serve warm.
+  ingredients:
+    - 'Russet potatoes':
+        amount: '6'
+
+    - 'butter':
+        amount: '1 stick'
+
+    - 'garlic powder':
+        amount: '1 teaspoon'
+        optional: True
+
+    - 'milk':
+        amount: '2 oz'
+
+
+'spaghetti':
+  directions: |
+    Boil in plenty of generously salted water as specified on the package.
+    
+    Boil up to 10% longer as a high-altitude adjustment.
+    
+    Drain, add marinara sauce, top with parmesan cheese if desired.
+    
+  ingredients:
+    - 'spaghetti':
+        amount: '1 package'
+
+    - 'marinara sauce':
+        brand: 'Bertolli'
+
+    - 'parmesan cheese':
+        optional: True
+
+
+'meatballs':
+  directions: |
+    Make the panade: In a large mixing bowl, stir together the bread crumbs and milk. Let sit for 5 minutes until the crumbs absorb the liquid and form a soft paste (this keeps the beef tender and juicy).
+    Prep the aromatics: Finely mince or grate the onion and mince the garlic cloves.
+    Mix the meatball base: Add the egg, minced onion, garlic, a generous pinch of salt, and black pepper into the bowl with the soaked bread crumbs and stir to combine. Add the ground beef and gently mix by hand just until incorporated—do not overwork the meat.
+    Roll into meatballs: With lightly dampened hands, shape the mixture into 12 to 16 even balls (about 1.5 inches wide).
+    Bake or pan-sear: Arrange on a lined baking sheet and bake at 400°F for 18 to 20 minutes until browned and cooked through (165°F internal temperature), or brown in a lightly oiled skillet over medium heat for 10 to 12 minutes, turning occasionally, until cooked through.
+  ingredients:
+    - 'ground beef':
+        amount: '1 lb'
+
+    - 'bread crumbs':
+        amount: '0.3 cup'
+
+    - 'onion':
+        amount: '0.3'
+
+    - 'egg'
+
+    - 'milk':
+        amount: '2 oz'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+
+'pancakes':
+  description: |
+    Breakfast classic
+    
+  directions: |
+    Thoroughly combine the dry ingredients. 
+    Mix in the milk gently, do not over mix. Better can be quite clumpy. 
+    
+    Melt butter in the microwave. 
+    
+    Whip the egg with immersion blender. Add butter and milk, mix gently. 
+    
+    Onto a well-oiled and preheated pan, scoop three tablespoons of batter at a time. Fry on medium high heat for about 2 minutes on each side. 
+    
+    Serve with syrup.
+    
+     If not serving immediately, brush with butter on each side and keep in a warm oven until ready to serve.
+    
+  ingredients:
+    - 'baking powder':
+        amount: '1 tbsp'
+
+    - 'sugar':
+        amount: '1 tbsp'
+
+    - 'butter':
+        amount: '3 tbsp'
+
+    - 'milk':
+        amount: '1 cup'
+
+    - 'egg'
+
+    - 'Flour':
+        amount: '1.2 cup'
+
+
+'smashburgers':
+  directions: |
+    Portion the beef and prep toppings: Loosely divide the cold ground beef into 4 equal balls (about 4 oz each) without packing them tightly. Very thinly slice the onion.
+    Toast the buns: Warm a large cast-iron skillet or griddle over medium heat. Toast the hamburger buns cut-sides down for 1 to 2 minutes until lightly golden, then set aside.
+    Heat the skillet and smash: Crank the heat up to medium-high until the skillet is smoking hot. Place the beef balls into the pan (working in batches so they aren't crowded), top each with a small handful of sliced onions, and press down firmly with a stiff metal spatula to flatten as thin as possible. Season with salt and black pepper.
+    Sear, flip, and melt cheese: Cook undisturbed for about 2 minutes until the edges are lacy, dark brown, and crisp. Scrape underneath with the spatula to release the crust, flip, and immediately top with the sliced cheese. Cook for 1 more minute until the cheese melts.
+    Assemble and serve: Transfer the cheesy patties to the toasted bottom buns, top with pickles (and Burger Sauce if desired), cap with the top buns, and serve hot.
+  ingredients:
+    - 'hamburger buns':
+        amount: '4 buns'
+
+    - 'ground beef':
+        amount: '1 lb'
+
+    - 'onion'
+
+    - 'sliced cheese':
+        amount: '5 slices'
+
+    - 'pickles':
+        amount: '3 slices'
+
+
+'burger sauce':
+  description: |
+    Ian's Burger Sauce
+    
+  directions: |
+    Combine the base: In a small mixing bowl, whisk together the mayonnaise, ketchup, mustard, and pickle juice until smooth and evenly combined.
+    Season: Add the salt, black pepper, and paprika. If using, mix in the steak sauce for savory depth and the sriracha for gentle heat.
+    Whisk until uniform: Whisk briskly until all seasonings are fully dissolved and the sauce achieves a smooth, consistent pinkish hue.
+    Chill to blend flavors: Cover and refrigerate for at least 15 to 30 minutes before serving to let the flavors meld together. Spread generously on burger buns or serve as a dipping sauce for fries.
+  ingredients:
+    - 'ketchup':
+        amount: '2 oz'
+
+    - 'mustard':
+        amount: '1 tsp'
+
+    - 'mayonnaise':
+        amount: '4 oz'
+
+    - 'pickle juice':
+        amount: '1 splash'
+
+    - 'black pepper':
+        amount: '1 pinch'
+
+    - 'salt':
+        amount: '1 pinch'
+
+    - 'paprika':
+        amount: '1 pinch'
+
+    - 'steak sauce':
+        amount: '1 oz'
+        optional: True
+
+    - 'sriracha':
+        amount: '0.5 tsp'
+        optional: True
+
+
+'black bean burger':
+  directions: |
+    Prep toppings: Thinly slice the onion. Lightly toast the hamburger bun if desired.
+    Microwave the patty: Place the black bean patty on a microwave-safe plate and microwave on high for 1 minute.
+    Melt the cheese: Place the cheddar cheese on top of the warm patty and microwave for another 10 seconds until melted.
+    Assemble the burger: Spread the ketchup and mustard onto the bottom bun. Transfer the hot, cheesy patty onto the bun, top with the sliced onions and pickle, and cap with the top bun.
+  ingredients:
+    - 'black bean patty'
+
+    - 'hamburger bun':
+        amount: '1 bun'
+
+    - 'cheddar cheese':
+        amount: '2 oz'
+
+    - 'pickle':
+        amount: '1 slice'
+
+    - 'onion':
+        amount: '2 oz'
+
+    - 'ketchup':
+        amount: '1 oz'
+
+    - 'mustard':
+        amount: '1 oz'
+
+
+'buckwheat':
+  directions: |
+    Rinse the groats: Place the buckwheat in a fine-mesh strainer and rinse thoroughly under cool running water until clear. Drain well.
+    Combine and bring to a boil: In a medium saucepan, combine the rinsed buckwheat, 2 cups of water, a pinch of salt, and 1 tablespoon of the butter. Bring to a boil over medium-high heat.
+    Cover and simmer: Once boiling, cover the saucepan tightly with a lid and immediately lower the heat to low. Simmer undisturbed for 12 to 15 minutes without stirring or lifting the lid, until the liquid is fully absorbed.
+    Rest off heat: Remove the saucepan from the heat and let it rest, covered, for 5 minutes to steam through.
+    Butter and fluff: Uncover, drop in the remaining 1 tablespoon of butter, and gently fluff the buckwheat with a fork until melted and evenly dispersed. Serve warm.
+  ingredients:
+    - 'buckwheat':
+        amount: '1 cup'
+
+    - 'butter':
+        amount: '2 tbsp'
+
+
+'salad with butter lettuce':
+  directions: |
+    Whisk the dressing: In a small bowl, mix together the sour cream, garlic powder, Italian seasoning, and salt until smooth and well combined.
+    Prep the egg (if using): Hard-boil the egg for 10 minutes, cool in an ice water bath, peel, and slice or quarter.
+    Prep the produce: Gently rinse and dry the butter lettuce leaves, then tear them into bite-sized pieces. Thinly slice the cucumber and grate or julienne the carrot (if using).
+    Toss the greens: Combine the butter lettuce, cucumber, and carrot in a salad bowl. Spoon the seasoned sour cream dressing over the top and fold gently to coat the tender leaves.
+    Top and serve: Arrange the hard-boiled egg slices over the salad and scatter the cheese crisps on top right before serving so they stay crisp.
+  ingredients:
+    - 'sour cream':
+        amount: '3 oz'
+
+    - 'garlic powder':
+        amount: '1 tsp'
+
+    - 'italian seasoning':
+        amount: '1 tsp'
+
+    - 'salt':
+        amount: '1 pinch'
+
+    - 'butter lettuce':
+        amount: '0.5 head'
+
+    - 'cucumbers':
+        amount: '0.25'
+
+    - 'carrots':
+        amount: '0.33'
+        optional: True
+
+    - 'egg':
+        optional: True
+
+    - 'cheese crisps':
+        amount: '0.25 bag'
+        optional: True
+
+
+'fried egg':
+  description: |
+    Make sure the egg is not too cold. I microwave refrigerated eggs for 15-20 seconds first. Preheat pan, fry in a small amount of butter on medium-high heat. If desired, cover with lid for desired doneness on the top part of the egg.
+    
+  directions: |
+    Take the chill off the egg: If the egg is straight from the fridge, warm it in its shell in the microwave for 15 to 20 seconds so it cooks evenly.
+    Preheat the pan: Set a skillet over medium-high heat and let it get fully hot.
+    Add butter: Melt a small pat of butter in the pan and swirl to coat.
+    Fry the egg: Crack the egg into the pan and let it cook until the white is set and the edges turn lightly crisp.
+    Finish the top (optional): For a firmer top, cover the pan with a lid for 30 to 60 seconds until the egg is done the way you like. Season with salt and pepper and serve.
+  ingredients:
+    - 'egg'
+
+
+'slow cooked chicken':
+  directions: |
+    Cover chicken thighs in water in the Instant Pot.
+    
+    Cook for 1.5 hours on the "Slow cook" setting. Remove promptly.
+    
+    Cooking water can be used as chicken broth in other recipes.
+    
+  ingredients:
+    - 'chicken thighs':
+        amount: '4'
+
+
+'steak':
+  directions: |
+    Temper and season the steak: Remove the steak from the refrigerator 20 to 30 minutes before cooking so it cooks evenly. Pat all sides completely dry with paper towels, then season generously with kosher salt and freshly cracked black pepper. Peel and lightly smash the garlic clove with the flat side of a knife.
+    Preheat the skillet: Heat a heavy cast-iron or stainless-steel skillet over high heat for 3 to 5 minutes until smoking hot, then add a light drizzle of neutral high-smoke-point oil.
+    Sear the first side: Lay the steak into the hot pan away from you and sear undisturbed for 3 to 4 minutes until a deep golden-brown crust forms underneath.
+    Flip and baste with garlic-herb butter: Flip the steak, reduce the heat to medium-low, and immediately add the 2 tablespoons of butter, smashed garlic clove, and fresh herbs (such as rosemary or thyme, if using) to the pan. Tilt the pan slightly and continuously spoon the foaming, aromatic butter over the top of the steak for 1 to 2 minutes until cooked to your preferred doneness (about 130°F for medium-rare).
+    Rest and slice: Transfer the steak to a warm cutting board, pour the remaining garlic-herb butter from the pan over the top, and let rest for 5 to 10 minutes so the juices redistribute. Slice against the grain and serve warm.
+  ingredients:
+    - 'steak':
+        amount: '1 lb'
+
+    - 'butter':
+        amount: '2 tbsp'
+
+    - 'garlic':
+        amount: '1 clove'
+
+    - 'herbs, fresh':
+        optional: True
+
+
+'mashed potatoes with herbs':
+  directions: |
+    Prep for the Instant Pot: Scrub the unpeeled Russet potatoes clean under running water. Pour 1 cup of water into the bottom of the Instant Pot, insert the metal trivet or steamer basket, and arrange the whole potatoes on top.
+    Pressure cook: Secure the lid, set the valve to sealing, and cook on High Pressure for 25 minutes. Allow the pressure to release naturally for 10 minutes, then carefully vent any remaining steam.
+    Peel and cut: Remove the potatoes and let them cool for a few minutes until safe to handle while still warm. Slip or peel off the loosened skins, then cut the warm potatoes into chunks. Finely chop the fresh herbs (if using).
+    Mash and enrich: Place the potato chunks into a large bowl (or the drained, dry inner pot) and mash until smooth. Add the butter, warm milk, and garlic powder, then fold and mash gently until rich and creamy without overworking the starch.
+    Fold in herbs and serve: Gently fold in the finely chopped fresh herbs (saving a sprinkle for the top), season with salt and black pepper to taste, and serve warm.
+  ingredients:
+    - 'potatoes, Russet':
+        amount: '6'
+
+    - 'butter':
+        amount: '8 oz'
+
+    - 'milk':
+        amount: '1 oz'
+
+    - 'herbs, fresh':
+        optional: True
+
+    - 'garlic powder':
+        amount: '1 tsp'
+
+
+'zucchini casserole':
+  directions: |
+    Preheat and prep: Preheat the oven to 375°F and lightly grease a baking dish. Dice the half onion, zucchini, and carrot.
+    Brown the beef and sauté vegetables: In a large skillet over medium-high heat, cook the ground beef with the diced onion and carrot for 6 to 7 minutes, breaking up the meat until browned and the vegetables begin to soften; drain off any excess fat. Add the diced zucchini and cook for 3 to 4 minutes until tender-crisp, then stir in the can of seasoned beans until warmed through.
+    Layer the casserole: Spread a thin layer of enchilada sauce across the bottom of the baking dish. Arrange a single layer of corn tortillas on top (tearing or halving as needed to fit), then spoon half of the beef, bean, and vegetable mixture over the tortillas, drizzle with enchilada sauce, and sprinkle with a third of the shredded cheese. Repeat the layers once more, finishing with a final layer of tortillas, the remaining enchilada sauce, and the rest of the shredded cheese on top.
+    Bake until bubbly: Cover the dish with foil and bake for 20 minutes, then uncover and bake for another 5 to 8 minutes until the cheese is melted, bubbly, and lightly golden at the edges.
+    Rest and serve: Let rest for 5 minutes so the layers set cleanly before slicing and serving warm.
+  ingredients:
+    - 'corn tortillas':
+        amount: '0.5 package'
+
+    - 'enchilada sauce':
+        amount: '1 small can'
+
+    - 'ground beef':
+        amount: '1 lb'
+
+    - 'seasoned beans':
+        amount: '1 can'
+        brand: 'Rosarita'
+
+    - 'shredded cheese':
+        amount: '8 oz'
+
+    - 'onion':
+        amount: '0.5'
+
+    - 'zucchini'
+
+    - 'Carrots'
+
+
+'vegetarian zucchini casserole':
+  directions: |
+    Preheat and prep: Preheat the oven to 375°F and lightly grease a baking dish. Dice the half onion, zucchini, carrots, and bell pepper (if using).
+    Sauté the vegetables and beans: Heat a drizzle of oil in a large skillet over medium heat. Add the onion, carrots, and bell pepper and cook for 4 to 5 minutes until starting to soften. Add the diced zucchini and cook for another 3 to 4 minutes until tender-crisp, then stir in the can of seasoned beans until warmed through.
+    Layer the casserole: Spread a thin layer of enchilada sauce across the bottom of the baking dish. Arrange a single layer of corn tortillas on top (tearing or halving as needed to fit), then spoon half of the vegetable-bean mixture over the tortillas, drizzle with enchilada sauce, and sprinkle with a third of the shredded cheese. Repeat the layers once more, finishing with a final layer of tortillas, the remaining enchilada sauce, and the rest of the shredded cheese on top.
+    Bake until bubbly: Cover the dish with foil and bake for 20 minutes, then uncover and bake for another 5 to 8 minutes until the cheese is melted, bubbly, and lightly golden at the edges.
+    Rest and serve: Let rest for 5 minutes so the layers set cleanly before slicing and serving warm.
+  ingredients:
+    - 'corn tortillas':
+        amount: '0.5 package'
+
+    - 'enchilada sauce':
+        amount: '1 small can'
+
+    - 'seasoned beans':
+        amount: '1 can'
+
+    - 'shredded cheese':
+        amount: '8 oz'
+
+    - 'onion':
+        amount: '0.5'
+
+    - 'zucchini'
+
+    - 'carrot':
+        amount: '2'
+
+    - 'bell pepper':
+        optional: True
+
+
+'twice baked potatoes':
+  description: |
+    Classic American side-dish, steakhouse style.
+    
+  directions: |
+    Preheat the oven to 400°F.
+    
+    Wash and dry the potatoes well, pierce each potato once to prevent bursting. Place the potatoes on a parchment lined baking sheet.
+    Drizzle with olive oil then brush the oil over each potato until fully coated, and season with a pinch of salt.
+    
+    Bake in the preheated oven for 60-90 minutes, or until the potatoes can be pierced easily with a fork. Total baking time will depend on the size of your potatoes.
+    
+    Optionally, while the potatoes are baking, cook the bacon in a skillet over medium heat until brown and crispy. Remove the cooked bacon from the skillet and allow it to drain on a paper-towel lined plate. Once cool enough to handle, rough chop the bacon into smaller pieces.
+    
+    Allow the potatoes to cool slightly after baking. When cool enough to handle, cut at an angle to remove the top third of each potato. Carefully scoop out the potato flesh, leaving a thin rim of potato (about ¼ inch rim) around the edges to help the skin hold its shape.
+    
+    Place the scooped out potato flesh in a large bowl and add the butter, sour cream, milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes until light and fluffy. Add the chopped bacon, if using, and half of the sliced green onions and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold to combine.
+    
+    Fill the potato skins with about 1/3 cup of the potato mixture, then sprinkle the remaining cheddar cheese over the top of each potato.
+    
+    Bake the potatoes in the oven a second time, just until heated through and the cheddar cheese is melted on top, about 20 minutes.
+    
+    Top with the remaining green onions and enjoy!
+    
+  ingredients:
+    - 'potatoes, Russet':
+        amount: '4'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+
+    - 'bacon':
+        amount: '4 oz'
+        optional: True
+
+    - 'butter':
+        amount: '4 tbsp'
+
+    - 'sour cream':
+        amount: '4 oz'
+
+    - 'milk':
+        amount: '0.25 cup'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+    - 'green onion':
+        amount: '0.5 bunch'
+
+    - 'shredded cheese':
+        amount: '8 oz'
+
+
+'cabbage and egg salad with cucumber':
+  directions: |
+    finely shred the cabbage on a mandoline and pound with the back of a wooden spatula until soft.
+    
+    Hard boil an egg (8.5 minutes in Denver), peel, cut in halves or quarters.
+    
+    Slice the cucumber on the mandoline. 
+    
+    Top the cabbage with the cucumber and egg. serve with your choice of dressing.
+    
+  ingredients:
+    - 'egg'
+
+    - 'cucumber':
+        amount: '0.25'
+
+    - 'cabbage':
+        amount: '0.25 head'
+
+
+'tahini miso dressing':
+  directions: |
+    Grate the aromatics: Finely grate or mince the fresh ginger and garlic cloves into a smooth paste.
+    Whisk the base: In a medium bowl or glass jar, whisk together the tahini, miso paste, soy sauce, vinegar, sesame oil, maple syrup, grated ginger, garlic, and a pinch of salt. (The mixture will initially tighten up into a thick paste.)
+    Emulsify with water: Slowly drizzle in the 3 tablespoons of warm water while whisking briskly until the dressing loosens into a smooth, glossy, pourable emulsion. Add an extra teaspoon of water if you prefer a thinner consistency.
+    Serve: Drizzle immediately over salads, grain bowls, or roasted vegetables.
+  storage_instructions: |
+    Store in an airtight jar in the refrigerator for up to a week. Whisk in a splash of warm water before serving if the tahini thickens when chilled.
+  ingredients:
+    - 'tahini':
+        amount: '0.33 cup'
+
+    - 'ginger':
+        amount: '1 tbsp'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'miso':
+        amount: '1 tsp'
+
+    - 'soy sauce':
+        amount: '1 tbsp'
+
+    - 'vinegar':
+        amount: '1 tbsp'
+
+    - 'sesame oil':
+        amount: '1 tsp'
+
+    - 'maple syrup':
+        amount: '2 tsp'
+
+    - 'water':
+        amount: '3 tbsp'
+
+    - 'salt':
+        amount: '1 pinch'
+
+
+'lima bean side dish':
+  directions: |
+    Bloom the cumin: Warm the olive oil in a saucepan over medium heat. Add the pinch of cumin and stir for about 30 seconds until fragrant.
+    Toast the tomato paste: Stir in the tomato paste and cook for 1 to 2 minutes, stirring constantly, until it darkens to a deep brick red.
+    Add beans and liquid: Pour in about 3/4 cup of water, scraping up anything stuck to the pan. Add the lima beans (no need to thaw if frozen) and stir until coated.
+    Simmer until tender: Bring to a gentle boil, then cover, lower the heat, and simmer for 15 to 20 minutes, stirring now and then, until the beans are creamy inside and the sauce has thickened. Add a splash of water if it gets dry.
+    Season and serve: Season with salt and black pepper to taste and serve warm.
+  ingredients:
+    - 'lima beans':
+        amount: '1 package'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+
+    - 'cumin':
+        amount: '1 pinch'
+
+    - 'tomato paste':
+        amount: '4 oz'
+
+
+'cheesy puff pastry rolls':
+  description: |
+    Crispy warm cheesy rolls lightly seasoned with mint and oregano.
+    
+  directions: |
+    Thaw puff pastry for 40 min at room temp, spread with cream cheese, sprinkle feta, mozzarella, mint and oregano.
+    
+    Roll up and cut into 8 pieces.
+    
+    Combine egg yolk and cream to make an egg wash, brush generously.
+    
+    Bake at 350F for 35 to 40 min, rest for 10 min.
+    
+  ingredients:
+    - 'puff pastry sheet, frozen':
+        amount: '1 pound'
+
+    - 'cream cheese':
+        amount: '8 oz'
+
+    - 'feta cheese':
+        amount: '8 oz'
+
+    - 'mozzarella cheese':
+        amount: '8 oz'
+
+    - 'mint':
+        amount: '2 tsp'
+
+    - 'oregano':
+        amount: '2 tsp'
+
+    - 'egg'
+
+    - 'heavy cream':
+        amount: '2 tsp'
+
+
+'veggie nuggets':
+  directions: |
+    Preheat: Preheat your oven or air fryer to the temperature specified on the package (or use 400°F for an oven / 390°F for an air fryer if the packaging is unavailable), and line a baking sheet with parchment paper if baking.
+    Arrange in a single layer: Spread the frozen veggie nuggets across the baking sheet or air fryer basket with space between each piece so hot air circulates evenly.
+    Cook according to package directions: Follow your specific brand's recommended cooking time, flipping halfway through until golden and crisp. As a fallback if the package is missing, bake for 12 to 15 minutes at 400°F or air-fry for 8 to 10 minutes at 390°F.
+    Rest and serve: Let cool for 1 to 2 minutes so the coating sets, then serve warm with your favorite dipping sauces.
+  ingredients:
+    - 'veggie nuggets':
+        amount: '1 package'
+
+
+'butternut squash soup':
+  directions: |
+    Prep vegetables: Peel and seed the butternut squash, then cut into 1-inch cubes. Dice the onion.
+    Sauté the aromatics: Heat the olive oil in a large pot or Dutch oven over medium heat. Add the diced onion and cook for 5 to 7 minutes until tender and translucent.
+    Simmer the squash: Add the cubed squash and the vegetable broth (prepared from Better Than Bouillon and 2 cups of water). Bring to a boil, then cover tightly, reduce the heat to low, and simmer for 15 to 20 minutes until the squash is completely fork-tender.
+    Puree until silky: Remove from heat. Use an immersion blender directly in the pot (or transfer in batches to a countertop blender) and blend until velvety smooth.
+    Finish and garnish: Stir in the cream (if using) over low heat until gently warmed through. Season to taste with salt and black pepper, ladle into warm bowls, and top with croutons.
+  ingredients:
+    - 'onion'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+
+    - 'better than boullion, or other veggie broth':
+        amount: '1 to make 2 cups'
+
+    - 'butternut squash'
+
+    - 'croutons':
+        optional: True
+
+    - 'cream':
+        amount: '1 cup'
+        optional: True
+
+
+'vanilla pudding':
+  directions: |
+    Mix everything and boil at low heat for ~5 minutes and whisk the entire time until thick.
+    
+  ingredients:
+    - 'milk':
+        amount: '3 cups'
+
+    - 'butter':
+        amount: '1 stick'
+
+    - 'cinnamon':
+        amount: '1 tbsp'
+
+    - 'vannila extract':
+        amount: '1 /4 tbsp'
+
+    - 'brown sugar':
+        amount: '1 /2 tbsp'
+
+    - 'cornstarch':
+        amount: '2 tbsp'
+
+
+'black bean patty with cheese':
+  description: |
+    Quick vegetarian protein
+    
+  directions: |
+    Microwave a Spicy Black Bean patty from frozen, until hot, about 1 minute, do not overcook.
+    
+    Place a slice of cheese on top, microwave for another 10-15 seconds, until the cheese just starts to melt.
+    
+  ingredients:
+    - 'black bean patty':
+        amount: '1 patty'
+
+    - 'cheese':
+        amount: '1 slice'
+
+
+'stir fry beef':
+  directions: |
+    Slice against the grain: If not already pre-sliced, cut the beef across the grain into thin, bite-sized strips (about 1/4-inch thick) to shorten the muscle fibers.
+    Velvet and marinate: In a mixing bowl, toss the sliced beef with the baking soda, corn starch, and soy sauce (plus a tablespoon of water or oil if needed to loosen the mixture), massaging gently until every piece is evenly coated. Let rest for 15 to 20 minutes to tenderize.
+    Preheat the wok or skillet: Heat a wok or large heavy skillet over high heat until smoking hot, then add a swirl of high-smoke-point cooking oil.
+    Sear the beef: Spread the marinated beef in a single layer in the hot pan (working in two batches if needed so it sears rather than steams). Let sear undisturbed for 60 seconds, then toss and stir-fry for another 1 to 2 minutes until browned on the outside and tender inside. Serve hot or toss into your favorite vegetable stir-fry.
+  ingredients:
+    - 'beef, thinly sliced':
+        amount: '1 pound'
+
+    - 'baking soda':
+        amount: '1 tsp'
+
+    - 'corn starch':
+        amount: '1 tbsp'
+
+    - 'soy sauce':
+        amount: '1 tbsp'
+
+
+'steamed broccoli':
+  directions: |
+    Prep the broccoli: Rinse the head of broccoli under cool water and cut the crown into uniform, bite-sized florets (about 1.5 inches wide). If using the stem, peel off the tough outer layer and slice into thin rounds.
+    Boil the water: Pour about 1 inch of water into a saucepan or pot fitted with a steamer basket, ensuring the water level sits below the bottom of the basket. Bring to a boil over high heat.
+    Steam until crisp-tender: Arrange the broccoli florets in an even layer in the steamer basket. Cover the pot tightly with a lid, reduce the heat to medium, and steam for 4 to 5 minutes until vibrant bright green and easily pierced with the tip of a fork.
+    Season and serve: Immediately transfer the steamed broccoli to a serving dish so it doesn't overcook, season with a pinch of salt and pepper (or a pat of butter), and serve warm.
+  ingredients:
+    - 'broccoli':
+        amount: '1 head'
+
+
+'solyanka':
+  description: |
+    Eastern European "everything but the kitchen sink" soup with a multitude of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
+    
+  directions: |
+    Prep vegetables and meats: Dice the onions, carrots, celery, and dill pickles. Shred the quarter head of cabbage. If using the meats, cut the Polish sausage, ham, and chicken breast into bite-sized pieces.
+    Simmer the spiced wine, then build the broth: In a large soup pot or Dutch oven, combine the dry white wine (if using) with the bay leaves, whole peppercorns, and allspice berries. Bring to a simmer and cook gently for 10 minutes to cook off the alcohol and infuse the spices. Pour in the 10 cups of water, bring to a simmer, and whisk in the concentrated beef base until dissolved (adding the raw chicken breast pieces to poach, if using).
+    Sauté vegetables and meats: Meanwhile, heat the avocado oil in a large, deep skillet over medium heat. Add the onions, carrots, and celery and cook for 5 to 7 minutes until softened. Add the shredded cabbage and cured meats (sausage and ham, if using) and sauté for another 4 to 5 minutes until lightly browned.
+    Caramelize tomato paste: Stir the tomato paste into the skillet and cook for 1 to 2 minutes until darkened and fragrant, then stir in the canned stewed or diced tomatoes (with their juices) and simmer together for 2 to 3 minutes.
+    Combine and simmer: Transfer the contents of the skillet into the pot of simmering broth. Simmer over low heat for 15 to 20 minutes until the cabbage and vegetables are tender.
+    Finish with pickles and olives: Stir in the diced dill pickles, sliced black olives, and capers (if using) during the final 2 to 3 minutes of simmering—just long enough for the briny flavors to meld without cooking the pickles soft.
+    Season and serve: Taste before adding salt and black pepper. Remove the bay leaves, ladle into warm bowls, and top each serving with a dollop of sour cream and freshly chopped dill.
+  ingredients:
+    - 'bay leaves':
+        amount: '2 large leaves'
+
+    - 'peppercorns, whole':
+        amount: '6 peppercorns'
+
+    - 'allspice berries, whole':
+        amount: '4 berries'
+
+    - 'water':
+        amount: '10 cups'
+
+    - 'concentrated beef base, or Better Than Boullion':
+        amount: '4 tablespoons'
+
+    - 'cabbage':
+        amount: '0.25 head'
+
+    - 'celery':
+        amount: '3 ribs'
+
+    - 'avocado oil':
+        amount: '3 tbsp'
+
+    - 'onions':
+        amount: '2'
+
+    - 'carrots':
+        amount: '2'
+
+    - 'ham or polish sausage':
+        amount: '0.5 pounds'
+        optional: True
+
+    - 'chicken breast':
+        optional: True
+
+    - 'ham':
+        amount: '0.25 pounds'
+        optional: True
+
+    - 'dill pickles':
+        amount: '3 pickles'
+
+    - 'tomato paste':
+        amount: '6 oz'
+
+    - 'canned stewed or diced tomatoes':
+        amount: '24 oz'
+
+    - 'sliced black olives':
+        amount: '6 oz'
+
+    - 'capers':
+        amount: '2 tbsp'
+        optional: True
+
+    - 'dry white wine':
+        amount: '1 cup'
+        optional: True
+
+    - 'salt':
+        amount: '1 pinch'
+
+    - 'pepper':
+        amount: '1 pinch'
+
+    - 'sour cream':
+        amount: '0.5 cup'
+        optional: True
+
+    - 'dill':
+        amount: '0.33 cups'
+        optional: True
+
+    - 'Veggie sausages'
+
+
+'mac-and-cheese casserole':
+  description: |
+    adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
+    
+  directions: |
+    Preheat oven to 350F. Lightly grease a large 3 qt or 4 qt baking dish and set aside.Combine shredded cheeses in a large bowl and set aside.
+    Cook the pasta one minute shy of al dente according to the package instructions. Remove from heat, drain, and place in a large bowl.
+    
+    Drizzle pasta with olive oil and stir to coat pasta. Set aside to cool while preparing cheese sauce.
+    Melt butter in a deep saucepan, dutch oven, or stock pot.
+    Whisk in flour over medium heat and continue whisking for about 1 minute until bubbly and golden.
+    Gradually whisk in the milk and heavy cream until nice and smooth. Continue whisking until you see bubbles on the surface and then continue cooking and whisking for another 2 minutes. Whisk in salt and pepper.
+    Add two cups of shredded cheese and whisk until smooth. Add another two cups of shredded cheese and continue whisking until creamy and smooth. Sauce should be nice and thick.
+    Stir in the cooled pasta until combined and pasta is fully coated with the cheese sauce.
+    Pour half of the mac and cheese into the prepared baking dish. Top with remaining 2 cups of shredded cheese and then the remaining mac and cheese.
+    In a small bowl, combine panko crumbs, Parmesan cheese, melted butter and paprika. Sprinkle over the top and bake until bubbly and golden brown, about 30 minutes. Serve immediately.
+    
+    Tips for the Best Homemade Baked Mac and Cheese
+    Use block cheese and shred, do not buy the pre-shredded cheese. The pre-shredded cheese is great for so many things but not macaroni and cheese. It’s coated and won’t melt properly. You need to shred it yourself for the best result.
+    Cook your pasta to slightly less than al dente, about one minute shy is perfect. The reason is that this is baked mac and cheese so the pasta will continue to cook in the homemade cheese sauce in the oven. You don’t want soggy macaroni.
+    I used elbow pasta but really, any tubular past will work.
+    This mac and cheese recipe starts with a roux. The roux is super important to getting the creamiest cheese sauce of your life. 
+    The roux (equal parts butter and flour) is whisked together until bubbly and golden.
+    Whisk in cold milk – not warm – to prevent the flour from clumping.
+    Cook the roux until  you see bubbles on the surface and then continue cooking for an additional 2 minutes before adding the cheese.
+    
+  ingredients:
+    - 'elbow macaroni, cooked (or other tubular pasta)':
+        amount: '16 oz'
+
+    - 'extra virgin olive oil':
+        amount: '1 tbsp'
+
+    - 'unsalted butter':
+        amount: '6 tbsp'
+
+    - 'all purpose flour':
+        amount: '0.33 cups'
+
+    - 'whole milk':
+        amount: '3 cups'
+
+    - 'heavy whipping cream':
+        amount: '1 cup'
+
+    - 'sharp cheddar cheese shredded':
+        amount: '4 cups'
+
+    - 'Gruyere cheese shredded':
+        amount: '2 cups'
+
+    - 'salt':
+        amount: '1 pinch'
+
+    - 'pepper':
+        amount: '1 pinch'
+
+    - 'panko crumbs':
+        amount: '1.5 cups'
+
+    - 'butter melted':
+        amount: '4 tbsp'
+
+    - 'Parmesan cheese shredded':
+        amount: '0.5 cup'
+
+    - 'paprika':
+        amount: '0.25 tsp'
+
+
+'egg salad sandwiches':
+  directions: |
+    Hard-boil and chill eggs: Place the 8 eggs in a medium saucepan, cover with cold water by an inch, and bring to a rolling boil over high heat. Cover with a lid, remove from heat, and let sit for 10 to 12 minutes. Transfer immediately to an ice water bath for 5 minutes to cool rapidly, then peel.
+    Chop aromatics and eggs: Finely mince the quarter onion and celery rib (if using). Roughly chop the peeled eggs into small pieces or mash gently with a fork to your desired texture.
+    Whisk curried dressing: In a mixing bowl, stir together the mayonnaise, curry powder, salt, and black pepper until completely smooth and evenly golden.
+    Fold salad together: Add the chopped eggs, diced celery, and onion into the bowl with the curried mayo. Gently fold together until the ingredients are well incorporated and creamy. Taste and adjust salt or pepper as desired.
+    Assemble sandwiches: Divide the curried egg salad evenly across 3 slices of bread, spreading gently toward the edges. Top with the remaining 3 bread slices, slice diagonally, and serve.
+  ingredients:
+    - 'bread':
+        amount: '6 slices'
+
+    - 'eggs':
+        amount: '8'
+
+    - 'onion':
+        amount: '0.25'
+        optional: True
+
+    - 'celery':
+        amount: '1 rib'
+        optional: True
+
+    - 'mayonnaise':
+        amount: '3 oz'
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+    - 'curry powder':
+        amount: '0.75 tsp'
+
+
+'roasted broccoli':
+  directions: |
+    Cut into florets, toss with olive oil and salt and pepper, bake at 15 to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with herbs.
+    
+  ingredients:
+    - 'broccoli':
+        amount: '1 head'
+
+    - 'olive oil':
+        amount: '2 tbsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.5 tsp'
+
+    - 'parmesan cheese':
+        amount: '3 tbsp'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'fresh herbs'
+
+
+'cobb salad':
+  directions: |
+    Cook and prep the proteins: Place eggs in a pot of water, bring to a rolling boil, then cover, remove from heat, and let sit for 10 minutes. Plunge into an ice bath, peel, and slice in half lengthwise. Fry the bacon in a skillet until crisp, drain on paper towels, and crumble. Season and pan-sear the chicken breast until cooked through (165°F internal temperature), let rest for 5 minutes, then dice into bite-sized pieces. Dice the baked tofu into small cubes.
+    Chop the fresh produce: Wash, dry, and chop the lettuce into bite-sized shreds. Halve the cherry tomatoes. Dice the cucumber and bell pepper. Drain the canned corn well.
+    Assemble in classic Cobb style: Spread the shredded lettuce across a large serving platter or bowl to create a fresh base. Arrange the chicken, baked tofu, bacon, halved hard-boiled eggs, shredded cheese, cherry tomatoes, cucumbers, bell pepper, and corn in neat, colorful parallel rows on top.
+    Dress and serve: Drizzle the ranch dressing evenly over the salad right before serving, or pass the dressing at the table to toss individually.
+  ingredients:
+    - 'lettuce'
+
+    - 'cherry tomatoes'
+
+    - 'bacon':
+        amount: '4 oz'
+
+    - 'chicken breast':
+        amount: '8 oz'
+
+    - 'shredded cheese':
+        amount: '4 oz'
+
+    - 'baked tofu'
+
+    - 'eggs':
+        amount: '4'
+
+    - 'bell pepper'
+
+    - 'cucumber':
+        amount: '0.5'
+
+    - 'canned corn'
+
+    - 'ranch dressing':
+        amount: '6 oz'
+
+    - 'Barbecue sauce'
+
+
+'schnitzel':
+  description: |
+    Simple breaded schnitzel recipe with chicken.
+    
+  directions: |
+    Cut the chicken thin, and pound flat. Tenderize if desired. Dredge in flour, thoroughly coat in beaten eggs, and coat completely in Panko. Fry in oil on medium heat until golden, on both sides, do not over-brown. If not cooked all the way through, bake at 350F until cooked through, but do not over-cook. Garnish with herbs, serve with Tonkatsu sauce.
+    
+  ingredients:
+    - 'chicken breast':
+        amount: '1 lb'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'flour':
+        amount: '1 cup'
+
+    - 'Panko bread crumbs':
+        amount: '1.5 cup'
+
+    - 'avocado oil':
+        amount: '4 tbsp'
+
+    - 'Tonkatsu sauce':
+        amount: '0.5 cup'
+        optional: True
+
+
+'buttery lima beans':
+  directions: |
+    Saute the garlic and onions, add the pre-cooked lima beans, stir, add paprika.
+    
+  ingredients:
+    - 'butter':
+        amount: '1 tbsp'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'lima beans':
+        amount: '1 package'
+
+    - 'onion':
+        amount: '0.5'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'smoked paprika':
+        amount: '0.25 tsp'
+        optional: True
+
+
+'cole slaw':
+  directions: |
+    Shred the cabbage on a mandoline, pound with a spatula for softness. add remaining ingredients, let rest for 30 minutes.
+    
+  ingredients:
+    - 'cabbage':
+        amount: '0.25 head'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'olive oil':
+        amount: '2 tbsp'
+
+    - 'vinegar':
+        amount: '2 tbsp'
+
+    - 'mayonnaise':
+        amount: '3 tbsp'
+        optional: True
+
+
+'collard greens':
+  directions: |
+    Cut and de-stem collard greens, cook in Instant Pot for 5 min with quick release. Saute onions and garlic in oil until soft, add the collard greeens. Cook on high heat to crisp the edges. Add salt, pepper and spices.
+    
+  ingredients:
+    - 'collard greens'
+
+    - 'onion'
+
+    - 'garlic':
+        amount: '4 cloves'
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+    - 'avocado oil':
+        amount: '2 tbsp'
+
+    - 'paprika':
+        amount: '1 pinch'
+        optional: True
+
+
+'pinto beans':
+  directions: |
+    Cook according to package instructions
+    
+  ingredients:
+    - 'pinto beans'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+
+'slow cooked turkey':
+  directions: |
+    Cover in water and cook in Instant Pot for 1 - 1.5 hrs on "slow cook" setting
+    
+  ingredients:
+    - 'turkey thighs':
+        amount: '4'
+
+    - 'salt':
+        amount: '1 tsp'
+        optional: True
+
+
+'esquites':
+  description: |
+    Mexican street corn salad
+    
+  directions: |
+    Heat a large skillet over medium-high heat. Add the butter, fresh corn kernels (cut off the cob), minced garlic, and minced jalapeño. Cook, stirring occasionally, for 5 minutes. Transfer to a medium mixing bowl.
+    Add the mayonnaise, crumbled cotija cheese, chopped cilantro, salt, and lime juice. Add the chili powder and optional ingredients if using. Mix until fully combined. Taste and season with more salt and mayonnaise if desired.
+    Garnish with chili powder to your liking, a lime wedge, and a sprinkle cotija cheese.
+    Serve immediately in individual portions.
+    
+  ingredients:
+    - 'butter':
+        amount: '4 tbsp'
+
+    - 'corn on the cob':
+        amount: '4 ears'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'jalapeño pepper'
+
+    - 'mayonnaise':
+        amount: '1 ¼ cup'
+
+    - 'cotija cheese':
+        amount: '0.5 cup'
+
+    - 'cilantro':
+        amount: '2 tablespoons'
+
+    - 'salt':
+        amount: '1 ½ teaspoon'
+
+    - 'lime':
+        amount: '2'
+
+    - 'Chili powder':
+        amount: '1 tsp'
+
+    - 'paprika':
+        amount: '1 teaspoon'
+        optional: True
+
+    - 'chili lime seasoning':
+        amount: '1 tsp'
+        optional: True
+
+
+'vegetarian kharcho':
+  description: |
+    A vegetarian version of a hearty soup with walnuts from Georgia in the Caucasus Mountains
+    
+  directions: |
+    From food.com  
+    
+    Mince and sautee the onion in butter until soft but not yet brown.
+    
+    Add water, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
+    Bring to boil.
+    
+    Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
+    
+    Add khmeli-suneli and salt. Cook for 1-2 minutes.
+    
+    Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
+    
+  ingredients:
+    - 'onion'
+
+    - 'butter':
+        amount: '20 grams'
+
+    - 'walnuts':
+        amount: '1 e+02 grams'
+
+    - 'can crushed tomatoes':
+        amount: '16 oz'
+
+    - 'cup rice':
+        amount: '0.5 cup'
+
+    - 'water':
+        amount: '6 cups'
+
+    - 'garlic cloves':
+        amount: '2 cloves'
+
+    - 'red pepper flakes':
+        amount: '0.5 tsp'
+
+    - 'khmeli-suneli spice blend':
+        amount: '1.5 tbsp'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'cilantro':
+        amount: '6 tbsp'
+
+    - 'dill':
+        amount: '3 tbsp'
+
+    - 'parsley':
+        amount: '3 tbsp'
+
+
+'edible chalk sugar candy':
+  description: |
+    Ian's Edible Chalk candy. Fun fact, when Ian brought some to his school, a literal fight broke out as the other students were trying to get some of it.
+    
+  directions: |
+    Mix the sugar, water, and corn syrup, heat until 240F, turn off the heat, add the butter.
+    
+    Carefully continue heating on low. Stir slowly until you can see crystals form.
+    
+    Quickly mix in the vanilla, and pour on parchment paper, allow to set until hard.
+    
+    Break or cut into pieces. 
+    
+  ingredients:
+    - 'sugar':
+        amount: '1.5 cups'
+
+    - 'corn syrup':
+        amount: '0.33 cups'
+
+    - 'water':
+        amount: '0.33 cups'
+
+    - 'butter':
+        amount: '2 tbsp'
+
+    - 'vanilla extract':
+        amount: '0.25 tsp'
+
+
+'refried beans':
+  directions: |
+    Cook beans with 3X water by volume in the Intant Pot, along with a chopped onion, salt, and a dried chili pepper. Pan-fry in oil while mashing, until the beans disintegrate.
+    
+  ingredients:
+    - 'beans, dry':
+        amount: '1 lb'
+
+    - 'onion'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'dried chili, whole':
+        amount: '1 piece'
+
+    - 'avocado oil':
+        amount: '1 tbsp'
+
+    - 'cotija cheese':
+        amount: '2 oz'
+        optional: True
+
+
+'canellini bean side dish':
+  directions: |
+    Prep aromatics and beans: Finely dice the half onion and mince the garlic cloves. Drain and rinse the cannellini beans under cool water.
+    Sauté the aromatics: Warm the olive oil in a skillet or saucepan over medium heat. Add the diced onion and cook for 3 to 4 minutes until softened and translucent, then add the minced garlic and sauté for another 30 to 45 seconds until fragrant.
+    Caramelize tomato paste and cumin: Stir in the tomato paste and pinch of cumin. Cook while stirring constantly for 1 to 2 minutes until the paste deepens in color and blooms in aroma.
+    Combine and simmer: Add the drained cannellini beans along with about 1/3 cup of water (or broth) to loosen the paste into a rich sauce. Stir gently to coat every bean evenly.
+    Simmer to glaze: Lower heat to medium-low and simmer uncovered for 6 to 8 minutes, stirring occasionally, until the sauce thickens and clings to the beans. Season with salt and black pepper to taste, and serve warm as a side.
+  ingredients:
+    - 'canellini beans':
+        amount: '1 can'
+
+    - 'onion':
+        amount: '0.5'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+
+    - 'cumin':
+        amount: '1 pinch'
+
+    - 'tomato paste':
+        amount: '4 oz'
+
+
+'stuffed shells':
+  directions: |
+    Cook jumbo shell pasta according to package directions to al dente. Stir in the olive oil and a few tablespoons of tomato sauce to avoid sticking.
+    
+    Dice and fry the onion on medium heat without browning, until translucent. Smash and mince the garlic, and add to the pan for 1 more minute, then take off the heat.
+    
+    In a bowl, mix the cheese, the garlic and onion mixture, and nearly all of the remaining pasta sauce, until the consistency of play-dough.
+    
+    Stuff each shell witht eh cheese mixture, and place on a platter. Microwave for one minute, or until the cheese just starts to melt.
+    
+    Sprinkle with the italian seasoning, and serve immediately.
+    
+  ingredients:
+    - 'jumbo shell noodles':
+        amount: '1 box'
+
+    - 'mozarella cheese, shredded':
+        amount: '1 lb'
+
+    - 'pasta sauce':
+        amount: '1 jar'
+
+    - 'onion'
+
+    - 'garlic':
+        amount: '4 cloves'
+
+    - 'italian seasoning':
+        amount: '0.5 tsp'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+
+
+'cold borscht':
+  description: |
+    Eastern European cold sumertime soup
+    
+  directions: |
+    Place the beets in a large pot of boiling salted water and cook uncovered until the beets are tender, 30 to 40 minutes. Remove the beets to a bowl with a slotted spoon and set aside to cool. Strain the cooking liquid through a fine sieve and also set aside to cool.
+    
+    In a large bowl, whisk together 1 1/2 cups of the beet cooking liquid, the chicken stock, sour cream, yogurt, sugar, lemon juice, vinegar, 1 tablespoon salt, and the pepper. Peel the cooled beets with a small paring knife or rub the skins off with your hands. Cut the beets in small to medium dice. Add the beets, diced cucumber,  1/2 cup of chopped scallions, and 2 tbsp of chopped dill to the soup. Cover with plastic wrap and chill for at least 4 hours or overnight. Season, to taste, and serve cold with a dollop of sour cream and an extra sprig of fresh dill.
+    
+    Optionally top each bowl with half of a hard-boiled egg.
+    
+  ingredients:
+    - 'beets':
+        amount: '2 lb'
+
+    - 'salt':
+        amount: '2 tsp'
+
+    - 'vegetable stock':
+        amount: '2 cups'
+
+    - 'sour cream':
+        amount: '20 oz'
+
+    - 'yogurt, plain':
+        amount: '0.5 cups'
+
+    - 'sugar':
+        amount: '4 tbsp'
+
+    - 'lemon juice, freshly squeezed':
+        amount: '2 tbsp'
+
+    - 'vinegar':
+        amount: '2 tsp'
+
+    - 'black pepper':
+        amount: '1.5 tsp'
+
+    - 'eggs':
+        amount: '3'
+        optional: True
+
+    - 'cucumber, english'
+
+    - 'green onions'
+
+    - 'dill'
+
+
+'Banana Treats':
+  description: |
+    Banana slices topped with peanut butter and chocolate
+    
+  directions: |
+    Peel and slice a banana, arrange the slices on a plate.
+    
+    Place a marble sized amount of peanut butter on top of each slice. I use two butter knives to manipulate the sticky peanut butter.
+    
+    Place a chocolate chip or similar sized little piece of chocolate on top of each slice.
+    
+  ingredients:
+    - 'banana'
+
+    - 'peanut butter':
+        amount: '2 tbsp'
+
+    - 'chocolate or chocolate chips':
+        amount: '1.5 oz'
+
+
+'pan-fried chicken':
+  description: |
+    Quick pan-fried chicken with a lot of flavor.
+    
+  directions: |
+    De-bone chicken pieces. Cut to 1/2" thick or thinner.
+    
+    Optionally tenderize with a jaccard or pound flat with a mallet tenderizer.
+    
+    Cover with spices, salt very lightly. Fry in hot oil, 2-3 minutes per side. Let rest 3 min before serving. 
+    
+  ingredients:
+    - 'chicken thighs':
+        amount: '1 lb'
+
+    - 'paprika':
+        amount: '0.25 tsp'
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+    - 'garlic powder':
+        amount: '0.5 tsp'
+
+    - 'onion powder':
+        amount: '0.5 tsp'
+
+    - 'italian seasoning':
+        amount: '0.5 tsp'
+
+    - 'avocado oil':
+        amount: '1 tbsp'
+
+
+'kharcho':
+  description: |
+    A hearty flavorful soup with meat and walnuts, from the Caucasus Mountains (Georgia).
+    
+  directions: |
+    From food.com
+    
+    In a pot, brown the short ribs well. Add water and salt, and pressure cook in the Instant Pot for 30 minutes.
+    
+    Mince and sauté the onion in butter until soft but not yet brown.
+    
+    Add the sautéed onion with the butter, crushed walnuts, half of the cilantro (chopped), crushed garlic, pepper flakes, and rice.
+    Bring to boil.
+    
+    Add crushed tomatoes, bring to boil and lower the heat. Cook until the rice is ready, approximately 30 minutes.
+    
+    Add khmeli-suneli and salt. Cook for 1-2 minutes.
+    
+    Take off the heat. Chop and add the rest of cilantro, dill, and parsley.
+    
+  ingredients:
+    - 'short ribs':
+        amount: '2 lbs'
+
+    - 'onion'
+
+    - 'butter':
+        amount: '20 grams'
+
+    - 'walnuts':
+        amount: '0.5 lbs'
+
+    - 'canned crushed tomatoes':
+        amount: '16 oz'
+
+    - 'cup rice':
+        amount: '0.5 cup'
+
+    - 'water':
+        amount: '6 cups'
+
+    - 'garlic cloves':
+        amount: '2 cloves'
+
+    - 'red pepper flakes':
+        amount: '0.5 tsp'
+
+    - 'khmeli-suneli spice blend':
+        amount: '1.5 tbsp'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'cilantro':
+        amount: '6 tbsp'
+
+    - 'dill':
+        amount: '3 tbsp'
+
+    - 'parsley':
+        amount: '3 tbsp'
+
+
+'vegetables a la Grecque':
+  description: |
+    Aromatic vegetables cooked in a court boullion (from "Joy of Cooking"). This dish keeps well if covered and refrigerated.
+    
+  directions: |
+    Use a mix of vegetables that will keep their structure, cut into appealing and manageable shapes, such as artichoke hearts, julienned carrots, celery or fennel pieces, cauliflower florets, trimmed igreen beans, leeks cut lengthwise, pearl onions, whole mushrooms, strips of bell peppers, whole olives.
+    
+    Immediately squeeze the juice of 2 lemons over the cut vegetables, to prevent discoloration.
+    
+    Reserve 2 of the lemon peel halves.
+    
+    Prepare the court boullion from the water, olive oil, water, vinegar, sliced remaining lemons, and the salt and spices (spices may be placed in a spice bag).
+    
+    Cook the vegetables in the boullion by bringing to a boil, then taking off the heat and allowing to infuse for 15 minutes.
+    
+    Drain, reserving the marinade, and serve.
+    
+    Cover with cooled marinade to store in the refrigerator. After refrigeration, bring up to room temperature before serving.
+    
+  ingredients:
+    - 'mixed vegetables':
+        amount: '2 lbs'
+
+    - 'lemons':
+        amount: '4'
+
+    - 'olive oil':
+        amount: '1 cup'
+
+    - 'cider vinegar':
+        amount: '0.75 cup'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'parsley':
+        amount: '3 sprigs'
+
+    - 'whole peppercorns':
+        amount: '6'
+
+    - 'fresh thyme':
+        amount: '3 tsp'
+
+    - 'dried oregano':
+        amount: '0.25 tsp'
+
+    - 'fennel or celery seeds':
+        amount: '1 pinch'
+        optional: True
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'water':
+        amount: '4 cups'
+
+
+'tortellini soup':
+  description: |
+    Italian classic
+    
+  directions: |
+    Boil a package of tortellini according to package directions.
+    
+    Drain, reserving the cooking liquid, mix in 1 tsp of olive oil to prevent sticking, set aside.
+    
+    Saute one chopped white onion in one tablespoon of olive oil on medium heat, until translucent. Slice one carrot, add to the pot and cook for 5 min. 
+    
+    Slice one celery rib, peeled, into the pan. Add 4 peeled garlic cloves, and half of a red bell pepper, diced. Cook for an additional 3 minutes.
+    
+    Add cooking liquid from the tortellini. Optionally add 1-2 cups of broth.
+    
+    Pressure cook on the "Soup" setting in the Instant Pot for 5 minutes, then manually release pressure.
+    
+    Add zucchini sliced into 1 inch pieces. Add spinach  and italian seasoning and stir.
+    
+    Carefully add the tortellini, and 5 tbsp of pasta sauce. Salt and pepper to taste. 
+    
+    Optionally finish with half a cup of cream.
+    Optionally garnish each bowl with a sprinkle of grated parmesan cheese.
+    
+  ingredients:
+    - 'tortellini':
+        amount: '1 package'
+
+    - 'olive oil':
+        amount: '4 tsp'
+
+    - 'onion, white'
+
+    - 'carrot'
+
+    - 'celery':
+        amount: '1 rib'
+
+    - 'garlic':
+        amount: '4 cloves'
+
+    - 'bell pepper':
+        amount: '0.5'
+
+    - 'zucchini'
+
+    - 'spinach':
+        amount: '1 bunch'
+
+    - 'pasta sauce':
+        amount: '5 tbsp'
+
+    - 'broth':
+        amount: '2 cups'
+        optional: True
+
+    - 'italian seasoning':
+        amount: '0.5 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'black pepper':
+        amount: '1 pinch'
+
+    - 'cream':
+        amount: '0.5 cup'
+        optional: True
+
+
+'Eggplant Parmesan':
+  description: |
+    Classic Eggplant Parmesan
+    
+  directions: |
+    Pick fresh, firm eggplant, slice 1/4" thick. Season each slice with salt and pepper.
+    
+    Dredge in flour, thoroughly coat in beaten eggs, and coat completely in a mix of shredded Parmesan cheese and Panko.
+    
+    Fry in avocado oil on medium heat until golden, on both sides, do not over-brown.
+    
+    Top with mozzarella.
+    
+    Bake at 350F until mozzarella starts to bubble and brown at the edges.
+    
+    Garnish with parsley and serve.
+    
+    Ingredients
+    -	chicken breast   1 lb
+    -	eggs   2
+    -	flour   1 cup
+    -	Panko bread crumbs   1.5 cup
+    -	avocado oil   4 tbsp
+    
+  ingredients:
+    - 'eggplant'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'Panko':
+        amount: '1.5 cups'
+
+    - 'flour':
+        amount: '1 cup'
+
+    - 'parmesan cheese':
+        amount: '1 cup'
+
+    - 'mozzarella':
+        amount: '8 oz'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'black pepper':
+        amount: '0.5 tsp'
+
+    - 'avocado oil':
+        amount: '4 tbsp'
+
+
+'crêpes':
+  description: |
+    A simple and versatile crêpes recipe
+    
+  directions: |
+    In a blender, mix 2 eggs, one cup of flour, 1.25 cups of milk, and 2 tsp of oil.
+    
+    Blend on low speed until fully incorporated.
+    
+    Melt the butter, preheat a wide flat pan (carbon steel or or cast iron are said to be best, or use a special crêpe pan) on high heat, and brush the pan with a small amount of butter.
+    
+    Cook 4-5 tbsp of batter at a time on high heat, spreading the batter flat to cover the entire bottom of the pan. Allow to brown and crisp slightly, usually about 20-30 seconds per side. Flip over with a gentle but decisive motion to keep the crêpes from sticking to themselves while being flipped.
+    
+    Stack the cooked crêpes, brushing each one lightly with the melted butter.
+    
+    Serve with either savory toppings or fillings, or sweet ones.
+    
+    Savory topping examples
+    sautéed mushrooms and onions, spinach and bell pepper
+    tomato slices, fresh basil and fresh mozzarella
+    bacon, fried egg
+    
+    Sweet topping examples
+    freshly squeezed lemon juice and sugar
+    fruit jam
+    chocolate-hazelnut spread (like Nutella, but we prefer without palm oil)
+    sliced fresh fruit and berries
+    whipped cream 
+    
+  ingredients:
+    - 'flour':
+        amount: '1 cup'
+
+    - 'milk':
+        amount: '1.2 cups'
+
+    - 'avocado oil':
+        amount: '2 tsp'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'butter':
+        amount: '4 tbsp'
+
+
+'quinoa and white bean soup':
+  description: |
+    Soup with quinoa and white beans, and we have added kale.
+    
+    From NY Times Cooking
+    
+  directions: |
+    Peel and finely chop the carrots, onions, and celery. Chop the parsley. Chop the oregano, thyme or rosemary, if using.
+    
+    Remove stem from the kale.
+    
+    Heat oil in a large, heavy-bottomed saucepan over medium heat. Add onions, carrots and celery, and sauté until barely tender, about 5 minutes. Add beans and garlic and stir for 2 minutes.
+    
+    Stir in tomatoes and their juices, add the kale and the vegetable stock. Simmer for 20 minutes.
+    
+    Add quinoa, parsley, oregano or other herb, and bay leaf. Cover and simmer until quinoa is cooked, 12 to 15 minutes. Season with salt and pepper to taste. Remove bay leaf and serve.
+    
+  ingredients:
+    - 'olive oil':
+        amount: '0.25 cups'
+
+    - 'onions':
+        amount: '2'
+
+    - 'carrots':
+        amount: '2'
+
+    - 'celery':
+        amount: '2 ribs'
+
+    - 'cannellini beans':
+        amount: '14 oz'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'chopped tomatoes':
+        amount: '14 oz'
+
+    - 'vegetable stock':
+        amount: '7 cups'
+
+    - 'quinoa':
+        amount: '0.33 cups'
+
+    - 'parsley':
+        amount: '0.25 cups'
+
+    - 'oregano':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'rosemary':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'thyme':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'bay leaf'
+
+    - 'kale':
+        amount: '1 bunch'
+
+
+'S''mores':
+  description: |
+    Camping classic: a sandwich of roasted marshmallow and chocolate, between two graham crackers. 
+    
+  directions: |
+    Roast marshmallows on a skewer over an open fire. Let marshmallow catch fire and blow out immediately. Sandwich between 2 pieces of graham cracker, with a small piece of chocolate inside. The chocolate piece should partially melt from contact with the hot marshmallow. Allow to cool slightly and eat immediately.
+    
+  ingredients:
+    - 'Marshmallow'
+
+    - 'Chocolate'
+
+    - 'Graham crackers'
+
+
+'Lasagna':
+  description: |
+    Classic Italian-American casserole
+    
+    From https://thecozycook.com/easy-lasagna-recipe/
+    
+  directions: |
+    Spoon meat sauce on the bottom of a lightly greased casserole dish. Add 4 boiled lasagna noodles (or use no-boil or fresh noodles). Spread 1/3 of the ricotta cheese mixture on top. Add 1.5 cups of meat sauce.
+    
+    Repeat the same layers two more times.
+    
+    Adding layers of noodles, ricotta cheese, and meat sauce to make Lasagna.
+    
+    Top with grated mozzarella cheese. Cover and bake at 375° for 30 minutes. Remove cover and bake for 15 more minutes. Broil at the end if desired. Let it rest for 15 minutes prior to serving 
+    
+    Cheese Filling
+    15 oz. ricotta cheese, 2 cups
+    1 large egg
+    2 cups mozzarella cheese
+    ¾ cup Parmesan cheese, freshly grated
+    2 teaspoons Italian seasoning
+    ½ teaspoon salt
+    ¼ tsp pepper
+    
+    Meat Sauce
+    1 tablespoon olive oil
+    1 yellow onion, finely diced
+    ¾ lb. ground beef
+    ¾ lb. ground Italian sausage
+    3 cloves garlic, minced
+    ½ cup chicken broth
+    40 oz. marinara sauce, see notes
+    1 tablespoon tomato paste
+    1 teaspoon hot sauce
+    1 teaspoon Worcestershire sauce
+    
+    Lasagna Noodles/ Cheese Topping
+    ▢12 lasagna noodles, plus extra in case of breakage
+    ▢2.5 cups mozzarella cheese
+    
+    
+    Equipment
+    1 9 x 13-inch casserole dish
+    
+    Instructions
+    Prep Work
+    Combine the cheese filling ingredients (ricotta, egg, 2 cups of the shredded mozzarella, parmesan, Italian seasoning, salt, pepper) in a medium bowl and set aside. Measure out remaining ingredients.
+    
+    Make the Meat Sauce
+    Heat olive oil over medium heat and add the diced onions. Let them soften for 10 minutes. (This allows them to release a little sugar which is a nice offset to the acidity of the tomatoes.)
+    Add the ground beef and sausage and increase heat to medium-high. Use a spatula to break up the meat so that it’s very fine and crumbled. Cook for 8-10 minutes, or until cooked through. Add garlic during the last minute. Drain excess grease.
+    Add the chicken broth and use a silicone spatula to “clean” the bottom and sides of the pot. Add the marinara sauce, tomato paste, hot sauce, and Worcestershire sauce. Bring to a boil, then reduce to a simmer. Cover partially and let the sauce simmer gently while you boil the pasta noodles.
+    
+    Preheat Oven and Cook the Lasagna Noodles
+    Preheat oven to 375°.
+    Begin boiling a large pot of salted pasta water for the lasagna noodles. Once a rapid boil is reached, cook the noodles to al dente according to package instructions. (Set a timer to ensure you don’t overcook them.) Gently stir with a wooden spoon throughout cooking to prevent the noodles from sticking. Drain and rinse with cold water until noodles are completely cool.
+    Lay the cooled noodles flat on wax or parchment paper while you begin assembling the lasagna.
+    
+    Assemble
+    Spread 1 heaping cup of meat sauce on the bottom of a 9 x 13-inch casserole dish. Next, add 4 lasagna noodles, overlapping them if needed.
+    Spread 1/3 of the ricotta cheese mixture over the noodles, followed by about 1 ½ cups of meat sauce.
+    Top with 4 more lasagna noodles, 1/3 of the ricotta cheese mixture, 1 ½ cups meat sauce.
+    Finish with 4 more lasagna noodles, the rest of the ricotta mixture, and the rest of the meat sauce.
+    Top with 2 ½ cups of Mozzarella cheese.
+    Spray foil with nonstick cooking spray and place it spray-side-down on top of the baking dish to prevent the cheese from sticking to it.
+    
+    Bake
+    Bake for 35 minutes. Remove cover and bake for 10 more minutes.
+    Remove and garnish with fresh parsley. Let it sit for 15 minutes prior to serving to allow the layers to set. 
+     
+    Pro Tips:
+    Flavor Enhancers: The hot sauce and Worcestershire sauce are flavor enhancers and can’t be tasted outright. The hot sauce won’t make it hot/spicy. I use Frank's Hot Sauce.
+    
+    Cheese: Shred and grate the cheese from a block, avoid using packaged shredded/grated cheese for this recipe. Low moisture, whole milk mozzarella cheese melts the best.
+    Lasagna Noodles: No-boil lasagna noodles or fresh lasagna noodles can also be used for this recipe, neither of which need to be cooked first. Fresh lasagna noodles can be found in the deli section of the grocery store.
+    Casserole Dish: If your lasagna is very close to the top of your casserole dish, place a baking sheet underneath the casserole dish to catch any splatters of sauce, as it gets hot and bubbly toward the end. A Deep Casserole Dish is helpful.
+    
+    Storage:
+    Store in an airtight container and refrigerate for up to 3 days or freeze for up to 3 months. Leftovers do freeze well. 
+    
+    Reheating Leftovers:
+    To reheat leftover lasagna, place it in a lightly greased, covered casserole dish. Bake at 350° for 25-30 minutes.
+    
+  ingredients:
+    - 'ricotta cheese':
+        amount: '15 oz'
+
+    - 'egg'
+
+    - 'mozzarella cheese':
+        amount: '10 oz'
+
+    - 'Italian seasoning':
+        amount: '2 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+    - 'olive oil':
+        amount: '1 tbsp'
+
+    - 'onion, yellow'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'chicken broth':
+        amount: '0.5 cups'
+
+    - 'Parmesan cheese, grated':
+        amount: '0.75 cups'
+
+    - 'ground beef':
+        amount: '0.75 lb'
+
+    - 'Italian sausage':
+        amount: '0.75 lb'
+
+    - 'marinara sauce':
+        amount: '40 oz'
+
+    - 'tomato paste':
+        amount: '1 tbsp'
+
+    - 'hot sauce':
+        amount: '1 tsp'
+        optional: True
+
+    - 'Worcestershire sauce':
+        amount: '1 tsp'
+        optional: True
+
+    - 'lasagna noodles':
+        amount: '12 noodles'
+
+    - 'mozzarella cheese':
+        amount: '2.5 cups'
+
+
+'Monte Christo Sandwich':
+  directions: |
+    Prep the bread: Spread the mustard evenly across one side of each slice of bread.
+    Assemble the double-decker sandwich: Place the first bread slice mustard-side up. Layer on one slice of Swiss cheese and half of the sliced ham. Add the second slice of bread, then layer the remaining ham and the second slice of Swiss cheese. Cap with the third slice of bread (mustard-side down) and press down gently to compact.
+    Whisk the egg: In a shallow, wide bowl or pie dish, thoroughly beat the egg.
+    Heat the skillet: Melt the butter in a skillet or nonstick frying pan over medium-low heat.
+    Coat the sandwich: Dip the assembled sandwich into the beaten egg, turning to coat both sides and all edges evenly.
+    Pan-fry to golden: Place the coated sandwich in the skillet. Cook for 3 to 4 minutes per side until crisp and golden brown, pressing down gently with a spatula so the cheese melts through the layers (cover briefly with a lid if needed to accelerate melting).
+    Slice and serve: Transfer to a cutting board, slice in half diagonally, and serve warm.
+  ingredients:
+    - 'Ham':
+        amount: '5 oz'
+
+    - 'Bread':
+        amount: '3 slices'
+
+    - 'Mustard':
+        amount: '1 tsp'
+
+    - 'Swiss cheese':
+        amount: '2 slices'
+
+    - 'Butter':
+        amount: '1 tbsp'
+
+    - 'egg'
+
+
+'Veggie Pot Pie':
+  directions: |
+    Make a pie crust using 2 ½ cups (325g) all-purpose flour, 1/2 teaspoon salt, 1 cup (230g) very cold unsalted butter, cut into 1/2-inch cubes, 6 to 8 tablespoons ice water, or more as needed. https://www.inspiredtaste.net/22662/flaky-pie-crust-recipe/
+    
+    Roll out 2/3 of the dough onto a floured surface and transfer to a pie tin. Bake for about 15 to 20 minutes at 375 degrees Fahrenheit. 
+    
+    Sautee tofu and vegetables in a frying pan in 1 Tablespoon oil. 
+    
+    Make a gravy using 1/3 cup flour, 1/3 cup nutritional yeast, 1/4 cup oil or butter, 2 cups water or veggie broth and 1 Tablespoon soy sauce (optional). 
+    
+    Stir vegetables and gravy together then transfer into pie crust. Add top pie crust layer and then bake at 375 degrees Fahrenheit for 30 to 40 minutes or until top is lightly browned. 
+    
+  ingredients:
+    - 'salt':
+        amount: '1 teaspoon'
+
+    - 'garlic powder':
+        amount: '1 teasoon'
+
+    - 'tofu':
+        amount: '2 cups'
+
+    - 'Avocado oil or similar':
+        amount: '1 Tablespoon'
+
+    - 'onion'
+
+    - 'celery':
+        amount: '1 /2 cup diced'
+
+    - 'carrots':
+        amount: '2 -3'
+
+    - 'frozen peas'
+
+    - 'frozen corn':
+        optional: True
+
+    - 'butter':
+        amount: '1 cup'
+
+    - 'nutritional yeast':
+        amount: '1 /3 cup'
+
+    - 'Flour':
+        amount: '3 cups'
+
+    - 'Potato, Russet'
+
+
+'Salsa Verde':
+  description: |
+    Spicy classic with a good Mexican flavor. Good on meat, chilaquiles, tacos
+    
+  directions: |
+    Cook serrano peppers, garlic, onion, tomatillos in oven until soft and slightly blackened. 
+    
+    Blend the cooked ingredients in a blender. Add the juice of the half lime and the remaining ingredients.
+    
+  ingredients:
+    - 'tomatillos':
+        amount: '8'
+
+    - 'garlic':
+        amount: '0.25 bulb'
+
+    - 'onion':
+        amount: '0.25'
+
+    - 'serrano peppers':
+        amount: '3'
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+    - 'Knorr seasoning':
+        amount: '0.5 tbsp'
+
+    - 'cilantro':
+        amount: '0.5 bunch'
+
+    - 'lime':
+        amount: '0.5'
+
+
+'Kale':
+  description: |
+    Steamed then lightly fried kale
+    
+  directions: |
+    Wash and dry the kale. Cut off any tough stems. Cut into 1 inch pieces.
+    
+    Steam for 10 minutes, then remove to let dry.
+    
+    Dice the onion and fry on medium heat in the oil until soft. Add steamed kale, cook on high heat until the edges begin to char. 
+    
+    Remove from heat, stir in salt, pepper, and optionally the sesame oil.
+    
+  ingredients:
+    - 'kale':
+        amount: '1 bunch'
+
+    - 'avocado oil':
+        amount: '1 tbsp'
+
+    - 'onion, white':
+        amount: '1 small'
+
+    - 'sesame oil':
+        amount: '2 tsp'
+        optional: True
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+
+'quinoa':
+  directions: |
+    Cook according to package directions
+    
+  ingredients:
+    - 'quinoa, dry':
+        amount: '1 cup'
+
+    - 'salt':
+        amount: '0.25 tsp'
+        optional: True
+
+
+'minestrone soup':
+  description: |
+    americanized recipe
+    
+  directions: |
+    Boil a bag of multi-colored spiral pasta according to package directions, until al dente. Drain and coat with a minimal amount of olive oil to avoid sticking.
+    
+    Cube and sauté onion, bell pepper, carrots and eggplant in olive oil.
+    
+    Add one jar of pasta sauce. Add up to two cans of cannellini beans. Add five cloves of garlic, sliced. Add 3 cups of water and cook in the Instant Pot for 10 minutes.
+    
+    Add salt, pepper, and Italian seasoning to taste. Serve with the spiral noodles   
+    
+  ingredients:
+    - 'Spiral noodles, multi-colored':
+        amount: '1 bag'
+
+    - 'olive oil':
+        amount: '4 tbsp'
+
+    - 'carrot':
+        amount: '2 carrots'
+
+    - 'celery':
+        amount: '2 ribs'
+
+    - 'eggplant'
+
+    - 'bell pepper'
+
+    - 'onion'
+
+    - 'cannellini beans':
+        amount: '1 cans'
+
+    - 'garlic':
+        amount: '5 cloves'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+    - 'italian seasoning':
+        amount: '0.25 tsp'
+        optional: True
+
+    - 'Marinara sauce':
+        amount: '1 jar'
+
+
+'PB&J Sandwich':
+  directions: |
+    Spread peanut butter on one side, fruit jam on the other
+    
+  ingredients:
+    - 'bread':
+        amount: '2 slices'
+
+    - 'peanut butter':
+        amount: '1 tbsp'
+
+    - 'Jam':
+        amount: '1 tbsp'
+
+
+'Hashbrowns':
+  description: |
+    Breakfast classic
+    
+  directions: |
+    Grate a Russet potato into a strainer or colander and rinse well under running water.
+    
+    Squeeze as much of the water out as possible and allow to air dry for 10 minutes.
+    
+    While the rinsed potato is drying, chop one onion and peel and slice the garlic cloves.
+    
+    Add the oil, potatoes and onion to a medium hot pan, and stir to coat the potatoes in the oil. Add salt and pepper. Cook while stirring genty for 5 minutes. Shape by pushing away from the edges and for the potatoes to have a uniform thickness. Then cover, lower the heat slightly, and cook without stirring for 5 more minutes, to develop a crust.
+    
+    Then add the garlic by pressing it into the potatoes, so it won't be in direct contact with the pan after flipping. Flip, cover, and cook for 5 more minutes. 
+    
+    Serve with ketchup and hot sauce 
+    
+  ingredients:
+    - 'potato, Russet'
+
+    - 'onion':
+        amount: '0.25'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'avocado oil':
+        amount: '5 tbsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+
+'Corn on the cob':
+  directions: |
+    Shuck the corn and carefully remove all cornsilk.
+    
+    Cut in half, if desired. Place into a large pot of salted briskly boiling water. Allow to return to a boil, amd cook for five minutes.
+    
+    Remove from heat. The corn can remain in the water for 10 more minutes to keep warm without overcooking.
+    
+    When ready to serve, remove from the cooking water and rub with salted butter.
+    
+  ingredients:
+    - 'corn on the cob':
+        amount: '4'
+
+    - 'salt':
+        amount: '2 tbsp'
+
+    - 'butter':
+        amount: '3 tbsp'
+
+
+'Asian salad':
+  description: |
+    Interpretation of asian salad
+    
+  directions: |
+    1-2 cups shredded iceberg lettuce or Napa cabbage
+    1-2 cup shredded purple cabbage
+    shredded or schnitzel chicken
+    1 block fried or baked tofu
+    2-4 shredded carrots
+    1-2 slided green onions
+    4-8 oz sliced almonds
+    mandarin oranges, 1 can or 2-3 fresh
+    1 can baby corn (optional)
+    chow mein topping (optional)
+    
+    Dressing
+    1/3 - 1/2 cup soy sauce
+    1 teaspoon sesame oil
+    2-3 tablespoons ketchup
+    juice of 1/2 orange
+    grated ginger root to taste
+    1-2 cloves garlic minced
+    1 tablespoon sugar or honey
+    
+  ingredients:
+    - 'iceberg lettuce or napa cabbage'
+
+    - 'purple cabbage'
+
+    - 'chicken'
+
+    - 'tofu'
+
+    - 'carrots':
+        amount: '2 -4'
+
+    - 'green onions'
+
+    - 'sliced almonds':
+        amount: '4 -8 oz'
+
+    - 'soy sauce'
+
+    - 'ketchup':
+        amount: '2 -3 Tablespoons'
+
+    - 'ginger root'
+
+    - 'garlic':
+        amount: '1 -2 cloves'
+
+    - 'sugar or honey':
+        amount: '1 -2 tablespoons'
+
+    - 'orange'
+
+    - 'canned baby corn (optional)'
+
+    - 'chow mein (optional)'
+
+    - 'mandarin oranges 1 can or 2-3 fresh'
+
+
+'Russian Vinigret':
+  description: |
+    Russian festive beet and potato salad
+    
+  directions: |
+    Steam, bake, or boil the potatoes, and beets (separately), do not overcook. Peel and dice.
+    
+    Peel carrots and boil until soft but not mushy. Dice.
+    
+    Dice the onion and the pickles.
+    Mix all ingredients, optionally add a small splash of pickle brine
+    
+  ingredients:
+    - 'Beets':
+        amount: '2'
+
+    - 'Onion, red':
+        amount: '0.5'
+
+    - 'Pickles':
+        amount: '2'
+
+    - 'Carrots':
+        amount: '3'
+
+    - 'Sweet peas':
+        amount: '0.75 can'
+
+    - 'Olive oil':
+        amount: '4 tbsp'
+
+    - 'Salt':
+        amount: '1 pinch'
+
+    - 'Pepper':
+        amount: '1 pinch'
+
+    - 'potatoes, yukon or red':
+        amount: '4'
+
+
+'Sweet Potato Casserole':
+  directions: |
+    Add peeled and cubed sweet potatoes to a large pot of salted water. Bring to boil over high heat, then lower the heat to a simmer and cook until the potatoes are fork tender, about 15 to 20 minutes. Drain well and cool.
+    boiled sweet potato
+    Drain the potatoes well and cool. Return to the same pot.
+    drained potatoes
+    
+    Mash the sweet potatoes with a potato masher or a mixer.
+    mash the potatoes
+    Preheat the oven to 350° F. Butter a 2-quart baking dish.
+    
+    In a large bowl, whisk together the butter, mashed sweet potatoes, milk, brown sugar, vanilla, nutmeg, salt and eggs. Transfer to the prepared baking dish.
+    
+  ingredients:
+    - 'sweet potatoes':
+        amount: '4'
+
+    - 'unsalted butter':
+        amount: '4 tbsp'
+
+    - 'milk':
+        amount: '0.5 cup'
+
+    - 'brown sugar':
+        amount: '0.25 cup'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'vanilla extract':
+        amount: '1 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'nutmeg, ground':
+        amount: '0.25 tsp'
+
+
+'Creamy Corn Casserole':
+  description: |
+    Sue's Thanksgiving Recipe
+    
+  directions: |
+    Gather all ingredients and preheat the oven to 350 degrees F (175 degrees C). Lightly grease a 9x9-inch baking dish.
+    
+    Drain can of corn.
+    Stir whole and creamed corn, cornbread mix, sour cream, melted butter, and beaten eggs together in a medium bowl until well combined. Add green chilies.
+    
+    
+    Spoon mixture into the prepared dish.
+    
+    
+    Bake in the preheated oven until the top is golden brown and a toothpick inserted in the center comes out clean, about 45 minutes.
+    
+    Serve and enjoy!
+    
+  ingredients:
+    - 'corn, whole kernel':
+        amount: '1 can'
+
+    - 'creamed corn':
+        amount: '1 can'
+
+    - 'cornbread mix':
+        amount: '8 ,5 oz'
+
+    - 'sour cream':
+        amount: '1 cup'
+
+    - 'butter':
+        amount: '4 tbsp'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'canned green chilies':
+        amount: '4 oz'
+
+
+'garlic bread':
+  description: |
+    Home -made version
+    
+  directions: |
+    Melt butter, mix in spices and olive oil
+    
+    Spread on sliced bread
+    
+    Toast the slices on 'bagel' setting in the toaster oven
+    
+  ingredients:
+    - 'butter':
+        amount: '3 tbsp'
+
+    - 'olive oil':
+        amount: '3 tbsp'
+
+    - 'garlic powder':
+        amount: '0.5 tsp'
+
+    - 'onion powder':
+        amount: '1 pinch'
+        optional: True
+
+    - 'challah':
+        amount: '5 slices'
+
+    - 'italian seasoning':
+        amount: '0.5 tsp'
+
+
+'kale gnocchi':
+  description: |
+    From https://www.delish.com/cooking/recipe-ideas/a41037917/creamy-kale-and-gnocchi-bake-recipe/
+    
+  directions: |
+    Step 1
+    Preheat oven to 375º. 
+    
+    
+    In a large pot over medium-high heat, heat oil. Add kale a large handful at a time, tossing with tongs and slightly wilting each batch before adding the next, until all kale is added and leaves are bright green and just wilted, about 5 minutes total. Season kale with 1/2 teaspoon salt and transfer into an 11"-by-8" (2-quart) baking dish.
+    Step 2
+    In same pot over medium heat, melt butter. Cook shallots and garlic, stirring often, until tender and light golden, 3 to 5 minutes. Add flour and cook, stirring, until lightly toasted, about 1 minute more.
+    Step 3
+    While whisking, slowly pour in milk until combined and smooth. Whisk in mustard, nutmeg, 3/4 teaspoon salt, and 1/4 teaspoon pepper. Stir in gnocchi. Bring mixture to a simmer over medium heat, stirring occasionally, and cook until thickened slightly, about 1 minute.
+    Step 4
+    Remove pot from heat and whisk in 1 cup Monterey Jack cheese until melted.
+    Return cooked kale to pot and toss to combine, then scrape kale mixture into baking dish. Top with Parmesan and remaining 1 cup Monterey Jack cheese.
+    For an extra layer of crunch, add 1 cup panko bread crumbs when you add the cheese.
+    Step 5
+    Bake until filling is bubbling and top is golden, 16 to 20 minutes. Let cool 10 minutes before serving.
+    
+  ingredients:
+    - 'olive oil':
+        amount: '2 tbsp'
+
+    - 'kale':
+        amount: '20 oz'
+
+    - 'salt':
+        amount: '1 pinch'
+
+    - 'shallots':
+        amount: '2'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'flour':
+        amount: '3 tbsp'
+
+    - 'milk':
+        amount: '4 cups'
+
+    - 'mustard, Dijon':
+        amount: '2 tsp'
+
+    - 'nutmeg':
+        amount: '1 pinch'
+
+    - 'black pepper':
+        amount: '1 pinch'
+
+    - 'potato gnocchi':
+        amount: '16 oz'
+
+    - 'Monterey Jack cheese, shredded':
+        amount: '8 oz'
+
+    - 'parmesan cheese, finely grated':
+        amount: '1 oz'
+
+    - 'panko bread crumbs':
+        amount: '1 cup'
+        optional: True
+
+    - 'butter':
+        amount: '2 tbsp'
+
+
+'mayo egg':
+  description: |
+    best breakfast egg recipe
+    
+  directions: |
+    mix egg and mayo, nuke for 30 seconds, add seasonings
+    
+  ingredients:
+    - 'egg'
+
+    - 'mayonnaise':
+        amount: '1 tbsp'
+
+    - 'italian seasoning':
+        amount: '1 pinch'
+
+    - 'black pepper':
+        amount: '1 pinch'
+        optional: True
+
+    - 'paprika':
+        amount: '1 pinch'
+        optional: True
+
+
+'Pumkin bean and kale soup':
+  description: |
+    Sue Culig's easy soup recipe
+    
+  directions: |
+    Saute onions, add beans and corn, then add remaining ingredients besides the cheese and heat thru
+    
+    Finish with parmesan cheese
+    
+  ingredients:
+    - 'Can of Pumpkin':
+        amount: '1 can'
+
+    - 'white beans':
+        amount: '1 can'
+
+    - 'Kale':
+        amount: '1 bunch'
+
+    - 'onion'
+
+    - 'frozen corn':
+        amount: '1 cup'
+        optional: True
+
+    - 'vegetable broth':
+        amount: '3 cups'
+
+    - 'Thyme':
+        amount: '1 bunch'
+        optional: True
+
+    - 'Salt':
+        amount: '1 tsp'
+
+    - 'Black pepper':
+        amount: '1 pinch'
+        optional: True
+
+    - 'Parmesan cheese':
+        amount: '0.3 cups'
+        optional: True
+
+
+'Spanish rice':
+  description: |
+    Mexican-style side dish
+    
+  directions: |
+    Mince the garlic.
+    
+    Heat oil in a frying pan over medium heat. Fry the dry rice for ~5 min, until slightly browned.
+    
+    Add broth and remaining ingredients, cover, and let simmer. Cook until all of the liquid is absorbed, approx. 30 min.
+    
+    Fluff with fork and serve
+    
+  ingredients:
+    - 'avocado oil':
+        amount: '2 tbsp'
+
+    - 'long grain rice':
+        amount: '2 cups'
+
+    - 'chicken broth':
+        amount: '4 cups'
+
+    - 'tomato sauce':
+        amount: '8 oz'
+
+    - 'garlic':
+        amount: '1 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'black pepper':
+        amount: '1 pinch'
+
+
+'Soft and Chewy Almond Sugar Cookies':
+  description: |
+    From codykitchenconfections.blogspot.com
+    
+    Best sugar cookies I've ever had!
+    
+  directions: |
+    Preheat oven to 350F, prep the baking sheet.
+    
+    Cream the sugar with the butter and shortening
+    
+    Add eggs and almond extract and stir.
+    
+    Make sure the butter is cold, and the shortening is at room temp.
+    
+    Combine flour, cornstarch, baking powder, and salt, and add to the mixture.
+    Use electric mixer to mix all ingredients thoroughly.
+    
+    Refrigerate the cookie dough for 30 minutes
+    
+    Scoop 2 tsp of dough at a time, roll in raw sugar
+    
+    Refrigerate the dough between batches.
+    
+    Bake for 7 minutes, do not over-bake. Cookies will firm up as they cool.
+    Remove from oven immediately, and right away press flat to a uniform shape. Place on ooling rack to fully cool.  
+    
+  ingredients:
+    - 'sugar':
+        amount: '1.5 cups'
+
+    - 'unsalted butter':
+        amount: '0.66 cups'
+
+    - 'shortening':
+        amount: '0.66 cups'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'almond extract':
+        amount: '2 tsp'
+
+    - 'cake flour':
+        amount: '2.8 cups'
+
+    - 'all-purpose flour':
+        amount: '1 cup'
+
+    - 'corn starch':
+        amount: '1 tbsp'
+
+    - 'baking powder':
+        amount: '2 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'sugar in the raw, coarse sugar, or sprinkles':
+        amount: '3 tbsp'
+
+
+'quesadilla':
+  directions: |
+    preheat pan on medium low heat with a drop of oil or butter.
+    
+    Place tortilla on pan, layer cheese on top of tortilla. once cheese begins to melt, fold in half, cover and cook until just slightly browned. flip and cook on other side until also slightly browned and completely melted. cut into 4-5 wedges.
+    
+  ingredients:
+    - 'large tortilla, flour'
+
+    - 'shredded cheese':
+        amount: '3 oz'
+
+
+'Creamy Mocha Fudge':
+  description: |
+    Another one of Sue's holiday recipes!
+    
+  directions: |
+    Over low heat melt morsels with dissolved coffee, additional water may be needed. Add vanilla. Stir constantly, add milks. Remove from heat. Consistency should be smooth with some sheen. In an 8x8 pan lined with parchment paper, quickly pour fudge into pan, smoothing with spoon or spatula. Refrigerate 3 hours. Cut into approximately 1 inch squares and place in Christmas tins.
+    
+  ingredients:
+    - 'Dark chocolate morsels':
+        amount: '18 oz'
+
+    - 'Sweetened condensed milk can':
+        amount: '10 oz'
+
+    - 'Instant coffee crystals':
+        amount: '5 tsp'
+
+    - 'Water':
+        amount: '2 tbsp'
+
+    - 'Vanilla extract':
+        amount: '1 tsp'
+
+    - 'Milk':
+        amount: '2 tbsp'
+
+
+'Brisket in the Instant Pot':
+  description: |
+    From https://www.recipetineats.com/slow-cooker-beef-brisket-with-bbq-sauce/
+    
+    'Meat candy' when caramelized with sauce in the oven
+    
+  directions: |
+    Mix the spice rub, rub on the meat:
+     1 tsp onion powder
+     1 tbsp brown sugar
+     2 tsp paprika
+     1 tsp garlic powder
+     .5 tsp cumin powder
+     .75 tsp dry mustard powder
+     1 tsp salt
+     .5 tsp black pepper
+    
+    For sauce, mix in the Instant Pot:
+     0.5 cups apple cider vinegar
+     2 garlic cloves, minced
+     1.5 cups ketchup
+     0.5 cups brown sugar
+     2 tsp black pepper
+     2 tsp onion powder
+     2 tsp dry mustard powder
+     1 tsp cayenne pepper
+     1 tbsp Worcestershire sauce
+    
+    Make a mental note of how the grain runs on the meat, it may be more difficult to tell once cooked and covered in sauce. 
+    Place a ~3 lb brisket into the Instant Pot, cook on 'slow cook' setting for 8-10 hrs, until fork tender.
+    
+    Remove the brisket, drizzle with 1 tbsp of oil, and bake for 15 min at 390F.
+    Meanwhile, reduce the sauce until just starting to get syrupy.
+    
+    Baste the meat generously with the sauce, bake another 5 min. Baste again, bake another 5-10 min, but be careful not to burn, as the sauce becomes bitter if burnt.
+    
+    Slice against the grain, and serve with the remained of the sauce
+    
+  ingredients:
+    - 'brisket':
+        amount: '3 lb'
+
+    - 'onion powder':
+        amount: '3 tsp'
+
+    - 'brown sugar':
+        amount: '1 tbsp'
+
+    - 'paprika':
+        amount: '2 tsp'
+
+    - 'garlic powder':
+        amount: '1 tsp'
+
+    - 'cumin':
+        amount: '0.5 tsp'
+
+    - 'mustard powder':
+        amount: '0.75 tsp'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'black pepper':
+        amount: '0.5 tsp'
+
+    - 'apple cider vinegar':
+        amount: '0.5 cups'
+
+    - 'garlic':
+        amount: '2 cloves'
+
+    - 'ketchup':
+        amount: '1.5 cups'
+
+    - 'brown sugar':
+        amount: '0.5 cups'
+
+    - 'black pepper':
+        amount: '2 tsp'
+
+    - 'onion powder':
+        amount: '2 tsp'
+
+    - 'mustard powder':
+        amount: '2 tsp'
+
+    - 'cayenne pepper':
+        amount: '1 tsp'
+        optional: True
+
+    - 'Worcestershire sauce':
+        amount: '1 tbsp'
+
+
+'Soviet Olivier ''Olivye'' Salad':
+  description: |
+    A creamy potato salad from the Soviet times
+    
+  directions: |
+    Boil potatoes until just tender, do not overcook.
+    
+    At the same time, peel and boil the carrot until just tender, and cook the eggs until hard boiled.
+    
+    Let cool and peel the potatoes and the eggs.
+    
+    Cut the potatoes, eggs, carrots, hot dogs and pickles into 1/2" cubes. Chop the dill finely. Use just enough mayo to lightly coat all of the chopped ingredients, do not use excess mayo. Mix all ingredients well.
+    
+  ingredients:
+    - 'potatoes, Yukon Gold':
+        amount: '6'
+
+    - 'carrot'
+
+    - 'eggs':
+        amount: '4'
+
+    - 'pickles':
+        amount: '6'
+
+    - 'canned peas':
+        amount: '7 oz'
+
+    - 'mayonnaise':
+        amount: '0.5 cups'
+
+    - 'dill':
+        amount: '1 tbsp'
+
+    - 'Dijon mustard':
+        amount: '2 tbsp'
+
+    - 'Hot dogs':
+        amount: '4'
+
+
+'Soviet ''New Years Clock'' Salad':
+  description: |
+    A salad in the shape of a clock, served for New Year's Eve.
+    
+  directions: |
+    Boil the raw ingredients. Cool completely. 
+    
+    Grate or shred all ingredients except the carrot, layer with mayonnaise using a circular form. Top layer should be the egg yolk.
+    
+    Use the largest carrot you can find. Cut the thick part of the carrot into rounds, to be used as the hours of the clock. Cut the remainder of the carrot into the clock hands. Write the number on the carrot circles using mayonnaise.
+    
+    Position the carrot "clock hands" at five minutes to midnight. Optionally, garnish with parsley, and a single olive in the center.
+    
+  ingredients:
+    - 'chicken':
+        amount: '1 lb'
+
+    - 'eggs':
+        amount: '3'
+
+    - 'koryo-saram pickled carrots':
+        amount: '7 oz'
+
+    - 'cheese':
+        amount: '4 oz'
+
+    - 'mayonnaise':
+        amount: '0.33 cups'
+
+    - 'carrot'
+
+    - 'parsley':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'olive':
+        optional: True
+
+
+'Morkov-cha Koryo-saram carrot salad':
+  description: |
+    Created by Koryo-saram people of Central Asia (ethnic Koreans from the Russian Far East, resettled by Stalin in the 1930s) to substitute for traditional Korean banchan. Popular throughout the ex-Soviet Union and diaspora, and has now been re-introduced back into Korea as 'carrot kimchi'
+    
+  directions: |
+    Peel and julienne the carrots (consider mandoline attachments or specialized tools) into long strands.
+    
+    Add salt, sugar, and vinegar, massage in, and allow to sit for 20 min or more.
+    Drain off the liquid and discard. 
+    
+    Pour coriander, cayenne pepper and black pepper into a heat-proof ramekin in preparation for the next steps.
+    
+    Heat oil, chop the onion and fry in the oil until aromatic, do not burn. Add chopped garlic into the oil for 1 min. Strain the onion and garlic and pour the hot oil over the spices into a heat-proof ramekin.
+    
+    Allow the spices to bloom in the hot oil for 30 seconds, then add to the carrots. Mix and store in the fridge for 2 hrs to allow the flavors to permeate.
+    
+  ingredients:
+    - 'avocado oil':
+        amount: '5 tbsp'
+
+    - 'carrots':
+        amount: '30 oz'
+
+    - 'vinegar':
+        amount: '3 tbsp'
+
+    - 'salt':
+        amount: '1 tsp'
+
+    - 'sugar':
+        amount: '1 tsp'
+
+    - 'garlic':
+        amount: '1 head'
+
+    - 'coriander powder':
+        amount: '0.5 tsp'
+
+    - 'cayenne pepper':
+        amount: '0.25 tsp'
+
+    - 'paprika':
+        amount: '0.25 tsp'
+
+    - 'black pepper':
+        amount: '0.5 tsp'
+
+    - 'onion'
+
+
+'Bellringer''s Reward (Roast Roots and Baked Spuds)':
+  description: |
+    An assortment of baked, seasoned vegetables from the "Redwall Cookbook" 
+    
+  directions: |
+    1. Preheat oven to 375 F. Bring a large pot of water to a boil and salt it well. 
+    
+    2. Peel and cut rutabaga, parsnip, and carrot into one by two inch pieces. Finely chop the parsley.
+    
+    3. Add the vegetables to the boiling water, and cook for 3 minute, then drain.
+    
+    4. Brush a rimmed baking sheet with some of the vegetable oil, add the vegetables, then drizzle the remaining oil over the vegetables and season with salt and and pepper.
+    
+    5. Bake until the vegetables are golden, about 30 minutes. Sprinkle with the parsley and serve.
+    
+    
+    Baked Spuds:
+    
+    1. Preheat the oven to 400 F. Prick the potatoes all over with a fork. Place them in a roasting pan and drizzle with olive oil. Sprinkle with salt, then shake the pan to coat the potatoes.
+    
+    2. Bake for 90 minutes 
+    
+  ingredients:
+    - 'Vegetable oil':
+        amount: '2 tbsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'black pepper':
+        amount: '0.25 tsp'
+
+    - 'potato, Russet':
+        amount: '4'
+
+    - 'parsley':
+        amount: '1 tbsp'
+
+    - 'olive oil':
+        amount: '2 tbsp'
+
+    - 'carrots':
+        amount: '4'
+
+    - 'parsnips':
+        amount: '4'
+
+    - 'rutabaga'
+
+
+'Chile Rellenos':
+  description: |
+    Authentic Mexican Chile Rellenos
+    
+  directions: |
+    Preheat the oven broiler; set the oven rack about 6 inches below the heat source. Line a baking sheet with aluminum foil.
+    
+    Place peppers onto the prepared baking sheet and broil until skins are blackened and blistered, about 10 minutes. Use tongs to rotate peppers often to char all sides. Place blackened peppers into a bowl and tightly seal with plastic wrap. Allow peppers to steam as they cool, about 15 minutes.
+    
+    Remove skin from peppers, then cut a slit down the long side of each one to remove seeds and core.
+    
+    Rinse peppers inside and our and pat dry with paper towels. Cut cheese into 3/4# thick strips. Stuff peppers with strips of cheese.
+    
+    Separate the eggs. Whisk egg yolks and baking powder in a bowl until combined.
+    
+    Beat egg whites with an electric mixer in a separate bowl until stiff peaks form.
+    
+    Gently fold beaten whites into the yolk mixture. Place flour into a separate shallow bowl.
+    
+    Heat the frying oil (the original recipe has vegetable shortening) in a skillet over medium heat. Roll each stuffed pepper in flour, tap off excess flour, and dip into the egg mixture to coat both sides. Gently lay coated peppers into the hot oil. Fry peppers until lightly golden brown and cheese has melted, about 5 minutes per side.
+    
+  ingredients:
+    - 'Anaheim chiles':
+        amount: '6'
+
+    - 'queso asadero':
+        amount: '8 oz'
+
+    - 'eggs':
+        amount: '2'
+
+    - 'baking powder':
+        amount: '1 tsp'
+
+    - 'flour':
+        amount: '0.75 cups'
+
+    - 'oil':
+        amount: '1 cup'
+
+
+'Lomo Saltado':
+  description: |
+    Peruvian stir-fried beef with fries, serve with  rice
+    
+  directions: |
+    https://www.littlespicejar.com/lomo-saltado/
+    
+    Marinate the beef: Mince the garlic finely.
+    
+    Add a splash of soy sauce and roughly half of the minced garlic to the thinly sliced beef.
+    
+    Allow for it to marinate for 5-7 minutes while you prepare the remaining ingredients.
+    This is where you’d add in a pinch of baking soda if you used a particularly tough cut of meat.
+    
+    Slice the onion into 1/2" wedges.
+    
+    
+    Make the sauce: The sauce is as simple as combining a few ingredients in a mason jar and giving it a quick shake to help everything mix. All you need is soy sauce, red wine vinegar, oyster sauce, aji Amarillo paste, and cornstarch. 
+    
+    Stir fry and put it all together: Add oil to a cast iron skillet or a cast iron braiser. Let it heat all the way through. When the oil is shimmering, add the beef slices in batches and sear them on both sides. Then, remove the beef to a plate and continue browning the remaining beef. Add another splash of oil to the pan then salt the onions until they soften a bit before adding the garlic and the tomatoes. Continue to saute for 1 minute. Then add the beef back into the pan. Drizzle everything with the prepared sauce and toss to combine.
+    
+    You’d also add the French fries here if you wanted them to soften in the sauce. 
+    
+    Top with sliced scallions or chopped cilantro if desired. Serve warm over rice!
+    
+  ingredients:
+    - 'Frozen french fries'
+
+    - 'beef tenderloin or another cut of beef':
+        amount: '1 lb'
+
+    - 'soy sauce, low sodium':
+        amount: '5 tbsp'
+
+    - 'garlic':
+        amount: '5 cloves'
+
+    - 'red wine vinegar':
+        amount: '1 tbsp'
+
+    - 'Aji Amarillo paste':
+        amount: '1 tbsp'
+
+    - 'cornstrach':
+        amount: '1 tsp'
+
+    - 'onion, red'
+
+    - 'tomatoes, roma':
+        amount: '3'
+
+    - 'scallions':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'cilantro':
+        amount: '1 tbsp'
+        optional: True
+
+    - 'cooking oil':
+        amount: '3 tbsp'
+
+
+'Peruvian garlic rice':
+  description: |
+    To serve with Lomo Saltado
+    
+  directions: |
+    From https://cookingformysoul.com/peruvian-rice/#recipe
+    
+    Rinse the rice through a colander over cold water until the water runs mostly clear, about 2 to 3 times. This step removes excess starch, which ensures the grains are perfectly separated later.
+    
+    In a medium pot, heat 1-2 tablespoons of oil over medium heat, and sauté the garlic for a few seconds, being careful not to burn the garlic.
+    
+    Then, add the rice and toast for another 2-3 minutes until fragrant. Add the water and salt. Stir to combine. 
+    
+    Bring to a boil, then reduce to a low simmer. Cover and cook for 15 to 18 minutes, until the rice is tender and the liquid is fully absorbed.
+    
+    Fluff with a fork and let it rest for 5 minutes before serving. Enjoy!
+    
+  ingredients:
+    - 'rice, jasmine':
+        amount: '1 cup'
+
+    - 'water':
+        amount: '1.5 cups'
+
+    - 'garlic':
+        amount: '4 cloves'
+
+    - 'salt':
+        amount: '0.25 tsp'
+
+    - 'olive oil':
+        amount: '2 tbsp'
+
+
+'Spinach Lasagna':
+  description: |
+    A healthy spinach-enriched variation on a hearty Italian dish
+    
+  directions: |
+    Cook frozen spinach according to package directions, and drain. Mix with the ingredients below for the spinach filling.
+    
+    Place some spinach filling on the bottom of a casserole dish. Add 4 boiled lasagna noodles (or use no-boil or fresh noodles). Spread 1/3 of the ricotta cheese mixture on top. Add 1.5 cups of meat sauce.
+    
+    Repeat the same layers two more times.
+    
+    Adding layers of noodles, ricotta cheese, and spinach to make Lasagna.
+    
+    Top with grated mozzarella cheese. Cover and bake at 375° for 30 minutes. Remove cover and bake for 15 more minutes. Broil at the end if desired. Let it rest for 15 minutes prior to serving 
+    
+    Cheese Filling
+    15 oz. ricotta cheese, 2 cups
+    1 large egg
+    2 cups mozzarella cheese
+    ¾ cup Parmesan cheese, freshly grated
+    2 teaspoons Italian seasoning
+    ½ teaspoon salt
+    ¼ tsp pepper
+    
+    Spinach Filling
+    3 cloves garlic, minced
+    40 oz. marinara sauce, see notes
+    1 tablespoon tomato paste
+    1 teaspoon hot sauce
+    1 teaspoon Worcestershire sauce
+    
+    Lasagna Noodles/ Cheese Topping
+    12 lasagna noodles, plus extra in case of breakage
+    2.5 cups mozzarella cheese
+    
+    
+    Equipment
+    1 9 x 13-inch casserole dish
+    
+    Instructions
+    Prep Work
+    Combine the cheese filling ingredients (ricotta, egg, 2 cups of the shredded mozzarella, parmesan, Italian seasoning, salt, pepper) in a medium bowl and set aside. Measure out remaining ingredients.
+    
+    Make the Spinach Filling.
+    
+    Preheat Oven and Cook the Lasagna Noodles
+    Preheat oven to 375°.
+    Begin boiling a large pot of salted pasta water for the lasagna noodles. Once a rapid boil is reached, cook the noodles to al dente according to package instructions. (Set a timer to ensure you don’t overcook them.) Gently stir with a wooden spoon throughout cooking to prevent the noodles from sticking. Drain and rinse with cold water until noodles are completely cool.
+    Lay the cooled noodles flat on wax or parchment paper while you begin assembling the lasagna.
+    
+    Assemble
+    Spread 1 heaping cup of spinach filling on the bottom of a 9 x 13-inch casserole dish. Next, add 4 lasagna noodles, overlapping them if needed.
+    Spread 1/3 of the ricotta cheese mixture over the noodles, followed by about 1 ½ cups of spinach filling.
+    Top with 4 more lasagna noodles, 1/3 of the ricotta cheese mixture, 1 ½ spinach filling.
+    Finish with 4 more lasagna noodles, the rest of the ricotta mixture, and the rest of the spinach filling.
+    Top with 2 ½ cups of Mozzarella cheese.
+    Spray foil with nonstick cooking spray and place it spray-side-down on top of the baking dish to prevent the cheese from sticking to it.
+    
+    Bake
+    Bake for 35 minutes. Remove cover and bake for 10 more minutes.
+    Remove and garnish with fresh parsley. Let it sit for 15 minutes prior to serving to allow the layers to set. 
+     
+    Pro Tips:
+    Flavor Enhancers: The hot sauce and Worcestershire sauce are flavor enhancers and can’t be tasted outright. The hot sauce won’t make it hot/spicy. I use Frank's Hot Sauce.
+    
+    Cheese: Shred and grate the cheese from a block, avoid using packaged shredded/grated cheese for this recipe. Low moisture, whole milk mozzarella cheese melts the best.
+    Lasagna Noodles: No-boil lasagna noodles or fresh lasagna noodles can also be used for this recipe, neither of which need to be cooked first. Fresh lasagna noodles can be found in the deli section of the grocery store.
+    Casserole Dish: If your lasagna is very close to the top of your casserole dish, place a baking sheet underneath the casserole dish to catch any splatters of sauce, as it gets hot and bubbly toward the end. A Deep Casserole Dish is helpful.
+    
+    Storage:
+    Store in an airtight container and refrigerate for up to 3 days or freeze for up to 3 months. Leftovers do freeze well. 
+    
+    Reheating Leftovers:
+    To reheat leftover lasagna, place it in a lightly greased, covered casserole dish. Bake at 350° for 25-30 minutes.
+    
+  ingredients:
+    - 'ricotta cheese':
+        amount: '15 oz'
+
+    - 'egg'
+
+    - 'mozzarella cheese':
+        amount: '10 oz'
+
+    - 'Italian seasoning':
+        amount: '2 tsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+    - 'onion, yellow'
+
+    - 'garlic':
+        amount: '3 cloves'
+
+    - 'Parmesan Cheese, grated':
+        amount: '0.75 cups'
+
+    - 'marinara sauce':
+        amount: '40 oz'
+
+    - 'tomato paste':
+        amount: '1 tbsp'
+
+    - 'hot sauce':
+        amount: '1 tsp'
+        optional: True
+
+    - 'Worcestershire sauce':
+        amount: '1 tsp'
+        optional: True
+
+    - 'lasagna noodles':
+        amount: '12 noodles'
+
+    - 'mozarella cheese':
+        amount: '2.5 cups'
+
+    - 'frozen spinach':
+        amount: '1 package'
+
+
+'Matzo ball soup':
+  description: |
+    Matzo ball soup from scratch 
+    
+  directions: |
+    Matzo Balls from scratch (may use boxed mix)
+    ▢3 large eggs ($0.75)
+    ▢3 Tbsp vegetable or canola oil*** ($0.12)
+    ▢3/4 cup matzo meal**** ($1.02)
+    ▢1 tsp salt ($0.05)
+    ▢1/2 tsp baking powder ($0.04)
+    ▢Freshly cracked pepper ($0.01)
+    ▢3 Tbsp water ($0.00)
+    
+    Mince the garlic and dice the onion, celery, and carrots. Sauté the garlic, onion, celery, and carrots with the vegetable oil in a large pot over medium heat until the onions are soft and transparent (about five minutes).
+    
+    inach Mushroom and Feta Crustless Quiche
+    Ads end in 27
+    
+    
+    “So delicious! An absolute comfort food but in a flash! Definitely going on permanent rotation!”
+    
+    ALLISYN
+    
+    
+    Ditch Toast. Get Square.
+    Tired of Toast’s fees and friction? Square gives you clear pricing, no long-term contracts, intuitive tools, and a scalable ecosystem.
+    Sponsored By Square
+    Learn more
+    COZY Matzo Ball Soup
+    Matzo or Matzah Ball Soup is a traditional Ashkenazi Jewish dish that is often served during Passover and is commonly known as ‘Jewish penicillin.’ It’s a chicken soup filled with delicious dumplings made out of matzo meal (crushed unleavened bread), eggs, chicken fat (or another fat or oil), and broth. This recipe is a simplified, short-cut version that I’ve developed based on different recipes I’ve come across, tutorials I’ve watched, and myth-busters I’ve read. It’s certainly not authentic, but it’s delicious and perfect for anyone looking for a comforting, easy-to-make recipe, even if it’s your first time making it!
+    
+    However, I highly recommend checking out some authentic recipes before you give my one a go to see what it’s really all about. The Jewish Food Society and Chabad both have great options. This soup is absolutely delicious and soul-warming, and there’s just nothing in the world like it.
+    
+    Budget-Saving Tips!
+    Add more or less chicken: When I first made this recipe all those years ago, I only used one boneless, skinless chicken breast. I’ve since upped the amount to two to make this recipe even heartier, but to save some money, you can definitely stick with just one. The soup will still have plenty of flavor; it’ll just be more brothy with fewer chicken pieces!
+    Let the dough rest before adding to the soup. As you can see from the process photos below, there’s a big difference in the texture of the dough immediately after mixing and then after letting it rest. I let the dough rest in the fridge for 30 minutes to firm up and rehydrate, which makes it easier to form into balls and stops them from falling apart in the soup.
+    Make the dough ahead of time! You can make the matzo ball dough ahead of time and store it in the fridge overnight before forming into balls and cooking.
+    
+    Share this recipe
+    Matzo Ball Soup Recipe
+    Cost $11.83 recipe / $2.37 serving
+    4.55 from 75 votes
+    This is an easy, short-cut version of Matzo Ball Soup, a warm and comforting Jewish Soup served during Passover.  
+    Step-by-step photos can be seen below the recipe card.
+    Author: Beth Moncel
+    Side view of matzo ball soup in a bowl.
+    Servings
+    5
+     (2 cups soup, 3 matzo balls each)
+    Prep
+    10minutes mins
+    Cook
+    1hour hr 30minutes mins
+    Total
+    1hour hr 40minutes mins
+    Save Recipe
+    Print Recipe
+    Read the reviews
+    
+    Ingredients
+    Soup
+    ▢1 Tbsp vegetable or canola oil ($0.04)
+    ▢2 cloves garlic ($0.16)
+    ▢1 yellow onion ($0.40)
+    ▢3 carrots ($0.75)
+    ▢3 stalks celery ($0.56)
+    ▢2 boneless, skinless chicken breasts (about 1.25 lb.)* ($6.25)
+    ▢6 cups chicken broth** ($1.02)
+    ▢2 cups water ($0.00)
+    ▢Freshly cracked pepper ($0.01)
+    ▢Few sprigs fresh dill ($0.65)
+    
+    Matzo Balls
+    ▢3 large eggs ($0.75)
+    ▢3 Tbsp vegetable or canola oil*** ($0.12)
+    ▢3/4 cup matzo meal**** ($1.02)
+    ▢1 tsp salt ($0.05)
+    ▢1/2 tsp baking powder ($0.04)
+    ▢Freshly cracked pepper ($0.01)
+    ▢3 Tbsp water ($0.00)
+    Video
+    
+    Instructions 
+    Mince the garlic and dice the onion, celery, and carrots. Sauté the garlic, onion, celery, and carrots with the vegetable oil in a large pot over medium heat until the onions are soft and transparent (about five minutes).
+    
+    Add the chicken breast, chicken broth, 2 cups water, some freshly cracked pepper, and one or two sprigs of dill to the pot. Place a lid on the pot and let it come up to a boil. Once it reaches a boil, turn the heat down to low and let it simmer for 30 minutes.
+    While the soup is simmering, mix the matzo ball dough. In a medium bowl, whisk together the eggs and vegetable oil. Add the matzo meal, salt, baking powder, and a little freshly cracked pepper to the eggs and oil. Stir until well combined. Finally, add 3 Tbsp water and stir until smooth again. Refrigerate the mixture for 30 minutes to allow the matzo meal time to absorb the moisture.
+    
+    After the chicken soup has simmered, carefully remove the chicken breast and shred it with a fork. Return the shredded chicken to the soup. Taste the broth and adjust the salt if needed.
+    Once the dumpling mix has refrigerated and stiffened up, begin to form it into ping pong sized balls. Drop the balls into the simmering soup as they are formed, returning the lid to the pot after each one. If the dough is a little sticky, I recommend wetting your hands to help form the dough into balls. This will prevent it from sticking to your hands and make it easier to work with.Once all the dumplings are in the soup, let them simmer for 20 minutes without removing the lid. Make sure the soup is gently simmering the entire time.
+    
+    Add a couple sprigs of fresh dill just before serving.
+    See how we calculate recipe costs here.
+    
+    Notes
+    *You can use boneless, skinless or bone-in and skin on. Bone-in gives the best flavor, but be sure to remove the skin before adding it to the soup. The bones can be removed when you shred the chicken.
+    **I use Better Than Bouillon to make inexpensive broth in the exact quantity that I need.
+    ***Traditional matzo ball soup recipes often use chicken fat (aka schmaltz) for the dumplings, but I find vegetable or canola oil works just as well and is easier to find. Feel free to use chicken fat if you have it, though!
+    ****Be sure to use matzo meal, NOT matzo ball ‘mix.‘
+    
+  ingredients:
+    - 'Vegetable oil':
+        amount: '1 Tbsp'
+
+    - 'Garlic cloves':
+        amount: '2'
+
+    - 'Carrots':
+        amount: '3'
+
+    - 'Yellow onion'
+
+    - 'Celery':
+        amount: '3 stalks'
+
+    - 'Chicken breasts':
+        amount: '2'
+        optional: True
+
+    - 'Veggie or chicken broth':
+        amount: '6 cups'
+
+    - 'Fresh dill':
+        optional: True
+
+    - 'Matzo meal':
+        amount: '6 cups'
+
+    - 'Baking powder':
+        amount: '1 /2 tsp'
+
+    - 'Eggs':
+        amount: '3'
+
+
+'Charoset':
+  directions: |
+    6 apples grated
+    1 cup walnuts finely chopped
+    1/2 teaspoon cinnamon
+    2-3 tablespoons sugar or honey
+    1/3 cup sweet red wine or grape juice
+    
+    Instructions
+    Place the apples and walnuts into a large bowl. 
+    Add cinnamon and sugar or honey.  
+    Stir in the sweet wine, we like to use the traditional Manischewitz Concord Grape, but any sweet wine or even grape juice is fine. 
+    Stir well and store in refrigerator until ready to serve
+    
+    Jamie Geller
+    
+  ingredients:
+    - 'Apples':
+        amount: '6'
+
+    - 'Walnuts':
+        amount: '1 cup'
+
+    - 'Cinnamon':
+        amount: '1 tsp'
+        optional: True
+
+    - 'Sugar or honey':
+        amount: '2 or 3 Tbsp'
+
+    - 'Sweet red wine or grape juice':
+        amount: '1 /3 cup'
+
+
+'Seder plate':
+  description: |
+    Seder plate
+    
+  directions: |
+    Hard boil the egg
+    Grate the fresh horseradish if applicable 
+    Make charoset 
+    Wash the vegetable
+    Roast the beet at 375 degrees for 45 minutes to an hour
+    Arrange everything on a plate
+    Have enough grape juice or wine on hand so that everyone has 4 glasses
+    
+  ingredients:
+    - '1 boiled egg'
+
+    - '1 roasted beet or shank bone'
+
+    - 'Horseradish, prepared or fresh'
+
+    - 'veggie : onion, parsley, radish or celery'
+
+    - 'Charoset'
+
+    - 'Matzoh'
+
+    - 'A bowl of saltwater'
+
+    - 'Grape juice or wine':
+        amount: '1 A few bottles'
+
+
+'White chocolate cake':
+  description: |
+    A dense sweet cake that will serve about 6-8 people.
+    
+  directions: |
+    First, preheat the oven to 325 degrees Fahrenheit. Then, melt the white chocolate over a double boiler until smooth. Mix in milk and melted butter  and mix slowly so as to not incorporate any air bubbles. Next, slowly mix in the egg and flour one after the other. Lightly tap the mixing bowl against a hard surface to make sure there are not any bubbles of air. Pour the mixture into a baking dish lined with parchment paper and bake for about 30-35 minutes or until the surface is golden brown, and enjoy!
+    
+  ingredients:
+    - 'Whole milk':
+        amount: '1 /2 cup'
+
+    - 'Egg'
+
+    - 'Flour':
+        amount: '1 /4 cup'
+
+    - 'Melted butter':
+        amount: '1 /4 tsp'
+
+    - 'White chocolate':
+        amount: '1 1/8 cups'
+
+
+'tomato cucumber and onion salad':
+  description: |
+    Russian, Ukrainian, or Middle-Eastern side salad
+    
+  directions: |
+    Cut tomatoes into small wedges, dice the cucumbers and onions.
+    
+    Chop the herbs finely. Cut out the lemon flesh. 
+    
+    Mix and dress with salt, pepper and olive oil. 
+    
+  ingredients:
+    - 'tomatoes':
+        amount: '4'
+
+    - 'cucumber':
+        amount: '0.5'
+
+    - 'red onion':
+        amount: '0.33'
+
+    - 'lemon'
+
+    - 'dill':
+        optional: True
+
+    - 'parsley':
+        optional: True
+
+    - 'cilantro':
+        optional: True
+
+    - 'olive oil':
+        amount: '5 tbsp'
+
+    - 'salt':
+        amount: '0.5 tsp'
+
+    - 'pepper':
+        amount: '0.25 tsp'
+
+
+'pork chops':
+  directions: |
+    Bring pork chops to room temperature (microwave briefly, if needed, ~15 sec)
+    
+    Preheat pan, add oil and butter.
+    
+    Add pork chops and herbs, cook covered on medium heat, 3 minutes on each side, keep from sticking.
+    
+    Take off the heat, allow to cool and come up to internal temperature covered in the pan. Salt to taste
+    
+  ingredients:
+    - 'pork chops':
+        amount: '1 lb'
+
+    - 'avocado oil':
+        amount: '3 tbsp'
+
+    - 'butter':
+        amount: '1 tbsp'
+
+    - 'fresh herbs'
+
+    - 'salt':
+        amount: '1 pinch'
+
+
+'Star crossed garlic parsley baked potatoes':
+  description: |
+    The "Star-Crossed" Baked PotatoThis viral recipe transforms a standard jacket potato by scoring a star pattern into the flesh, allowing for a super-crispy exterior and a creamy center.
+    
+  directions: |
+    1. Ingredients:
+    2 large starchy potatoes (Russet or Maris Piper)Olive oil and sea salt (for the skin)1 head of garlic (roasted or pan-cooked)1/2 stick (4 tbsp) salted butter, melted1/4 cup cream cheese or blended fetaFresh parsley, chopped
+    
+    Steps:
+    Prick the potatoes with a fork, rub with oil and salt, and bake at 400°F until cooked through and the skin is crispy.Cut the potato vertically straight across, then at a slight diagonal, and repeat (creating a star shape).Push the edges to fan out the sections.Scoop your cream cheese (or feta) into the center of the potato.Mix the cooked/roasted garlic, melted butter, and parsley together. Pour generously inside and over the potato.Bake for another 5–10 minutes until bubbling.For a quick visual demonstration of the star-cross slicing technique, you can watch this short tutorial:
+    
+  ingredients:
+    - 'Russet potatoes':
+        amount: '5'
+
+    - 'head of garlic':
+        amount: '2 -3'
+
+    - 'butter sticks':
+        amount: '2.5'
+
+    - 'cream cheese or feta':
+        amount: '3 /4 cups'
+
+    - 'fresh parsley'
+
+    - 'olive oil'
+
+
+'Green Bean Casserole':
+  description: |
+    Classic casserole with cream soup sauce
+    
+  directions: |
+    ▢4 cups frozen cut green beans see notes for canned or fresh beans
+    ▢1 (10.5 ounce) can condensed cream of mushroom soup
+    ▢½ cup milk
+    ▢1 teaspoon soy sauce
+    ▢½ teaspoon black pepper
+    ▢¼ teaspoon seasoned salt more to taste
+    ▢1½ cups crispy fried onions divided
+    optional 1 1/2 cups shredded cheddar cheese
+    
+    Instructions 
+    Preheat the oven to 350°F.
+    
+    Bring a medium pot of salted water to a boil. Add the frozen green beans and boil until tender crisp, about 2 to 3 minutes.
+    In a large bowl, combine green beans with soup, milk, soy sauce, pepper, salt, 1 cup of crispy onions, and cheese if using (see notes). Transfer to a 2-quart baking dish.
+    Bake uncovered for 30 to 35 minutes or bubbly.
+    Remove from oven and stir. Top with remaining onions and return to oven for an additional 10 minutes or until golden.
+    
+    Notes
+    Green beans: Canned, fresh, or frozen beans work in this recipe. In place of frozen beans, you can use either of the following:
+    drain 2 (14.5 ounce each) cans of cut green beans
+    1 ½ pounds fresh green beans, trimmed and simmered for about 7-8 minutes
+    Optional additions:
+    1 ½ cups shredded cheddar cheese mixed into the sauce (favorite!)
+    fried mushrooms, onions, garlic, and/or shallots
+    Cheese: If adding cheese, you can mix it with the soup for a cheesy sauce or sprinkle it on top after stirring. I prefer to mix it into the sauce.
+    Make ahead: This casserole can be prepped up to 48 hours ahead of time—store the topping on the side until baking. Remove the casserole from the fridge for at least 30 minutes before baking. You may need to add 10 minutes of extra cooking time.
+    Leftovers: Leftovers can be stored in an airtight container in the refrigerator for 2-3 days. 
+    
+  ingredients:
+    - 'green beans (fresh, frozen or canned)':
+        amount: '4 cups'
+
+    - '10 oz canned "cream of" soup, usually mushroom'
+
+    - 'milk'
+
+    - 'soy sauce'
+
+    - 'bag of crispy fried onions':
+        amount: '1 1/2 cups'
+
+    - 'shredded cheddar cheese':
+        amount: '1 1/2 cups'
+        optional: True
+
+
+'Warm seasoned soba noodles':
+  description: |
+    Warm seasoned soba noodles
+    
+    noodles are best known in Japanese cooking, but they’re just as beloved in Korea — often called memil guksu and enjoyed hot or cold. This easy 15-minute bowl is my Korean-style take: simple, comforting, and full of flavor
+    Ingredients You’ll Need
+    
+  directions: |
+    Pantry ingredients for Korean-style sesame soba noodles
+    Soba (buckwheat) noodles: Use Korean memil guksu or Japanese soba — both have that earthy buckwheat flavor and chewy texture that soaks up sauce beautifully.
+    
+    Green onion: The star of the dish. You’ll need plenty — about two small bunches. Half gets sautéed to flavor the sauce, the rest added fresh for a bright finish.
+    
+    Sesame-soy sauce mix: Made with soy sauce, toasted sesame oil, a splash of rice vinegar, sugar, and a touch of ginger. It’s pantry-friendly but full of depth — nutty, savory, and lightly sweet, just like many Korean noodle dishes.
+    
+    Toppings: Finish with sesame seeds and crumbled seaweed for a nutty crunch.
+    
+    
+    How to Make Sesame Soba Noodles: Step-by-Step
+    Sauce ingredients for sesame soba noodles mixed in a glass bowl
+    Finely chopped green onions on a wooden cutting board
+    Mix the sauce. Whisk together the soy sauce, sesame oil, vinegar, sugar, and ginger until smooth. Having it ready before you start cooking keeps things effortless once the noodles are done.
+    
+    
+    Cold water poured into a pot of boiling soba noodles
+    Cooked soba noodles being rinsed under cold water in a colander
+    
+    Cook the soba. Boil the noodles following package directions. When the pot threatens to bubble over, splash in a bit of cold water — it’s a little Korean trick that helps the noodles cook evenly and gives them a nice, chewy texture (I use it in kongguksu (Korean soy milk noodles), too). Rinse briefly under cold water to stop the cooking but keep them warm.
+    
+    Chopped green onions sautéed in a wok
+    Sesame soy sauce mixture poured over sautéed green onions in a wok
+    Soba noodles tossed with sesame soy sauce, green onions, and sesame seeds
+    Bring it all together. In a skillet or wok, sauté half the green onion in a drizzle of oil until fragrant. Pour in the sauce, let it bubble for a few seconds, then toss in the noodles. Add the remaining green onion, a sprinkle of sesame seeds, and crumble of seaweed on top. That’s it — warm, nutty, and perfectly slurpable soba bowl in about 15 minutes.
+    
+    
+    Serving Ideas & Variations
+    These sesame soba noodles are delicious on their own, but you can also toss in blanched spinach, sautéed mushrooms, or tofu for a heartier bowl
+    
+    Sesame soba noodles are topped with crumbled seaweed
+    Warm Sesame Soba Noodles (Korean-Style)
+    Servings:4
+    Prep Time:10minutes mins
+    Cook Time:5minutes mins
+    Total Time:15minutes mins
+    Warm sesame soba noodles tossed in a Korean-style sesame soy sauce with green onion. Cozy, nutty, and ready in 15 minutes.
+    4.89 from 9 ratings
+    Print Recipe
+    Pin Recipe
+    Leave a Review
+    
+    Ingredients
+    1/3 cup (80 ml) soy sauce
+    3 tbsp (45 ml) sesame oil
+    2 tbsp (30 ml) rice vinegar
+    1 tbsp (15 ml) brown sugar or honey
+    1 tsp (5 ml) ginger paste
+    1/2 tsp (2.5 ml) black pepper
+    10 oz (285 g) buckwheat (soba) noodles
+    1 tbsp (15 m) oil
+    2 bunch green onion, finely chopped
+    2 tbsp (15 g) toasted sesame seeds
+    1 cup (25 g) crumbled roasted seaweed, optional
+    
+    Instructions 
+    Mix soy sauce, sesame oil, vinegar, brown sugar, ginger, pepper in a mixing bowl; set aside. Chop green onion finely.
+    Cook your soba noodles according to the package directions (usually 3-4 minutes) When the water comes to a full boil, pour a little bit of cold water to calm the water down. Add more water as it boils up again. Rinse the noodles under cold running water to cool completely. Drain the noodles and set aside.
+    Heat the oil in a wok or skillet and saute half of the green onion for 30 seconds. Add the sauce and bring to boil and thicken for 15 seconds.
+    Add the noodles and the remaining green onion and toss through. Sprinkle with sesame seeds and crumbled seaweed (if using) on top. Serve with fried dumplings, tofu, or grilled shrimp for a complete meal.
+    
+  ingredients:
+    - 'Soy sauce':
+        amount: '1 /2 cup'
+
+    - 'Sesame oil':
+        amount: '4 Tablespoons'
+
+    - 'Rice vinegar':
+        amount: '2 1/2 Tablespoons'
+
+    - 'Brown sugar or honey':
+        amount: '1 Tablespoon'
+        optional: True
+
+    - 'Ground ginger':
+        amount: '1 teaspoon'
+
+    - 'Black pepper'
+
+    - 'Soba noodles':
+        amount: '13 oz'
+
+    - 'Oil':
+        amount: '1 Tablespoon'
+
+    - 'Green onions'
+
+    - 'Toasted sesame seeds':
+        amount: '2 Tablespoons'
+
+    - 'Roasted seaweed':
+        amount: '1 cup'
+        optional: True
+
+
+'Vegetarian Borscht':
+  description: |
+    Traditional Ukrainian beet soup. The family recipe is vegetarian, presumably originally for kosher reasons: it was a choice between meat or sour cream, and the sour cream won. 
+  directions: |
+    Steam a large beet in the Instant Pot for 35+ minutes, then peel.
+    
+    Start heating 2 cups of water. Peel and cut the potato into large pieces, peel and slice the carrots, add both immediately to the hot or boiling water. 
+    
+    Dice the onion and saute slowly in the oil on low heat until translucent but not browned. 
+    
+    While the onion is cooking, peel and chop the celery, chop the bell pepper, and add to the hot water. 
+    
+    Add the beet, tomato paste, bouillon base, vinegar. Add 6 more cups of boiling water, pressure cook on 'Soup' setting in the Instant Pot for 7 minutes.
+    
+    In the meanwhile, chop the cabbage thinly, peel and chop the garlic, and add both to the soup after the pressure cooking has finished. Continue cooking 5 to 10 more minutes.
+    
+    Salt and pepper to taste.
+    
+    Serve topped with a dollop of sour cream, chopped green onion and dill, and additional fresh minced garlic as desired 
+  ingredients:
+    - 'onion, yellow'
+
+    - 'carrots':
+        amount: '2'
+
+    - 'beet, large'
+
+    - 'celery':
+        amount: '3 ribs'
+
+    - 'tomato paste':
+        amount: '6 oz'
+
+    - 'garlic':
+        amount: '5 cloves'
+
+    - 'bell pepper'
+
+    - 'green onion':
+        amount: '2 stalks'
+
+    - 'dill':
+        amount: '2 tbsp'
+
+    - 'sour cream':
+        amount: '3 tbsp'
+
+    - 'potato'
+
+    - 'cabbage':
+        amount: '4 oz'
+
+    - 'vegetable oil':
+        amount: '3 tbsp'
+
+    - 'vinegar':
+        amount: '1 tbsp'
+
+    - 'bouillon base'
+
+

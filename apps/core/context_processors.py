@@ -1,0 +1,60 @@
+"""
+Context processors for multi-tenant Workspace navigation and persona switching.
+"""
+
+from typing import Any
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.http import HttpRequest
+
+from apps.core.services.workspace_service import get_active_workspace, get_user_workspaces
+from apps.core.utils import get_known_ingredient_suggestions
+
+User = get_user_model()
+
+
+def workspace_context(request: HttpRequest) -> dict[str, Any]:
+    """
+    Expose active workspace, accessible workspaces, permissions, and dev personas to templates.
+
+    Args:
+        request: HttpRequest instance.
+
+    Returns:
+        Dictionary of template context variables.
+    """
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated:
+        ws = get_active_workspace(request)
+        role = ws.get_user_role(user) if ws else "owner"
+        can_write = ws.can_write(user) if ws else True
+        user_workspaces = get_user_workspaces(user)
+    else:
+        ws = None
+        role = "guest"
+        can_write = False
+        user_workspaces = []
+    is_owner = (role == "owner")
+
+    personas = [
+        {"username": "admin", "label": "Admin", "role": "Owner of Home"},
+        {"username": "alice", "label": "Alice", "role": "Editor in Home"},
+        {"username": "bob", "label": "Bob", "role": "Viewer in Home"},
+        {"username": "carol", "label": "Carol", "role": "External Guest"},
+    ]
+
+    session = getattr(request, "session", None)
+    auto_launch_tour = session.pop("auto_launch_tour", False) if session else False
+
+    return {
+        "active_workspace": ws,
+        "workspace_role": role,
+        "can_write_workspace": can_write,
+        "is_workspace_owner": is_owner,
+        "user_workspaces": user_workspaces,
+        "dev_personas": personas,
+        "debug_mode": settings.DEBUG,
+        "known_ingredient_suggestions": get_known_ingredient_suggestions(),
+        "auto_launch_tour": auto_launch_tour,
+    }

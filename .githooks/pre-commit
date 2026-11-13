@@ -1,0 +1,38 @@
+#!/bin/sh
+# ==============================================================================
+# Shoppin Git Pre-Commit Hook
+# Automatically verifies Ruff linting & formatting standards before committing.
+# ==============================================================================
+
+echo "==> [pre-commit] Checking code formatting and linting with Ruff..."
+
+# Locate Ruff in local venv or PATH
+if [ -f ".venv/Scripts/ruff.exe" ]; then
+    RUFF=".venv/Scripts/ruff.exe"
+elif [ -f ".venv/bin/ruff" ]; then
+    RUFF=".venv/bin/ruff"
+elif command -v ruff >/dev/null 2>&1; then
+    RUFF="ruff"
+elif [ -f ".venv/Scripts/python.exe" ]; then
+    RUFF=".venv/Scripts/python.exe -m ruff"
+elif [ -f ".venv/bin/python" ]; then
+    RUFF=".venv/bin/python -m ruff"
+else
+    RUFF="python -m ruff"
+fi
+
+$RUFF check .
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+    echo ""
+    echo "===================================================================="
+    echo " [PRE-COMMIT BLOCKED] Ruff lint errors detected!"
+    echo " Run '.venv/Scripts/ruff check . --fix' to automatically resolve safe fixes,"
+    echo " or manually correct the errors above before committing."
+    echo "===================================================================="
+    exit 1
+fi
+
+echo "==> [pre-commit] Ruff checks passed cleanly!"
+exit 0

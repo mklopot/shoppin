@@ -1,0 +1,2758 @@
+black bean burger: &id001 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id001
+    brand: ''
+    item: null
+    name: black bean patty
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: bun
+    attribution: *id001
+    brand: ''
+    item: null
+    name: hamburger bun
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id001
+    brand: ''
+    item: null
+    name: cheddar cheese
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: slice
+    attribution: *id001
+    brand: ''
+    item: null
+    name: pickle
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id001
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: oz
+    attribution: *id001
+    brand: ''
+    item: null
+    name: ketchup
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: oz
+    attribution: *id001
+    brand: ''
+    item: null
+    name: mustard
+    optional: false
+    purpose: black bean burger
+    vendor: ''
+  name: black bean burger
+black bean patty with cheese: &id002 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: patty
+    attribution: *id002
+    brand: ''
+    item: null
+    name: black bean patty
+    optional: false
+    purpose: black bean patty with cheese
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: slice
+    attribution: *id002
+    brand: ''
+    item: null
+    name: cheese
+    optional: false
+    purpose: black bean patty with cheese
+    vendor: ''
+  name: black bean patty with cheese
+buckwheat: &id003 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id003
+    brand: ''
+    item: null
+    name: buckwheat
+    optional: false
+    purpose: buckwheat
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tbsp
+    attribution: *id003
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: buckwheat
+    vendor: ''
+  name: buckwheat
+burger sauce: &id004 !!python/object:recipes.Recipe
+  description: Ian's Burger Sauce
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id004
+    brand: ''
+    item: null
+    name: ketchup
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id004
+    brand: ''
+    item: null
+    name: mustard
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id004
+    brand: ''
+    item: null
+    name: mayonnaise
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: splash
+    attribution: *id004
+    brand: ''
+    item: null
+    name: pickle juice
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id004
+    brand: ''
+    item: null
+    name: black pepper
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id004
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id004
+    brand: ''
+    item: null
+    name: paprika
+    optional: false
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: oz
+    attribution: *id004
+    brand: ''
+    item: null
+    name: steak sauce
+    optional: true
+    purpose: burger sauce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: tsp
+    attribution: *id004
+    brand: ''
+    item: null
+    name: sriracha
+    optional: true
+    purpose: burger sauce
+    vendor: ''
+  name: burger sauce
+butternut squash soup: &id005 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id005
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: butternut squash soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id005
+    brand: ''
+    item: null
+    name: olive oil
+    optional: false
+    purpose: butternut squash soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: to make 2 cups
+    attribution: *id005
+    brand: ''
+    item: null
+    name: better than boullion, or other veggie broth
+    optional: false
+    purpose: butternut squash soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id005
+    brand: ''
+    item: null
+    name: butternut squash
+    optional: false
+    purpose: butternut squash soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id005
+    brand: ''
+    item: null
+    name: croutons
+    optional: true
+    purpose: butternut squash soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id005
+    brand: ''
+    item: null
+    name: cream
+    optional: true
+    purpose: butternut squash soup
+    vendor: ''
+  name: butternut squash soup
+cabbage and egg salad with cucumber: &id006 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id006
+    brand: ''
+    item: null
+    name: egg
+    optional: false
+    purpose: cabbage and egg salad with cucumber
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: ''
+    attribution: *id006
+    brand: ''
+    item: null
+    name: cucumber
+    optional: false
+    purpose: cabbage and egg salad with cucumber
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: head
+    attribution: *id006
+    brand: ''
+    item: null
+    name: cabbage
+    optional: false
+    purpose: cabbage and egg salad with cucumber
+    vendor: ''
+  name: cabbage and egg salad with cucumber
+cheesy puff pastry rolls: &id007 !!python/object:recipes.Recipe
+  description: ''
+  directions: Thaw puff pastry for 40 min at room temp, spread with cream cheese,
+    sprinkle feta, mozzarella, mint and oregano. Roll up and cut into 8 pieces. Combine
+    egg yolk and cream to make an egg wash, brush generously. Bake at 350F for 35
+    to 40 min, rest for 10 min.
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pound
+    attribution: *id007
+    brand: ''
+    item: null
+    name: puff pastry sheet, frozen
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id007
+    brand: ''
+    item: null
+    name: cream cheese
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id007
+    brand: ''
+    item: null
+    name: feta cheese
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id007
+    brand: ''
+    item: null
+    name: mozzarella cheese
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tsp
+    attribution: *id007
+    brand: ''
+    item: null
+    name: mint
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tsp
+    attribution: *id007
+    brand: ''
+    item: null
+    name: oregano
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id007
+    brand: ''
+    item: null
+    name: egg
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tsp
+    attribution: *id007
+    brand: ''
+    item: null
+    name: heavy cream
+    optional: false
+    purpose: cheesy puff pastry rolls
+    vendor: ''
+  name: cheesy puff pastry rolls
+cobb salad: &id008 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: lettuce
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: cherry tomatoes
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id008
+    brand: ''
+    item: null
+    name: bacon
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id008
+    brand: ''
+    item: null
+    name: chicken breast
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id008
+    brand: ''
+    item: null
+    name: shredded cheese
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: baked tofu
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: eggs
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: bell pepper
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: cucumber
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id008
+    brand: ''
+    item: null
+    name: canned corn
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: oz
+    attribution: *id008
+    brand: ''
+    item: null
+    name: ranch dressing
+    optional: false
+    purpose: cobb salad
+    vendor: ''
+  name: cobb salad
+egg salad sandwiches: &id009 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: slices
+    attribution: *id009
+    brand: ''
+    item: null
+    name: bread
+    optional: false
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: ''
+    attribution: *id009
+    brand: ''
+    item: null
+    name: eggs
+    optional: false
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: ''
+    attribution: *id009
+    brand: ''
+    item: null
+    name: onion
+    optional: true
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: rib
+    attribution: *id009
+    brand: ''
+    item: null
+    name: celery
+    optional: true
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: oz
+    attribution: *id009
+    brand: ''
+    item: null
+    name: mayonnaise
+    optional: false
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: tsp
+    attribution: *id009
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: tsp
+    attribution: *id009
+    brand: ''
+    item: null
+    name: pepper
+    optional: false
+    purpose: egg salad sandwiches
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.75
+    amount_unit: tsp
+    attribution: *id009
+    brand: ''
+    item: null
+    name: curry powder
+    optional: false
+    purpose: egg salad sandwiches
+    vendor: ''
+  name: egg salad sandwiches
+fried egg: &id010 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id010
+    brand: ''
+    item: null
+    name: egg
+    optional: false
+    purpose: fried egg
+    vendor: ''
+  name: fried egg
+lima bean side dish: &id011 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: package
+    attribution: *id011
+    brand: ''
+    item: null
+    name: lima beans
+    optional: false
+    purpose: lima bean side dish
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id011
+    brand: ''
+    item: null
+    name: olive oil
+    optional: false
+    purpose: lima bean side dish
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id011
+    brand: ''
+    item: null
+    name: cumin
+    optional: false
+    purpose: lima bean side dish
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id011
+    brand: ''
+    item: null
+    name: tomato paste
+    optional: false
+    purpose: lima bean side dish
+    vendor: ''
+  name: lima bean side dish
+mac-and-cheese casserole: &id012 !!python/object:recipes.Recipe
+  description: adapted from https://www.momontimeout.com/best-homemade-baked-mac-and-cheese-recipe/
+  directions: "Preheat oven to 350F. Lightly grease a large 3 qt or 4 qt baking dish\
+    \ and set aside.Combine shredded cheeses in a large bowl and set aside.\nCook\
+    \ the pasta one minute shy of al dente according to the package instructions.\
+    \ Remove from heat, drain, and place in a large bowl.\n\nDrizzle pasta with olive\
+    \ oil and stir to coat pasta. Set aside to cool while preparing cheese sauce.\n\
+    Melt butter in a deep saucepan, dutch oven, or stock pot.\nWhisk in flour over\
+    \ medium heat and continue whisking for about 1 minute until bubbly and golden.\n\
+    Gradually whisk in the milk and heavy cream until nice and smooth. Continue whisking\
+    \ until you see bubbles on the surface and then continue cooking and whisking\
+    \ for another 2 minutes. Whisk in salt and pepper.\nAdd two cups of shredded cheese\
+    \ and whisk until smooth. Add another two cups of shredded cheese and continue\
+    \ whisking until creamy and smooth. Sauce should be nice and thick.\nStir in the\
+    \ cooled pasta until combined and pasta is fully coated with the cheese sauce.\n\
+    Pour half of the mac and cheese into the prepared baking dish. Top with remaining\
+    \ 2 cups of shredded cheese and then the remaining mac and cheese.\nIn a small\
+    \ bowl, combine panko crumbs, Parmesan cheese, melted butter and paprika. Sprinkle\
+    \ over the top and bake until bubbly and golden brown, about 30 minutes. Serve\
+    \ immediately.\n\nTips for the Best Homemade Baked Mac and Cheese\nUse block cheese\
+    \ and shred, do not buy the pre-shredded cheese. The pre-shredded cheese is great\
+    \ for so many things but not macaroni and cheese. It\u2019s coated and won\u2019\
+    t melt properly. You need to shred it yourself for the best result.\nCook your\
+    \ pasta to slightly less than al dente, about one minute shy is perfect. The reason\
+    \ is that this is baked mac and cheese so the pasta will continue to cook in the\
+    \ homemade cheese sauce in the oven. You don\u2019t want soggy macaroni.\nI used\
+    \ elbow pasta but really, any tubular past will work.\nThis mac and cheese recipe\
+    \ starts with a roux. The roux is super important to getting the creamiest cheese\
+    \ sauce of your life. \nThe roux (equal parts butter and flour) is whisked together\
+    \ until bubbly and golden.\nWhisk in cold milk \u2013 not warm \u2013 to prevent\
+    \ the flour from clumping.\nCook the roux until  you see bubbles on the surface\
+    \ and then continue cooking for an additional 2 minutes before adding the cheese.\n"
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 16.0
+    amount_unit: oz
+    attribution: *id012
+    brand: ''
+    item: null
+    name: elbow macaroni, cooked (or other tubular pasta)
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id012
+    brand: ''
+    item: null
+    name: extra virgin olive oil
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: tbsp
+    attribution: *id012
+    brand: ''
+    item: null
+    name: unsalted butter
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.33
+    amount_unit: cups
+    attribution: *id012
+    brand: ''
+    item: null
+    name: all purpose flour
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: cups
+    attribution: *id012
+    brand: ''
+    item: null
+    name: whole milk
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id012
+    brand: ''
+    item: null
+    name: heavy whipping cream
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: cups
+    attribution: *id012
+    brand: ''
+    item: null
+    name: sharp cheddar cheese shredded
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: cups
+    attribution: *id012
+    brand: ''
+    item: null
+    name: Gruyere cheese shredded
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id012
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id012
+    brand: ''
+    item: null
+    name: pepper
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.5
+    amount_unit: cups
+    attribution: *id012
+    brand: ''
+    item: null
+    name: panko crumbs
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: tbsp
+    attribution: *id012
+    brand: ''
+    item: null
+    name: butter melted
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: cup
+    attribution: *id012
+    brand: ''
+    item: null
+    name: Parmesan cheese shredded
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: tsp
+    attribution: *id012
+    brand: ''
+    item: null
+    name: paprika
+    optional: false
+    purpose: mac-and-cheese casserole
+    vendor: ''
+  name: mac-and-cheese casserole
+mashed potatoes: &id013 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: ''
+    attribution: *id013
+    brand: ''
+    item: null
+    name: Russet potatoes
+    optional: false
+    purpose: mashed potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: stick
+    attribution: *id013
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: mashed potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: teaspoon
+    attribution: *id013
+    brand: ''
+    item: null
+    name: garlic powder
+    optional: true
+    purpose: mashed potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id013
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: mashed potatoes
+    vendor: ''
+  name: mashed potatoes
+mashed potatoes with herbs: &id014 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: ''
+    attribution: *id014
+    brand: ''
+    item: null
+    name: potatoes, Russet
+    optional: false
+    purpose: mashed potatoes with herbs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id014
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: mashed potatoes with herbs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: oz
+    attribution: *id014
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: mashed potatoes with herbs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id014
+    brand: ''
+    item: null
+    name: herbs, fresh
+    optional: true
+    purpose: mashed potatoes with herbs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id014
+    brand: ''
+    item: null
+    name: garlic powder
+    optional: false
+    purpose: mashed potatoes with herbs
+    vendor: ''
+  name: mashed potatoes with herbs
+meatballs: &id015 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id015
+    brand: ''
+    item: null
+    name: ground beef
+    optional: false
+    purpose: meatballs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.3
+    amount_unit: cup
+    attribution: *id015
+    brand: ''
+    item: null
+    name: bread crumbs
+    optional: false
+    purpose: meatballs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.3
+    amount_unit: ''
+    attribution: *id015
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: meatballs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id015
+    brand: ''
+    item: null
+    name: egg
+    optional: false
+    purpose: meatballs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id015
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: meatballs
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: cloves
+    attribution: *id015
+    brand: ''
+    item: null
+    name: garlic
+    optional: false
+    purpose: meatballs
+    vendor: ''
+  name: meatballs
+meatloaf: &id016 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id016
+    brand: ''
+    item: null
+    name: ground beef
+    optional: false
+    purpose: meatloaf
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: ''
+    attribution: *id016
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: meatloaf
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: ''
+    attribution: *id016
+    brand: ''
+    item: null
+    name: eggs
+    optional: false
+    purpose: meatloaf
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.75
+    amount_unit: cup
+    attribution: *id016
+    brand: ''
+    item: null
+    name: bread crumbs, italian
+    optional: false
+    purpose: meatloaf
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: oz
+    attribution: *id016
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: meatloaf
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: cloves
+    attribution: *id016
+    brand: ''
+    item: null
+    name: garlic
+    optional: true
+    purpose: meatloaf
+    vendor: ''
+  name: meatloaf
+pancakes: &id017 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.5
+    amount_unit: cup
+    attribution: *id017
+    brand: ''
+    item: null
+    name: flour
+    optional: false
+    purpose: pancakes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id017
+    brand: ''
+    item: null
+    name: leavening
+    optional: false
+    purpose: pancakes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id017
+    brand: ''
+    item: null
+    name: sugar
+    optional: false
+    purpose: pancakes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: tbsp
+    attribution: *id017
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: pancakes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id017
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: pancakes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id017
+    brand: ''
+    item: null
+    name: egg
+    optional: false
+    purpose: pancakes
+    vendor: ''
+  name: pancakes
+roasted broccoli: &id018 !!python/object:recipes.Recipe
+  description: ''
+  directions: Cut into florets, toss with olive oil and salt and pepper, bake at 15
+    to 20 min at 400F. Add parmesan and garlic and bake 2 more minutes. Toss with
+    herbs.
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: head
+    attribution: *id018
+    brand: ''
+    item: null
+    name: broccoli
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tbsp
+    attribution: *id018
+    brand: ''
+    item: null
+    name: olive oil
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: tsp
+    attribution: *id018
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: tsp
+    attribution: *id018
+    brand: ''
+    item: null
+    name: pepper
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: tbsp
+    attribution: *id018
+    brand: ''
+    item: null
+    name: parmesan cheese
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: cloves
+    attribution: *id018
+    brand: ''
+    item: null
+    name: garlic
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id018
+    brand: ''
+    item: null
+    name: fresh herbs
+    optional: false
+    purpose: roasted broccoli
+    vendor: ''
+  name: roasted broccoli
+salad with butter lettuce: &id019 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: oz
+    attribution: *id019
+    brand: ''
+    item: null
+    name: sour cream
+    optional: false
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id019
+    brand: ''
+    item: null
+    name: garlic powder
+    optional: false
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id019
+    brand: ''
+    item: null
+    name: italian seasoning
+    optional: false
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id019
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: head
+    attribution: *id019
+    brand: ''
+    item: null
+    name: butter lettuce
+    optional: false
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: ''
+    attribution: *id019
+    brand: ''
+    item: null
+    name: cucumbers
+    optional: false
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.33
+    amount_unit: ''
+    attribution: *id019
+    brand: ''
+    item: null
+    name: carrots
+    optional: true
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id019
+    brand: ''
+    item: null
+    name: egg
+    optional: true
+    purpose: salad with butter lettuce
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: bag
+    attribution: *id019
+    brand: ''
+    item: null
+    name: cheese crisps
+    optional: true
+    purpose: salad with butter lettuce
+    vendor: ''
+  name: salad with butter lettuce
+sloppy joes: &id020 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id020
+    brand: ''
+    item: null
+    name: ground beef
+    optional: false
+    purpose: sloppy joes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 5.0
+    amount_unit: buns
+    attribution: *id020
+    brand: ''
+    item: null
+    name: hamburger buns
+    optional: false
+    purpose: sloppy joes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id020
+    brand: ''
+    item: null
+    name: Sloppy Joe Seasoning Packet
+    optional: false
+    purpose: sloppy joes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: can
+    attribution: *id020
+    brand: ''
+    item: null
+    name: tomato paste
+    optional: false
+    purpose: sloppy joes
+    vendor: ''
+  name: sloppy joes
+slow cooked chicken: &id021 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: ''
+    attribution: *id021
+    brand: ''
+    item: null
+    name: chicken thighs
+    optional: false
+    purpose: slow cooked chicken
+    vendor: ''
+  name: slow cooked chicken
+smashburgers: &id022 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: buns
+    attribution: *id022
+    brand: ''
+    item: null
+    name: hamburger buns
+    optional: false
+    purpose: smashburgers
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id022
+    brand: ''
+    item: null
+    name: ground beef
+    optional: false
+    purpose: smashburgers
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id022
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: smashburgers
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 5.0
+    amount_unit: slices
+    attribution: *id022
+    brand: ''
+    item: null
+    name: sliced cheese
+    optional: false
+    purpose: smashburgers
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: slices
+    attribution: *id022
+    brand: ''
+    item: null
+    name: pickles
+    optional: false
+    purpose: smashburgers
+    vendor: ''
+  name: smashburgers
+solyanka: &id023 !!python/object:recipes.Recipe
+  description: Eastern European "everything but the kitchen sink" soup with a multitude
+    of preserved meats and pickled vegetables. Thick, pleasantly sour, and aromatic.
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: large leaves
+    attribution: *id023
+    brand: ''
+    item: null
+    name: bay leaves
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: peppercorns
+    attribution: *id023
+    brand: ''
+    item: null
+    name: peppercorns, whole
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: berries
+    attribution: *id023
+    brand: ''
+    item: null
+    name: allspice berries, whole
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 10.0
+    amount_unit: cups
+    attribution: *id023
+    brand: ''
+    item: null
+    name: water
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: tablespoons
+    attribution: *id023
+    brand: ''
+    item: null
+    name: concentrated beef base, or Better Than Boullion
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: head
+    attribution: *id023
+    brand: ''
+    item: null
+    name: cabbage
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: ribs
+    attribution: *id023
+    brand: ''
+    item: null
+    name: celery
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: tbsp
+    attribution: *id023
+    brand: ''
+    item: null
+    name: avocado oil
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: ''
+    attribution: *id023
+    brand: ''
+    item: null
+    name: onions
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: ''
+    attribution: *id023
+    brand: ''
+    item: null
+    name: carrots
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: pounds
+    attribution: *id023
+    brand: ''
+    item: null
+    name: ham or polish sausage
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id023
+    brand: ''
+    item: null
+    name: chicken breast
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: pounds
+    attribution: *id023
+    brand: ''
+    item: null
+    name: ham
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: pickles
+    attribution: *id023
+    brand: ''
+    item: null
+    name: dill pickles
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: oz
+    attribution: *id023
+    brand: ''
+    item: null
+    name: tomato paste
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 24.0
+    amount_unit: oz
+    attribution: *id023
+    brand: ''
+    item: null
+    name: canned stewed or diced tomatoes
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: oz
+    attribution: *id023
+    brand: ''
+    item: null
+    name: sliced black olives
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tbsp
+    attribution: *id023
+    brand: ''
+    item: null
+    name: capers
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id023
+    brand: ''
+    item: null
+    name: dry white wine
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id023
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id023
+    brand: ''
+    item: null
+    name: pepper
+    optional: false
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: cup
+    attribution: *id023
+    brand: ''
+    item: null
+    name: sour cream
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.33
+    amount_unit: cups
+    attribution: *id023
+    brand: ''
+    item: null
+    name: dill
+    optional: true
+    purpose: solyanka
+    vendor: ''
+  name: solyanka
+spaghetti: &id024 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: package
+    attribution: *id024
+    brand: ''
+    item: null
+    name: spaghetti
+    optional: false
+    purpose: spaghetti
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id024
+    brand: Bertolli
+    item: null
+    name: marinara sauce
+    optional: false
+    purpose: spaghetti
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id024
+    brand: ''
+    item: null
+    name: parmesan cheese
+    optional: true
+    purpose: spaghetti
+    vendor: ''
+  name: spaghetti
+steak: &id025 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id025
+    brand: ''
+    item: null
+    name: steak
+    optional: false
+    purpose: steak
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tbsp
+    attribution: *id025
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: steak
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: clove
+    attribution: *id025
+    brand: ''
+    item: null
+    name: garlic
+    optional: false
+    purpose: steak
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id025
+    brand: ''
+    item: null
+    name: herbs, fresh
+    optional: true
+    purpose: steak
+    vendor: ''
+  name: steak
+steamed broccoli: &id026 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: head
+    attribution: *id026
+    brand: ''
+    item: null
+    name: broccoli
+    optional: false
+    purpose: steamed broccoli
+    vendor: ''
+  name: steamed broccoli
+stir fry: &id027 !!python/object:recipes.Recipe
+  description: null
+  directions: null
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id027
+    brand: ''
+    item: null
+    name: rice
+    optional: false
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id027
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: small piece
+    attribution: *id027
+    brand: ''
+    item: null
+    name: ginger
+    optional: false
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: cloves
+    attribution: *id027
+    brand: ''
+    item: null
+    name: garlic
+    optional: false
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id027
+    brand: ''
+    item: null
+    name: bell pepper
+    optional: false
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id027
+    brand: ''
+    item: null
+    name: carrot
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id027
+    brand: ''
+    item: null
+    name: shiitake mushrooms
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: ''
+    attribution: *id027
+    brand: ''
+    item: null
+    name: eggs
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id027
+    brand: ''
+    item: null
+    name: canned pineapple
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: head
+    attribution: *id027
+    brand: ''
+    item: null
+    name: broccoli
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 6.0
+    amount_unit: oz
+    attribution: *id027
+    brand: ''
+    item: null
+    name: stir fry sauce
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: cup
+    attribution: *id027
+    brand: ''
+    item: null
+    name: ketchup
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id027
+    brand: ''
+    item: null
+    name: tofu
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id027
+    brand: ''
+    item: null
+    name: soy sauce
+    optional: true
+    purpose: stir fry
+    vendor: ''
+  name: stir fry
+stir fry beef: &id028 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pound
+    attribution: *id028
+    brand: ''
+    item: null
+    name: beef, thinly sliced
+    optional: false
+    purpose: stir fry beef
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id028
+    brand: ''
+    item: null
+    name: baking soda
+    optional: false
+    purpose: stir fry beef
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id028
+    brand: ''
+    item: null
+    name: corn starch
+    optional: false
+    purpose: stir fry beef
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id028
+    brand: ''
+    item: null
+    name: soy sauce
+    optional: false
+    purpose: stir fry beef
+    vendor: ''
+  name: stir fry beef
+taco soup: &id029 !!python/object:recipes.Recipe
+  description: null
+  directions: null
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id029
+    brand: ''
+    item: null
+    name: tomato paste
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id029
+    brand: ''
+    item: null
+    name: frozen corn
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: can
+    attribution: *id029
+    brand: ''
+    item: null
+    name: cannellini beans
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id029
+    brand: ''
+    item: null
+    name: shredded cheese
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id029
+    brand: ''
+    item: null
+    name: avocado
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id029
+    brand: ''
+    item: null
+    name: lime
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id029
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: ''
+    attribution: *id029
+    brand: ''
+    item: null
+    name: carrots
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 7.0
+    amount_unit: oz
+    attribution: *id029
+    brand: ''
+    item: null
+    name: canned green chili
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: oz
+    attribution: *id029
+    brand: ''
+    item: null
+    name: sour cream
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: bunch
+    attribution: *id029
+    brand: ''
+    item: null
+    name: cilantro
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: bag
+    attribution: *id029
+    brand: ''
+    item: null
+    name: tortilla chips
+    optional: false
+    purpose: taco soup
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id029
+    brand: ''
+    item: null
+    name: radishes
+    optional: true
+    purpose: taco soup
+    vendor: ''
+  name: taco soup
+tacos and burritos: &id030 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id030
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id030
+    brand: ''
+    item: null
+    name: bell pepper
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id030
+    brand: Mission
+    item: null
+    name: tortillas, large
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id030
+    brand: Ortega
+    item: null
+    name: taco sauce
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id030
+    brand: Rosarita
+    item: null
+    name: seasoned beans
+    optional: false
+    purpose: tacos and burritos
+    vendor: Safeway
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: ''
+    attribution: *id030
+    brand: ''
+    item: null
+    name: avocados
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id030
+    brand: ''
+    item: null
+    name: ground beef
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id030
+    brand: ''
+    item: null
+    name: shredded cheese
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id030
+    brand: ''
+    item: null
+    name: cilantro
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id030
+    brand: ''
+    item: null
+    name: lime
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id030
+    brand: ''
+    item: null
+    name: sour cream
+    optional: false
+    purpose: tacos and burritos
+    vendor: ''
+  name: tacos and burritos
+tahini miso dressing: &id031 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 0.33
+    amount_unit: cup
+    attribution: *id031
+    brand: ''
+    item: null
+    name: tahini
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: ginger
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: cloves
+    attribution: *id031
+    brand: ''
+    item: null
+    name: garlic
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: miso
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: soy sauce
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: vinegar
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: sesame oil
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: maple syrup
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: tbsp
+    attribution: *id031
+    brand: ''
+    item: null
+    name: water
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: pinch
+    attribution: *id031
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: tahini miso dressing
+    vendor: ''
+  name: tahini miso dressing
+take-out: !!python/object:recipes.Recipe
+  description: ''
+  directions: order from Chipotle, Dominos, or Taste of Thailand
+  ingredients: []
+  name: take-out
+tofu joe: &id032 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id032
+    brand: ''
+    item: null
+    name: Sloppy Joe Seasoning Packet
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id032
+    brand: ''
+    item: null
+    name: tofu
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id032
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: ribs
+    attribution: *id032
+    brand: ''
+    item: null
+    name: celery
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1
+    amount_unit: ''
+    attribution: *id032
+    brand: ''
+    item: null
+    name: carrot
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: ''
+    attribution: *id032
+    brand: ''
+    item: null
+    name: bell pepper
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: buns
+    attribution: *id032
+    brand: ''
+    item: null
+    name: hamburger buns
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: can
+    attribution: *id032
+    brand: ''
+    item: null
+    name: tomato paste
+    optional: false
+    purpose: tofu joe
+    vendor: ''
+  name: tofu joe
+twice baked potatoes: &id033 !!python/object:recipes.Recipe
+  description: ''
+  directions: "Preheat the oven to 400\xB0F. Wash and dry the potatoes well, then\
+    \ use a fork to prick each potato several times. Place the potatoes on a parchment\
+    \ lined baking sheet. Drizzle the olive oil over the potatoes, then use your hands\
+    \ or a silicone brush to brush the oil over each potato until it is fully coated.\
+    \ Season the potatoes with a pinch of salt. Bake in the preheated oven for 50-60\
+    \ minutes, or until the potatoes can be pierced easily with a fork. Total baking\
+    \ time will depend on the size of your potatoes. Optionally, while the potatoes\
+    \ are baking, cook the bacon in a skillet over medium heat until brown and crispy.\
+    \ Remove the cooked bacon from the skillet and allow it to drain on a paper-towel\
+    \ lined plate. Once cool enough to handle, rough chop the bacon into smaller pieces.\
+    \ nce the potatoes are done baking, remove them from the oven and allow them to\
+    \ cool slightly. When the potatoes are cool enough to handle, slice them in half\
+    \ lengthwise. Carefully scoop out the potato flesh, leaving a thin rim of potato\
+    \ (about \xBC inch rim) around the edges to help the skin hold its shape. Place\
+    \ the scooped out potato flesh in a large bowl and add the butter, sour cream,\
+    \ milk, salt, and pepper. Use a potato masher or hand mixer to blend the potatoes\
+    \ until light and fluffy. Add the chopped bacon, half of the sliced green onions,\
+    \ and 1/2 cup of the shredded cheddar cheese to the mashed potatoes, then fold\
+    \ to combine. Fill the potato skins with about 1/3 cup of the potato mixture,\
+    \ then sprinkle the remaining cheddar cheese over the top of each potato. Bake\
+    \ the potatoes in the oven a second time, just until heated through and the cheddar\
+    \ cheese is melted on top, about 20 minutes. Top with the remaining green onions\
+    \ and enjoy!\n"
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: ''
+    attribution: *id033
+    brand: ''
+    item: null
+    name: potatoes, Russet
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id033
+    brand: ''
+    item: null
+    name: olive oil
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id033
+    brand: ''
+    item: null
+    name: bacon
+    optional: true
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: tbsp
+    attribution: *id033
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 4.0
+    amount_unit: oz
+    attribution: *id033
+    brand: ''
+    item: null
+    name: sour cream
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: cup
+    attribution: *id033
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: tsp
+    attribution: *id033
+    brand: ''
+    item: null
+    name: salt
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.25
+    amount_unit: tsp
+    attribution: *id033
+    brand: ''
+    item: null
+    name: pepper
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: bunch
+    attribution: *id033
+    brand: ''
+    item: null
+    name: green onion
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id033
+    brand: ''
+    item: null
+    name: shredded cheese
+    optional: false
+    purpose: twice baked potatoes
+    vendor: ''
+  name: twice baked potatoes
+vanilla pudding: &id034 !!python/object:recipes.Recipe
+  description: ''
+  directions: Mix everything and boil at low heat for ~5 minutes and whisk the entire
+    time until thick.
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 3.0
+    amount_unit: cups
+    attribution: *id034
+    brand: ''
+    item: null
+    name: milk
+    optional: false
+    purpose: vanilla pudding
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: stick
+    attribution: *id034
+    brand: ''
+    item: null
+    name: butter
+    optional: false
+    purpose: vanilla pudding
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: tbsp
+    attribution: *id034
+    brand: ''
+    item: null
+    name: cinnamon
+    optional: false
+    purpose: vanilla pudding
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: /4 tbsp
+    attribution: *id034
+    brand: ''
+    item: null
+    name: vannila extract
+    optional: false
+    purpose: vanilla pudding
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: /2 tbsp
+    attribution: *id034
+    brand: ''
+    item: null
+    name: brown sugar
+    optional: false
+    purpose: vanilla pudding
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: tbsp
+    attribution: *id034
+    brand: ''
+    item: null
+    name: cornstarch
+    optional: false
+    purpose: vanilla pudding
+    vendor: ''
+  name: vanilla pudding
+vegetarian zucchini casserole: &id035 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: package
+    attribution: *id035
+    brand: ''
+    item: null
+    name: corn tortillas
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: small can
+    attribution: *id035
+    brand: ''
+    item: null
+    name: enchilada sauce
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: can
+    attribution: *id035
+    brand: ''
+    item: null
+    name: seasoned beans
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id035
+    brand: ''
+    item: null
+    name: shredded cheese
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: ''
+    attribution: *id035
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id035
+    brand: ''
+    item: null
+    name: zucchini
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 2.0
+    amount_unit: ''
+    attribution: *id035
+    brand: ''
+    item: null
+    name: carrot
+    optional: false
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id035
+    brand: ''
+    item: null
+    name: bell pepper
+    optional: true
+    purpose: vegetarian zucchini casserole
+    vendor: ''
+  name: vegetarian zucchini casserole
+veggie nuggets: &id036 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: package
+    attribution: *id036
+    brand: ''
+    item: null
+    name: veggie nuggets
+    optional: false
+    purpose: veggie nuggets
+    vendor: ''
+  name: veggie nuggets
+zucchini casserole: &id037 !!python/object:recipes.Recipe
+  description: ''
+  directions: ''
+  ingredients:
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: package
+    attribution: *id037
+    brand: ''
+    item: null
+    name: corn tortillas
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: small can
+    attribution: *id037
+    brand: ''
+    item: null
+    name: enchilada sauce
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: lb
+    attribution: *id037
+    brand: ''
+    item: null
+    name: ground beef
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: can
+    attribution: *id037
+    brand: Rosarita
+    item: null
+    name: seasoned beans
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 8.0
+    amount_unit: oz
+    attribution: *id037
+    brand: ''
+    item: null
+    name: shredded cheese
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 0.5
+    amount_unit: ''
+    attribution: *id037
+    brand: ''
+    item: null
+    name: onion
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  - !!python/object:recipes.Ingredient
+    amount: 1.0
+    amount_unit: ''
+    attribution: *id037
+    brand: ''
+    item: null
+    name: zucchini
+    optional: false
+    purpose: zucchini casserole
+    vendor: ''
+  name: zucchini casserole

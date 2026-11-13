@@ -1,0 +1,169 @@
+<div id="recipe-detail-modal" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-modal-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white border border-gray-400 shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col rounded-none p-5 space-y-4 animate-[fadeIn_0.15s_ease-out]">
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between border-b border-gray-300 pb-3 flex-shrink-0">
+            <div>
+                <h3 id="recipe-detail-modal-title" class="font-bold text-lg text-gray-900 leading-tight">{{ recipe.name }}</h3>
+                <div class="flex items-center space-x-2 text-xs text-gray-500 mt-1">
+                    {% if recipe.cuisine %}
+                    <span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 border border-gray-300">{{ recipe.cuisine }}</span>
+                    {% endif %}
+                    {% if recipe.prep_time_minutes %}
+                    <span>Prep: {{ recipe.prep_time_minutes }}m</span>
+                    {% endif %}
+                    {% if recipe.cook_time_minutes %}
+                    <span>Cook: {{ recipe.cook_time_minutes }}m</span>
+                    {% endif %}
+                    {% if recipe.portions %}
+                    <span>Portions: {{ recipe.portions }}</span>
+                    {% endif %}
+                    <span class="text-emerald-800 font-semibold">Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" aria-label="Close dialog" class="text-gray-500 hover:text-gray-900 text-2xl font-bold leading-none"><span aria-hidden="true">&times;</span></button>
+        </div>
+
+        {% if is_recipe_updated_since_added %}
+        <div class="p-2.5 bg-amber-50 border border-amber-300 text-amber-950 text-xs flex items-center justify-between gap-2 flex-shrink-0" role="alert">
+            <div class="flex items-center space-x-2">
+                <span class="text-amber-800 text-sm leading-none select-none" aria-hidden="true">⚠️</span>
+                <span><strong>Recipe updated:</strong> This recipe was updated in your catalog after it was added to this meal plan.</span>
+            </div>
+            {% if meal_dish and meal_dish.created_at %}
+            <span class="text-[10px] text-amber-800 select-none whitespace-nowrap">
+                Added: {{ meal_dish.created_at|date:"M j" }} &bull; Updated: {{ recipe.updated_at|date:"M j" }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Scrollable Content -->
+        <div class="overflow-y-auto space-y-4 text-xs pr-1 flex-1">
+            {% if recipe.description %}
+            <p class="text-gray-700 italic">{{ recipe.description }}</p>
+            {% endif %}
+
+            <!-- Ingredients -->
+            <div>
+                <div class="flex items-center justify-between border-b border-gray-200 pb-1 mb-2">
+                    <h4 class="font-bold text-gray-900 uppercase tracking-wider text-xs">Ingredients</h4>
+                    <div class="text-[11px] font-medium">
+                        {% if need_count == 0 and total_ingredients > 0 %}
+                        <span class="text-emerald-900 font-bold bg-emerald-50 px-2 py-0.5 border border-emerald-300">
+                            ✓ Ready to cook! All ingredients available
+                        </span>
+                        {% elif need_count > 0 %}
+                        <span class="text-amber-950 font-bold bg-amber-50 px-2 py-0.5 border border-amber-300">
+                            🛒 {{ need_count }} of {{ total_ingredients }} need to buy
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="divide-y divide-gray-100 border border-gray-200 bg-gray-50/50">
+                    {% for row in ingredients_with_status %}
+                    <div class="p-2 flex items-center justify-between text-xs {% if row.status_code == 'need' %}bg-amber-50/50{% elif row.status_code == 'missing' %}bg-amber-50/30{% endif %}">
+                        <div class="flex items-center space-x-2">
+                            {% if row.status_code == 'got' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="In cart / purchased">
+                                <span class="text-emerald-700 font-bold text-sm leading-none" aria-hidden="true">✓</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-none">Got</span>
+                            </span>
+                            {% elif row.status_code == 'have' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Already have at home in pantry">
+                                <span class="text-blue-800 font-bold text-sm leading-none" aria-hidden="true">🏠</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-blue-100 text-blue-900 border border-blue-300 rounded-none">Have</span>
+                            </span>
+                            {% elif row.status_code == 'skipped' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Skipped / not buying today">
+                                <span class="text-gray-700 font-bold text-sm leading-none" aria-hidden="true">⏭</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-gray-200 text-gray-700 border border-gray-300 rounded-none">Skipped</span>
+                            </span>
+                            {% elif row.status_code == 'need' %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Still need to buy on shopping list">
+                                <span class="text-amber-700 font-bold text-sm leading-none" aria-hidden="true">🛒</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-none">Need</span>
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center space-x-1 select-none" title="Missing / not on shopping list">
+                                <span class="text-gray-700 font-bold text-sm leading-none" aria-hidden="true">-</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-gray-100 text-gray-700 border border-gray-300 rounded-none">Missing</span>
+                            </span>
+                            {% endif %}
+
+                            <span class="font-medium {% if row.status_code == 'skipped' %}line-through text-gray-700{% elif row.status_code == 'need' %}text-gray-900 font-semibold{% else %}text-gray-800{% endif %}">
+                                {{ row.ingredient.name }}
+                            </span>
+                            {% if row.ingredient.optional %}
+                            <span class="italic text-gray-700 text-[10px]">(optional)</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-gray-700 text-right">
+                            <span>{{ row.ingredient.amount }} {{ row.ingredient.amount_unit }}</span>
+                            {% if row.ingredient.brand %}
+                            <span class="text-gray-700 text-[10px] block">Brand: {{ row.ingredient.brand }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-3 text-gray-700 italic">No ingredients listed.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Directions -->
+            {% if recipe.directions %}
+            <div>
+                <h4 class="font-bold text-gray-900 uppercase tracking-wider text-xs border-b border-gray-200 pb-1 mb-2">Directions</h4>
+                <div class="bg-gray-50 border border-gray-200 p-3 text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    {{ recipe.directions }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 flex-shrink-0">
+            {% if can_write and meals %}
+            <form class="flex flex-wrap items-center gap-1.5 text-xs">
+                {% csrf_token %}
+                <label for="modal-target-meal" class="text-gray-700 font-medium">Add to Meal:</label>
+                <select id="modal-target-meal" name="meal_id" aria-label="Select meal to add dish to" class="border border-gray-400 px-2 py-1 bg-white text-xs rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                    {% for m in meals %}
+                    <option value="{{ m.id }}">{{ m.name }}{% if m.emoji %} {{ m.emoji }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <div class="flex items-center space-x-1">
+                    <label for="modal-scale-input" class="text-gray-600 font-medium">Scale:</label>
+                    <input type="number" id="modal-scale-input" name="scale_factor" value="1" min="0.1" max="100" step="any"
+                           aria-label="Scale factor" class="w-14 border border-gray-400 px-1.5 py-1 bg-white text-xs rounded-none focus:outline-none">
+                    <span class="text-xs text-gray-500 font-bold" aria-hidden="true">x</span>
+                </div>
+                <button type="button"
+                        onclick="
+                            const modal = document.getElementById('recipe-detail-modal');
+                            const select = this.form.querySelector('select[name=meal_id]');
+                            if (!select) return;
+                            const mealId = select.value;
+                            const scaleVal = this.form.querySelector('input[name=scale_factor]')?.value || '1';
+                            htmx.ajax('POST', '/mealplans/meal/' + mealId + '/add-dish/', {
+                                target: '#mealplan-content',
+                                swap: 'outerHTML',
+                                values: { recipe_id: '{{ recipe.id }}', scale_factor: scaleVal, csrfmiddlewaretoken: '{{ csrf_token }}' }
+                            });
+                            if (modal) modal.remove();
+                        "
+                        class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none cursor-pointer">
+                    + Add Dish
+                </button>
+            </form>
+            {% else %}
+            <div></div>
+            {% endif %}
+
+            <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" class="border border-gray-400 bg-white hover:bg-gray-100 px-4 py-1.5 text-xs text-gray-700 font-medium">
+                Close
+            </button>
+        </div>
+    </div>
+</div>

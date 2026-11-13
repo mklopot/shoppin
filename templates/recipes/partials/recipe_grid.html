@@ -1,0 +1,96 @@
+<div id="recipe-results-container" class="space-y-4">
+    <!-- Results Header / Active Filters Summary -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-gray-200 text-xs">
+        <div class="flex items-center space-x-2">
+            <span class="font-bold text-gray-800">
+                Found {{ recipe_count }} recipe{{ recipe_count|pluralize }}
+            </span>
+            {% if active_filter_count > 0 or params.q %}
+            <span class="text-gray-500">
+                ({% if active_filter_count > 0 %}{{ active_filter_count }} filter{{ active_filter_count|pluralize }}{% endif %}{% if active_filter_count > 0 and params.q %} + {% endif %}{% if params.q %}search{% endif %} active)
+            </span>
+            <button type="button"
+                    onclick="resetRecipeFilters()"
+                    class="text-blue-700 hover:underline font-semibold ml-1 cursor-pointer">
+                Clear all filters
+            </button>
+            {% endif %}
+        </div>
+
+        <div class="text-gray-500 text-[11px]">
+            Sorted by: <strong class="text-gray-800">{{ params.sort|default:"Name (A-Z)"|title }}</strong>
+        </div>
+    </div>
+
+    <!-- Active Filter Tags Row -->
+    {% if active_filter_count > 0 or params.q %}
+    <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="text-gray-500 text-[11px] font-semibold uppercase tracking-wider">Active:</span>
+        {% if params.q %}
+        <button type="button"
+                onclick="clearSingleRecipeFilter('q')"
+                title="Remove search query filter"
+                class="inline-flex items-center space-x-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-800 cursor-pointer shadow-sm rounded-none">
+            <span>Query: "{{ params.q }}"</span>
+            <span class="text-gray-500 hover:text-black font-bold ml-1">✕</span>
+        </button>
+        {% endif %}
+        {% for filter in active_filters %}
+            {% if filter.type == 'include' %}
+            <button type="button"
+                    onclick="toggleFacetOption('{{ filter.facet }}', '{{ filter.value|escapejs }}', 'off')"
+                    title="Remove {{ filter.value }} inclusion"
+                    class="inline-flex items-center space-x-1 px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-medium cursor-pointer shadow-sm rounded-none">
+                <span class="text-emerald-700 font-bold mr-0.5">+</span>
+                <span>{{ filter.facet_label }}: {{ filter.value }}</span>
+                <span class="text-emerald-700 hover:text-emerald-950 font-bold ml-1">✕</span>
+            </button>
+            {% else %}
+            <button type="button"
+                    onclick="toggleFacetOption('{{ filter.facet }}', '{{ filter.value|escapejs }}', 'off')"
+                    title="Remove {{ filter.value }} exclusion"
+                    class="inline-flex items-center space-x-1 px-2 py-0.5 bg-rose-50 hover:bg-rose-100 border border-rose-300 text-rose-900 font-medium cursor-pointer shadow-sm rounded-none">
+                <span class="text-rose-700 font-bold mr-0.5">−</span>
+                <span>NOT {{ filter.facet_label }}: {{ filter.value }}</span>
+                <span class="text-rose-700 hover:text-rose-950 font-bold ml-1">✕</span>
+            </button>
+            {% endif %}
+        {% endfor %}
+        <button type="button"
+                onclick="resetRecipeFilters()"
+                class="text-blue-700 hover:underline font-semibold ml-2 cursor-pointer">
+            Reset all
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Grid of Recipe Cards -->
+    {% if recipes %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for recipe in recipes %}
+        {% include "recipes/partials/recipe_card.html" with recipe=recipe can_write=can_write %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="py-12 px-4 text-center border-2 border-dashed border-gray-300 bg-gray-50/70 space-y-3">
+        <span class="text-3xl block">🔍</span>
+        <h3 class="text-base font-bold text-gray-800">No matching recipes found</h3>
+        <p class="text-xs text-gray-500 max-w-sm mx-auto">
+            Try adjusting your search keywords or clearing some of the filters to broaden your search results.
+        </p>
+        <div>
+            <button type="button"
+                    onclick="resetRecipeFilters()"
+                    class="inline-block border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-3 py-1.5 text-xs shadow-sm cursor-pointer">
+                Reset Filters
+            </button>
+            {% if can_write %}
+            <a href="{% url 'recipes:create' %}" class="inline-block ml-2 bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 text-xs">
+                ➕ Create New Recipe
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

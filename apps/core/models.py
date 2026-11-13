@@ -1,0 +1,291 @@
+"""
+Models for the core application.
+
+Defines multi-tenant Workspaces and membership sharing roles.
+A Workspace encapsulates an active shopping list, preset lists, and a meal plan.
+"""
+
+from typing import TYPE_CHECKING, Any
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+
+if TYPE_CHECKING:
+    from apps.mealplans.models import MealPlan
+    from apps.shopping.models import ShoppingList
+
+
+class WorkspaceRole(models.TextChoices):
+    """
+    Access roles for shared workspace members.
+
+    - VIEWER: Read-only access. Cannot mutate lists, items, or meal plans.
+    - EDITOR: Read-write access. Can add, edit, and organize lists and meal plans.
+    """
+    VIEWER = "viewer", "Read-Only"
+    EDITOR = "editor", "Read-Write"
+
+
+class Workspace(models.Model):
+    """
+    A workspace encapsulating an active shopping list, a set of preset lists, and a meal plan.
+
+    Can be shared with other users as read-only (viewer) or read-write (editor).
+    """
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_workspaces",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_items_retention_days = models.PositiveIntegerField(
+        default=7,
+        null=True,
+        blank=True,
+        help_text=(
+            "Days to retain items in 'Got' and 'Already Have' sections not associated "
+            "with recipes or preset lists before automatic removal (0 or null disables auto-removal)."
+        ),
+    )
+
+    class Meta:
+        ordering = ["name"]
+
+    def clean(self) -> None:
+        """Validate that workspace name is free of expletives and hurtful language."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+        check_model_instance_for_moderation(self)
+
+    def __str__(self) -> str:
+        """Return the workspace name."""
+        return self.name
+
+    def get_user_role(self, user: Any) -> str | None:
+        """
+        Determine the access level of a user within this workspace.
+
+        Args:
+            user: Django user instance to inspect.
+
+        Returns:
+            'owner', 'editor', 'viewer', or None if the user has no access.
+        """
+        if not user or not user.is_authenticated:
+            return None
+        if self.owner_id == user.id or getattr(user, "is_superuser", False):
+            return "owner"
+        membership = self.memberships.filter(user=user).first()
+        return membership.role if membership else None
+
+    def can_write(self, user: Any) -> bool:
+        """Return True if user has edit/write permissions (owner or editor)."""
+        role = self.get_user_role(user)
+        return role in ("owner", WorkspaceRole.EDITOR)
+
+    def can_read(self, user: Any) -> bool:
+        """Return True if user has at least read/view access."""
+        return self.get_user_role(user) is not None
+
+    @property
+    def is_shared(self) -> bool:
+        """Return True if the workspace has any collaborators beyond the owner."""
+        return self.memberships.exists()
+
+    def get_primary_list(self) -> "ShoppingList | None":
+        """Retrieve the active primary household shopping list for this workspace."""
+        return self.shopping_lists.filter(is_preset=False).first()
+
+    def get_preset_lists(self) -> models.QuerySet["ShoppingList"]:
+        """Retrieve all preset list templates belonging to this workspace."""
+        return self.shopping_lists.filter(is_preset=True)
+
+    def get_meal_plan(self) -> "MealPlan | None":
+        """Retrieve the primary meal plan associated with this workspace."""
+        return self.meal_plans.first()
+
+
+class WorkspaceMember(models.Model):
+    """
+    Membership record defining a user's sharing permissions on a workspace.
+    """
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.CASCADE,
+        related_name="memberships",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="workspace_memberships",
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=WorkspaceRole.choices,
+        default=WorkspaceRole.VIEWER,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("workspace", "user")
+        ordering = ["workspace", "user"]
+
+    def __str__(self) -> str:
+        """Return human-readable membership description."""
+        return f"{self.user} ({self.get_role_display()}) in {self.workspace.name}"
+
+
+class TermsOfServiceAcceptance(models.Model):
+    """
+    Audit record of a user's binding acceptance of the Terms of Service,
+    storing user identity, client network details, and device characteristics.
+    """
+    CURRENT_VERSION = "2026.1"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tos_acceptances",
+        null=True,
+        blank=True,
+    )
+    version = models.CharField(max_length=64, default=CURRENT_VERSION)
+    accepted_at = models.DateTimeField(auto_now_add=True)
+
+    # User identification from account or OAuth
+    first_name = models.CharField(max_length=150, blank=True, default="")
+    last_name = models.CharField(max_length=150, blank=True, default="")
+
+    # Network & Geolocation Telemetry
+    ip_address = models.CharField(max_length=128, blank=True, default="")
+    user_agent = models.TextField(blank=True, default="")
+    geolocation = models.CharField(max_length=255, blank=True, default="")
+
+    # Hardware & Screen Telemetry
+    screen_resolution = models.CharField(max_length=64, blank=True, default="")
+    viewport_size = models.CharField(max_length=64, blank=True, default="")
+    color_depth = models.CharField(max_length=32, blank=True, default="")
+    pixel_ratio = models.CharField(max_length=32, blank=True, default="")
+    timezone = models.CharField(max_length=128, blank=True, default="")
+    client_language = models.CharField(max_length=64, blank=True, default="")
+    platform = models.CharField(max_length=128, blank=True, default="")
+    hardware_concurrency = models.CharField(max_length=32, blank=True, default="")
+    device_memory_gb = models.CharField(max_length=32, blank=True, default="")
+    touch_support = models.BooleanField(default=False)
+
+    # Comprehensive raw telemetry dump
+    raw_telemetry = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-accepted_at"]
+        verbose_name = "Terms of Service Acceptance"
+        verbose_name_plural = "Terms of Service Acceptances"
+
+    def __str__(self) -> str:
+        username = self.user.username if self.user else "Anonymous"
+        name_str = f" ({self.first_name} {self.last_name})".strip() if (self.first_name or self.last_name) else ""
+        return f"TOS Acceptance v{self.version} by {username}{name_str} at {self.accepted_at}"
+
+
+class UserDMCAProfile(models.Model):
+    """
+    Tracks DMCA notices, copyright infringement strikes, and repeat infringer
+    account status under 17 U.S.C. § 512(i)(1)(A).
+    """
+    MAX_STRIKES_BEFORE_BAN = 3
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="dmca_profile",
+    )
+    strikes = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of validated DMCA copyright strikes against this user.",
+    )
+    is_banned = models.BooleanField(
+        default=False,
+        help_text="Whether this user is banned from uploading/sharing content due to repeat copyright infringement.",
+    )
+    strike_history = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Audit log of strike records: [{timestamp, notice_id, affected_urls, notes}].",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User DMCA Profile"
+        verbose_name_plural = "User DMCA Profiles"
+
+    def __str__(self) -> str:
+        username = self.user.username if self.user else "Unknown"
+        return f"DMCA Profile for {username} (Strikes: {self.strikes}, Banned: {self.is_banned})"
+
+    def record_strike(self, notice_id: str, affected_urls: list[str] | None = None, notes: str = "") -> int:
+        """
+        Record a validated DMCA infringement strike and automatically ban if threshold is reached.
+        """
+        self.strikes += 1
+        entry = {
+            "timestamp": timezone.now().isoformat(),
+            "strike_number": self.strikes,
+            "notice_id": notice_id,
+            "affected_urls": affected_urls or [],
+            "notes": notes,
+        }
+        if not isinstance(self.strike_history, list):
+            self.strike_history = []
+        self.strike_history.append(entry)
+        if self.strikes >= self.MAX_STRIKES_BEFORE_BAN:
+            self.is_banned = True
+        self.save(update_fields=["strikes", "is_banned", "strike_history", "updated_at"])
+        return self.strikes
+
+    def remove_strike(self, reason: str = "") -> int:
+        """
+        Remove a strike (e.g. following a successful, uncontested counter-notice).
+        """
+        if self.strikes > 0:
+            self.strikes -= 1
+        entry = {
+            "timestamp": timezone.now().isoformat(),
+            "action": "strike_removed",
+            "remaining_strikes": self.strikes,
+            "reason": reason,
+        }
+        if not isinstance(self.strike_history, list):
+            self.strike_history = []
+        self.strike_history.append(entry)
+        if self.strikes < self.MAX_STRIKES_BEFORE_BAN:
+            self.is_banned = False
+        self.save(update_fields=["strikes", "is_banned", "strike_history", "updated_at"])
+        return self.strikes
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_or_update_user_dmca_profile(sender: Any, instance: Any, created: bool, **kwargs: Any) -> None:
+    """Ensure a UserDMCAProfile exists for each User."""
+    if created:
+        UserDMCAProfile.objects.get_or_create(user=instance)
+
+
+def _get_dmca_strikes(user: Any) -> int:
+    profile = getattr(user, "dmca_profile", None)
+    if profile is None:
+        profile, _ = UserDMCAProfile.objects.get_or_create(user=user)
+    return profile.strikes
+
+
+# Attach dmca_strikes property to the User model dynamically
+_UserModel = get_user_model()
+if not hasattr(_UserModel, "dmca_strikes"):
+    _UserModel.dmca_strikes = property(_get_dmca_strikes)  # type: ignore[attr-defined]
+

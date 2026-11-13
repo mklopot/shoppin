@@ -1,0 +1,792 @@
+"""
+Views and HTMX endpoints for Meal Planning, recipe dish composition,
+and ingredient synchronization with the active shopping list.
+"""
+
+from decimal import Decimal
+from typing import Any
+
+from django.contrib import messages
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.http import require_POST
+
+from apps.core.services.moderation_service import contains_obscene_language
+from apps.core.services.workspace_service import get_active_workspace
+from apps.mealplans.models import Meal, MealDish, MealPlanRule
+from apps.mealplans.services.mealplan_service import (
+    add_item_to_meal,
+    add_meal_to_plan,
+    add_recipe_to_meal,
+    broadcast_mealplan_update,
+    compute_cooking_status,
+    delete_meal_from_plan,
+    get_active_meal_plan,
+    get_recipe_ingredients_status,
+    remove_dish_from_meal,
+    remove_recipe_from_meal,
+    scale_meal_dish,
+    update_meal_name,
+)
+from apps.mealplans.services.suggestion_service import (
+    calculate_current_meal_nutrition,
+    get_dish_suggestions,
+)
+from apps.recipes.models import Recipe, RecipeRating
+from apps.recipes.services.recipe_service import record_recipe_made, submit_recipe_rating
+from apps.shopping.views import get_active_list
+
+
+def _check_mealplan_write(request: HttpRequest) -> HttpResponseForbidden | None:
+    """Verify the user has edit/write permissions for the active workspace."""
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+    workspace = get_active_workspace(request)
+    if not workspace or not workspace.can_write(user):
+        return HttpResponseForbidden("You have read-only access to this workspace.")
+    return None
+
+
+def meal_plan_view(
+    request: HttpRequest,
+    toast_messages: list[str] | None = None,
+) -> HttpResponse:
+    """
+    Render the Meal Plan management page or HTMX partial.
+    """
+    if not (request.user and request.user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
+
+    workspace = get_active_workspace(request)
+    shopping_list = get_active_list(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+
+    status_info = compute_cooking_status(meal_plan, shopping_list)
+    available_recipes = Recipe.objects.all().order_by("name")
+
+    user = getattr(request, "user", None)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+
+    meals = meal_plan.meals.prefetch_related("recipes").all()
+    rules = meal_plan.rules.all() if meal_plan else []
+
+    context: dict[str, Any] = {
+        "workspace": workspace,
+        "shopping_list": shopping_list,
+        "meal_plan": meal_plan,
+        "meals": meals,
+        "rules": rules,
+        "recipes_ready": status_info["recipes_ready"],
+        "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
+        "meals_ready": status_info["meals_ready"],
+        "meals_missing_optional": status_info["meals_missing_optional"],
+        "available_recipes": available_recipes,
+        "can_write": can_write,
+        "toast_messages": toast_messages or [],
+    }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(request, "mealplans/partials/mealplan_content.html", context)
+    return render(request, "mealplans/mealplan_detail.html", context)
+
+
+@require_POST
+def add_meal(request: HttpRequest) -> HttpResponse:
+    """
+    Handle POST request to add a new meal to the meal plan.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+
+    meal_name = request.POST.get("meal", "").strip()
+    toast_messages: list[str] = []
+    if meal_name:
+        is_obscene, _ = contains_obscene_language(meal_name)
+        if is_obscene:
+            msg = "Cannot add meal: Obscene or hurtful language is not permitted."
+            messages.error(request, msg)
+            toast_messages.append(f"❌ {msg}")
+            return meal_plan_view(request, toast_messages=toast_messages)
+        meal = add_meal_to_plan(meal_plan, meal_name)
+        toast_messages.append(f"➕ Added '{meal.name}' to meal plan")
+        actor = (request.user.first_name or "").strip() or request.user.username if request.user.is_authenticated else "Someone"
+        broadcast_mealplan_update(
+            request,
+            toast_message=f"➕ {actor} added '{meal.name}' to meal plan",
+            shopping_list=get_active_list(request),
+        )
+
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+def edit_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Handle inline editing of a meal's name.
+    GET: renders meal_name_form partial (or meal_header partial if ?cancel=1).
+    POST: updates meal name, recomputes emoji, and returns updated meal plan view.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+
+    if request.method == "POST":
+        new_name = request.POST.get("name", "").strip()
+        toast_messages: list[str] = []
+        if new_name and new_name != meal.name:
+            is_obscene, _ = contains_obscene_language(new_name)
+            if is_obscene:
+                toast_messages.append("❌ Cannot rename meal: Obscene or hurtful language is not permitted.")
+                return meal_plan_view(request, toast_messages=toast_messages)
+            old_name = meal.name
+            update_meal_name(meal, new_name)
+            toast_messages.append(f"✏️ Renamed '{old_name}' to '{meal.name}'")
+            actor = (request.user.first_name or "").strip() or request.user.username if request.user.is_authenticated else "Someone"
+            broadcast_mealplan_update(
+                request,
+                toast_message=f"✏️ {actor} renamed '{old_name}' to '{meal.name}'",
+                shopping_list=get_active_list(request),
+            )
+        return meal_plan_view(request, toast_messages=toast_messages)
+
+    if request.GET.get("cancel"):
+        return render(request, "mealplans/partials/meal_header.html", {"meal": meal, "can_write": True})
+
+    return render(request, "mealplans/partials/meal_name_form.html", {"meal": meal})
+
+
+@require_POST
+def delete_meal(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Handle POST request to delete a meal and its shopping list ingredients.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    meal_name = meal.name
+    shopping_list = get_active_list(request)
+    delete_meal_from_plan(meal, shopping_list, request)
+
+    toast_messages = [f"🗑 Deleted '{meal_name}' from meal plan"]
+    actor = (request.user.first_name or "").strip() or request.user.username if request.user.is_authenticated else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} deleted '{meal_name}' from meal plan",
+        shopping_list=shopping_list,
+    )
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def add_dish(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Handle POST request to add a recipe dish to a meal.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+
+    recipe_name = request.POST.get("recipe", "").strip()
+    recipe_id = request.POST.get("recipe_id")
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        scale_factor = Decimal(scale_raw)
+        if scale_factor <= Decimal("0"):
+            scale_factor = Decimal("1.00")
+    except Exception:
+        scale_factor = Decimal("1.00")
+
+    recipe = None
+    if recipe_id:
+        recipe = Recipe.objects.filter(id=recipe_id).first()
+    elif recipe_name:
+        recipe = Recipe.objects.filter(name__iexact=recipe_name).first()
+
+    toast_messages: list[str] = []
+    if recipe:
+        added_descriptions = add_recipe_to_meal(meal, recipe, shopping_list, request, scale_factor=scale_factor)
+        scale_tag = f" ({scale_factor.normalize():f}x)" if scale_factor != Decimal("1.00") else ""
+        count = len(added_descriptions)
+        if count == 0:
+            toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name}")
+        elif count == 1:
+            toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name} (1 ingredient added to shopping list)")
+        else:
+            toast_messages.append(f"🥘 Added '{recipe.name}'{scale_tag} to {meal.name} ({count} ingredients added to shopping list)")
+
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def add_single_item(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Handle POST request from the dedicated Single Item entry form on a meal card.
+    Adds a single ingredient or shopping list item directly to the meal and onto
+    the shopping list with the meal's name as its purpose.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+
+    item_name = (request.POST.get("item_name") or request.POST.get("item") or "").strip()
+    amount_raw = request.POST.get("amount", "").strip()
+    unit_raw = request.POST.get("amount_unit", "").strip()
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        scale_factor = Decimal(scale_raw)
+        if scale_factor <= Decimal("0"):
+            scale_factor = Decimal("1.00")
+    except Exception:
+        scale_factor = Decimal("1.00")
+
+    toast_messages: list[str] = []
+    if item_name:
+        is_obscene, _ = contains_obscene_language(f"{item_name} {amount_raw} {unit_raw}")
+        if is_obscene:
+            msg = "Cannot add item: Obscene or hurtful language is not permitted."
+            messages.error(request, msg)
+            toast_messages.append(f"❌ {msg}")
+            return meal_plan_view(request, toast_messages=toast_messages)
+
+        dish, _ = add_item_to_meal(
+            meal=meal,
+            raw_item_input=item_name,
+            shopping_list=shopping_list,
+            request=request,
+            amount_override=amount_raw if amount_raw else None,
+            unit_override=unit_raw if unit_raw else None,
+            scale_factor=scale_factor,
+        )
+        toast_messages.append(
+            f"🛒 Added single item '{dish.display_name}' ({dish.quantity_display}) to {meal.name} & shopping list"
+        )
+
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def scale_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
+    """
+    Update portion scaling factor for an individual planned dish.
+    Recalculates contributed ingredient amounts on the shopping list.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
+    if not dish:
+        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+    if not dish:
+        return HttpResponseForbidden("Dish not found.")
+
+    shopping_list = get_active_list(request)
+    scale_raw = request.POST.get("scale_factor", "1").strip()
+    try:
+        new_scale = Decimal(scale_raw)
+        if new_scale <= Decimal("0"):
+            new_scale = Decimal("1.00")
+    except Exception:
+        new_scale = Decimal("1.00")
+
+    scale_meal_dish(dish, new_scale, shopping_list, request)
+
+    scale_tag = f"{new_scale.normalize():f}x"
+    dish_name = dish.display_name
+    toast_messages = [f"⚖️ Scaled '{dish_name}' to {scale_tag}"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"⚖️ {actor} scaled '{dish_name}' to {scale_tag}",
+        shopping_list=shopping_list,
+    )
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def delete_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
+    """
+    Handle POST request to remove a recipe dish or single item from a meal.
+    Accepts dish_id (targeting a specific occurrence) or recipe_id for backward compatibility.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+
+    dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
+    if not dish:
+        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+
+    if dish:
+        dish_name = dish.display_name
+        remove_dish_from_meal(dish, shopping_list, request)
+    else:
+        recipe = get_object_or_404(Recipe, id=dish_id)
+        dish_name = recipe.name
+        remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    toast_messages = [f"🗑 Removed '{dish_name}' from {meal.name} (ingredients updated on shopping list)"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} removed '{dish_name}' from {meal.name}",
+        shopping_list=shopping_list,
+    )
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
+    """
+    Mark an individual recipe dish or single-item occurrence in a meal as made.
+    For recipe dishes: increments recipe times_made counter, logs cooking event, removes
+    that specific dish from the meal plan, and prompts for recipe rating.
+    For single items: removes the item from the meal plan and shopping list without
+    prompting for ratings or feedback.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
+    if not dish:
+        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+
+    shopping_list = get_active_list(request)
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    user = getattr(request, "user", None)
+
+    if dish and dish.is_single_item:
+        item_name = dish.display_name
+        remove_dish_from_meal(dish, shopping_list, request)
+        toast_messages = [f"✓ Marked '{item_name}' as made and removed from meal plan"]
+        actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+        broadcast_mealplan_update(
+            request,
+            toast_message=f"✓ {actor} marked '{item_name}' as made",
+            shopping_list=shopping_list,
+        )
+        status_info = compute_cooking_status(meal_plan, shopping_list)
+        available_recipes = Recipe.objects.all().order_by("name")
+        can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+        meals = meal_plan.meals.prefetch_related("recipes").all()
+        rules = meal_plan.rules.all() if meal_plan else []
+        context = {
+            "recipes": [],
+            "recipe": None,
+            "existing_ratings": {},
+            "meal_name": meal.name,
+            "is_entire_meal": False,
+            "workspace": workspace,
+            "shopping_list": shopping_list,
+            "meal_plan": meal_plan,
+            "meals": meals,
+            "rules": rules,
+            "recipes_ready": status_info["recipes_ready"],
+            "recipes_missing_optional": status_info["recipes_missing_optional"],
+            "dishes_ready": status_info["dishes_ready"],
+            "dishes_missing_optional": status_info["dishes_missing_optional"],
+            "meals_ready": status_info["meals_ready"],
+            "meals_missing_optional": status_info["meals_missing_optional"],
+            "available_recipes": available_recipes,
+            "can_write": can_write,
+            "toast_messages": toast_messages,
+        }
+        return render(request, "mealplans/partials/recipe_rating_modal.html", context)
+
+    if dish:
+        recipe = dish.recipe
+    else:
+        recipe = get_object_or_404(Recipe, id=dish_id)
+
+    # 1. Record recipe made & increment counter
+    record_recipe_made(recipe, user=user)
+
+    # 2. Remove dish from meal and synchronize shopping list
+    if dish:
+        remove_dish_from_meal(dish, shopping_list, request)
+    else:
+        remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    # 3. Toast message & WebSocket broadcast
+    toast_messages = [
+        f"✓ Marked '{recipe.name}' as made! (Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''})"
+    ]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"✓ {actor} marked '{recipe.name}' as made",
+        shopping_list=shopping_list,
+    )
+
+    # 4. Context for meal plan content re-render
+    status_info = compute_cooking_status(meal_plan, shopping_list)
+    available_recipes = Recipe.objects.all().order_by("name")
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    meals = meal_plan.meals.prefetch_related("recipes").all()
+    rules = meal_plan.rules.all() if meal_plan else []
+
+    # Check for existing user rating
+    existing_rating = None
+    if user and user.is_authenticated:
+        existing_rating = RecipeRating.objects.filter(recipe=recipe, user=user).first()
+
+    context = {
+        "recipes": [recipe],
+        "recipe": recipe,
+        "existing_ratings": {recipe.id: existing_rating} if existing_rating else {},
+        "meal_name": meal.name,
+        "is_entire_meal": False,
+        "workspace": workspace,
+        "shopping_list": shopping_list,
+        "meal_plan": meal_plan,
+        "meals": meals,
+        "rules": rules,
+        "recipes_ready": status_info["recipes_ready"],
+        "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
+        "meals_ready": status_info["meals_ready"],
+        "meals_missing_optional": status_info["meals_missing_optional"],
+        "available_recipes": available_recipes,
+        "can_write": can_write,
+        "toast_messages": toast_messages,
+    }
+    return render(request, "mealplans/partials/recipe_rating_modal.html", context)
+
+
+@require_POST
+def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Mark an entire meal as made.
+    Increments recipe times_made counter for each recipe dish in the meal, logs cooking events,
+    removes the meal and all dishes (including single items) from the meal plan, and prompts
+    for recipe ratings only on actual recipe dishes (single items are exempt).
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    meal = get_object_or_404(Meal, id=meal_id)
+    shopping_list = get_active_list(request)
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    user = getattr(request, "user", None)
+    meal_name = meal.name
+
+    dishes = list(meal.dishes.select_related("recipe").all())
+    recipes = []
+    toast_messages = []
+
+    # 1. Record made & remove ingredients for all dish occurrences in the meal
+    for dish in dishes:
+        if dish.recipe:
+            recipes.append(dish.recipe)
+            record_recipe_made(dish.recipe, user=user)
+        remove_dish_from_meal(dish, shopping_list, request)
+
+    # Fallback for any legacy recipes in M2M without MealDish
+    for recipe in list(meal.recipes.all()):
+        if recipe not in recipes:
+            recipes.append(recipe)
+            record_recipe_made(recipe, user=user)
+            remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    # 2. Delete the meal itself
+    meal.delete()
+
+    toast_messages.append(f"🍽 Marked entire meal '{meal_name}' as made and removed from plan.")
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🍽 {actor} marked entire meal '{meal_name}' as made",
+        shopping_list=shopping_list,
+    )
+
+    # 3. Context for meal plan content re-render
+    status_info = compute_cooking_status(meal_plan, shopping_list)
+    available_recipes = Recipe.objects.all().order_by("name")
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    meals = meal_plan.meals.prefetch_related("recipes").all()
+    rules = meal_plan.rules.all() if meal_plan else []
+
+    # Check for existing user ratings
+    existing_ratings = {}
+    if user and user.is_authenticated:
+        for r in recipes:
+            rating = RecipeRating.objects.filter(recipe=r, user=user).first()
+            if rating:
+                existing_ratings[r.id] = rating
+
+    context = {
+        "recipes": recipes,
+        "existing_ratings": existing_ratings,
+        "meal_name": meal_name,
+        "is_entire_meal": True,
+        "workspace": workspace,
+        "shopping_list": shopping_list,
+        "meal_plan": meal_plan,
+        "meals": meals,
+        "rules": rules,
+        "recipes_ready": status_info["recipes_ready"],
+        "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
+        "meals_ready": status_info["meals_ready"],
+        "meals_missing_optional": status_info["meals_missing_optional"],
+        "available_recipes": available_recipes,
+        "can_write": can_write,
+        "toast_messages": toast_messages,
+    }
+    return render(request, "mealplans/partials/recipe_rating_modal.html", context)
+
+
+@require_POST
+def submit_made_ratings(request: HttpRequest) -> HttpResponse:
+    """
+    Handle submission of recipe ratings prompted after marking dishes as made.
+    """
+    user = getattr(request, "user", None)
+    recipe_ids = request.POST.getlist("recipe_id")
+    toast_messages = []
+
+    if user and user.is_authenticated:
+        for rid in recipe_ids:
+            try:
+                recipe = Recipe.objects.get(id=int(rid))
+            except (ValueError, Recipe.DoesNotExist):
+                continue
+
+            stars_val = request.POST.get(f"stars_{rid}", "5")
+            thumbs_val = request.POST.get(f"thumbs_up_{rid}") in ("true", "1", "on", True)
+            try:
+                stars = int(stars_val)
+            except ValueError:
+                stars = 5
+
+            submit_recipe_rating(recipe, user, stars, thumbs_val)
+            toast_messages.append(f"⭐ Saved {stars}★ rating for '{recipe.name}'")
+    else:
+        toast_messages.append("⭐ Rating noted! Log in to save ratings to your profile.")
+
+    context = {
+        "toast_messages": toast_messages,
+    }
+    return render(request, "mealplans/partials/rating_dismissed.html", context)
+
+
+@require_POST
+def clear_meal_plan(request: HttpRequest) -> HttpResponse:
+    """
+    Clear all meals from the meal plan and remove their ingredients from the shopping list.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    shopping_list = get_active_list(request)
+
+    for meal in meal_plan.meals.all():
+        delete_meal_from_plan(meal, shopping_list, request)
+
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} cleared the meal plan",
+        shopping_list=shopping_list,
+    )
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return meal_plan_view(request, toast_messages=["🗑 Cleared the entire meal plan"])
+    return redirect("mealplans:detail")
+
+
+def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
+    """
+    Render HTMX modal showing full recipe details, ingredients, and instructions.
+    """
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    shopping_list = get_active_list(request)
+    meal_id = request.GET.get("meal_id")
+    dish_id = request.GET.get("dish_id")
+
+    meal = Meal.objects.filter(id=meal_id).first() if meal_id else None
+    meal_dish = MealDish.objects.filter(id=dish_id).first() if dish_id else None
+    if not meal_dish and meal:
+        meal_dish = MealDish.objects.filter(meal=meal, recipe=recipe).order_by("-created_at").first()
+
+    is_recipe_updated_since_added = meal_dish.is_recipe_updated_since_added if meal_dish else False
+
+    if not shopping_list and meal and meal.meal_plan and meal.meal_plan.workspace:
+        shopping_list = meal.meal_plan.workspace.get_primary_list()
+
+    # Check ingredient statuses on shopping list via centralized attribution resolver
+    ingredients_with_status = get_recipe_ingredients_status(
+        recipe=recipe,
+        shopping_list=shopping_list,
+        meal=meal,
+        meal_dish=meal_dish,
+    )
+
+    total_ingredients = len(ingredients_with_status)
+    need_count = sum(1 for row in ingredients_with_status if row["status_code"] in ("need", "missing"))
+    got_count = sum(1 for row in ingredients_with_status if row["status_code"] == "got")
+    have_count = sum(1 for row in ingredients_with_status if row["status_code"] == "have")
+    skipped_count = sum(1 for row in ingredients_with_status if row["status_code"] == "skipped")
+    ready_count = got_count + have_count
+
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    user = getattr(request, "user", None)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    meals = meal_plan.meals.all() if meal_plan else []
+
+    context = {
+        "recipe": recipe,
+        "ingredients_with_status": ingredients_with_status,
+        "total_ingredients": total_ingredients,
+        "need_count": need_count,
+        "got_count": got_count,
+        "have_count": have_count,
+        "skipped_count": skipped_count,
+        "ready_count": ready_count,
+        "is_recipe_updated_since_added": is_recipe_updated_since_added,
+        "meal_dish": meal_dish,
+        "meals": meals,
+        "can_write": can_write,
+    }
+    return render(request, "mealplans/partials/recipe_modal.html", context)
+
+
+def meal_suggestions(request: HttpRequest, meal_id: int) -> HttpResponse:
+    """
+    Render dish suggestions partial for a planned meal.
+    """
+    meal = get_object_or_404(Meal, id=meal_id)
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated) or not meal.meal_plan.workspace.can_read(user):
+        return HttpResponseForbidden("Access denied.")
+
+    workspace = get_active_workspace(request)
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+
+    suggestions = get_dish_suggestions(meal, limit=5)
+    current_nutrition = calculate_current_meal_nutrition(meal)
+
+    context = {
+        "meal": meal,
+        "suggestions": suggestions,
+        "current_nutrition": current_nutrition,
+        "can_write": can_write,
+    }
+    return render(request, "mealplans/partials/dish_suggestions.html", context)
+
+
+@require_POST
+def add_meal_rule(request: HttpRequest) -> HttpResponse:
+    """
+    Handle POST request to add a new dietary/balance rule to the active meal plan.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    meal_plan = get_active_meal_plan(request, workspace)
+    rule_text = request.POST.get("rule_text", "").strip()
+
+    toast_messages: list[str] = []
+    if rule_text:
+        is_obscene, _ = contains_obscene_language(rule_text)
+        if is_obscene:
+            msg = "Cannot add guideline: Obscene or hurtful language is not permitted."
+            messages.error(request, msg)
+            toast_messages.append(f"❌ {msg}")
+            return meal_plan_view(request, toast_messages=toast_messages)
+        MealPlanRule.objects.create(meal_plan=meal_plan, rule_text=rule_text, is_active=True)
+        toast_messages.append(f"📋 Added guideline: '{rule_text}'")
+        actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+        broadcast_mealplan_update(
+            request,
+            toast_message=f"📋 {actor} added guideline: '{rule_text}'",
+            shopping_list=get_active_list(request),
+        )
+
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def toggle_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
+    """
+    Toggle active/inactive state of a meal plan rule.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    rule = get_object_or_404(MealPlanRule, id=rule_id)
+    rule.is_active = not rule.is_active
+    rule.save(update_fields=["is_active"])
+
+    status_str = "Enabled" if rule.is_active else "Paused"
+    toast_messages = [f"📋 {status_str} guideline: '{rule.rule_text}'"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"📋 {actor} {status_str.lower()} guideline: '{rule.rule_text}'",
+        shopping_list=get_active_list(request),
+    )
+    return meal_plan_view(request, toast_messages=toast_messages)
+
+
+@require_POST
+def delete_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
+    """
+    Delete a meal plan rule.
+    """
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    rule = get_object_or_404(MealPlanRule, id=rule_id)
+    text = rule.rule_text
+    rule.delete()
+
+    toast_messages = [f"🗑 Removed guideline: '{text}'"]
+    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
+    broadcast_mealplan_update(
+        request,
+        toast_message=f"🗑 {actor} removed guideline: '{text}'",
+        shopping_list=get_active_list(request),
+    )
+    return meal_plan_view(request, toast_messages=toast_messages)

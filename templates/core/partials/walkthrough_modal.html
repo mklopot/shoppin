@@ -1,0 +1,1318 @@
+<!-- Guided In-App Site Tutorial Overlay with Dynamic Spotlight & Collision-Free Card -->
+<div id="walkthrough-modal"
+     role="dialog"
+     aria-modal="true"
+     data-no-trap="true"
+     aria-labelledby="tour-step-indicator"
+     class="hidden fixed inset-0 z-[60] overflow-hidden pointer-events-none">
+
+    <!-- 4-Quadrant Backdrop: Blurs & dims surrounding areas only; leaves the framed target 100% crisp and unblurred -->
+    <div id="tour-backdrop-top"
+         class="fixed top-0 left-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         aria-hidden="true"
+         onclick="closeWalkthroughModal()"></div>
+    <div id="tour-backdrop-bottom"
+         class="fixed left-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         aria-hidden="true"
+         onclick="closeWalkthroughModal()"></div>
+    <div id="tour-backdrop-left"
+         class="fixed left-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         aria-hidden="true"
+         onclick="closeWalkthroughModal()"></div>
+    <div id="tour-backdrop-right"
+         class="fixed bg-black/60 backdrop-blur-[2px] pointer-events-auto z-40 transition-all duration-150"
+         aria-hidden="true"
+         onclick="closeWalkthroughModal()"></div>
+
+    <!-- Glowing Accent Spotlight Border around the active element (Green Frame) -->
+    <div id="tour-spotlight-border"
+         aria-hidden="true"
+         class="fixed pointer-events-none border-2 border-emerald-400 ring-4 ring-emerald-500/30 rounded transition-all duration-150 z-50 hidden"></div>
+
+    <!-- Dynamically Positioned Tutorial Card: Center-aligned, flips top/bottom so highlighted content is NEVER obscured -->
+    <div id="tour-tooltip-card"
+         tabindex="-1"
+         role="region"
+         aria-label="Tutorial Card"
+         class="fixed pointer-events-auto bottom-3 sm:bottom-4 left-3 right-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 bg-white border border-gray-400 shadow-2xl p-3 sm:p-4 w-auto sm:w-[500px] max-w-[calc(100vw-24px)] text-xs text-gray-900 flex flex-col space-y-2.5 transition-all duration-150 focus:outline-none">
+
+        <!-- Live status announcer for screen reader users (WCAG 4.1.3) -->
+        <div id="tour-live-announcer" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-1.5 border-b border-gray-200">
+            <div class="flex items-center space-x-1.5 min-w-0">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0" aria-hidden="true"></span>
+                <span id="tour-step-indicator" class="font-mono text-[11px] font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap" aria-live="polite">
+                    Tutorial 1 of 15
+                </span>
+                <span id="tour-element-badge" class="bg-gray-100 text-gray-700 font-medium text-[10px] px-1.5 py-0.2 truncate border border-gray-200">
+                    Shopping List
+                </span>
+            </div>
+            <button type="button"
+                    onclick="closeWalkthroughModal()"
+                    aria-label="Exit tutorial"
+                    class="text-gray-700 hover:text-gray-950 font-bold text-lg leading-none min-w-[24px] min-h-[24px] inline-flex items-center justify-center p-1 ml-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                &times;
+            </button>
+        </div>
+
+        <!-- Dynamic Step Content Panes (Purely Informational) -->
+        <div class="min-h-[56px]">
+            
+            <!-- Step 1: Shopping List -->
+            <div id="tour-pane-0" class="tour-pane space-y-1 hidden">
+                <h3 id="tour-step-title" class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Shopping list with real-time transitions
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Tap items as you buy them to mark them as bought (🛒 Got) or needed. When anyone in your workspace makes changes, the list updates in real time via WebSockets.
+                </p>
+            </div>
+
+            <!-- Step 2: High Priority toggle on shopping list items -->
+            <div id="tour-pane-1" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    High Priority toggle on shopping list items
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Flag urgent or essential items directly from any item row using the 🚩 Priority toggle, or when typing in the Add bar. Priority items display a crimson tag and sort to the top of their aisle.
+                </p>
+            </div>
+
+            <!-- Step 3: Setting Store Location & Populating Aisles -->
+            <div id="tour-pane-2" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Setting store location & populating aisles
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Select your supermarket from the dropdown or click Near Me / Map to locate nearby stores. Setting a store automatically queries store directory data (when supported by the store) to populate exact aisle and bay locations for your list items.
+                </p>
+            </div>
+
+            <!-- Step 4: Sorting by Priority & Store Aisle -->
+            <div id="tour-pane-3" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Sorting by priority and store aisle
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Items are automatically grouped by aisle so you can move smoothly through the store in perimeter order. Choosing Priority sort puts all priority items to the top of the entire list.
+                </p>
+            </div>
+
+            <!-- Step 5: Completed Purchases & The "Got" Section -->
+            <div id="tour-pane-4" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    The "Got" section & 7-day clearing
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Checked-off items move into the Got section. Items not linked to recipes or preset lists are automatically cleared after a default of 7 days to keep your active list fresh and uncluttered.
+                </p>
+            </div>
+
+            <!-- Step 6: Pantry Check & Confirming Needed Items -->
+            <div id="tour-pane-5" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Pantry check & confirming needed items
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Audit your pantry before you shop. Items needing verification begin unconfirmed. Tapping 'Need' confirms you need to buy it and moves it to your active shopping list; tapping 'Have' confirms you already have it at home.
+                </p>
+            </div>
+
+            <!-- Step 7: Recipe Search -->
+            <div id="tour-pane-6" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Search and filter recipes
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Filter recipes by cuisine, meal type, diet, and equipment. Use (+) to require tags or (-) to exclude ingredients. Recipes can be browsed without logging in.
+                </p>
+            </div>
+
+            <!-- Step 8: "All Cuisines" Pulldown Menu -->
+            <div id="tour-pane-7" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    All Cuisines filter pulldown
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Cuisine is shown here as an example of how each filter dropdown works across meal types, cooking methods, and dietary tags. Tap any option to require it (+), or tap minus (-) to exclude specific ingredients or diets.
+                </p>
+            </div>
+
+            <!-- Step 9: Import / Create Recipes -->
+            <div id="tour-pane-8" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Import from a URL or create a recipe
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Paste any recipe webpage URL (Allrecipes, Serious Eats, NYT Cooking, blogs, etc.) into the <strong>Webpage URL</strong> input to scrape ingredients and directions automatically, or write custom dishes in the recipe editor.
+                </p>
+            </div>
+
+            <!-- Step 10: Meal Plans & Adding Dishes -->
+            <div id="tour-pane-9" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Weekly meal plans & adding dishes
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Plan your meals for the week (e.g. Monday Dinner, Taco Tuesday). Type any recipe into a meal to add dishes and automatically send required ingredients to your shopping list.
+                </p>
+            </div>
+
+            <!-- Step 11: Recipe Ingredients & Cooking Readiness -->
+            <div id="tour-pane-10" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Recipe ingredients & cooking readiness
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Tap any dish to open its recipe and see ingredient readiness: green (<span class="text-emerald-500 font-bold text-sm leading-none align-middle" aria-hidden="true">●</span>) dots indicate items already in your pantry or cart, while amber/gray dots show ingredients that still need to be bought before cooking.
+                </p>
+            </div>
+
+            <!-- Step 12: Workspaces & Collaboration -->
+            <div id="tour-pane-11" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Organize with workspaces
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Workspaces separate lists for home, work, or different households. Share your workspace with family members or roommates to collaborate on shopping in real time.
+                </p>
+            </div>
+
+            <!-- Step 13: Preset Lists & Reusable Templates -->
+            <div id="tour-pane-12" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Preset lists and reusable templates
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Preset lists bundle reusable collections of groceries—like weekly staples, breakfasts, or party supplies. Load an entire bundle onto your shopping list with a single click.
+                </p>
+            </div>
+
+            <!-- Step 14: Automated Recurring Schedules -->
+            <div id="tour-pane-13" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Automated recurring schedules
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    Configure automated recurrence schedules to reload preset items into your list on set days and times (e.g. every 7 days) so essentials are always ready for your routine shopping trip.
+                </p>
+            </div>
+
+            <!-- Step 15: Re-running the Product Tour Anytime -->
+            <div id="tour-pane-14" class="tour-pane space-y-1 hidden">
+                <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
+                    Re-run the product tour anytime
+                </h3>
+                <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
+                    You can re-launch this interactive tour anytime by clicking your avatar in the top right and selecting <strong>Product Tour</strong>.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- Controls: Fixed at bottom of card -->
+        <div class="pt-2 border-t border-gray-200 flex items-center justify-between">
+            <button type="button"
+                    onclick="prevTourStep()"
+                    id="tour-prev-btn"
+                    aria-label="Back: Previous tutorial step"
+                    class="min-h-[28px] min-w-[55px] inline-flex items-center justify-center px-2.5 py-1 text-xs font-semibold border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled>
+                &larr; Back
+            </button>
+
+            <div class="flex items-center space-x-2">
+                <button type="button"
+                    onclick="closeWalkthroughModal()"
+                    aria-label="Exit tutorial"
+                    class="min-h-[28px] min-w-[48px] inline-flex items-center justify-center px-2.5 py-1 text-xs text-gray-700 hover:text-gray-950 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                    Exit
+                </button>
+                <button type="button"
+                        onclick="nextTourStep()"
+                        id="tour-next-btn"
+                        aria-label="Next tutorial step"
+                        class="min-h-[28px] min-w-[70px] inline-flex items-center justify-center px-3 py-1 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-none shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-1">
+                    Next &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTourStep = 0;
+    const totalTourSteps = 15;
+    let tourTriggerElement = null;
+
+    // Helpers to inject and clean up simulated demo data in the DOM when empty
+    function cleanupTourDemoData() {
+        document.querySelectorAll('[data-tour-demo="true"]').forEach(el => el.remove());
+        document.querySelectorAll('[data-tour-unhidden="true"]').forEach(el => {
+            el.classList.add('hidden');
+            el.removeAttribute('data-tour-unhidden');
+        });
+        const demoModal = document.getElementById('tour-demo-recipe-modal');
+        if (demoModal) demoModal.remove();
+        const demoTag = document.getElementById('tour-demo-need-tag');
+        if (demoTag) demoTag.remove();
+        const demoPriorityTag = document.getElementById('tour-demo-priority-tag');
+        if (demoPriorityTag) demoPriorityTag.remove();
+        const tourBtn = document.querySelector('[data-tour-highlighted="true"]');
+        if (tourBtn) {
+            tourBtn.classList.remove('bg-emerald-100/70', 'ring-1', 'ring-emerald-400');
+            tourBtn.removeAttribute('data-tour-highlighted');
+        }
+        const count = document.getElementById('got-items-count');
+        if (count && count.getAttribute('data-tour-demo') === 'true') {
+            count.textContent = '(0)';
+            count.removeAttribute('data-tour-demo');
+        }
+    }
+
+    function ensureDemoGotData() {
+        const gotContainer = document.getElementById('got-section-container');
+        if (gotContainer) {
+            if (gotContainer.classList.contains('hidden')) {
+                gotContainer.classList.remove('hidden');
+                gotContainer.setAttribute('data-tour-unhidden', 'true');
+            }
+            const list = document.getElementById('got-items-list');
+            if (list && !list.querySelector('.item-row')) {
+                const demoRow = document.createElement('div');
+                demoRow.id = 'tour-demo-got-row';
+                demoRow.setAttribute('data-tour-demo', 'true');
+                demoRow.className = 'item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors';
+                demoRow.innerHTML = `
+                    <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                        <span class="status-icon text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
+                        <div class="min-w-0 flex-1 leading-snug">
+                            <span class="item-title font-semibold text-gray-900 text-sm">Organic Whole Milk</span>
+                            <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">1 gal</span>
+                            <span class="text-gray-700 ml-2">
+                                <span class="ml-1.5 text-gray-700 italic text-xs select-none">Bought today</span>
+                            </span>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(demoRow);
+                const count = document.getElementById('got-items-count');
+                if (count && count.textContent.trim() === '(0)') {
+                    count.textContent = '(1)';
+                    count.setAttribute('data-tour-demo', 'true');
+                }
+            }
+        }
+    }
+
+    function ensureDemoShoppingData() {
+        const container = document.getElementById('section-groups-container');
+        if (container && !container.querySelector('.item-row')) {
+            const demoBlock = document.createElement('div');
+            demoBlock.setAttribute('data-tour-demo', 'true');
+            demoBlock.className = 'section-group-block space-y-1.5 mt-2';
+            demoBlock.innerHTML = `
+                <div class="flex items-center justify-between pb-1">
+                    <h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">Produce</h3>
+                </div>
+                <div class="sortable-group divide-y divide-gray-200">
+                    <div id="tour-demo-item-row" class="item-row py-1.5 px-3 flex items-center justify-between bg-white text-xs border border-gray-200">
+                        <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                            <span class="item-title font-semibold text-gray-900 text-sm">Honeycrisp Apples</span>
+                            <span class="font-normal text-gray-700 ml-1.5">3 lbs</span>
+                            <span class="inline-block ml-1 text-gray-700 font-medium">📍 Produce Bay 4</span>
+                        </div>
+                        <div class="item-actions flex items-center space-x-1">
+                            <button type="button" class="item-priority-toggle-btn text-gray-700 hover:text-[#800020] min-w-[24px] min-h-[24px] inline-flex items-center justify-center p-1" aria-label="Flag as High Priority" title="Flag as High Priority">
+                                <span aria-hidden="true">🚩</span>
+                            </button>
+                            <button type="button" class="border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-800 font-medium">🛒 Got</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.prepend(demoBlock);
+        }
+    }
+
+    function ensureDemoPantryData() {
+        const container = document.getElementById('section-groups-container');
+        if (container && !container.querySelector('.item-row')) {
+            const demoBlock = document.createElement('div');
+            demoBlock.setAttribute('data-tour-demo', 'true');
+            demoBlock.className = 'section-group-block space-y-1.5 mt-2';
+            demoBlock.innerHTML = `
+                <div class="flex items-center justify-between pb-1">
+                    <h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">Pantry Audit</h3>
+                </div>
+                <div class="sortable-group divide-y divide-gray-200">
+                    <div id="tour-demo-pantry-row" class="item-row py-1.5 px-3 flex items-center justify-between bg-white text-xs border border-gray-200">
+                        <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                            <span class="item-title font-semibold text-gray-900 text-sm">Organic Strawberries</span>
+                            <span class="font-normal text-gray-700 ml-1.5">1 lb</span>
+                            <span class="ml-1.5 px-1.5 py-0 text-[9px] font-semibold border border-amber-300 bg-amber-50 text-amber-900">pantry check needed</span>
+                        </div>
+                        <div class="item-actions flex items-center space-x-1">
+                            <button type="button" class="border border-amber-500 bg-amber-100 px-2 py-0.5 text-xs text-amber-950 font-semibold">🏠 Have</button>
+                            <button type="button" id="tour-demo-need-btn" class="border border-gray-300 bg-white px-2 py-0.5 text-xs text-gray-800 font-medium">📋 Need</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.prepend(demoBlock);
+        }
+    }
+
+    function ensureDemoMealPlanData() {
+        const content = document.getElementById('mealplan-content');
+        if (content && !content.querySelector('.meal-card')) {
+            const demoCard = document.createElement('div');
+            demoCard.setAttribute('data-tour-demo', 'true');
+            demoCard.className = 'meal-card border border-gray-300 bg-white p-3.5 space-y-2.5 mb-3';
+            demoCard.innerHTML = `
+                <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <h3 class="font-bold text-gray-900 text-sm">Monday Dinner</h3>
+                    <span class="text-xs text-gray-700">1 dish planned</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" role="img" aria-label="Status: Ready to cook" title="Ready to cook"></span>
+                    <span class="font-medium text-gray-900">Tacos Al Pastor</span>
+                    <span class="text-xs text-gray-700">(4 servings)</span>
+                </div>
+            `;
+            const mealsList = content.querySelector('.space-y-3');
+            if (mealsList) {
+                mealsList.prepend(demoCard);
+            } else {
+                content.prepend(demoCard);
+            }
+        }
+    }
+
+    function ensureDemoRecipeModal() {
+        if (document.getElementById('tour-demo-recipe-modal')) return;
+        const modal = document.createElement('div');
+        modal.id = 'tour-demo-recipe-modal';
+        modal.setAttribute('data-tour-demo', 'true');
+        modal.className = 'fixed inset-0 z-40 overflow-y-auto bg-black/40 flex items-center justify-center p-3 sm:p-4';
+        modal.innerHTML = `
+            <div class="bg-white border border-gray-400 shadow-2xl max-w-lg w-full p-4 space-y-3 max-h-[85vh] overflow-y-auto">
+                <div class="flex items-start justify-between border-b border-gray-200 pb-2">
+                    <div>
+                        <h3 class="text-base font-bold text-gray-950">Tacos Al Pastor</h3>
+                        <p class="text-xs text-gray-700">Mexican &bull; 4 servings &bull; 35 mins</p>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block mr-1.5" aria-hidden="true"></span>2 of 4 Ready
+                    </span>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-800 mb-1.5">Required Ingredients & Status</h4>
+                    <ul class="divide-y divide-gray-100 text-xs">
+                        <li class="py-1.5 flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" aria-hidden="true"></span>
+                                <span class="font-medium text-gray-900">1.5 lbs Pork shoulder</span>
+                            </span>
+                            <span class="text-emerald-800 font-bold text-[10px] uppercase flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" aria-hidden="true"></span>In Cart
+                            </span>
+                        </li>
+                        <li class="py-1.5 flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" aria-hidden="true"></span>
+                                <span class="font-medium text-gray-900">1/2 Fresh pineapple, diced</span>
+                            </span>
+                            <span class="text-emerald-800 font-bold text-[10px] uppercase flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" aria-hidden="true"></span>In Pantry
+                            </span>
+                        </li>
+                        <li class="py-1.5 flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" aria-hidden="true"></span>
+                                <span class="font-medium text-gray-900">1 White onion</span>
+                            </span>
+                            <span class="text-amber-900 font-bold text-[10px] uppercase">Need to buy</span>
+                        </li>
+                        <li class="py-1.5 flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" aria-hidden="true"></span>
+                                <span class="font-medium text-gray-900">1 bunch Fresh cilantro</span>
+                            </span>
+                            <span class="text-gray-700 font-bold text-[10px] uppercase">Need to buy</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    function ensureDemoPresetData() {
+        const grid = document.getElementById('preset-index-grid-container');
+        if (grid && !grid.querySelector('.preset-card')) {
+            const demoCard = document.createElement('div');
+            demoCard.setAttribute('data-tour-demo', 'true');
+            demoCard.className = 'preset-card bg-white border border-gray-300 shadow-md flex flex-col justify-between p-5 space-y-4 mb-4 max-w-md';
+            demoCard.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-2 border-b border-gray-100 pb-2">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Weekly Essentials</h2>
+                            <div class="mt-1 text-xs text-gray-700">
+                                <span>📋 4 items</span>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
+                            Inactive
+                        </span>
+                    </div>
+                    <div class="preset-items-container pt-1">
+                        <p class="text-[10px] uppercase font-bold text-gray-700 tracking-wider mb-1.5">Preset Items</p>
+                        <div class="flex flex-wrap gap-1">
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Whole Milk (1 gal)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Sourdough Bread (1 loaf)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Eggs (1 dozen)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs">Bananas (2 lbs)</span>
+                        </div>
+                    </div>
+                    <div class="preset-schedule-block p-3 bg-gray-50 border border-gray-200 text-xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-gray-800 uppercase text-[10px] tracking-wider flex items-center space-x-1">
+                                <span>⏱ Recurring Schedule:</span>
+                            </span>
+                            <span class="inline-flex items-center px-2 py-0.2 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                ● Active (Every 7d)
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-gray-700 text-[11px]">
+                            <span>Next occurrence:</span>
+                            <span class="font-semibold text-gray-900">Sunday 9:00 AM</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-3 border-t border-gray-200 flex items-center justify-between text-xs">
+                    <span class="font-medium text-indigo-700">Edit Items &rarr;</span>
+                    <button type="button" class="preset-load-btn px-2.5 py-1 bg-indigo-700 hover:bg-indigo-800 font-medium text-white shadow-sm">
+                        Load to Shopping List
+                    </button>
+                </div>
+            `;
+            grid.prepend(demoCard);
+        }
+    }
+
+    // Navigation and target configurations for each step
+    const tourStepConfigs = [
+        // Step 0: Shopping List items & live sync (Guaranteed in mode=shopping)
+        {
+            path: '{% url "shopping:list" %}?mode=shopping',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) &&
+                       !p.includes('/pantry') &&
+                       !p.includes('/preset') &&
+                       !p.includes('/mealplans') &&
+                       !p.includes('/recipes') &&
+                       !window.location.search.includes('mode=pantry');
+            },
+            selector: '#section-groups-container .item-row, #shopping-list-content, #main-content',
+            badge: 'Shopping List',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoShoppingData();
+            }
+        },
+        // Step 1: High Priority Item Toggle
+        {
+            path: '{% url "shopping:list" %}?mode=shopping',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) &&
+                       !p.includes('/pantry') &&
+                       !p.includes('/preset') &&
+                       !p.includes('/mealplans') &&
+                       !p.includes('/recipes') &&
+                       !window.location.search.includes('mode=pantry');
+            },
+            selector: '.item-priority-toggle-btn, button[title*="High Priority"], #add-item-priority-label, #section-groups-container .item-row',
+            badge: 'High Priority Items',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoShoppingData();
+
+                // Simulate toggling priority on an item row
+                setTimeout(function() {
+                    const row = document.querySelector('#section-groups-container .item-row');
+                    if (row && !row.querySelector('#tour-demo-priority-tag')) {
+                        const titleEl = row.querySelector('.item-title');
+                        if (titleEl) {
+                            const badge = document.createElement('span');
+                            badge.id = 'tour-demo-priority-tag';
+                            badge.setAttribute('data-tour-demo', 'true');
+                            badge.className = 'ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none shadow-sm ring-2 ring-[#800020]/30 transition-all';
+                            badge.innerHTML = '<span aria-hidden="true">🚩</span><span>Priority</span>';
+                            titleEl.after(badge);
+                            positionSpotlight('.item-priority-toggle-btn, #tour-demo-priority-tag, button[title*="High Priority"], #add-item-priority-label');
+                        }
+                    }
+                }, 600);
+            },
+            onLeave: function() {
+                const tag = document.getElementById('tour-demo-priority-tag');
+                if (tag) tag.remove();
+            }
+        },
+        // Step 2: Setting Store Location & Populating Aisles
+        {
+            path: '{% url "shopping:list" %}?mode=shopping',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) &&
+                       !p.includes('/pantry') &&
+                       !p.includes('/preset') &&
+                       !p.includes('/mealplans') &&
+                       !p.includes('/recipes') &&
+                       !window.location.search.includes('mode=pantry');
+            },
+            selector: '#store-select-container .inline-flex, #store-select-container, #store-selector-select, button[onclick*="openStorePickerModal"]',
+            badge: 'Store Location & Aisles',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoShoppingData();
+                setTimeout(function() {
+                    positionSpotlight('#store-select-container .inline-flex, #store-select-container');
+                }, 80);
+            }
+        },
+        // Step 3: Store Aisles & Priority Sorting
+        {
+            path: '{% url "shopping:list" %}?mode=shopping',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) &&
+                       !p.includes('/pantry') &&
+                       !p.includes('/preset') &&
+                       !p.includes('/mealplans') &&
+                       !p.includes('/recipes') &&
+                       !window.location.search.includes('mode=pantry');
+            },
+            selector: '[aria-label="Sort order"], #section-groups-container .section-group-block, #section-groups-container',
+            badge: 'Aisle & Sort Controls',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoShoppingData();
+            }
+        },
+        // Step 4: The "Got" Section & 7-Day Item Retention
+        {
+            path: '{% url "shopping:list" %}?mode=shopping',
+            pathCheck: function(p) {
+                return (p === '/' || p.startsWith('/shopping')) &&
+                       !p.includes('/pantry') &&
+                       !p.includes('/preset') &&
+                       !p.includes('/mealplans') &&
+                       !p.includes('/recipes') &&
+                       !window.location.search.includes('mode=pantry');
+            },
+            selector: '#got-section-container, #got-items-list, #shopping-list-content',
+            badge: 'Got Section & Retention',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                if (typeof closeUserDropdown === 'function') closeUserDropdown();
+                cleanupTourDemoData();
+                ensureDemoShoppingData();
+                ensureDemoGotData();
+                setTimeout(function() {
+                    const gotContainer = document.getElementById('got-section-container');
+                    if (gotContainer) {
+                        gotContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    positionSpotlight('#got-section-container, #got-items-list');
+                }, 80);
+            },
+            onLeave: function() {
+                cleanupTourDemoData();
+            }
+        },
+        // Step 4: Pantry Check Mode (simulating transition to "Need" on the page itself)
+        {
+            path: '{% url "shopping:pantry_check" %}',
+            pathCheck: function(p) {
+                return p.includes('/pantry');
+            },
+            selector: '#section-groups-container .item-row, #shopping-list-content, [data-mode-switch="pantry"], #main-content',
+            badge: 'Pantry Check Mode',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoPantryData();
+
+                // Simulate transition from initial state to 'Need'
+                setTimeout(function() {
+                    const row = document.querySelector('#section-groups-container .item-row');
+                    if (row && !row.querySelector('.item-need-tag') && !document.getElementById('tour-demo-need-tag')) {
+                        const titleEl = row.querySelector('.item-title');
+                        const needBtn = row.querySelector('#tour-demo-need-btn, button[title*="confirm we need to buy"]');
+                        if (needBtn) {
+                            needBtn.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+                        }
+                        if (titleEl) {
+                            const tag = document.createElement('span');
+                            tag.id = 'tour-demo-need-tag';
+                            tag.setAttribute('data-tour-demo', 'true');
+                            tag.className = 'item-need-tag ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none whitespace-nowrap inline-flex items-center shadow-sm ring-2 ring-blue-400/40 transition-all';
+                            tag.textContent = '📋 Need';
+                            titleEl.after(tag);
+                            row.classList.add('bg-blue-50/40');
+                            positionSpotlight(row);
+                        }
+                    }
+                }, 650);
+            },
+            onLeave: function() {
+                cleanupTourDemoData();
+            }
+        },
+        // Step 5: Recipe Search & Multi-Tag Filters (navigates to Recipes tab)
+        {
+            path: '{% url "recipes:list" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/recipes') && !p.includes('/create');
+            },
+            selector: '#recipe-search-bar, #recipe-filter-form',
+            badge: 'Recipe Search & Filters',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
+                cleanupTourDemoData();
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
+                setTimeout(function() {
+                    const searchBar = document.getElementById('recipe-search-bar') || document.getElementById('recipe-filter-form');
+                    if (searchBar) {
+                        positionSpotlight(searchBar);
+                    }
+                }, 80);
+            }
+        },
+        // Step 6: "All Cuisines" Pulldown Menu (actively pulls down the Cuisine menu)
+        {
+            path: '{% url "recipes:list" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/recipes') && !p.includes('/create');
+            },
+            selector: '#facet-menu-cuisine, [data-facet="cuisine"], #facet-btn-cuisine',
+            badge: 'All Cuisines Pulldown',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                setTimeout(function() {
+                    const menu = document.getElementById('facet-menu-cuisine');
+                    const btn = document.getElementById('facet-btn-cuisine');
+                    if (menu) {
+                        menu.classList.remove('hidden');
+                        if (btn) btn.setAttribute('aria-expanded', 'true');
+                        positionSpotlight('#facet-menu-cuisine');
+                    }
+                }, 80);
+            },
+            onLeave: function() {
+                const menu = document.getElementById('facet-menu-cuisine');
+                const btn = document.getElementById('facet-btn-cuisine');
+                if (menu) menu.classList.add('hidden');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        },
+        // Step 7: Recipe Import & Creation (opens import modal without focusing input)
+        {
+            path: '{% url "recipes:list" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/recipes') && !p.includes('/create');
+            },
+            selector: '#import-url-modal .bg-white, #import-url-modal form, #recipe-action-buttons',
+            badge: 'Import from URL',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                if (typeof closeFacetMenu === 'function') closeFacetMenu('cuisine');
+                cleanupTourDemoData();
+                if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                    document.activeElement.blur();
+                }
+                const modal = document.getElementById('import-url-modal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    setTimeout(function() {
+                        const modalDialog = modal.querySelector('.bg-white') || modal.querySelector('form');
+                        if (modalDialog) {
+                            positionSpotlight(modalDialog);
+                        } else {
+                            positionSpotlight('#import-url-modal');
+                        }
+                    }, 100);
+                }
+            },
+            onLeave: function() {
+                const modal = document.getElementById('import-url-modal');
+                if (modal) modal.classList.add('hidden');
+            }
+        },
+        // Step 8: Meal Plans & Adding Dishes (navigates to Meal Plans tab)
+        {
+            path: '{% url "mealplans:detail" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/mealplans');
+            },
+            selector: '.meal-card, #add-meal-container, #mealplan-content',
+            badge: 'Weekly Meal Plans',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoMealPlanData();
+                setTimeout(function() {
+                    const card = document.querySelector('.meal-card');
+                    if (card) {
+                        positionSpotlight(card);
+                    } else {
+                        positionSpotlight('#mealplan-content');
+                    }
+                }, 80);
+            }
+        },
+        // Step 9: Recipe Ingredients & Cooking Readiness (opens recipe modal with ingredient checklist)
+        {
+            path: '{% url "mealplans:detail" %}',
+            pathCheck: function(p) {
+                return p.startsWith('/mealplans');
+            },
+            selector: '#tour-demo-recipe-modal > div, #recipe-detail-modal, [role="img"][aria-label*="Status:"], .meal-card',
+            badge: 'Ingredient Readiness',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoRecipeModal();
+                setTimeout(function() {
+                    positionSpotlight('#tour-demo-recipe-modal > div, #recipe-detail-modal');
+                }, 70);
+            },
+            onLeave: function() {
+                cleanupTourDemoData();
+            }
+        },
+        // Step 10: Workspaces & Collaboration (opens the workspace dropdown menu)
+        {
+            path: null,
+            pathCheck: function() {
+                return true;
+            },
+            selector: '#workspace-dropdown-menu, #workspace-dropdown-container, #workspace-dropdown-btn',
+            badge: 'Workspace Collaboration',
+            onEnter: function() {
+                cleanupTourDemoData();
+                setTimeout(function() {
+                    const menu = document.getElementById('workspace-dropdown-menu');
+                    if (menu && menu.classList.contains('hidden') && typeof toggleWorkspaceDropdown === 'function') {
+                        toggleWorkspaceDropdown();
+                        positionSpotlight('#workspace-dropdown-menu');
+                    }
+                }, 80);
+            },
+            onLeave: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+            }
+        },
+        // Step 11: Preset Lists & Reusable Templates (focusing on the preset list card)
+        {
+            path: '{% url "shopping:preset_list_index" %}',
+            pathCheck: function(p) {
+                return p.includes('/preset');
+            },
+            selector: '.preset-card, .preset-items-container, #preset-index-grid-container',
+            badge: 'Preset Lists',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                ensureDemoPresetData();
+                setTimeout(function() {
+                    const card = document.querySelector('.preset-card');
+                    if (card) {
+                        positionSpotlight(card);
+                    } else {
+                        positionSpotlight('#preset-index-grid-container');
+                    }
+                }, 80);
+            }
+        },
+        // Step 12: Automated Recurring Schedules (focusing specifically on the recurrence schedule block)
+        {
+            path: '{% url "shopping:preset_list_index" %}',
+            pathCheck: function(p) {
+                return p.includes('/preset');
+            },
+            selector: '.preset-schedule-block, .preset-card',
+            badge: 'Recurring Schedules',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                if (typeof closeUserDropdown === 'function') closeUserDropdown();
+                cleanupTourDemoData();
+                ensureDemoPresetData();
+                setTimeout(function() {
+                    const block = document.querySelector('.preset-schedule-block');
+                    if (block) {
+                        positionSpotlight(block);
+                    } else {
+                        positionSpotlight('.preset-card');
+                    }
+                }, 80);
+            }
+        },
+        // Step 14: Re-running the Product Tour Anytime from Avatar Menu
+        {
+            path: null,
+            pathCheck: function() {
+                return true;
+            },
+            selector: '#user-dropdown-menu, #user-dropdown-container, #user-dropdown-btn',
+            badge: 'Re-run Product Tour',
+            onEnter: function() {
+                if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
+                cleanupTourDemoData();
+                setTimeout(function() {
+                    const menu = document.getElementById('user-dropdown-menu');
+                    if (menu && menu.classList.contains('hidden') && typeof toggleUserDropdown === 'function') {
+                        toggleUserDropdown();
+                    }
+                    const tourBtn = menu ? menu.querySelector('button[onclick*="startProductTour"]') : null;
+                    if (tourBtn) {
+                        tourBtn.classList.add('bg-emerald-100/70', 'ring-1', 'ring-emerald-400');
+                        tourBtn.setAttribute('data-tour-highlighted', 'true');
+                    }
+                    positionSpotlight('#user-dropdown-menu');
+                }, 80);
+            },
+            onLeave: function() {
+                const tourBtn = document.querySelector('[data-tour-highlighted="true"]');
+                if (tourBtn) {
+                    tourBtn.classList.remove('bg-emerald-100/70', 'ring-1', 'ring-emerald-400');
+                    tourBtn.removeAttribute('data-tour-highlighted');
+                }
+                if (typeof closeUserDropdown === 'function') closeUserDropdown();
+            }
+        }
+    ];
+
+    function openWalkthroughModal(initialStep = 0) {
+        const modal = document.getElementById('walkthrough-modal');
+        if (!modal) return;
+
+        // Remember element that had focus before opening the tutorial
+        if (document.activeElement && document.activeElement !== document.body && !modal.contains(document.activeElement)) {
+            tourTriggerElement = document.activeElement;
+        }
+
+        // Save starting page & mode if not already recorded
+        if (!sessionStorage.getItem('tour_origin_url')) {
+            const isPantry = window.location.pathname.includes('/pantry') || window.location.search.includes('mode=pantry');
+            sessionStorage.setItem('tour_origin_url', window.location.pathname + window.location.search);
+            sessionStorage.setItem('tour_origin_mode', isPantry ? 'pantry' : 'shopping');
+        }
+
+        goToTourStep(initialStep);
+        modal.classList.remove('hidden');
+    }
+
+    function closeWalkthroughModal(returnToOrigin = true) {
+        const modal = document.getElementById('walkthrough-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+
+        // Clean up any simulated tour demo items and modals
+        cleanupTourDemoData();
+
+        // Close dropdowns
+        if (typeof closeWorkspaceDropdown === 'function') {
+            closeWorkspaceDropdown();
+        }
+        if (typeof closeUserDropdown === 'function') {
+            closeUserDropdown();
+        }
+        if (typeof closeFacetMenu === 'function') {
+            closeFacetMenu('cuisine');
+        }
+        const importModal = document.getElementById('import-url-modal');
+        if (importModal) {
+            importModal.classList.add('hidden');
+        }
+
+        // Return user to the exact navigation tab where they started the tour
+        const originUrl = sessionStorage.getItem('tour_origin_url');
+        const originMode = sessionStorage.getItem('tour_origin_mode') || 'shopping';
+        sessionStorage.removeItem('tour_origin_url');
+        sessionStorage.removeItem('tour_origin_mode');
+
+        if (returnToOrigin && originUrl) {
+            let cleanOrigin = originUrl.replace(/[?&]tour=\d+/, '').replace(/\?$/, '');
+            const isShoppingOrigin = cleanOrigin === '/' || cleanOrigin.startsWith('/shopping');
+            if (isShoppingOrigin && !cleanOrigin.includes('/pantry') && !cleanOrigin.includes('/preset')) {
+                if (originMode === 'shopping') {
+                    if (!cleanOrigin.includes('mode=')) {
+                        cleanOrigin += (cleanOrigin.includes('?') ? '&' : '?') + 'mode=shopping';
+                    } else {
+                        cleanOrigin = cleanOrigin.replace(/mode=pantry/, 'mode=shopping');
+                    }
+                }
+            }
+            if (cleanOrigin && cleanOrigin !== (window.location.pathname + window.location.search)) {
+                window.location.href = cleanOrigin;
+                return;
+            }
+        }
+
+        // Restore focus to trigger element if remaining on same page (WCAG 2.4.3)
+        if (tourTriggerElement && typeof tourTriggerElement.focus === 'function') {
+            try {
+                tourTriggerElement.focus();
+            } catch (e) {}
+            tourTriggerElement = null;
+        }
+
+        // Remove tour query param without full reload
+        if (window.location.search.includes('tour=')) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('tour');
+            window.history.replaceState({}, '', url.toString());
+        }
+    }
+
+    function goToTourStep(index) {
+        // Trigger onLeave of previous step if defined
+        if (tourStepConfigs[currentTourStep] && tourStepConfigs[currentTourStep].onLeave) {
+            tourStepConfigs[currentTourStep].onLeave();
+        }
+
+        currentTourStep = Math.max(0, Math.min(totalTourSteps - 1, index));
+        const config = tourStepConfigs[currentTourStep];
+
+        // Check if we need to open another navigation tab to highlight this concept
+        if (config.path && !config.pathCheck(window.location.pathname)) {
+            // Provide immediate, unmistakable visual feedback that the tutorial is continuing!
+            const indicator = document.getElementById('tour-step-indicator');
+            if (indicator) indicator.textContent = `Tutorial ${currentTourStep + 1} of ${totalTourSteps}`;
+            const badge = document.getElementById('tour-element-badge');
+            if (badge) badge.textContent = `Opening ${config.badge}...`;
+            const nextBtn = document.getElementById('tour-next-btn');
+            if (nextBtn) {
+                nextBtn.innerHTML = '<span class="inline-flex items-center gap-1.5"><svg class="animate-spin h-3 w-3 text-white" aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>Loading...</span>';
+                nextBtn.disabled = true;
+            }
+            const activePane = document.getElementById('tour-pane-' + (currentTourStep - 1)) || document.querySelector('.tour-pane:not(.hidden)');
+            if (activePane) {
+                activePane.innerHTML = `
+                    <div class="flex items-center space-x-2.5 p-2 bg-emerald-50 border border-emerald-300 text-emerald-950 font-medium">
+                        <svg class="animate-spin h-4 w-4 text-emerald-600 shrink-0" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        <span>Opening <strong>${config.badge}</strong> tab &mdash; tutorial continues...</span>
+                    </div>
+                `;
+            }
+            cleanupTourDemoData();
+            const separator = config.path.includes('?') ? '&' : '?';
+            window.location.href = config.path + separator + 'tour=' + currentTourStep;
+            return;
+        }
+
+        // Trigger onEnter hook (e.g. opening dropdowns or demo data)
+        if (config.onEnter) {
+            config.onEnter();
+        }
+
+        // Switch pane visibility
+        for (let i = 0; i < totalTourSteps; i++) {
+            const pane = document.getElementById('tour-pane-' + i);
+            if (pane) pane.classList.toggle('hidden', i !== currentTourStep);
+        }
+
+        // Update header indicator and badge
+        const indicator = document.getElementById('tour-step-indicator');
+        if (indicator) indicator.textContent = `Tutorial ${currentTourStep + 1} of ${totalTourSteps}`;
+
+        const badge = document.getElementById('tour-element-badge');
+        if (badge && config.badge) {
+            badge.textContent = config.badge;
+        }
+
+        // Update live announcer for assistive technology (WCAG 4.1.3 Status Messages)
+        const activePane = document.getElementById('tour-pane-' + currentTourStep);
+        const headingEl = activePane ? activePane.querySelector('.tour-pane-title') : null;
+        const headingText = headingEl ? headingEl.textContent.trim() : '';
+        const announcer = document.getElementById('tour-live-announcer');
+        if (announcer) {
+            announcer.textContent = `Tutorial step ${currentTourStep + 1} of ${totalTourSteps}: ${headingText}`;
+        }
+
+        // Update footer buttons
+        const prevBtn = document.getElementById('tour-prev-btn');
+        if (prevBtn) prevBtn.disabled = (currentTourStep === 0);
+
+        const nextBtn = document.getElementById('tour-next-btn');
+        if (nextBtn) {
+            if (currentTourStep === totalTourSteps - 1) {
+                nextBtn.textContent = 'Finish Tour';
+                nextBtn.onclick = closeWalkthroughModal;
+            } else {
+                nextBtn.textContent = 'Next →';
+                nextBtn.onclick = nextTourStep;
+            }
+        }
+
+        // Keep current tour step in URL
+        const url = new URL(window.location.href);
+        url.searchParams.set('tour', currentTourStep);
+        window.history.replaceState({}, '', url.toString());
+
+        // Spotlight target on the live page
+        setTimeout(function() {
+            positionSpotlight(config.selector);
+        }, 70);
+
+        // Move focus into the card Next button so keyboard and screen reader users can navigate seamlessly
+        setTimeout(function() {
+            const btn = document.getElementById('tour-next-btn');
+            if (btn && !btn.disabled && document.activeElement !== btn) {
+                btn.focus();
+            }
+        }, 120);
+    }
+
+    function nextTourStep() {
+        if (currentTourStep < totalTourSteps - 1) {
+            goToTourStep(currentTourStep + 1);
+        }
+    }
+
+    function prevTourStep() {
+        if (currentTourStep > 0) {
+            goToTourStep(currentTourStep - 1);
+        }
+    }
+
+    // Positions the unblurred spotlight quadrants & border around the target element,
+    // and flips the card between top and bottom so highlighted content is NEVER obscured.
+    function positionSpotlight(selector, shouldScroll = true) {
+        let targetEl = null;
+        if (selector && typeof selector === 'object' && selector.nodeType) {
+            targetEl = selector;
+        } else if (typeof selector === 'string') {
+            const parts = selector.split(',');
+            for (let part of parts) {
+                const found = document.querySelector(part.trim());
+                if (found && found.offsetParent !== null) {
+                    targetEl = found;
+                    break;
+                }
+            }
+        }
+
+        const topBackdrop = document.getElementById('tour-backdrop-top');
+        const bottomBackdrop = document.getElementById('tour-backdrop-bottom');
+        const leftBackdrop = document.getElementById('tour-backdrop-left');
+        const rightBackdrop = document.getElementById('tour-backdrop-right');
+        const border = document.getElementById('tour-spotlight-border');
+        const card = document.getElementById('tour-tooltip-card');
+        if (!topBackdrop || !bottomBackdrop || !leftBackdrop || !rightBackdrop || !border) return;
+
+        if (targetEl) {
+            // Instantly center target in viewport so getBoundingClientRect() is immediately accurate
+            if (shouldScroll) {
+                targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+                // Account for sticky header (height ~85px on mobile) so targetEl is never behind the navbar
+                const header = document.querySelector('header');
+                const headerBottom = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+                const r = targetEl.getBoundingClientRect();
+                if (r.top < headerBottom + 16) {
+                    const diff = (headerBottom + 20) - r.top;
+                    window.scrollBy({ top: -diff, behavior: 'auto' });
+                }
+            }
+            let rect = targetEl.getBoundingClientRect();
+
+            // When highlighting the user dropdown menu, expand to include the avatar button directly above it
+            const userBtn = document.getElementById('user-dropdown-btn');
+            if (targetEl.id === 'user-dropdown-menu' && userBtn && userBtn.offsetParent !== null) {
+                const btnRect = userBtn.getBoundingClientRect();
+                const unionTop = Math.min(rect.top, btnRect.top);
+                const unionLeft = Math.min(rect.left, btnRect.left);
+                const unionRight = Math.max(rect.right, btnRect.right);
+                const unionBottom = Math.max(rect.bottom, btnRect.bottom);
+                rect = {
+                    top: unionTop,
+                    left: unionLeft,
+                    right: unionRight,
+                    bottom: unionBottom,
+                    width: unionRight - unionLeft,
+                    height: unionBottom - unionTop
+                };
+            }
+
+            const pad = 6;
+            const x = Math.max(0, rect.left - pad);
+            const y = Math.max(0, rect.top - pad);
+            const w = Math.min(window.innerWidth - x, rect.width + (pad * 2));
+            const h = Math.min(window.innerHeight - y, rect.height + (pad * 2));
+
+            // Position 4 backdrop quadrants around the spotlight rectangle (cutout is completely unblurred)
+            topBackdrop.style.top = '0px';
+            topBackdrop.style.left = '0px';
+            topBackdrop.style.width = '100vw';
+            topBackdrop.style.height = y + 'px';
+
+            bottomBackdrop.style.top = (y + h) + 'px';
+            bottomBackdrop.style.left = '0px';
+            bottomBackdrop.style.width = '100vw';
+            bottomBackdrop.style.height = Math.max(0, window.innerHeight - (y + h)) + 'px';
+
+            leftBackdrop.style.top = y + 'px';
+            leftBackdrop.style.left = '0px';
+            leftBackdrop.style.width = x + 'px';
+            leftBackdrop.style.height = h + 'px';
+
+            rightBackdrop.style.top = y + 'px';
+            rightBackdrop.style.left = (x + w) + 'px';
+            rightBackdrop.style.width = Math.max(0, window.innerWidth - (x + w)) + 'px';
+            rightBackdrop.style.height = h + 'px';
+
+            // Green spotlight frame around the crisp, unblurred element
+            border.classList.remove('hidden');
+            border.style.display = 'block';
+            border.style.left = x + 'px';
+            border.style.top = y + 'px';
+            border.style.width = w + 'px';
+            border.style.height = h + 'px';
+
+            // Collision-Free Positioning: ensure the card NEVER covers highlighted content
+            if (card) {
+                // If target is in the lower half of viewport or its bottom is near the bottom:
+                const isNearBottom = rect.bottom > (window.innerHeight - 240) || ((rect.top + rect.bottom) / 2) > (window.innerHeight * 0.52);
+                if (isNearBottom) {
+                    // Position at top of screen
+                    card.classList.remove('bottom-3', 'sm:bottom-4');
+                    card.classList.add('top-3', 'sm:top-4');
+                } else {
+                    // Position at bottom of screen
+                    card.classList.remove('top-3', 'sm:top-4');
+                    card.classList.add('bottom-3', 'sm:bottom-4');
+                }
+            }
+        } else {
+            // Fallback when element is not present on current page
+            topBackdrop.style.top = '0px';
+            topBackdrop.style.left = '0px';
+            topBackdrop.style.width = '100vw';
+            topBackdrop.style.height = '100vh';
+
+            bottomBackdrop.style.height = '0px';
+            leftBackdrop.style.width = '0px';
+            rightBackdrop.style.width = '0px';
+
+            border.classList.add('hidden');
+            border.style.display = 'none';
+
+            if (card) {
+                card.classList.remove('top-3', 'sm:top-4');
+                card.classList.add('bottom-3', 'sm:bottom-4');
+            }
+        }
+    }
+
+    // Reposition spotlight on window resize & scroll
+    window.addEventListener('resize', function() {
+        const modal = document.getElementById('walkthrough-modal');
+        if (modal && !modal.classList.contains('hidden') && tourStepConfigs[currentTourStep]) {
+            positionSpotlight(tourStepConfigs[currentTourStep].selector, false);
+        }
+    });
+
+    window.addEventListener('scroll', function() {
+        const modal = document.getElementById('walkthrough-modal');
+        if (modal && !modal.classList.contains('hidden') && tourStepConfigs[currentTourStep]) {
+            positionSpotlight(tourStepConfigs[currentTourStep].selector, false);
+        }
+    }, { passive: true });
+
+    // Keyboard navigation & Focus Trapping (WCAG 2.1.1, 2.1.2)
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('walkthrough-modal');
+        if (!modal || modal.classList.contains('hidden')) return;
+
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeWalkthroughModal();
+        } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            nextTourStep();
+        } else if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            prevTourStep();
+        } else if (event.key === 'Tab') {
+            const card = document.getElementById('tour-tooltip-card');
+            if (card) {
+                const focusables = Array.from(card.querySelectorAll('button:not([disabled]), [tabindex="0"]')).filter(el => el.offsetParent !== null);
+                if (focusables.length > 0) {
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (event.shiftKey) {
+                        if (document.activeElement === first || !card.contains(document.activeElement)) {
+                            event.preventDefault();
+                            last.focus();
+                        }
+                    } else {
+                        if (document.activeElement === last || !card.contains(document.activeElement)) {
+                            event.preventDefault();
+                            first.focus();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Auto-launch immediately if URL has ?tour=X (avoids flash of bare page during tab transitions)
+    (function checkAutoTour() {
+        const match = window.location.search.match(/[?&]tour=(\d+)/);
+        if (match) {
+            const step = parseInt(match[1], 10);
+            const targetStep = isNaN(step) ? 0 : Math.max(0, Math.min(totalTourSteps - 1, step));
+
+            // Immediately switch to the target step indicators and pane to avoid any flash of Step 1
+            currentTourStep = targetStep;
+            const ind = document.getElementById('tour-step-indicator');
+            if (ind) ind.textContent = `Tutorial ${targetStep + 1} of ${totalTourSteps}`;
+            const badge = document.getElementById('tour-element-badge');
+            if (badge && tourStepConfigs[targetStep]) badge.textContent = tourStepConfigs[targetStep].badge;
+
+            for (let i = 0; i < totalTourSteps; i++) {
+                const pane = document.getElementById('tour-pane-' + i);
+                if (pane) pane.classList.toggle('hidden', i !== targetStep);
+            }
+
+            // Instantly unhide modal overlay so user never sees a bare screen
+            const modal = document.getElementById('walkthrough-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    openWalkthroughModal(targetStep);
+                });
+            } else {
+                openWalkthroughModal(targetStep);
+            }
+        }
+    })();
+</script>

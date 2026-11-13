@@ -1,0 +1,1 @@
+"""Shoppin Django applications package."""

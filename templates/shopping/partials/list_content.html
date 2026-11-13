@@ -1,0 +1,594 @@
+{% if toast_messages %}
+<div id="toast-container" hx-swap-oob="beforeend">
+    {% for msg in toast_messages %}
+    <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+        <span class="font-medium pr-2">{{ msg }}</span>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"><span aria-hidden="true">&times;</span></button>
+    </div>
+    {% endfor %}
+</div>
+{% elif toast_message %}
+<div id="toast-container" hx-swap-oob="beforeend">
+    <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/90 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+        <span class="font-medium pr-2">{{ toast_message }}</span>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"><span aria-hidden="true">&times;</span></button>
+    </div>
+</div>
+{% endif %}
+
+<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" data-mode="{{ mode }}" data-group-by="{{ group_by }}">
+
+    {% if not can_write %}
+    <!-- Read-Only / Static View Banner -->
+    <div class="px-3.5 py-2.5 bg-blue-50 border border-blue-300 flex items-center justify-between text-xs text-blue-950">
+        <div class="flex items-center space-x-2">
+            <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-800 text-white select-none">Read-Only</span>
+            <span>You have <strong>Viewer</strong> access to <strong>{{ workspace.name }}</strong> (Shared by {{ workspace.owner.username }}). Editing controls, drag-and-drop, and filters are disabled.</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Header: Title & Real-Time Sync Indicator -->
+    <div class="flex items-center justify-between gap-2 border-b border-gray-400 pb-2.5 min-h-[42px]">
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight select-none min-w-0 flex-1 truncate">
+            {{ shopping_list.name }}{% if mode == 'pantry' %} <span class="text-sm font-normal text-gray-500 font-sans whitespace-nowrap">(Pantry Check)</span>{% endif %}
+        </h1>
+        <div class="flex-shrink-0 flex items-center justify-end">
+            <span id="offline-sync-indicator" class="opacity-0 pointer-events-none w-[110px] h-[22px] min-w-[110px] max-w-[110px] min-h-[22px] max-h-[22px] inline-flex items-center justify-center text-center text-[11px] font-semibold px-1.5 py-0.5 border border-transparent rounded-none select-none transition-opacity duration-200 whitespace-nowrap overflow-hidden flex-shrink-0"></span>
+        </div>
+    </div>
+
+    {% if planned_meals %}
+    <!-- Planned Meals Navigation Strip -->
+    <div class="flex flex-wrap items-center gap-1.5 py-1 text-xs text-gray-700 bg-gray-50 border border-gray-200 px-2.5">
+        <span class="font-bold text-gray-600 uppercase text-[10px] tracking-wider">Planned Meals:</span>
+        {% for m in planned_meals %}
+        <a href="{% url 'mealplans:detail' %}" class="inline-flex items-center space-x-1 px-2 py-0.5 bg-white border border-gray-300 hover:border-gray-500 hover:bg-gray-50 text-xs text-gray-800">
+            <span class="font-medium">{{ m.name }}</span>
+            {% if m.emoji %}<span>{{ m.emoji }}</span>{% endif %}
+        </a>
+        {% endfor %}
+        <a href="{% url 'mealplans:detail' %}" class="text-[11px] text-blue-700 hover:underline font-semibold ml-auto">
+            Edit Meal Plan &rarr;
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Preset Lists Strip (Collapsible Card) -->
+    <div id="preset-lists-card" class="bg-gray-50 border border-gray-200 text-xs">
+        <div class="px-2.5 py-1.5 flex items-center justify-between select-none cursor-pointer hover:bg-gray-100/80 transition-colors"
+             onclick="togglePresetListsCard()"
+             role="button"
+             tabindex="0"
+             aria-expanded="{% if preset_lists_open %}true{% else %}false{% endif %}"
+             aria-controls="preset-lists-body"
+             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePresetListsCard();}">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-700 uppercase text-[10px] tracking-wider">Include Preset Lists</span>
+                {% if preset_lists %}
+                <span class="text-[10px] font-semibold text-gray-600 bg-gray-200/80 px-1.5 py-0.2">
+                    {{ preset_lists|length }}
+                </span>
+                {% endif %}
+                <span class="text-[11px] text-gray-500 hidden sm:inline">&ndash; Check box to load/unload items. Indicators show loaded status & schedule.</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'shopping:preset_list_index' %}" onclick="event.stopPropagation()" class="text-[11px] text-indigo-700 hover:underline font-semibold flex items-center space-x-1">
+                    <span>Manage Presets &rarr;</span>
+                </a>
+                <span id="preset-lists-caret" class="text-gray-400 transition-transform duration-150 inline-block text-xs" style="{% if not preset_lists_open %}transform: rotate(-90deg);{% endif %}" aria-hidden="true">&#9662;</span>
+            </div>
+        </div>
+
+        <div id="preset-lists-body" class="p-2 border-t border-gray-200 flex flex-wrap items-center gap-2 {% if not preset_lists_open %}hidden{% endif %}">
+            {% for p in preset_lists %}
+            <div class="inline-flex items-center border shadow-sm divide-x divide-gray-200 text-xs {% if p.is_loaded %}bg-indigo-50/70 border-indigo-300 text-indigo-950 font-medium{% else %}bg-white border-gray-300 text-gray-700{% endif %}">
+                <!-- Checkbox & Loaded Indicator -->
+                <div class="flex items-center space-x-1.5 px-2.5 py-1">
+                    {% if p.is_loaded %}
+                    <form hx-post="{% url 'shopping:preset_unload' p.id %}?group_by={{ group_by }}&mode={{ mode }}"
+                          hx-target="#shopping-list-content"
+                          hx-swap="outerHTML"
+                          class="inline flex items-center">
+                        {% csrf_token %}
+                        <input type="checkbox"
+                                checked
+                                onchange="this.form.requestSubmit()"
+                                title="Click to unload '{{ p.name }}' from shopping list"
+                                aria-label="Unload {{ p.name }} from shopping list"
+                                class="h-3.5 w-3.5 text-indigo-600 border-gray-300 rounded-none cursor-pointer">
+                    </form>
+                    <span class="font-bold text-gray-900">{{ p.name }}</span>
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold bg-indigo-200/90 text-indigo-900 tracking-wide rounded-none">
+                        ✓ Loaded ({{ p.loaded_items_count }})
+                    </span>
+                    {% else %}
+                    <button type="button"
+                            hx-get="{% url 'shopping:preset_load_modal' p.id %}?from_shopping_list=1&group_by={{ group_by }}&mode={{ mode }}"
+                            hx-target="#modal-placeholder"
+                            title="Click to load '{{ p.name }}' onto shopping list"
+                            aria-label="Load preset {{ p.name }} onto shopping list"
+                            class="flex items-center space-x-1.5 hover:text-indigo-600 cursor-pointer">
+                        <input type="checkbox"
+                                aria-hidden="true"
+                                tabindex="-1"
+                                class="h-3.5 w-3.5 text-gray-400 border-gray-300 rounded-none pointer-events-none">
+                        <span>{{ p.name }}</span>
+                        <span class="text-gray-500 text-[10px]">({{ p.items.count }})</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Schedule Indicator (on that same pill!) -->
+                <div class="px-2 py-1 bg-white/60">
+                    <button type="button"
+                            hx-get="{% url 'shopping:preset_schedule_modal' p.id %}?from_shopping_list=1&group_by={{ group_by }}&mode={{ mode }}"
+                            hx-target="#modal-placeholder"
+                            class="flex items-center space-x-1 hover:opacity-80 cursor-pointer"
+                            aria-label="Recurring schedule settings for {{ p.name }}"
+                            title="View or configure recurring schedule for '{{ p.name }}'">
+                        {% if p.is_schedule_enabled %}
+                        <span class="inline-flex items-center text-[10px] font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-1.5 py-0.2">
+                            ⏱ Every {{ p.interval_days }}d
+                        </span>
+                        {% if p.next_occurrence %}
+                        <span class="text-[10px] text-gray-600 hidden md:inline" title="Next run: {{ p.next_occurrence|date:'M j, Y g:i A' }}">
+                            (Next: {{ p.next_occurrence|date:"M j" }})
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="inline-flex items-center text-[10px] font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 px-1.5 py-0.2" title="No automated refresh schedule. Click to configure.">
+                            ⏱ Schedule Off
+                        </span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-gray-600 italic text-[11px] py-0.5">
+                No preset lists created yet. <a href="{% url 'shopping:preset_list_index' %}" class="text-indigo-700 hover:underline not-italic font-medium">+ Create one now</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        function togglePresetListsCard() {
+            const body = document.getElementById('preset-lists-body');
+            const caret = document.getElementById('preset-lists-caret');
+            const header = document.querySelector('[aria-controls="preset-lists-body"]');
+            if (!body) return;
+            const isHidden = body.classList.toggle('hidden');
+            if (caret) caret.style.transform = isHidden ? 'rotate(-90deg)' : '';
+            if (header) header.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+            const state = isHidden ? 'false' : 'true';
+            try { localStorage.setItem('preset_lists_open', state); } catch (_) {}
+            try { document.cookie = 'preset_lists_open=' + state + '; path=/; max-age=31536000; SameSite=Lax'; } catch (_) {}
+        }
+        function applyPresetListsCardState() {
+            try {
+                let isOpen = localStorage.getItem('preset_lists_open');
+                if (isOpen === null) {
+                    const match = document.cookie.match(/(^|;)\s*preset_lists_open=([^;]+)/);
+                    if (match) isOpen = match[2];
+                }
+                if (isOpen === 'false') {
+                    const body = document.getElementById('preset-lists-body');
+                    const caret = document.getElementById('preset-lists-caret');
+                    const header = document.querySelector('[aria-controls="preset-lists-body"]');
+                    if (body) body.classList.add('hidden');
+                    if (caret) caret.style.transform = 'rotate(-90deg)';
+                    if (header) header.setAttribute('aria-expanded', 'false');
+                }
+            } catch (_) {}
+        }
+        applyPresetListsCardState();
+    </script>
+
+    {% if can_write %}
+    <!-- Secondary Controls Bar: Store Selector, Sort Order -->
+    <div class="flex flex-wrap justify-between items-center gap-2 text-xs py-0.5">
+        <!-- Store Selector with Integrated Map Action -->
+        <div id="store-select-container" class="flex items-center">
+            <form hx-post="{% url 'shopping:set_store' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline-flex items-center">
+                {% csrf_token %}
+                <div class="inline-flex border border-gray-400 items-stretch bg-white">
+                    <select id="store-selector-select" name="store_id" aria-label="Select active grocery store" onchange="this.form.requestSubmit()"
+                            class="border-0 px-2 py-1 bg-white text-gray-900 rounded-none focus:outline-none focus:ring-0 text-xs">
+                        <option value="">No Store (Default Category Flow)</option>
+                        {% for store in stores %}
+                        <option value="{{ store.id }}" {% if active_store and active_store.id == store.id %}selected{% endif %}>
+                            {{ store.display_name|default:store.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" onclick="openStorePickerModal()" aria-label="Near Me: Locate nearest store using GPS or map" title="Find nearest store / View map"
+                            class="border-l border-gray-400 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 text-gray-700 font-medium rounded-none inline-flex items-center gap-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                        <span aria-hidden="true">📍</span>
+                        <span class="hidden sm:inline">Near Me / </span><span>Map</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Sort Toggle (By Category / By Aisle / By Priority) -->
+            <div class="inline-flex border border-gray-400" role="group" aria-label="Sort order">
+                <button hx-get="{% url 'shopping:list' %}?group_by=category&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        aria-pressed="{% if group_by == 'category' %}true{% else %}false{% endif %}"
+                        class="px-2.5 py-1 text-xs font-medium {% if group_by == 'category' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
+                    By Category
+                </button>
+                <button hx-get="{% url 'shopping:list' %}?group_by=aisle&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        aria-pressed="{% if group_by == 'aisle' %}true{% else %}false{% endif %}"
+                        class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if group_by == 'aisle' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
+                    By Aisle
+                </button>
+                <button hx-get="{% url 'shopping:list' %}?group_by=priority&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true"
+                        aria-pressed="{% if group_by == 'priority' %}true{% else %}false{% endif %}"
+                        class="px-2.5 py-1 text-xs font-medium border-l border-gray-400 {% if group_by == 'priority' %}bg-gray-800 text-white font-bold{% else %}bg-white text-gray-700 hover:bg-gray-100{% endif %}">
+                    By Priority
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Bar (High Density, Simple Border) -->
+    <div class="bg-gray-50 border border-gray-300 p-2">
+        <form hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
+            {% csrf_token %}
+            <input type="text" name="name" id="add-item-name" aria-label="Item name" placeholder="Item name (e.g. celery, butter, bread)" list="all-ingredients-datalist" required autocomplete="off"
+                   class="flex-1 min-w-[140px] sm:min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-900 rounded-none text-xs">
+            <input type="text" name="amount" id="add-item-amount" aria-label="Item amount" value="1" placeholder="Amount" style="width: 55px;"
+                   class="border border-gray-400 px-2 py-1 bg-white text-center rounded-none focus:outline-none focus:border-gray-900 text-xs">
+            <input type="text" name="brand" id="add-item-brand" aria-label="Item brand (optional)" placeholder="Brand (opt)"
+                   class="flex-1 min-w-[85px] sm:w-[110px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none focus:border-gray-900 text-xs">
+            <input type="text" name="vendor" id="add-item-vendor" aria-label="Item vendor (optional)" placeholder="Vendor (opt)"
+                   class="flex-1 min-w-[85px] sm:w-[110px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none focus:border-gray-900 text-xs">
+            <input type="text" name="purpose" id="add-item-purpose" aria-label="Item purpose (optional)" placeholder="Purpose (opt)"
+                   class="flex-1 min-w-[95px] sm:w-[115px] sm:flex-initial border border-gray-400 px-2 py-1 bg-white rounded-none focus:outline-none focus:border-gray-900 text-xs">
+            <label id="add-item-priority-label" class="inline-flex items-center space-x-1 cursor-pointer select-none px-2 py-1 border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] min-h-[26px]" title="Flag as High Priority">
+                <input type="checkbox" name="priority" value="true" class="h-4 w-4 text-[#800020] border-[#800020]/40 rounded-none cursor-pointer focus:ring-1 focus:ring-[#800020]">
+                <span class="text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 leading-none">
+                    <span aria-hidden="true">🚩</span>
+                    <span class="inline">Priority</span>
+                </span>
+            </label>
+            <button type="submit" class="border border-gray-800 bg-gray-800 hover:bg-black text-white px-3 py-1 font-semibold rounded-none text-xs min-h-[26px] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                + Add Item
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- SECTION 1: TO BUY (NEED) -->
+    <div class="border border-gray-300 bg-white">
+        <!-- Section Header -->
+        <div class="px-3 py-2 bg-gray-100 border-b border-gray-300 flex justify-between items-center text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-gray-900 uppercase tracking-wider text-xs">To Buy</span>
+                <span id="need-items-count" class="text-gray-500 font-normal">({{ need_count }})</span>
+            </div>
+            {% if mode == 'shopping' and need_unconfirmed_count > 0 %}
+            <div class="flex items-center space-x-2 text-[11px]">
+                <span class="text-gray-500 font-normal select-none" title="Items needing Pantry Check">{{ need_unconfirmed_count }} pantry check needed</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if mode == 'pantry' %}
+        <!-- Helper banner for Pantry Check Mode -->
+        <div class="px-3 py-2 bg-amber-50 border-b border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-900">
+            <div class="flex items-center space-x-1.5">
+                <span class="text-base select-none leading-none">🏠</span>
+                <span><strong>Pantry Check Mode:</strong> Review what you have at home before heading out. Tap <strong>Have</strong> if you already have it, <strong>Skip</strong> if not buying today, or <strong>Need</strong> to confirm you need to buy it.</span>
+            </div>
+            <a href="{% url 'shopping:list' %}?mode=shopping"
+               data-mode-switch="shopping"
+               class="text-xs text-amber-800 hover:text-black font-semibold underline whitespace-nowrap">
+                Ready to shop &rarr;
+            </a>
+        </div>
+        {% endif %}
+
+        {% if grouped_need %}
+            <!-- Section Groups Container (Drag & Drop to rearrange sections or aisles) -->
+            <div id="section-groups-container" class="space-y-6 px-3 py-4" data-group-by="{{ group_by }}">
+                {% for group_title, items in grouped_need.items %}
+                <div class="section-group-block space-y-1.5" data-group-name="{{ group_title }}">
+                    <!-- Category/Aisle Header: No underline, drag handle for section reordering -->
+                    <div class="flex items-center justify-between pb-1">
+                        <div class="flex items-center space-x-2">
+                            {% if can_write %}
+                            <span class="section-drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-800 select-none text-base font-mono leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900" role="button" tabindex="0" title="Drag to rearrange section" aria-label="Reorder section {{ group_title }}: press Alt+Up or Alt+Down to move">⋮⋮</span>
+                            {% endif %}
+                            <h3 class="font-black text-sm tracking-wider uppercase text-gray-950 select-none">
+                                {{ group_title }}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Items List (Drag & Drop for individual items within section) -->
+                    <div class="sortable-group divide-y divide-gray-200" data-group="{{ group_title }}">
+                        {% for item in items %}
+                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-locked="{% if item.locked %}true{% else %}false{% endif %}" data-group-name="{{ group_title }}" style="view-transition-name: item-row-{{ item.id }};">
+                            <!-- Left: Drag handle + Name + Specs -->
+                            <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                                {% if can_write %}
+                                <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 select-none text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900" role="button" tabindex="0" title="Drag to rearrange item" aria-label="Reorder {{ item.name }}: press Alt+Up or Alt+Down to move">⋮⋮</span>
+                                {% endif %}
+                                <div class="min-w-0 flex-1 leading-snug">
+                                    <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                                    {% if item.priority %}
+                                        {% if can_write %}
+                                        <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] select-none inline-flex items-center gap-1 rounded-none cursor-pointer focus:outline-none transition-colors whitespace-nowrap" title="High Priority (click to remove priority)" aria-label="Priority: Remove high priority flag for {{ item.name }}">
+                                                <span aria-hidden="true">🚩</span>
+                                                <span>Priority</span>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none whitespace-nowrap" title="High Priority" aria-label="Priority: High priority">
+                                            <span aria-hidden="true">🚩</span>
+                                            <span>Priority</span>
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if mode == 'pantry' %}
+                                        {% if item.locked %}
+                                        <span class="item-need-tag ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none whitespace-nowrap inline-flex items-center">📋 Need</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <!-- In Store Mode: Only show subtle tag for items needing pantry check -->
+                                        {% if not item.locked %}
+                                            {% if can_write %}
+                                            <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 hover:bg-amber-100 text-amber-800 select-none inline-flex items-center cursor-pointer rounded-none whitespace-nowrap" aria-label="Pantry check needed: Confirm need for {{ item.name }}" title="Pantry check needed (click to confirm)">pantry check needed</button>
+                                            </form>
+                                            {% else %}
+                                            <span class="ml-1.5 px-1.5 py-0 text-[9px] font-normal border border-amber-200/80 bg-amber-50 text-amber-800 select-none inline-flex items-center rounded-none whitespace-nowrap" title="Pantry check needed">pantry check needed</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                    <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+
+                                    <!-- Secondary details -->
+                                    <span class="text-gray-600 ml-2">
+                                        {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                                        {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                                        {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                                        {% if item.vendor %}<span class="inline-block ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
+                                        {% with eff_loc=item.effective_location_display %}
+                                            {% if eff_loc and group_by != 'aisle' %}
+                                                <span class="inline-block ml-1 text-gray-700 font-medium">📍 {{ eff_loc }}</span>
+                                            {% elif group_by == 'aisle' and item.effective_bay %}
+                                                <span class="inline-block ml-1 text-gray-600 font-normal">📍 Bay {{ item.effective_bay }}</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                        <span class="ml-1.5 text-gray-700 italic text-xs select-none" title="{% if item.changed_by_display %}Date placed or updated by {{ item.changed_by_display }}{% else %}Date placed or updated{% endif %}">{% if item.changed_by_display %}{{ item.changed_by_display }} {% endif %}{{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Actions -->
+                            {% if can_write %}
+                            <div class="item-actions flex items-center space-x-1 flex-shrink-0">
+                                {% if mode == 'pantry' %}
+                                {% if not item.locked %}
+                                <form hx-post="{% url 'shopping:set_status' item.id 'HAVE' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" aria-label="Have: {{ item.name }} at home" title="Already have at home" class="border border-amber-500 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 text-xs text-amber-900 font-semibold rounded-none">
+                                        🏠 Have
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form hx-post="{% url 'shopping:toggle_lock' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    {% if item.locked %}
+                                    <button type="submit" aria-label="Reset: Need confirmed for {{ item.name }}" title="Confirmed need (click to reset)" class="border border-gray-400 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 text-xs text-gray-800 font-semibold rounded-none">
+                                        ↺ Reset
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" aria-label="Need: Confirm need to buy {{ item.name }}" title="Check item: confirm we need to buy this" class="border border-gray-400 hover:border-gray-600 bg-gray-50/70 hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-800 font-medium rounded-none">
+                                        📋 Need
+                                    </button>
+                                    {% endif %}
+                                </form>
+                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" aria-label="Skip: {{ item.name }} for this trip" title="Don't need this trip" class="border border-gray-400 hover:border-gray-600 bg-gray-50/70 hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 hover:text-gray-900">
+                                        ⏭ Skip
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form hx-post="{% url 'shopping:set_status' item.id 'GOT' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" aria-label="Got: {{ item.name }} in cart" title="Got it (Put in Cart)" class="border border-gray-400 hover:border-gray-600 bg-gray-50/70 hover:bg-gray-100 px-2 py-0.5 text-xs text-gray-900 font-medium">
+                                        🛒 Got
+                                    </button>
+                                </form>
+                                <form hx-post="{% url 'shopping:set_status' item.id 'DONT_NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                                    {% csrf_token %}
+                                    <button type="submit" aria-label="Skip: {{ item.name }} for this trip" title="Don't need this trip" class="border border-gray-400 hover:border-gray-600 bg-gray-50/70 hover:bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 hover:text-gray-900">
+                                        ⏭ Skip
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if not item.priority and mode != 'pantry' %}
+                                <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="item-priority-toggle-btn text-gray-700 hover:text-[#800020] min-w-[24px] min-h-[24px] inline-flex items-center justify-center p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#800020]" aria-label="Flag {{ item.name }} as High Priority" title="Flag as High Priority">
+                                        <span aria-hidden="true">🚩</span>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                                    <span aria-hidden="true">✏️</span>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="to-buy-empty-placeholder" class="p-6 text-center text-gray-500 text-xs hidden">
+                All items in To Buy have been checked off!
+            </div>
+        {% else %}
+            <div class="p-6 text-center text-gray-500 text-xs">
+                No items on shopping list. Add an item above or load meals from a meal plan.
+            </div>
+        {% endif %}
+    </div>
+
+    <!--
+      SECTION 2: IN CART (GOT)
+      Visual Styling Note:
+      Uses a soft, desaturated mint-green theme (bg-cart-header, bg-cart-bg, border-cart-border)
+      configured in Tailwind theme config to clearly communicate completion without harsh contrast.
+    -->
+    <div id="got-section-container" class="border border-cart-border bg-cart-bg mt-5 {% if not got_items %}hidden{% endif %}">
+        <!-- Section Header -->
+        <div class="px-3 py-2 border-b border-cart-border bg-cart-header flex justify-between items-center text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-emerald-950 uppercase tracking-wider text-xs">Got</span>
+                <span class="text-emerald-800 font-normal">Purchased or in cart</span>
+            </div>
+            <span id="got-items-count" class="text-emerald-800 font-semibold text-xs">({{ got_items|length }})</span>
+        </div>
+
+        <div id="got-items-list" class="divide-y divide-emerald-200">
+            {% for item in got_items %}
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
+                <!-- Left: Status check + Name + Specs -->
+                <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                    <span class="status-icon text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
+                    <div class="min-w-0 flex-1 leading-snug">
+                        <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                                    {% if item.priority %}
+                                        {% if can_write %}
+                                        <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] select-none inline-flex items-center gap-1 rounded-none cursor-pointer focus:outline-none transition-colors whitespace-nowrap" title="High Priority (click to remove priority)" aria-label="High Priority: click to toggle off">
+                                                <span aria-hidden="true">🚩</span>
+                                                <span>Priority</span>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none whitespace-nowrap" title="High Priority" aria-label="High Priority">
+                                            <span aria-hidden="true">🚩</span>
+                                            <span>Priority</span>
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
+                        <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+
+                        <!-- Secondary details -->
+                        <span class="text-gray-600 ml-2">
+                            {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                            {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                            {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                            {% if item.vendor %}<span class="inline-block ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
+                            <span class="ml-1.5 text-gray-700 italic text-xs select-none" title="{% if item.changed_by_display %}Date placed or updated by {{ item.changed_by_display }}{% else %}Date placed or updated{% endif %}">{% if item.changed_by_display %}{{ item.changed_by_display }} {% endif %}{{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Right: Actions -->
+                {% if can_write %}
+                <div class="item-actions flex items-center space-x-1 flex-shrink-0">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        {% csrf_token %}
+                        <button type="submit" aria-label="Need: Put {{ item.name }} back to To Buy" title="Put back to To Buy" class="border border-emerald-400 hover:border-emerald-600 bg-white hover:bg-emerald-50 px-2 py-0.5 text-xs text-gray-900 font-medium rounded-none">
+                            📋 Need
+                        </button>
+                    </form>
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                        <span aria-hidden="true">✏️</span>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!--
+      SECTION 3: ALREADY HAVE / SKIPPED
+      Visual Styling Note:
+      Uses a soft, cool sky-blue tint (bg-pantry-header, bg-pantry-bg, border-pantry-border)
+      configured in Tailwind theme config to represent items already at home or deferred.
+    -->
+    <div id="pantry-section-container" class="border border-pantry-border bg-pantry-bg mt-5 text-xs {% if not pantry_items %}hidden{% endif %}">
+        <!-- Section Header -->
+        <div class="px-3 py-2 border-b border-pantry-border bg-pantry-header flex justify-between items-center text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-blue-950 uppercase tracking-wider text-xs">Already Have / Skipped</span>
+                <span class="text-blue-800 font-normal">At home or skipped</span>
+            </div>
+            <span id="pantry-items-count" class="text-blue-800 font-semibold text-xs">({{ pantry_items|length }})</span>
+        </div>
+
+        <div id="pantry-items-list" class="divide-y divide-blue-200">
+            {% for item in pantry_items %}
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
+                <!-- Left: Status Icon + Name + Specs -->
+                <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
+                    {% if item.status == 'HAVE' %}
+                    <span class="status-icon text-blue-800 font-bold select-none text-sm" title="Already have at home" aria-label="Already have at home" role="img">🏠</span>
+                    {% else %}
+                    <span class="status-icon text-gray-600 font-bold select-none text-sm" title="Skipped" aria-label="Skipped" role="img">⏭</span>
+                    {% endif %}
+                    <div class="min-w-0 flex-1 leading-snug">
+                        <span class="item-title font-semibold text-gray-900 text-sm">{{ item.name }}</span>
+                                    {% if item.priority %}
+                                        {% if can_write %}
+                                        <form hx-post="{% url 'shopping:toggle_priority' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] hover:bg-[#fae1e6] text-[#800020] select-none inline-flex items-center gap-1 rounded-none cursor-pointer focus:outline-none transition-colors whitespace-nowrap" title="High Priority (click to remove priority)" aria-label="Priority: Remove high priority flag for {{ item.name }}">
+                                                <span aria-hidden="true">🚩</span>
+                                                <span>Priority</span>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none whitespace-nowrap" title="High Priority" aria-label="Priority: High priority">
+                                            <span aria-hidden="true">🚩</span>
+                                            <span>Priority</span>
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
+                        <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+
+                        <!-- Secondary details -->
+                        <span class="text-gray-600 ml-2">
+                            {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
+                            {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
+                            {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
+                            {% if item.vendor %}<span class="inline-block ml-1 italic text-gray-700">Vendor: {{ item.vendor }}</span>{% endif %}
+                            <span class="ml-1.5 text-gray-700 italic text-xs select-none" title="{% if item.changed_by_display %}Date placed or updated by {{ item.changed_by_display }}{% else %}Date placed or updated{% endif %}">{% if item.changed_by_display %}{{ item.changed_by_display }} {% endif %}{{ item.status_changed_at|default:item.updated_at|date:"m/d" }}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Right: Actions -->
+                {% if can_write %}
+                <div class="item-actions flex items-center space-x-1 flex-shrink-0">
+                    <form hx-post="{% url 'shopping:set_status' item.id 'NEED' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true">
+                        {% csrf_token %}
+                        <button type="submit" aria-label="Need: Move {{ item.name }} back to To Buy" title="Move back to To Buy" class="border border-blue-400 hover:border-blue-600 bg-white hover:bg-blue-50 px-2 py-0.5 text-xs text-gray-900 font-medium rounded-none">
+                            📋 Need
+                        </button>
+                    </form>
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                        <span aria-hidden="true">✏️</span>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

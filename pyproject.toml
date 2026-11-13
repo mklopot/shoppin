@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shoppin"
+version = "2.0.0"
+description = "Shopping list generator, recipe database, and meal planner"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.0",
+    "channels>=4.3",
+    "daphne>=4.2",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.2",
+    "pillow>=11.0",
+    "recipe-scrapers>=15.13",
+    "beautifulsoup4>=4.12",
+    "requests>=2.28",
+    "curl_cffi>=0.7",
+    "psycopg[binary]>=3.2",
+    "dj-database-url>=2.2",
+    "channels-redis>=4.2",
+    "inflection>=0.5.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["apps*", "config*"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1",
+    "pytest-django>=4.14",
+    "pytest-xdist>=3.8",
+    "ruff>=0.17",
+    "bandit>=1.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".venv",
+    "legacy",
+    "migrations",
+    "scratch",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]

@@ -1,0 +1,33 @@
+  - 'cumin'
+
+  - 'smoked paprika'
+
+  - 'italian seasoning'
+
+  - 'salt'
+
+  - 'pepper'
+
+  - 'turmeric'
+
+  - 'onion powder'
+
+  - 'garlic powder'
+
+  - 'chili powder'
+
+  - 'paprika'
+
+  - 'MSG'
+
+  - 'coriander'
+
+  - '"whole" coriander'
+
+  - '"whole" coriander':
+      amount: '2'
+      brand: '"best" ''spices'' '''
+      vendor: '"best" ''spice'' store''s'
+
+  - '''whole'' coriander'
+

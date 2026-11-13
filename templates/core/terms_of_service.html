@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - Recipe{% endblock %}
+
+{% block footer_terms_link %}{% endblock %}
+
+{% block content %}
+{% if is_mandatory_gate %}
+<!-- Mandatory Acceptance Gate (Standard, focused agreement dialog) -->
+<div class="max-w-xl mx-auto my-12 bg-white border border-gray-300 p-8 shadow-xs space-y-6 font-sans">
+    <div class="border-b border-gray-200 pb-4">
+        <h1 class="text-xl font-bold text-gray-900">Terms of Service</h1>
+        <p class="text-xs text-gray-600 mt-1">Please review and agree to the Terms of Service to continue using recipe.klopot.tech.</p>
+    </div>
+
+    <form method="post" action="{% url 'core:terms_accept' %}" id="tos-acceptance-form" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <!-- Client device & network signals recorded in background -->
+        <input type="hidden" id="input_screen_resolution" name="screen_resolution" value="">
+        <input type="hidden" id="input_viewport_size" name="viewport_size" value="">
+        <input type="hidden" id="input_color_depth" name="color_depth" value="">
+        <input type="hidden" id="input_pixel_ratio" name="pixel_ratio" value="">
+        <input type="hidden" id="input_timezone" name="timezone" value="">
+        <input type="hidden" id="input_client_language" name="client_language" value="">
+        <input type="hidden" id="input_platform" name="platform" value="">
+        <input type="hidden" id="input_hardware_concurrency" name="hardware_concurrency" value="">
+        <input type="hidden" id="input_device_memory_gb" name="device_memory_gb" value="">
+        <input type="hidden" id="input_touch_support" name="touch_support" value="false">
+        <input type="hidden" id="input_client_geolocation" name="client_geolocation" value="">
+        <input type="hidden" id="input_raw_client_telemetry" name="raw_client_telemetry" value="">
+
+        <div class="flex items-start space-x-3 pt-2">
+            <input type="checkbox"
+                   id="agree_to_terms"
+                   name="agree_to_terms"
+                   value="1"
+                   required
+                   class="mt-0.5 h-4 w-4 border-gray-300 rounded text-gray-900 focus:ring-gray-900 cursor-pointer">
+            <label for="agree_to_terms" class="text-xs text-gray-700 leading-normal select-none">
+                I have read and agree to the 
+                <a href="{% url 'core:terms' %}" id="view-terms-link" onclick="openTermsModal(event)" class="text-blue-600 hover:text-blue-800 underline font-medium">Terms of Service</a>.
+            </label>
+        </div>
+
+        <div class="pt-4 border-t border-gray-200 flex items-center justify-between">
+            <button type="submit"
+                    id="tos-submit-btn"
+                    class="bg-gray-900 hover:bg-black text-white px-5 py-2.5 text-xs font-semibold rounded-none border border-gray-900 transition-colors cursor-pointer">
+                Agree and Continue
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Dialog for Viewing Terms -->
+<div id="terms-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="terms-modal-title">
+    <div class="bg-white border border-gray-300 w-full max-w-3xl max-h-[85vh] flex flex-col shadow-lg rounded-none">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+            <h2 id="terms-modal-title" class="text-sm font-bold text-gray-900">Terms of Service</h2>
+            <div class="flex items-center space-x-3 text-xs">
+                <a href="{% url 'core:terms' %}" target="_blank" class="text-blue-600 hover:underline">Open in new tab &nearr;</a>
+                <button type="button" onclick="closeTermsModal()" class="text-gray-500 hover:text-black font-bold text-base px-1 leading-none cursor-pointer" aria-label="Close">&times;</button>
+            </div>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1 text-xs text-gray-700">
+            {% include "core/partials/terms_text.html" %}
+        </div>
+        <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 flex justify-end">
+            <button type="button" onclick="closeTermsModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-1.5 text-xs font-semibold rounded-none cursor-pointer">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Public Terms of Service View -->
+<div class="max-w-3xl mx-auto my-8 bg-white border border-gray-300 p-8 shadow-xs space-y-6 font-sans">
+    {% if has_accepted and acceptance_record %}
+    <div class="p-3 bg-gray-50 border border-gray-200 text-xs text-gray-700 flex flex-wrap items-center justify-between gap-2">
+        <div>
+            <span class="font-semibold text-gray-900">Terms Accepted:</span>
+            <span>You agreed to Version {{ acceptance_record.version }} on {{ acceptance_record.accepted_at|date:"F j, Y" }}.</span>
+        </div>
+        <a href="{{ next }}" class="text-blue-600 hover:underline font-medium">Return to App &rarr;</a>
+    </div>
+    {% endif %}
+
+    {% include "core/partials/terms_text.html" %}
+
+    {% if request.user.is_authenticated and not has_accepted %}
+    <div class="border-t border-gray-200 pt-6 mt-6">
+        <form method="post" action="{% url 'core:terms_accept' %}" id="tos-acceptance-form" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <!-- Client device & network signals recorded in background -->
+            <input type="hidden" id="input_screen_resolution" name="screen_resolution" value="">
+            <input type="hidden" id="input_viewport_size" name="viewport_size" value="">
+            <input type="hidden" id="input_color_depth" name="color_depth" value="">
+            <input type="hidden" id="input_pixel_ratio" name="pixel_ratio" value="">
+            <input type="hidden" id="input_timezone" name="timezone" value="">
+            <input type="hidden" id="input_client_language" name="client_language" value="">
+            <input type="hidden" id="input_platform" name="platform" value="">
+            <input type="hidden" id="input_hardware_concurrency" name="hardware_concurrency" value="">
+            <input type="hidden" id="input_device_memory_gb" name="device_memory_gb" value="">
+            <input type="hidden" id="input_touch_support" name="touch_support" value="false">
+            <input type="hidden" id="input_client_geolocation" name="client_geolocation" value="">
+            <input type="hidden" id="input_raw_client_telemetry" name="raw_client_telemetry" value="">
+
+            <div class="flex items-start space-x-3">
+                <input type="checkbox"
+                       id="agree_to_terms"
+                       name="agree_to_terms"
+                       value="1"
+                       required
+                       class="mt-0.5 h-4 w-4 border-gray-300 rounded text-gray-900 focus:ring-gray-900 cursor-pointer">
+                <label for="agree_to_terms" class="text-xs text-gray-700 select-none">
+                    I have read and agree to the Terms of Service.
+                </label>
+            </div>
+            <button type="submit"
+                    id="tos-submit-btn"
+                    class="bg-gray-900 hover:bg-black text-white px-5 py-2.5 text-xs font-semibold rounded-none border border-gray-900 transition-colors cursor-pointer">
+                Agree and Continue
+            </button>
+        </form>
+    </div>
+    {% elif not request.user.is_authenticated %}
+    <div class="border-t border-gray-200 pt-6 mt-6 text-xs text-gray-600">
+        To use recipe.klopot.tech features and save recipes, please <a href="{% url 'core:login' %}?next={% url 'core:terms' %}" class="text-blue-600 hover:underline font-medium">sign in</a>.
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+(function() {
+    // Modal toggle functions
+    window.openTermsModal = function(e) {
+        if (e) e.preventDefault();
+        const modal = document.getElementById('terms-modal');
+        if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeTermsModal = function() {
+        const modal = document.getElementById('terms-modal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            window.closeTermsModal();
+        }
+    });
+
+    // Populate client device and display signals silently in background
+    const setVal = (id, val) => {
+        const input = document.getElementById(id);
+        if (input) input.value = val;
+    };
+
+    const screenWidth = window.screen.width || 0;
+    const screenHeight = window.screen.height || 0;
+    const availWidth = window.screen.availWidth || 0;
+    const availHeight = window.screen.availHeight || 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const colorDepth = (window.screen.colorDepth || 24) + '-bit';
+    const pixelRatio = (window.devicePixelRatio || 1).toString();
+    const timezone = (window.Intl && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone || '' : '';
+    const language = navigator.language || (navigator.languages && navigator.languages[0]) || '';
+    const platform = navigator.platform || (navigator.userAgentData && navigator.userAgentData.platform) || '';
+    const cores = (navigator.hardwareConcurrency || '').toString();
+    const memory = (navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '').toString();
+    const touch = (navigator.maxTouchPoints > 0 || 'ontouchstart' in window);
+
+    setVal('input_screen_resolution', screenWidth ? `${screenWidth}x${screenHeight}` : '');
+    setVal('input_viewport_size', viewportWidth ? `${viewportWidth}x${viewportHeight}` : '');
+    setVal('input_color_depth', colorDepth);
+    setVal('input_pixel_ratio', pixelRatio);
+    setVal('input_timezone', timezone);
+    setVal('input_client_language', language);
+    setVal('input_platform', platform);
+    setVal('input_hardware_concurrency', cores);
+    setVal('input_device_memory_gb', memory);
+    setVal('input_touch_support', touch ? 'true' : 'false');
+
+    if (timezone) {
+        setVal('input_client_geolocation', `Timezone: ${timezone}`);
+    }
+
+    const rawTelemetry = {
+        screen: { width: screenWidth, height: screenHeight, availWidth, availHeight, colorDepth, pixelRatio },
+        viewport: { innerWidth: viewportWidth, innerHeight: viewportHeight },
+        hardware: { concurrency: cores, memoryGb: memory, maxTouchPoints: navigator.maxTouchPoints || 0 },
+        system: { platform, language, timezone },
+        timestamp: new Date().toISOString()
+    };
+    setVal('input_raw_client_telemetry', JSON.stringify(rawTelemetry));
+})();
+</script>
+{% endblock %}

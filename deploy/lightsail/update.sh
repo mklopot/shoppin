@@ -1,0 +1,82 @@
+#!/bin/bash
+# ==============================================================================
+# Shoppin Zero-Downtime Update Script for Lightsail
+# Pulls git updates, applies migrations, collects static assets, and restarts Daphne.
+# Usage: bash /app/deploy/lightsail/update.sh
+# ==============================================================================
+
+set -euo pipefail
+
+APP_DIR="/app"
+cd "$APP_DIR"
+
+echo "==> Discarding any local tracked modifications..."
+git reset --hard HEAD
+
+echo "==> Pulling latest code from git..."
+git pull origin v2-django
+
+echo "==> Updating Python dependencies..."
+# Clean up orphaned temporary directories left by interrupted pip operations (e.g. ~hoppin)
+rm -rf "$APP_DIR"/.venv/lib*/python*/site-packages/~* 2>/dev/null || true
+"$APP_DIR/.venv/bin/pip" install -q -e "$APP_DIR"
+
+echo "==> Applying database migrations..."
+"$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" migrate --noinput
+
+echo "==> Checking for new recipe database additions and updating existing directions..."
+"$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" import_recipes --update-existing
+
+echo "==> Collecting static assets..."
+"$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" collectstatic --noinput
+
+echo "==> Updating maintenance placeholder page..."
+sudo cp "$APP_DIR/deploy/lightsail/maintenance.html" "$APP_DIR/staticfiles/maintenance.html" 2>/dev/null || true
+sudo chmod 644 "$APP_DIR/staticfiles/maintenance.html" 2>/dev/null || true
+
+echo "==> Setting directory and media permissions..."
+if [ -d "$APP_DIR/media/media" ]; then
+    echo "==> Normalizing nested media directory structure..."
+    cp -rn "$APP_DIR/media/media/"* "$APP_DIR/media/" || true
+    rm -rf "$APP_DIR/media/media"
+fi
+sudo chmod 755 "$APP_DIR"
+sudo chmod -R 755 "$APP_DIR/staticfiles" "$APP_DIR/media" "$APP_DIR/deploy/lightsail" 2>/dev/null || true
+
+echo "==> Configuring Caddy web server..."
+sudo cp "$APP_DIR/deploy/lightsail/Caddyfile" /etc/caddy/Caddyfile
+if [ -f "$APP_DIR/.env" ]; then
+    DOMAIN=$(grep -E '^DOMAIN_NAME=' "$APP_DIR/.env" | cut -d '=' -f2- | tr -d '"' | tr -d "'" | tr -d ' ' || true)
+    if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost" ]; then
+        echo "==> Configuring Caddy for domain: $DOMAIN"
+        sudo sed -i "s/{\$DOMAIN_NAME:localhost}/$DOMAIN/g" /etc/caddy/Caddyfile
+    fi
+fi
+
+echo "==> Reloading Caddy web server (zero-downtime hot reload)..."
+if systemctl is-active --quiet caddy; then
+    sudo systemctl reload caddy || sudo systemctl restart caddy
+else
+    sudo systemctl start caddy
+fi
+
+echo "==> Restarting Shoppin Daphne service..."
+sudo systemctl restart shoppin
+
+echo "==> Verifying application health..."
+HEALTHY=false
+for i in {1..20}; do
+    if curl -fsS -H "X-Forwarded-Proto: https" http://127.0.0.1:8000/health/ > /dev/null 2>&1; then
+        HEALTHY=true
+        echo "==> Backend ready after ${i}s"
+        break
+    fi
+    sleep 1
+done
+
+if [ "$HEALTHY" = true ]; then
+    echo "==> SUCCESS: Application is healthy and serving requests!"
+else
+    echo "==> WARNING: Health check failed or timed out after 20 seconds. Check journalctl -u shoppin -n 50"
+    exit 1
+fi

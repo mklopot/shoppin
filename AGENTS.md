@@ -32,7 +32,7 @@ This document establishes the automated quality standards, testing policies, and
 ## 3. Continuous Integration & Deployment (CI/CD)
 
 - GitHub Actions pipeline is defined in `.github/workflows/deploy.yml`.
-- On push to `v2-django` or `main`:
+- On push to `main`:
   1. **`test` job**: Installs `.[dev]`, runs `ruff check .`, and runs `pytest`.
   2. **`deploy` job**: On successful completion of `test`, SSHs into the production Lightsail server and runs:
      ```bash

@@ -14,7 +14,8 @@ echo "==> Discarding any local tracked modifications..."
 git reset --hard HEAD
 
 echo "==> Pulling latest code from git..."
-git pull origin v2-django
+git fetch origin main
+git checkout -B main origin/main
 
 echo "==> Updating Python dependencies..."
 # Clean up orphaned temporary directories left by interrupted pip operations (e.g. ~hoppin)

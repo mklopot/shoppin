@@ -81,7 +81,7 @@ Now open `https://shoppin.yourdomain.com` in your browser!
 ## Operations & Maintenance
 
 ### How to Update Code After Git Push
-Whenever you push new code to `v2-django`:
+Whenever you push new code to `main`:
 ```bash
 bash /app/deploy/lightsail/update.sh
 ```

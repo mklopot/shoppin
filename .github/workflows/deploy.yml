@@ -3,11 +3,9 @@ name: CI & Deployment Pipeline
 on:
   push:
     branches:
-      - v2-django
       - main
   pull_request:
     branches:
-      - v2-django
       - main
 
 jobs:
@@ -40,7 +38,7 @@ jobs:
   deploy:
     name: Deploy to Production Lightsail
     needs: test
-    if: (github.ref == 'refs/heads/v2-django' || github.ref == 'refs/heads/main') && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH to Lightsail Server

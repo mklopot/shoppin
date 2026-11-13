@@ -554,7 +554,7 @@ A pre-commit hook is located at `.githooks/pre-commit`. It executes `ruff check 
 Shoppin is deployed to production via an automated CI/CD pipeline defined in `.github/workflows/deploy.yml`:
 
 1. **Continuous Integration**:
-   - Every push to `v2-django` or `main` automatically runs Ruff linting and the full Pytest test suite across all 309+ tests.
+   - Every push to `main` automatically runs Ruff linting and the full Pytest test suite across all 309+ tests.
 2. **Zero-Downtime Deployment**:
    - On successful test completion, the deployment runner connects to the production instance (e.g. AWS Lightsail / EC2) and invokes `deploy/lightsail/update.sh`.
    - The update script:
@@ -591,7 +591,7 @@ Accessibility is a primary design requirement in Shoppin:
 
 We welcome community contributions, bug reports, and feature suggestions!
 
-1. **Fork the Repository** and create your branch from `v2-django`:
+1. **Fork the Repository** and create your branch from `main`:
    ```bash
    git checkout -b feature/my-new-feature
    ```

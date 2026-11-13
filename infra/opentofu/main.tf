@@ -229,7 +229,7 @@ resource "aws_instance" "server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              curl -fsSL https://raw.githubusercontent.com/mklopot/shoppin/v2-django/scripts/setup-ec2.sh | bash
+              curl -fsSL https://raw.githubusercontent.com/mklopot/shoppin/main/scripts/setup-ec2.sh | bash
               EOF
 
   tags = {

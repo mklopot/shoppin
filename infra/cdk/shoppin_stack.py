@@ -109,7 +109,7 @@ class ShoppinStack(Stack):
 
         user_data = ec2.UserData.for_linux()
         user_data.add_commands(
-            "curl -fsSL https://raw.githubusercontent.com/mklopot/shoppin/v2-django/scripts/setup-ec2.sh | bash"
+            "curl -fsSL https://raw.githubusercontent.com/mklopot/shoppin/main/scripts/setup-ec2.sh | bash"
         )
 
         instance = ec2.Instance(

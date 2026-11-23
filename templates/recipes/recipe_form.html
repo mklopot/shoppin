@@ -482,9 +482,10 @@
                                            class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5 text-center align-middle">
+                                    <input type="hidden" name="ingredient_row_id[]" value="row-{{ forloop.counter0 }}">
                                     <input type="checkbox"
                                            name="ingredient_optional[]"
-                                           value="1"
+                                           value="row-{{ forloop.counter0 }}"
                                            aria-label="Optional ingredient"
                                            {% if ing.optional %}checked{% endif %}
                                            class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
@@ -537,9 +538,10 @@
                                            class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
                                 </td>
                                 <td class="p-1.5 text-center align-middle">
+                                    <input type="hidden" name="ingredient_row_id[]" value="row-0">
                                     <input type="checkbox"
                                            name="ingredient_optional[]"
-                                           value="1"
+                                           value="row-0"
                                            aria-label="Optional ingredient"
                                            class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                                 </td>
@@ -828,7 +830,11 @@
 
 <!-- Dynamic Ingredient Row Script -->
 <script>
+let nextIngredientRowSeq = 0;
+
 function addIngredientRow() {
+    nextIngredientRowSeq += 1;
+    const rowId = `new-${nextIngredientRowSeq}`;
     const tbody = document.getElementById('ingredients-table-body');
     const tr = document.createElement('tr');
     tr.className = 'ingredient-row';
@@ -866,9 +872,10 @@ function addIngredientRow() {
                    class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
         </td>
         <td class="p-1.5 text-center align-middle">
+            <input type="hidden" name="ingredient_row_id[]" value="${rowId}">
             <input type="checkbox"
                    name="ingredient_optional[]"
-                   value="1"
+                   value="${rowId}"
                    aria-label="Optional ingredient"
                    class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
         </td>

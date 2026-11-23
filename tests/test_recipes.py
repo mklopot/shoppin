@@ -327,6 +327,9 @@ def test_create_and_update_recipe(auth_user):
     assert recipe.cuisine == "Mexican"
     assert recipe.ingredients.count() == 3
     assert recipe.ingredients.filter(name="Avocados").first().brand == "Haas"
+    assert recipe.ingredients.get(name="Avocados").optional is False
+    assert recipe.ingredients.get(name="Lime Juice").optional is False
+    assert recipe.ingredients.get(name="Salt").optional is True
 
     # Now edit recipe
     edit_data = {
@@ -356,6 +359,8 @@ def test_create_and_update_recipe(auth_user):
     assert updated.name == "Super Guacamole Dip"
     assert updated.portions == 6
     assert updated.ingredients.count() == 2
+    assert updated.ingredients.get(name="Avocados").optional is False
+    assert updated.ingredients.get(name="Cilantro").optional is True
 
 
 @pytest.mark.django_db
@@ -1580,6 +1585,120 @@ def test_recipe_list_renders_bookmarklet_button(client: Client, auth_user):
     assert "READY_FOR_RECIPE_PAYLOAD" in content
 
 
+@pytest.mark.django_db
+def test_create_recipe_browser_optional_checkbox_alignment(client: Client, auth_user):
+    """Ensure optional checkboxes align to their specific ingredient rows even when earlier rows are unchecked."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    create_url = reverse("recipes:create")
+    form_resp = client.get(create_url)
+    assert form_resp.status_code == 200
+    form_html = form_resp.content.decode("utf-8")
+    assert 'name="ingredient_row_id[]" value="row-0"' in form_html
+    assert 'name="ingredient_optional[]"' in form_html
+    assert 'value="row-0"' in form_html
+    assert "nextIngredientRowSeq" in form_html
+
+    # Simulate browser POST: rows 0 and 2 unchecked (omitted from ingredient_optional[]),
+    # while rows 1 ("new-1") and 3 ("new-3") are checked as optional.
+    resp = client.post(
+        create_url,
+        {
+            "name": "Herb Roasted Chicken",
+            "directions": "Season chicken and roast until golden.",
+            "portions": "4",
+            "ingredient_name[]": ["Whole Chicken", "Lemon Zest", "Olive Oil", "Fresh Rosemary"],
+            "ingredient_amount[]": ["1", "1 tsp", "2 tbsp", "2 sprigs"],
+            "ingredient_unit[]": ["", "", "", ""],
+            "ingredient_brand[]": ["", "", "", ""],
+            "ingredient_vendor[]": ["", "", "", ""],
+            "ingredient_row_id[]": ["row-0", "new-1", "new-2", "new-3"],
+            "ingredient_optional[]": ["new-1", "new-3"],
+        },
+    )
+    assert resp.status_code == 302
+    recipe = Recipe.objects.get(name="Herb Roasted Chicken")
+    ings = {ing.name: ing for ing in recipe.ingredients.all()}
+    assert set(ings.keys()) == {"Whole Chicken", "Lemon Zest", "Olive Oil", "Fresh Rosemary"}
+    assert ings["Whole Chicken"].optional is False
+    assert ings["Lemon Zest"].optional is True
+    assert ings["Olive Oil"].optional is False
+    assert ings["Fresh Rosemary"].optional is True
+
+    # Simulate browser POST with NO optional checkboxes checked (ingredient_optional[] omitted)
+    resp_none = client.post(
+        create_url,
+        {
+            "name": "Simple Rice",
+            "directions": "Boil water and cook rice.",
+            "portions": "2",
+            "ingredient_name[]": ["White Rice", "Water"],
+            "ingredient_amount[]": ["1 cup", "2 cups"],
+            "ingredient_unit[]": ["", ""],
+            "ingredient_brand[]": ["", ""],
+            "ingredient_vendor[]": ["", ""],
+            "ingredient_row_id[]": ["row-0", "new-1"],
+        },
+    )
+    assert resp_none.status_code == 302
+    rice = Recipe.objects.get(name="Simple Rice")
+    assert list(rice.ingredients.values_list("name", "optional")) == [
+        ("White Rice", False),
+        ("Water", False),
+    ]
 
 
+@pytest.mark.django_db
+def test_edit_recipe_browser_optional_checkbox_alignment_with_deleted_and_added_rows(client: Client, auth_user):
+    """Ensure editing a recipe preserves optionality across deleted, skipped, and newly added rows."""
+    user, workspace = auth_user
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
 
+    recipe = Recipe.objects.create(
+        name="Spicy Noodle Bowl",
+        directions="Boil noodles and toss with sauce.",
+        created_by=user,
+    )
+    Ingredient.objects.create(recipe=recipe, name="Rice Noodles", amount=Decimal("8.00"), amount_unit="oz", optional=False, order=0)
+    Ingredient.objects.create(recipe=recipe, name="Soy Sauce", amount=Decimal("2.00"), amount_unit="tbsp", optional=False, order=1)
+    Ingredient.objects.create(recipe=recipe, name="Chili Flakes", amount=Decimal("1.00"), amount_unit="tsp", optional=True, order=2)
+
+    edit_url = reverse("recipes:edit", args=[recipe.id])
+    edit_get = client.get(edit_url)
+    assert edit_get.status_code == 200
+    edit_html = edit_get.content.decode("utf-8")
+    assert 'name="ingredient_row_id[]" value="row-0"' in edit_html
+    assert 'name="ingredient_row_id[]" value="row-1"' in edit_html
+    assert 'name="ingredient_row_id[]" value="row-2"' in edit_html
+
+    # Simulate user removing row-1 ("Soy Sauce"), leaving an empty row, unchecking row-2,
+    # checking row-0 ("Rice Noodles"), and adding a new checked row ("new-2" after deleting "new-1").
+    edit_post = client.post(
+        edit_url,
+        {
+            "name": "Spicy Noodle Bowl",
+            "directions": "Boil noodles and toss with chili oil.",
+            "portions": "2",
+            "ingredient_name[]": ["Rice Noodles", "", "Chili Flakes", "Sesame Seeds"],
+            "ingredient_amount[]": ["8 oz", "", "1 tsp", "1 tbsp"],
+            "ingredient_unit[]": ["", "", "", ""],
+            "ingredient_brand[]": ["", "", "", ""],
+            "ingredient_vendor[]": ["", "", "", ""],
+            "ingredient_row_id[]": ["row-0", "row-temp", "row-2", "new-2"],
+            "ingredient_optional[]": ["row-0", "row-temp", "new-2"],
+        },
+    )
+    assert edit_post.status_code == 302
+    recipe.refresh_from_db()
+    ings = {ing.name: ing for ing in recipe.ingredients.all()}
+    assert set(ings.keys()) == {"Rice Noodles", "Chili Flakes", "Sesame Seeds"}
+    assert ings["Rice Noodles"].optional is True
+    assert ings["Chili Flakes"].optional is False
+    assert ings["Sesame Seeds"].optional is True

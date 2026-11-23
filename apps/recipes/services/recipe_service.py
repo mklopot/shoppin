@@ -426,6 +426,39 @@ def fork_recipe(
     return forked
 
 
+def _get_post_list(data: Any, key: str) -> list[Any]:
+    """Extract a list of values for an array form field from a QueryDict or mapping."""
+    if hasattr(data, "getlist"):
+        return data.getlist(key)
+    val = data.get(key, [])
+    if val is None:
+        return []
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    return [val]
+
+
+def _is_ingredient_optional(
+    index: int,
+    ingredient_row_ids: list[Any],
+    optional_row_ids: set[str],
+    ingredient_optionals: list[Any],
+) -> bool:
+    """Determine whether an ingredient row is marked optional.
+
+    Browsers omit unchecked checkboxes from POST payloads, so matching by each
+    row's ``ingredient_row_id[]`` token prevents index drift when earlier rows
+    are unchecked. Falls back to the positional boolean list when callers omit
+    row tokens.
+    """
+    if ingredient_row_ids:
+        row_id = str(ingredient_row_ids[index]).strip() if index < len(ingredient_row_ids) else ""
+        return bool(row_id and row_id in optional_row_ids)
+    if index < len(ingredient_optionals):
+        return str(ingredient_optionals[index]).strip().lower() in ("1", "true", "on", "yes")
+    return False
+
+
 def create_or_update_recipe(
     data: dict[str, Any],
     files: Any = None,
@@ -478,12 +511,13 @@ def create_or_update_recipe(
     validate_content_clean(reheating_instructions, field_label="Reheating instructions")
 
     # Pre-validate ingredient inputs
-    ingredient_names = data.getlist("ingredient_name[]") if hasattr(data, "getlist") else data.get("ingredient_name[]", [])
-    ingredient_amounts = data.getlist("ingredient_amount[]") if hasattr(data, "getlist") else data.get("ingredient_amount[]", [])
-    ingredient_units = data.getlist("ingredient_unit[]") if hasattr(data, "getlist") else data.get("ingredient_unit[]", [])
-    ingredient_optionals = data.getlist("ingredient_optional[]") if hasattr(data, "getlist") else data.get("ingredient_optional[]", [])
-    ingredient_brands = data.getlist("ingredient_brand[]") if hasattr(data, "getlist") else data.get("ingredient_brand[]", [])
-    ingredient_vendors = data.getlist("ingredient_vendor[]") if hasattr(data, "getlist") else data.get("ingredient_vendor[]", [])
+    ingredient_names = _get_post_list(data, "ingredient_name[]")
+    ingredient_amounts = _get_post_list(data, "ingredient_amount[]")
+    ingredient_units = _get_post_list(data, "ingredient_unit[]")
+    ingredient_optionals = _get_post_list(data, "ingredient_optional[]")
+    ingredient_row_ids = _get_post_list(data, "ingredient_row_id[]")
+    ingredient_brands = _get_post_list(data, "ingredient_brand[]")
+    ingredient_vendors = _get_post_list(data, "ingredient_vendor[]")
 
     if ingredient_names:
         for raw_ing in ingredient_names:
@@ -682,6 +716,11 @@ def create_or_update_recipe(
     # Process ingredients if provided in data
     if ingredient_names:
         recipe.ingredients.all().delete()
+        optional_row_ids = (
+            {str(val).strip() for val in ingredient_optionals if str(val).strip()}
+            if ingredient_row_ids
+            else set()
+        )
         for i, raw_ing_name in enumerate(ingredient_names):
             ing_name = str(raw_ing_name).strip()
             if not ing_name:
@@ -699,7 +738,12 @@ def create_or_update_recipe(
                     amount = p_amt
                     unit = p_unit
 
-            is_opt = (ingredient_optionals[i] == "1") if i < len(ingredient_optionals) else False
+            is_opt = _is_ingredient_optional(
+                i,
+                ingredient_row_ids=ingredient_row_ids,
+                optional_row_ids=optional_row_ids,
+                ingredient_optionals=ingredient_optionals,
+            )
             brand = ingredient_brands[i].strip() if i < len(ingredient_brands) else ""
             vendor = ingredient_vendors[i].strip() if i < len(ingredient_vendors) else ""
             cat = categorizer.get_category(ing_name)

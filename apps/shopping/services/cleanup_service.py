@@ -77,6 +77,10 @@ def purge_expired_completed_items(workspace: "Workspace | None", force: bool = F
     has_any_attribution = models.Exists(
         ShoppingListItemSource.objects.filter(item_id=models.OuterRef("pk"))
     )
+    is_one_time_purpose = (
+        models.Q(purpose__iexact="one-time purchase")
+        | models.Q(purpose__iexact="for one-time purchase")
+    )
 
     qs = (
         ShoppingListItem.objects.filter(
@@ -84,8 +88,10 @@ def purge_expired_completed_items(workspace: "Workspace | None", force: bool = F
             shopping_list__is_preset=False,
             status__in=[ItemStatus.GOT, ItemStatus.HAVE],
         )
-        .filter(~has_linked_attribution)
-        .filter(~has_linked_source | has_any_attribution)
+        .filter(
+            (~has_linked_attribution & (~has_linked_source | has_any_attribution))
+            | is_one_time_purpose
+        )
         .filter(
             models.Q(status_changed_at__lte=cutoff)
             | models.Q(status_changed_at__isnull=True, updated_at__lte=cutoff)

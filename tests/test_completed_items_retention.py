@@ -630,3 +630,179 @@ def test_workspace_settings_modal_null_retention_shows_never_disabled(client, re
     html = resp.content.decode("utf-8")
     assert '<option value="0" selected>' in html
     assert '<option value="7" selected>' not in html
+
+
+@pytest.mark.django_db
+def test_purge_cleans_legacy_onetime_purchase_with_stale_source_links(retention_setup):
+    """
+    Pre-attribution (e.g. 10/29) items converted to 'one-time purchase' retain stale source_*
+    FKs; they must still be purged after retention while active/mixed recipe items remain.
+    """
+    ws = retention_setup["workspace"]
+    s_list = retention_setup["primary_list"]
+    recipe = retention_setup["recipe"]
+    ingredient = retention_setup["ingredient"]
+    meal = retention_setup["meal"]
+    preset = retention_setup["preset"]
+    old_ts = timezone.now() - datetime.timedelta(days=25)
+
+    legacy_recipe_remnant = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Eggs",
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+        source_meal=meal,
+        source_ingredient=ingredient,
+    )
+    legacy_preset_remnant = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Salt",
+        amount=Decimal("1.00"),
+        purpose="For one-time purchase",
+        status=ItemStatus.HAVE,
+        source_preset=preset,
+    )
+    mixed_item = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Olive Oil",
+        amount=Decimal("2.00"),
+        purpose="one-time purchase, Creamy Pasta",
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+    )
+    active_recipe_item = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Pasta",
+        amount=Decimal("1.00"),
+        purpose="Creamy Pasta",
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+    )
+    ShoppingListItem.objects.filter(
+        id__in=[
+            legacy_recipe_remnant.id,
+            legacy_preset_remnant.id,
+            mixed_item.id,
+            active_recipe_item.id,
+        ]
+    ).update(status_changed_at=old_ts, updated_at=old_ts)
+
+    purged = purge_expired_completed_items(ws)
+    assert purged == 2
+
+    remaining_ids = set(ShoppingListItem.objects.filter(shopping_list=s_list).values_list("id", flat=True))
+    assert legacy_recipe_remnant.id not in remaining_ids
+    assert legacy_preset_remnant.id not in remaining_ids
+    assert mixed_item.id in remaining_ids
+    assert active_recipe_item.id in remaining_ids
+
+
+@pytest.mark.django_db
+def test_edit_item_to_onetime_purchase_clears_legacy_source_and_allows_purge(client, retention_setup):
+    """Editing an unattributed legacy recipe item to 'one-time purchase' clears stale source FKs cleanly."""
+    ws = retention_setup["workspace"]
+    s_list = retention_setup["primary_list"]
+    owner = retention_setup["owner"]
+    recipe = retention_setup["recipe"]
+    meal = retention_setup["meal"]
+    old_ts = timezone.now() - datetime.timedelta(days=25)
+
+    legacy_item = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Eggs",
+        amount=Decimal("1.00"),
+        purpose="Creamy Pasta",
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+        source_meal=meal,
+    )
+    client.force_login(owner)
+    resp = client.post(
+        reverse("shopping:edit_item", args=[legacy_item.id]),
+        {"name": "Eggs", "amount": "1", "purpose": ""},
+    )
+    assert resp.status_code == 200
+
+    legacy_item.refresh_from_db()
+    assert legacy_item.purpose == "one-time purchase"
+    assert legacy_item.source_recipe is None
+    assert legacy_item.source_meal is None
+
+    # Merge another stale one-time item into an item via edit_item to verify _ensure_item_has_attribution
+    stale_got = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Milk",
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+        source_meal=meal,
+    )
+    extra_got = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Cream",
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+        status=ItemStatus.GOT,
+    )
+    ShoppingListItemSource.objects.create(
+        item=extra_got,
+        is_one_time=True,
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+    )
+    resp_merge = client.post(
+        reverse("shopping:edit_item", args=[extra_got.id]),
+        {"name": "Milk", "amount": "1", "purpose": "one-time purchase"},
+    )
+    assert resp_merge.status_code == 200
+    stale_got.refresh_from_db()
+    assert not stale_got.attributions.filter(recipe__isnull=False).exists()
+    assert not stale_got.attributions.filter(meal__isnull=False).exists()
+
+    ShoppingListItem.objects.filter(id__in=[legacy_item.id, stale_got.id]).update(
+        status_changed_at=old_ts, updated_at=old_ts
+    )
+    assert purge_expired_completed_items(ws) == 2
+
+
+@pytest.mark.django_db
+def test_migration_0018_clears_orphaned_onetime_sources(retention_setup):
+    """Data migration 0018 clears stale source FKs on unattributed one-time items while preserving real links."""
+    import importlib
+
+    from django.apps import apps as django_apps
+
+    s_list = retention_setup["primary_list"]
+    recipe = retention_setup["recipe"]
+    meal = retention_setup["meal"]
+    preset = retention_setup["preset"]
+
+    orphan = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Eggs",
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+        source_meal=meal,
+    )
+    active_preset = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Spices",
+        amount=Decimal("1.00"),
+        purpose="Preset: Pantry",
+        status=ItemStatus.GOT,
+        source_preset=preset,
+    )
+
+    mig = importlib.import_module("apps.shopping.migrations.0018_cleanup_orphaned_onetime_sources")
+    mig.clear_orphaned_onetime_sources(django_apps, None)
+
+    orphan.refresh_from_db()
+    active_preset.refresh_from_db()
+    assert orphan.source_recipe is None
+    assert orphan.source_meal is None
+    assert active_preset.source_preset == preset

@@ -652,17 +652,21 @@ def _ensure_item_has_attribution(
     src = source_item or target
     if src.amount <= Decimal("0.00"):
         return
-    is_one_time = not (src.source_recipe_id or src.source_meal_id or src.source_preset_id)
+    cleaned_purpose = clean_purpose(src.purpose) or "one-time purchase"
+    is_explicit_one_time = cleaned_purpose.lower() == "one-time purchase"
+    is_one_time = is_explicit_one_time or not (
+        src.source_recipe_id or src.source_meal_id or src.source_preset_id
+    )
     ShoppingListItemSource.objects.create(
         item=target,
         is_one_time=is_one_time,
-        recipe=src.source_recipe,
-        meal=src.source_meal,
-        ingredient=src.source_ingredient,
-        preset_list=src.source_preset,
+        recipe=None if is_explicit_one_time else src.source_recipe,
+        meal=None if is_explicit_one_time else src.source_meal,
+        ingredient=None if is_explicit_one_time else src.source_ingredient,
+        preset_list=None if is_explicit_one_time else src.source_preset,
         amount=src.amount,
         amount_unit=src.amount_unit,
-        purpose=clean_purpose(src.purpose) or "one-time purchase",
+        purpose=cleaned_purpose,
     )
 
 
@@ -761,6 +765,11 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         item.category = request.POST.get("category", item.category).strip()
         item.aisle = request.POST.get("aisle", item.aisle).strip()
         item.purpose = clean_purpose(request.POST.get("purpose", item.purpose).strip()) or "one-time purchase"
+        if item.purpose.lower() == "one-time purchase" and not item.attributions.exists():
+            item.source_recipe = None
+            item.source_meal = None
+            item.source_ingredient = None
+            item.source_preset = None
         item.priority = request.POST.get("priority") in ("true", "1", "on", True)
 
         # Moderation: Disallow expletives, obscene or hurtful language

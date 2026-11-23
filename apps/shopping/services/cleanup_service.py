@@ -54,29 +54,46 @@ def purge_expired_completed_items(workspace: "Workspace | None", force: bool = F
             return 0
         _LAST_PURGE_TIMES[workspace.id] = now_ts
 
-    from apps.shopping.models import ItemStatus, ShoppingListItem
+    from apps.shopping.models import ItemStatus, ShoppingListItem, ShoppingListItemSource
 
     cutoff = timezone.now() - datetime.timedelta(days=retention_days)
 
-    qs = ShoppingListItem.objects.filter(
-        shopping_list__workspace=workspace,
-        shopping_list__is_preset=False,
-        status__in=[ItemStatus.GOT, ItemStatus.HAVE],
-        source_recipe__isnull=True,
-        source_meal__isnull=True,
-        source_ingredient__isnull=True,
-        source_preset__isnull=True,
-    ).exclude(
-        models.Q(attributions__preset_list__isnull=False)
-        | models.Q(attributions__recipe__isnull=False)
-        | models.Q(attributions__meal__isnull=False)
-        | models.Q(attributions__meal_dish__isnull=False)
-    ).filter(
-        models.Q(status_changed_at__lte=cutoff)
-        | models.Q(status_changed_at__isnull=True, updated_at__lte=cutoff)
+    has_linked_source = (
+        models.Q(source_recipe__isnull=False)
+        | models.Q(source_meal__isnull=False)
+        | models.Q(source_ingredient__isnull=False)
+        | models.Q(source_preset__isnull=False)
+    )
+    has_linked_attribution = models.Exists(
+        ShoppingListItemSource.objects.filter(
+            item_id=models.OuterRef("pk"),
+        ).filter(
+            models.Q(preset_list__isnull=False)
+            | models.Q(recipe__isnull=False)
+            | models.Q(meal__isnull=False)
+            | models.Q(meal_dish__isnull=False)
+        )
+    )
+    has_any_attribution = models.Exists(
+        ShoppingListItemSource.objects.filter(item_id=models.OuterRef("pk"))
     )
 
-    count, _ = qs.delete()
+    qs = (
+        ShoppingListItem.objects.filter(
+            shopping_list__workspace=workspace,
+            shopping_list__is_preset=False,
+            status__in=[ItemStatus.GOT, ItemStatus.HAVE],
+        )
+        .filter(~has_linked_attribution)
+        .filter(~has_linked_source | has_any_attribution)
+        .filter(
+            models.Q(status_changed_at__lte=cutoff)
+            | models.Q(status_changed_at__isnull=True, updated_at__lte=cutoff)
+        )
+    )
+
+    _, deleted_counts = qs.delete()
+    count = deleted_counts.get(ShoppingListItem._meta.label, 0)
     if count > 0:
         logger.info(
             "Purged %d expired completed standalone items from workspace '%s' (retention: %d days)",

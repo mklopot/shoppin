@@ -644,6 +644,87 @@ def add_item(request: HttpRequest) -> HttpResponse:
     return render_list_response(request, context, toast_message=toast)
 
 
+def _ensure_item_has_attribution(
+    target: ShoppingListItem,
+    source_item: ShoppingListItem | None = None,
+) -> None:
+    """Seed an attribution record on target from source_item when unattributed."""
+    src = source_item or target
+    if src.amount <= Decimal("0.00"):
+        return
+    is_one_time = not (src.source_recipe_id or src.source_meal_id or src.source_preset_id)
+    ShoppingListItemSource.objects.create(
+        item=target,
+        is_one_time=is_one_time,
+        recipe=src.source_recipe,
+        meal=src.source_meal,
+        ingredient=src.source_ingredient,
+        preset_list=src.source_preset,
+        amount=src.amount,
+        amount_unit=src.amount_unit,
+        purpose=clean_purpose(src.purpose) or "one-time purchase",
+    )
+
+
+def _merge_edited_item_into_existing(
+    existing: ShoppingListItem,
+    item: ShoppingListItem,
+) -> None:
+    """Combine an edited item's quantities and source attributions into an existing item."""
+    if item.priority:
+        existing.priority = True
+
+    existing_has_attrs = existing.attributions.exists()
+    item_has_attrs = item.attributions.exists()
+
+    if existing_has_attrs or item_has_attrs:
+        if not existing_has_attrs:
+            _ensure_item_has_attribution(existing)
+
+        if item_has_attrs:
+            has_linked_attrs = item.attributions.filter(
+                models.Q(preset_list__isnull=False)
+                | models.Q(recipe__isnull=False)
+                | models.Q(meal__isnull=False)
+                | models.Q(meal_dish__isnull=False)
+            ).exists()
+            if has_linked_attrs:
+                item.attributions.update(item=existing)
+            else:
+                item.attributions.all().delete()
+                _ensure_item_has_attribution(existing, source_item=item)
+        else:
+            _ensure_item_has_attribution(existing, source_item=item)
+
+        existing.recalculate_from_attributions(save=False)
+    else:
+        combined_amount, combined_unit = combine_amounts_and_units(
+            existing.amount,
+            existing.amount_unit,
+            item.amount,
+            item.amount_unit,
+        )
+        existing.amount = combined_amount
+        existing.amount_unit = combined_unit
+        existing_purpose = clean_purpose(existing.purpose)
+        item_purpose = clean_purpose(item.purpose)
+        if item_purpose and item_purpose not in existing_purpose:
+            existing.purpose = f"{existing_purpose}, {item_purpose}".strip(", ")
+        else:
+            existing.purpose = existing_purpose
+        if item.source_meal and not existing.source_meal:
+            existing.source_meal = item.source_meal
+        if item.source_recipe and not existing.source_recipe:
+            existing.source_recipe = item.source_recipe
+        if item.source_ingredient and not existing.source_ingredient:
+            existing.source_ingredient = item.source_ingredient
+        if item.source_preset and not existing.source_preset:
+            existing.source_preset = item.source_preset
+
+    # Requirement: If an item is combined, it gets the "not confirmed" status
+    existing.locked = False
+
+
 def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
     """
     Render the edit modal dialog (GET) or update item details (POST).
@@ -707,30 +788,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
                 break
 
         if existing:
-            if item.priority:
-                existing.priority = True
-            # Combine into existing item
-            combined_amount, combined_unit = combine_amounts_and_units(
-                existing.amount,
-                existing.amount_unit,
-                item.amount,
-                item.amount_unit,
-            )
-            existing.amount = combined_amount
-            existing.amount_unit = combined_unit
-            existing_purpose = clean_purpose(existing.purpose)
-            item_purpose = clean_purpose(item.purpose)
-            if item_purpose and item_purpose not in existing_purpose:
-                existing.purpose = f"{existing_purpose}, {item_purpose}".strip(", ")
-            else:
-                existing.purpose = existing_purpose
-            if item.source_meal and not existing.source_meal:
-                existing.source_meal = item.source_meal
-            if item.source_recipe and not existing.source_recipe:
-                existing.source_recipe = item.source_recipe
-
-            # Requirement: If an item is combined, it gets the "not confirmed" status
-            existing.locked = False
+            _merge_edited_item_into_existing(existing, item)
             _set_item_audit(existing, request)
             existing.save()
 

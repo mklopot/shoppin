@@ -11,9 +11,11 @@ class ShoppingConfig(AppConfig):
     name = "apps.shopping"
 
     def ready(self) -> None:
-        """Initialize background scheduler for automated preset refreshes."""
+        """Register signals and initialize background scheduler for automated preset refreshes."""
         import os
         import sys
+
+        import apps.shopping.signals  # noqa: F401
 
         # Skip starting background scheduler during tests, migrations, and CLI utilities
         is_testing = (

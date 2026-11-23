@@ -73,7 +73,7 @@
                             aria-label="Retention duration for completed items"
                             class="w-full border border-gray-300 px-2.5 py-1.5 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
                         {% for days, label in retention_choices %}
-                        <option value="{{ days }}" {% if workspace.completed_items_retention_days == days or workspace.completed_items_retention_days is None and days == 7 %}selected{% endif %}>
+                        <option value="{{ days }}" {% if workspace.completed_items_retention_days == days or workspace.completed_items_retention_days is None and days == 0 %}selected{% endif %}>
                             {{ label }}
                         </option>
                         {% endfor %}

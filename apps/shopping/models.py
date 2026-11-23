@@ -491,13 +491,14 @@ class ShoppingListItem(models.Model):
 
         # Update backward-compatibility foreign keys
         last_dish_attr = next((a for a in reversed(attributions) if a.recipe_id), None)
+        last_preset_attr = next((a for a in reversed(attributions) if a.preset_list_id), None)
         if last_dish_attr:
             self.source_recipe = last_dish_attr.recipe
             self.source_meal = last_dish_attr.meal
             self.source_ingredient = last_dish_attr.ingredient
+            self.source_preset = last_preset_attr.preset_list if last_preset_attr else None
         else:
             last_meal_attr = next((a for a in reversed(attributions) if a.meal_id), None)
-            last_preset_attr = next((a for a in reversed(attributions) if a.preset_list_id), None)
             self.source_recipe = None
             self.source_ingredient = None
             self.source_meal = last_meal_attr.meal if last_meal_attr else None

@@ -18,7 +18,7 @@ from apps.core.models import WorkspaceRole
 from apps.core.services.workspace_service import create_workspace, share_workspace
 from apps.mealplans.models import Meal
 from apps.recipes.models import Ingredient, Recipe
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem
+from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
 from apps.shopping.services.cleanup_service import (
     purge_expired_completed_items,
 )
@@ -388,3 +388,245 @@ def test_shopping_list_view_auto_purges_expired_items(client, retention_setup):
     response = client.get(reverse("shopping:list"))
     assert response.status_code == 200
     assert not ShoppingListItem.objects.filter(id=old_got.id).exists()
+
+
+@pytest.mark.django_db
+def test_purge_counts_only_items_not_cascaded_attributions(retention_setup):
+    """Verify purged count reflects deleted ShoppingListItem count, not cascaded attribution rows."""
+    ws = retention_setup["workspace"]
+    s_list = retention_setup["primary_list"]
+    now = timezone.now()
+
+    item = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Dishwasher Pods",
+        amount=Decimal("1.00"),
+        status=ItemStatus.GOT,
+    )
+    ShoppingListItemSource.objects.create(
+        item=item,
+        is_one_time=True,
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+    )
+    ShoppingListItem.objects.filter(id=item.id).update(
+        status_changed_at=now - datetime.timedelta(days=8)
+    )
+
+    purged = purge_expired_completed_items(ws)
+    assert purged == 1
+    assert not ShoppingListItem.objects.filter(id=item.id).exists()
+
+
+@pytest.mark.django_db
+def test_purge_cleans_orphaned_items_with_stale_source_fks_and_only_onetime_attribution(retention_setup):
+    """Items whose attributions are purely one-time must purge even if stale source_* fields remain."""
+    ws = retention_setup["workspace"]
+    s_list = retention_setup["primary_list"]
+    recipe = retention_setup["recipe"]
+    meal = retention_setup["meal"]
+    preset = retention_setup["preset"]
+    now = timezone.now()
+
+    item = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Stale Combined Salt",
+        amount=Decimal("1.00"),
+        status=ItemStatus.GOT,
+        source_recipe=recipe,
+        source_meal=meal,
+        source_preset=preset,
+    )
+    ShoppingListItemSource.objects.create(
+        item=item,
+        is_one_time=True,
+        amount=Decimal("1.00"),
+        purpose="one-time purchase",
+    )
+    ShoppingListItem.objects.filter(id=item.id).update(
+        status_changed_at=now - datetime.timedelta(days=10)
+    )
+
+    purged = purge_expired_completed_items(ws)
+    assert purged == 1
+    assert not ShoppingListItem.objects.filter(id=item.id).exists()
+
+
+@pytest.mark.django_db
+def test_deleting_recipe_or_meal_or_preset_unlinks_items_for_purge(retention_setup):
+    """Deleting a Recipe, Meal, or Preset recalculates combined items and removes uncombined ones cleanly."""
+    from apps.mealplans.services.mealplan_service import add_recipe_to_meal
+    from apps.shopping.services.preset_service import (
+        add_preset_item,
+        load_preset_items_to_shopping_list,
+    )
+
+    ws = retention_setup["workspace"]
+    s_list = retention_setup["primary_list"]
+    recipe = retention_setup["recipe"]
+    meal = retention_setup["meal"]
+    preset = retention_setup["preset"]
+    now = timezone.now()
+
+    # 1. Standalone "garlic" combined with recipe "Garlic Pasta"
+    standalone_garlic = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="garlic",
+        amount=Decimal("1.00"),
+        amount_unit="cloves",
+        purpose="one-time purchase",
+        status=ItemStatus.NEED,
+    )
+    ShoppingListItemSource.objects.create(
+        item=standalone_garlic,
+        is_one_time=True,
+        amount=Decimal("1.00"),
+        amount_unit="cloves",
+        purpose="one-time purchase",
+    )
+    add_recipe_to_meal(meal, recipe, s_list)
+
+    # Also test an item solely from a second recipe
+    recipe_only = Recipe.objects.create(name="Toast", directions="Toast bread.")
+    Ingredient.objects.create(recipe=recipe_only, name="Sourdough Bread", amount=Decimal("2.00"), amount_unit="slices")
+    add_recipe_to_meal(meal, recipe_only, s_list)
+
+    ShoppingListItem.objects.filter(shopping_list=s_list).update(
+        status=ItemStatus.GOT,
+        status_changed_at=now - datetime.timedelta(days=9),
+    )
+
+    # Delete both recipes directly -> recipe_only's item is removed, standalone_garlic is unlinked
+    recipe.delete()
+    recipe_only.delete()
+
+    assert not ShoppingListItem.objects.filter(shopping_list=s_list, name="Sourdough Bread").exists()
+    standalone_garlic.refresh_from_db()
+    assert standalone_garlic.source_recipe is None
+    assert standalone_garlic.source_meal is None
+    assert standalone_garlic.source_ingredient is None
+    assert standalone_garlic.amount == Decimal("1.00")
+
+    # Now standalone_garlic is eligible for retention purge
+    assert purge_expired_completed_items(ws) == 1
+    assert not ShoppingListItem.objects.filter(id=standalone_garlic.id).exists()
+
+    # 2. Standalone item combined with Preset, then Preset deleted directly
+    add_preset_item(preset, "Butter", amount="1", amount_unit="lb")
+    standalone_butter = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Butter",
+        amount=Decimal("1.00"),
+        amount_unit="lb",
+        purpose="one-time purchase",
+        status=ItemStatus.NEED,
+    )
+    ShoppingListItemSource.objects.create(
+        item=standalone_butter,
+        is_one_time=True,
+        amount=Decimal("1.00"),
+        amount_unit="lb",
+        purpose="one-time purchase",
+    )
+    load_preset_items_to_shopping_list(preset, s_list)
+    ShoppingListItem.objects.filter(id=standalone_butter.id).update(
+        status=ItemStatus.GOT,
+        status_changed_at=now - datetime.timedelta(days=9),
+    )
+
+    preset.delete()
+    standalone_butter.refresh_from_db()
+    assert standalone_butter.source_preset is None
+    assert standalone_butter.amount == Decimal("1.00")
+    assert purge_expired_completed_items(ws) == 1
+    assert not ShoppingListItem.objects.filter(id=standalone_butter.id).exists()
+
+
+@pytest.mark.django_db
+def test_edit_item_combine_preserves_attributions_and_allows_subsequent_purge(client, retention_setup):
+    """Combining items via edit_item preserves attributions so removing the recipe later lets the standalone item purge."""
+    from apps.mealplans.services.mealplan_service import add_recipe_to_meal, remove_dish_from_meal
+
+    ws = retention_setup["workspace"]
+    owner = retention_setup["owner"]
+    s_list = retention_setup["primary_list"]
+    recipe = retention_setup["recipe"]
+    meal = retention_setup["meal"]
+    now = timezone.now()
+
+    add_recipe_to_meal(meal, recipe, s_list)
+    recipe_garlic = s_list.items.get(name="garlic")
+    recipe_garlic.status = ItemStatus.GOT
+    recipe_garlic.save(update_fields=["status"])
+
+    standalone_extra = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="roasted garlic",
+        amount=Decimal("1.00"),
+        amount_unit="cloves",
+        purpose="one-time purchase",
+        status=ItemStatus.GOT,
+    )
+    ShoppingListItemSource.objects.create(
+        item=standalone_extra,
+        is_one_time=True,
+        amount=Decimal("1.00"),
+        amount_unit="cloves",
+        purpose="one-time purchase",
+    )
+
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # Rename standalone_extra to "garlic" so edit_item combines it into recipe_garlic
+    res = client.post(
+        reverse("shopping:edit_item", args=[standalone_extra.id]),
+        {
+            "name": "garlic",
+            "amount": "1 cloves",
+            "amount_unit": "cloves",
+            "category": "produce",
+            "brand": "",
+            "vendor": "",
+            "purpose": "one-time purchase",
+        },
+    )
+    assert res.status_code == 200
+    assert not ShoppingListItem.objects.filter(id=standalone_extra.id).exists()
+
+    recipe_garlic.refresh_from_db()
+    assert recipe_garlic.amount == Decimal("3.00")
+    assert recipe_garlic.attributions.count() == 2
+
+    # Remove dish from meal -> only standalone 1 clove remains, source_recipe/source_meal cleared
+    dish = meal.dishes.first()
+    remove_dish_from_meal(dish, s_list)
+    recipe_garlic.refresh_from_db()
+    assert recipe_garlic.amount == Decimal("1.00")
+    assert recipe_garlic.source_recipe is None
+    assert recipe_garlic.source_meal is None
+
+    # Age past 7 days -> now properly purged!
+    ShoppingListItem.objects.filter(id=recipe_garlic.id).update(
+        status_changed_at=now - datetime.timedelta(days=8)
+    )
+    assert purge_expired_completed_items(ws) == 1
+    assert not ShoppingListItem.objects.filter(id=recipe_garlic.id).exists()
+
+
+@pytest.mark.django_db
+def test_workspace_settings_modal_null_retention_shows_never_disabled(client, retention_setup):
+    """When completed_items_retention_days is None, settings dropdown selects '0' (Never) matching cleanup behavior."""
+    ws = retention_setup["workspace"]
+    owner = retention_setup["owner"]
+    ws.completed_items_retention_days = None
+    ws.save(update_fields=["completed_items_retention_days"])
+
+    client.force_login(owner)
+    resp = client.get(reverse("core:workspace_settings", args=[ws.id]))
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert '<option value="0" selected>' in html
+    assert '<option value="7" selected>' not in html

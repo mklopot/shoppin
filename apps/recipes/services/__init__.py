@@ -2,6 +2,11 @@
 Recipes services package.
 """
 
+from apps.recipes.services.ingredient_lint_service import (
+    get_ingredient_unit_profiles,
+    lint_ingredient,
+    lint_recipe_ingredients,
+)
 from apps.recipes.services.nutrition_service import (
     calculate_ingredient_nutrition,
     calculate_recipe_nutrition,
@@ -44,4 +49,7 @@ __all__ = [
     "record_recipe_made",
     "add_recipe_to_shopping_list",
     "attach_recipe_made_counts",
+    "get_ingredient_unit_profiles",
+    "lint_ingredient",
+    "lint_recipe_ingredients",
 ]

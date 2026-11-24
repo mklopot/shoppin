@@ -68,7 +68,7 @@
     </div>
     {% endif %}
 
-    <form method="post" {% if not is_edit %}action="{% url 'recipes:create' %}"{% endif %} enctype="multipart/form-data" class="space-y-6">
+    <form id="recipe-form" method="post" {% if not is_edit %}action="{% url 'recipes:create' %}"{% endif %} enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
         <input type="hidden" name="has_public_toggle" value="1">
         {% if recipe.is_web_imported or import_url %}
@@ -420,13 +420,30 @@
                     <h2 class="text-xs font-bold uppercase tracking-wider text-gray-800">
                         4. Ingredients List
                     </h2>
-                    <span class="text-[11px] text-gray-500">Add all necessary items with their amount and unit for shopping list synchronization.</span>
+                    <span class="text-[11px] text-gray-700">Ingredients appear directly on your Shopping List &mdash; keep names store-ready and use realistic units.</span>
                 </div>
                 <button type="button"
                         onclick="addIngredientRow()"
                         class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-bold px-2.5 py-1 text-xs">
                     ➕ Add Ingredient
                 </button>
+            </div>
+
+            <div class="p-3 bg-blue-50/70 border border-blue-200 text-xs text-blue-950 space-y-1">
+                <div class="font-bold flex items-center gap-1.5">
+                    <span aria-hidden="true">🛒</span>
+                    <span>Ingredient Formatting Guide (Synced to Shopping List)</span>
+                </div>
+                <ul class="list-disc list-inside space-y-0.5 text-[11px] text-blue-900 pl-1">
+                    <li>
+                        <strong>Keep names brief &amp; buyable (no prep steps):</strong>
+                        Add <code>onion</code> as the ingredient (not <code>chopped onion</code>) and write <em>&ldquo;chop the onion&rdquo;</em> in <strong>Step-by-Step Directions</strong> below &mdash; stores do not sell pre-chopped onions.
+                    </li>
+                    <li>
+                        <strong>Use sensible, consistent units:</strong>
+                        Enter measurements that match how ingredients are sold and used in other recipes &mdash; e.g., <code>8 oz</code> for <code>sour cream</code> (not bare <code>1</code>).
+                    </li>
+                </ul>
             </div>
 
             <div class="overflow-x-auto">
@@ -445,7 +462,7 @@
                         {% if ingredients %}
                             {% for ing in ingredients %}
                             <tr class="ingredient-row">
-                                <td class="p-1.5">
+                                <td class="p-1.5 align-top">
                                     <input type="text"
                                            name="ingredient_name[]"
                                            required
@@ -453,17 +470,19 @@
                                            autocomplete="off"
                                            value="{{ ing.name }}"
                                            aria-label="Ingredient name"
-                                           placeholder="e.g. Yellow onion, Diced tomatoes"
+                                           placeholder="e.g. onion, sour cream"
                                            class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
+                                    <div class="ingredient-name-feedback hidden mt-1 space-y-1 text-[11px]"></div>
                                 </td>
-                                <td class="p-1.5">
+                                <td class="p-1.5 align-top">
                                     <input type="text"
                                            name="ingredient_amount[]"
                                            value="{% if ing.amount_unit %}{{ ing.amount|floatformat:'-2' }} {{ ing.amount_unit }}{% elif ing.amount %}{{ ing.amount|floatformat:'-2' }}{% endif %}"
                                            aria-label="Amount and unit"
-                                           placeholder="e.g. 1 cup, 2 lbs"
+                                           placeholder="e.g. 8 oz, 1 cup, 2 lbs"
                                            class="w-28 sm:w-36 focus:w-48 sm:focus:w-40 border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none transition-all duration-150 bg-white">
                                     <input type="hidden" name="ingredient_unit[]" value="">
+                                    <div class="ingredient-amount-feedback hidden mt-1 space-y-1 text-[11px]"></div>
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
@@ -504,24 +523,26 @@
                         {% else %}
                             <!-- Default blank row for new recipe -->
                             <tr class="ingredient-row">
-                                <td class="p-1.5">
+                                <td class="p-1.5 align-top">
                                     <input type="text"
                                            name="ingredient_name[]"
                                            required
                                            list="all-ingredients-datalist"
                                            autocomplete="off"
                                            aria-label="Ingredient name"
-                                           placeholder="e.g. Yellow onion, Olive oil"
+                                           placeholder="e.g. onion, sour cream"
                                            class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
+                                    <div class="ingredient-name-feedback hidden mt-1 space-y-1 text-[11px]"></div>
                                 </td>
-                                <td class="p-1.5">
+                                <td class="p-1.5 align-top">
                                     <input type="text"
                                            name="ingredient_amount[]"
-                                           placeholder="e.g. 1 cup, 2 lbs"
+                                           placeholder="e.g. 8 oz, 1 cup, 2 lbs"
                                            value="1"
                                            aria-label="Amount and unit"
                                            class="w-28 sm:w-36 focus:w-48 sm:focus:w-40 border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none transition-all duration-150 bg-white">
                                     <input type="hidden" name="ingredient_unit[]" value="">
+                                    <div class="ingredient-amount-feedback hidden mt-1 space-y-1 text-[11px]"></div>
                                 </td>
                                 <td class="p-1.5">
                                     <input type="text"
@@ -558,6 +579,19 @@
                         {% endif %}
                     </tbody>
                 </table>
+            </div>
+
+            <div id="ingredient-lint-summary" role="alert" class="hidden border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950 space-y-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span id="ingredient-lint-summary-title" class="font-bold"></span>
+                    <button type="button"
+                            id="ingredient-confirm-anyway-btn"
+                            onclick="confirmSaveWithIngredientWarnings()"
+                            class="hidden border border-amber-700 bg-amber-700 hover:bg-amber-800 text-white font-bold px-3 py-1 text-[11px] cursor-pointer">
+                        Save Recipe Anyway
+                    </button>
+                </div>
+                <ul id="ingredient-lint-summary-list" class="list-disc list-inside space-y-0.5 text-[11px] text-amber-900"></ul>
             </div>
         </div>
 
@@ -839,23 +873,25 @@ function addIngredientRow() {
     const tr = document.createElement('tr');
     tr.className = 'ingredient-row';
     tr.innerHTML = `
-        <td class="p-1.5">
+        <td class="p-1.5 align-top">
             <input type="text"
                    name="ingredient_name[]"
                    list="all-ingredients-datalist"
                    autocomplete="off"
                    aria-label="Ingredient name"
-                   placeholder="e.g. Yellow onion, Olive oil"
+                   placeholder="e.g. onion, sour cream"
                    class="w-full border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none">
+            <div class="ingredient-name-feedback hidden mt-1 space-y-1 text-[11px]"></div>
         </td>
-        <td class="p-1.5">
+        <td class="p-1.5 align-top">
             <input type="text"
                    name="ingredient_amount[]"
-                   placeholder="e.g. 1 cup, 2 lbs"
+                   placeholder="e.g. 8 oz, 1 cup, 2 lbs"
                    value="1"
                    aria-label="Amount and unit"
                    class="w-28 sm:w-36 focus:w-48 sm:focus:w-40 border border-gray-300 p-1.5 text-base sm:text-xs text-gray-900 focus:outline-none rounded-none transition-all duration-150 bg-white">
             <input type="hidden" name="ingredient_unit[]" value="">
+            <div class="ingredient-amount-feedback hidden mt-1 space-y-1 text-[11px]"></div>
         </td>
         <td class="p-1.5">
             <input type="text"
@@ -906,6 +942,7 @@ function removeIngredientRow(btn) {
         row.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
         row.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
+    scheduleIngredientLint();
 }
 
 function handleIngredientKeydown(e) {
@@ -991,15 +1028,279 @@ function cleanupEmptyIngredientRows() {
     }
 }
 
+const INGREDIENT_LINT_URL = "{% url 'recipes:lint_ingredients' %}";
+let ingredientLintTimer = null;
+let allowSubmitWithIngredientWarnings = false;
+let latestIngredientLintResult = { rows: [], warning_count: 0 };
+
+function createChipButton(label, classes, onClickHandler) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = classes;
+    btn.textContent = label;
+    btn.addEventListener('click', onClickHandler);
+    return btn;
+}
+
+function appendPrepNoteToDirections(prepText, itemName) {
+    const directionsEl = document.getElementById('id_directions');
+    if (!directionsEl || !prepText) return;
+    const cleanNote = `${prepText} ${itemName || ''}`.trim();
+    const current = directionsEl.value.trim();
+    if (!current.toLowerCase().includes(prepText.toLowerCase())) {
+        directionsEl.value = current ? `${current}\nPrep: ${cleanNote}.` : `1. Prep: ${cleanNote}.`;
+    }
+}
+
+function renderRowLintFeedback(rowEl, rowResult) {
+    const nameInput = rowEl.querySelector('input[name="ingredient_name[]"]');
+    const amtInput = rowEl.querySelector('input[name="ingredient_amount[]"]');
+    const optCheckbox = rowEl.querySelector('input[name="ingredient_optional[]"]');
+    const nameFeedback = rowEl.querySelector('.ingredient-name-feedback');
+    const amtFeedback = rowEl.querySelector('.ingredient-amount-feedback');
+    if (!nameFeedback || !amtFeedback) return;
+
+    nameFeedback.innerHTML = '';
+    amtFeedback.innerHTML = '';
+    nameFeedback.classList.add('hidden');
+    amtFeedback.classList.add('hidden');
+    if (nameInput) nameInput.classList.remove('border-amber-500', 'bg-amber-50/40');
+    if (amtInput) amtInput.classList.remove('border-amber-500', 'bg-amber-50/40', 'border-blue-400');
+
+    const warnings = rowResult.warnings || [];
+    const nameCodes = new Set(['prep_word', 'prep_in_name', 'instruction_in_name', 'optional_in_name', 'embedded_quantity', 'brevity']);
+    let hasNameWarning = false;
+    let hasAmtWarning = false;
+
+    warnings.forEach(w => {
+        const isName = nameCodes.has(w.code);
+        const container = isName ? nameFeedback : amtFeedback;
+        const isWarn = w.severity === 'warning';
+        const box = document.createElement('div');
+        box.className = isWarn
+            ? 'p-1.5 border border-amber-300 bg-amber-50 text-amber-950 space-y-1'
+            : 'p-1.5 border border-blue-200 bg-blue-50 text-blue-950 space-y-1';
+
+        const msgEl = document.createElement('div');
+        msgEl.textContent = (isWarn ? '⚠️ ' : '💡 ') + w.message;
+        box.appendChild(msgEl);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex flex-wrap gap-1';
+
+        if (w.suggested_name && nameInput) {
+            actions.appendChild(createChipButton(
+                `Use "${w.suggested_name}"`,
+                'px-1.5 py-0.5 bg-white border border-amber-400 hover:bg-amber-100 text-amber-950 font-semibold cursor-pointer text-[10px]',
+                () => {
+                    nameInput.value = w.suggested_name;
+                    if (w.suggested_amount && amtInput && (!amtInput.value.trim() || amtInput.value.trim() === '1')) {
+                        amtInput.value = w.suggested_amount;
+                    }
+                    if (w.code === 'optional_in_name' && optCheckbox) {
+                        optCheckbox.checked = true;
+                    }
+                    allowSubmitWithIngredientWarnings = false;
+                    runIngredientLint();
+                }
+            ));
+        }
+        if ((w.code === 'prep_word' || w.code === 'prep_in_name' || w.code === 'instruction_in_name') && rowResult.prep_notes && rowResult.prep_notes.length > 0) {
+            const noteStr = rowResult.prep_notes.join(', ');
+            const cleanTarget = w.suggested_name || rowResult.cleaned_name || '';
+            actions.appendChild(createChipButton(
+                `+ Move "${noteStr}" to Directions`,
+                'px-1.5 py-0.5 bg-white border border-gray-400 hover:bg-gray-100 text-gray-800 font-medium cursor-pointer text-[10px]',
+                () => {
+                    appendPrepNoteToDirections(noteStr, cleanTarget);
+                    if (w.suggested_name && nameInput) {
+                        nameInput.value = w.suggested_name;
+                    }
+                    allowSubmitWithIngredientWarnings = false;
+                    runIngredientLint();
+                }
+            ));
+        }
+        if (w.suggested_amount && amtInput && !w.suggested_name) {
+            actions.appendChild(createChipButton(
+                `Set "${w.suggested_amount}"`,
+                isWarn
+                    ? 'px-1.5 py-0.5 bg-white border border-amber-400 hover:bg-amber-100 text-amber-950 font-semibold cursor-pointer text-[10px]'
+                    : 'px-1.5 py-0.5 bg-white border border-blue-400 hover:bg-blue-100 text-blue-950 font-semibold cursor-pointer text-[10px]',
+                () => {
+                    amtInput.value = w.suggested_amount;
+                    allowSubmitWithIngredientWarnings = false;
+                    runIngredientLint();
+                }
+            ));
+        }
+
+        if (actions.children.length > 0) {
+            box.appendChild(actions);
+        }
+        container.appendChild(box);
+        container.classList.remove('hidden');
+        if (isName && isWarn) hasNameWarning = true;
+        if (!isName && isWarn) hasAmtWarning = true;
+    });
+
+    if (hasNameWarning && nameInput) nameInput.classList.add('border-amber-500', 'bg-amber-50/40');
+    if (hasAmtWarning && amtInput) amtInput.classList.add('border-amber-500', 'bg-amber-50/40');
+
+    // Show quick DB unit consistency pills when helpful
+    const hints = rowResult.unit_hints || [];
+    if (hints.length > 0 && amtInput) {
+        const hintWrap = document.createElement('div');
+        hintWrap.className = 'flex flex-wrap items-center gap-1 text-[10px] text-gray-700';
+        const lbl = document.createElement('span');
+        lbl.textContent = rowResult.db_usage_summary ? `${rowResult.db_usage_summary}:` : 'Suggested units:';
+        hintWrap.appendChild(lbl);
+        hints.forEach(h => {
+            hintWrap.appendChild(createChipButton(
+                h,
+                'px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 font-medium cursor-pointer text-[10px]',
+                () => {
+                    amtInput.value = h;
+                    allowSubmitWithIngredientWarnings = false;
+                    runIngredientLint();
+                }
+            ));
+        });
+        amtFeedback.appendChild(hintWrap);
+        amtFeedback.classList.remove('hidden');
+    }
+}
+
+function updateLintSummaryPanel(data, showConfirmGate) {
+    const panel = document.getElementById('ingredient-lint-summary');
+    const titleEl = document.getElementById('ingredient-lint-summary-title');
+    const listEl = document.getElementById('ingredient-lint-summary-list');
+    const confirmBtn = document.getElementById('ingredient-confirm-anyway-btn');
+    if (!panel || !titleEl || !listEl || !confirmBtn) return;
+
+    const warnEntries = [];
+    (data.rows || []).forEach(r => {
+        (r.warnings || []).forEach(w => {
+            if (w.severity === 'warning') {
+                warnEntries.push({ rowNum: r.row_index + 1, name: r.name, message: w.message });
+            }
+        });
+    });
+
+    if (warnEntries.length === 0) {
+        panel.classList.add('hidden');
+        confirmBtn.classList.add('hidden');
+        listEl.innerHTML = '';
+        return;
+    }
+
+    titleEl.textContent = showConfirmGate
+        ? `Please review ${warnEntries.length} ingredient formatting warning(s) before saving:`
+        : `${warnEntries.length} ingredient formatting warning(s) detected:`;
+    listEl.innerHTML = '';
+    warnEntries.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `Row ${item.rowNum} ("${item.name}"): ${item.message}`;
+        listEl.appendChild(li);
+    });
+
+    if (showConfirmGate) {
+        confirmBtn.classList.remove('hidden');
+    } else {
+        confirmBtn.classList.add('hidden');
+    }
+    panel.classList.remove('hidden');
+}
+
+async function runIngredientLint(showConfirmGate = false) {
+    const tbody = document.getElementById('ingredients-table-body');
+    if (!tbody) return { rows: [], warning_count: 0 };
+    const rowEls = Array.from(tbody.querySelectorAll('.ingredient-row'));
+    const payload = {
+        rows: rowEls.map(row => ({
+            name: (row.querySelector('input[name="ingredient_name[]"]')?.value || '').trim(),
+            amount: (row.querySelector('input[name="ingredient_amount[]"]')?.value || '').trim(),
+        })),
+    };
+    const csrfToken = document.querySelector('#recipe-form input[name="csrfmiddlewaretoken"]')?.value || '';
+    try {
+        const resp = await fetch(INGREDIENT_LINT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(payload),
+        });
+        if (!resp.ok) return latestIngredientLintResult;
+        const data = await resp.json();
+        latestIngredientLintResult = data;
+        (data.rows || []).forEach((rowResult, idx) => {
+            if (rowEls[idx]) {
+                renderRowLintFeedback(rowEls[idx], rowResult);
+            }
+        });
+        updateLintSummaryPanel(data, showConfirmGate);
+        return data;
+    } catch (_err) {
+        return latestIngredientLintResult;
+    }
+}
+
+function scheduleIngredientLint() {
+    allowSubmitWithIngredientWarnings = false;
+    if (ingredientLintTimer) clearTimeout(ingredientLintTimer);
+    ingredientLintTimer = setTimeout(() => runIngredientLint(false), 180);
+}
+
+function confirmSaveWithIngredientWarnings() {
+    const form = document.getElementById('recipe-form');
+    if (!form) return;
+    allowSubmitWithIngredientWarnings = true;
+    cleanupEmptyIngredientRows();
+    form.submit();
+}
+
 function initIngredientEnterBehavior() {
     const tbody = document.getElementById('ingredients-table-body');
     if (tbody) {
         tbody.addEventListener('keydown', handleIngredientKeydown);
+        tbody.addEventListener('input', e => {
+            if (e.target && (e.target.name === 'ingredient_name[]' || e.target.name === 'ingredient_amount[]')) {
+                scheduleIngredientLint();
+            }
+        });
+        tbody.addEventListener('change', e => {
+            if (e.target && (e.target.name === 'ingredient_name[]' || e.target.name === 'ingredient_amount[]')) {
+                allowSubmitWithIngredientWarnings = false;
+                runIngredientLint(false);
+            }
+        });
+        // Lint pre-populated ingredients on edit or URL import
+        const hasInitial = Array.from(tbody.querySelectorAll('input[name="ingredient_name[]"]'))
+            .some(el => el.value.trim().length > 0);
+        if (hasInitial) {
+            runIngredientLint(false);
+        }
     }
 
-    const form = document.querySelector('form[method="post"]');
+    const form = document.getElementById('recipe-form') || document.querySelector('form[method="post"]');
     if (form) {
-        form.addEventListener('submit', cleanupEmptyIngredientRows);
+        form.addEventListener('submit', async function(e) {
+            cleanupEmptyIngredientRows();
+            if (allowSubmitWithIngredientWarnings) {
+                return;
+            }
+            e.preventDefault();
+            const data = await runIngredientLint(true);
+            if ((data.warning_count || 0) === 0) {
+                allowSubmitWithIngredientWarnings = true;
+                form.submit();
+            } else {
+                const panel = document.getElementById('ingredient-lint-summary');
+                if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
         const submitBtns = form.querySelectorAll('button[type="submit"]');
         submitBtns.forEach(btn => {
             btn.addEventListener('pointerdown', cleanupEmptyIngredientRows);

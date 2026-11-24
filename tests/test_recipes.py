@@ -3,6 +3,7 @@ Unit and integration tests for culinary recipes:
 models, search service, ratings, and views.
 """
 
+import json
 from decimal import Decimal
 
 import pytest
@@ -13,6 +14,10 @@ from django.test import Client
 from django.urls import reverse
 
 from apps.recipes.models import Ingredient, Recipe, RecipeRating
+from apps.recipes.services.ingredient_lint_service import (
+    get_ingredient_unit_profiles,
+    lint_ingredient,
+)
 from apps.recipes.services.recipe_service import (
     add_recipe_to_shopping_list,
     create_or_update_recipe,
@@ -1702,3 +1707,149 @@ def test_edit_recipe_browser_optional_checkbox_alignment_with_deleted_and_added_
     assert ings["Rice Noodles"].optional is True
     assert ings["Chili Flakes"].optional is False
     assert ings["Sesame Seeds"].optional is True
+
+
+@pytest.mark.django_db
+def test_ingredient_lint_prep_words_and_brevity():
+    """Suspect prep words, embedded quantities, and verbose names produce actionable warnings."""
+    r_chopped = lint_ingredient("chopped onion", "1", profiles={})
+    assert r_chopped["cleaned_name"] == "onion"
+    assert any(w["code"] == "prep_word" and w["severity"] == "warning" for w in r_chopped["warnings"])
+    assert "chopped" in r_chopped["prep_notes"]
+
+    r_clean = lint_ingredient("onion", "1", profiles={})
+    assert r_clean["cleaned_name"] is None
+    assert r_clean["warnings"] == []
+
+    r_comma = lint_ingredient("garlic, minced", "2 cloves", profiles={})
+    assert r_comma["cleaned_name"] == "garlic"
+    assert any(w["code"] == "prep_word" for w in r_comma["warnings"])
+
+    r_embed = lint_ingredient("2 cups flour", "1", profiles={})
+    assert r_embed["cleaned_name"] == "flour"
+    assert any(
+        w["code"] == "embedded_quantity" and w.get("suggested_amount") == "2 cups"
+        for w in r_embed["warnings"]
+    )
+
+    r_opt = lint_ingredient("salt (optional)", "1 tsp", profiles={})
+    assert r_opt["cleaned_name"] == "salt"
+    assert any(w["code"] == "optional_in_name" for w in r_opt["warnings"])
+
+    r_verbose = lint_ingredient("freshly shredded sharp cheddar cheese or jack", "1 cup", profiles={})
+    codes = {w["code"] for w in r_verbose["warnings"]}
+    assert "prep_word" in codes
+    assert "brevity" in codes
+
+    # Pre-packaged / normal culinary descriptors should remain clean
+    assert lint_ingredient("diced tomatoes", "1 can", profiles={})["warnings"] == []
+    assert lint_ingredient("Yellow onion", "1", profiles={})["warnings"] == []
+    assert lint_ingredient("Fresh Rosemary", "2 sprigs", profiles={})["warnings"] == []
+
+
+@pytest.mark.django_db
+def test_ingredient_lint_unit_sanity_and_db_consistency():
+    """Unitless bulk items and inconsistent units steer authors toward sensible DB-backed units."""
+    r = Recipe.objects.create(name="Nachos Supreme", directions="Layer and bake.")
+    Ingredient.objects.create(recipe=r, name="sour cream", amount=Decimal("8.00"), amount_unit="oz")
+    Ingredient.objects.create(recipe=r, name="sour cream", amount=Decimal("4.00"), amount_unit="oz")
+    Ingredient.objects.create(recipe=r, name="ground beef", amount=Decimal("1.00"), amount_unit="lb")
+    Ingredient.objects.create(recipe=r, name="onion", amount=Decimal("1.00"), amount_unit="")
+
+    profiles = get_ingredient_unit_profiles(use_cache=False)
+
+    # '1 sour cream' -> warns & suggests '8 oz' from DB/retail conventions
+    bad_sour = lint_ingredient("sour cream", "1", profiles=profiles)
+    assert any(
+        w["code"] == "missing_unit" and w["severity"] == "warning" and w.get("suggested_amount") == "8 oz"
+        for w in bad_sour["warnings"]
+    )
+    assert "oz" in bad_sour["db_usage_summary"]
+
+    # '8 oz sour cream' -> clean!
+    good_sour = lint_ingredient("sour cream", "8 oz", profiles=profiles)
+    assert good_sour["warnings"] == []
+
+    # '1 stick sour cream' -> steers toward 'oz'
+    incon_sour = lint_ingredient("sour cream", "1 stick", profiles=profiles)
+    assert any(w["code"] == "inconsistent_unit" and w.get("suggested_amount") == "8 oz" for w in incon_sour["warnings"])
+
+    # '1 tsp ground beef' -> flags absurd tiny spice unit on protein
+    bad_beef = lint_ingredient("ground beef", "1 tsp", profiles=profiles)
+    assert any(w["code"] == "unusual_unit" and w["severity"] == "warning" for w in bad_beef["warnings"])
+
+    # New bulk item not yet in DB ('1 cream cheese') -> warns using food-type heuristic
+    unseeded = lint_ingredient("cream cheese", "1", profiles=profiles)
+    assert any(w["code"] == "missing_unit" and w.get("suggested_amount") == "8 oz" for w in unseeded["warnings"])
+
+    # Discrete countable DB item ('1 onion') -> clean!
+    assert lint_ingredient("onion", "1", profiles=profiles)["warnings"] == []
+
+
+@pytest.mark.django_db
+def test_recipe_form_guide_and_lint_endpoint_and_save_warnings(client: Client, auth_user):
+    """Verify formatting guide on form, JSON lint endpoint, and server-side warning messages on save."""
+    user, workspace = auth_user
+
+    lint_url = reverse("recipes:lint_ingredients")
+    # Unauthenticated lint request rejected cleanly
+    assert client.post(lint_url, json.dumps({"rows": []}), content_type="application/json").status_code == 403
+
+    r_seed = Recipe.objects.create(name="Burritos", directions="Roll and serve.")
+    Ingredient.objects.create(recipe=r_seed, name="sour cream", amount=Decimal("8.00"), amount_unit="oz")
+
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+
+    # Create form displays clear shopping-list formatting instructions & placeholder examples
+    form_resp = client.get(reverse("recipes:create"))
+    assert form_resp.status_code == 200
+    form_html = form_resp.content.decode("utf-8")
+    assert "Ingredient Formatting Guide" in form_html
+    assert "chopped onion" in form_html
+    assert "sour cream" in form_html
+    assert "8 oz" in form_html
+    assert lint_url in form_html
+
+    # JSON lint endpoint checks multiple rows accurately
+    lint_resp = client.post(
+        lint_url,
+        json.dumps({
+            "rows": [
+                {"name": "chopped onion", "amount": "1"},
+                {"name": "sour cream", "amount": "1"},
+                {"name": "sour cream", "amount": "8 oz"},
+            ]
+        }),
+        content_type="application/json",
+    )
+    assert lint_resp.status_code == 200
+    payload = lint_resp.json()
+    assert payload["warning_count"] == 2
+    assert payload["rows"][0]["cleaned_name"] == "onion"
+    assert "8 oz" in payload["rows"][1]["unit_hints"]
+    assert payload["rows"][2]["warnings"] == []
+
+    # Submitting suspect ingredients directly still saves but attaches warning messages
+    save_resp = client.post(
+        reverse("recipes:create"),
+        {
+            "name": "Quick Nachos",
+            "directions": "Top chips and bake.",
+            "portions": "4",
+            "ingredient_name[]": ["chopped onion", "sour cream"],
+            "ingredient_amount[]": ["1", "1"],
+            "ingredient_unit[]": ["", ""],
+            "ingredient_brand[]": ["", ""],
+            "ingredient_vendor[]": ["", ""],
+            "ingredient_row_id[]": ["row-0", "new-1"],
+        },
+        follow=True,
+    )
+    assert save_resp.status_code == 200
+    detail_html = save_resp.content.decode("utf-8")
+    assert "Ingredient formatting check:" in detail_html
+    assert "onion" in detail_html
+    assert "sour cream" in detail_html

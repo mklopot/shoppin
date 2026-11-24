@@ -2,13 +2,14 @@
 Views for culinary recipes, interactive multi-facet search, detail, ratings, and creation.
 """
 
+import json
 from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +23,7 @@ from apps.mealplans.services.mealplan_service import (
     get_active_meal_plan,
 )
 from apps.recipes.models import Recipe, RecipeRating
+from apps.recipes.services.ingredient_lint_service import lint_recipe_ingredients
 from apps.recipes.services.recipe_scraper import import_recipe_from_url, scrape_recipe_data
 from apps.recipes.services.recipe_service import (
     attach_recipe_made_counts,
@@ -338,6 +340,7 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
         try:
             recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user, workspace=workspace)
             messages.success(request, f"Recipe '{recipe.name}' created successfully!")
+            _emit_ingredient_lint_messages(request, request.POST)
             return redirect(recipe.get_absolute_url())
         except ValidationError as ve:
             err_msg = getattr(ve, "message", None) or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
@@ -580,6 +583,7 @@ def recipe_edit_view(
                 )
             else:
                 messages.success(request, f"Recipe '{saved_recipe.name}' updated successfully!")
+            _emit_ingredient_lint_messages(request, request.POST)
             return redirect(saved_recipe.get_absolute_url())
         except ValidationError as ve:
             err_msg = getattr(ve, "message", None) or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
@@ -789,3 +793,54 @@ def recipe_copy_to_workspace_view(
         f"Note: Recipes shared with a workspace or made public can be copied and modified by other members."
     )
     return redirect(forked.get_absolute_url())
+
+def _emit_ingredient_lint_messages(request: HttpRequest, post_data: Any) -> None:
+    """Attach summary warning messages if any submitted ingredients trigger shopping-list formatting heuristics."""
+    names = post_data.getlist("ingredient_name[]") if hasattr(post_data, "getlist") else []
+    amounts = post_data.getlist("ingredient_amount[]") if hasattr(post_data, "getlist") else []
+    if not names:
+        return
+    result = lint_recipe_ingredients(names, amounts)
+    warn_texts: list[str] = []
+    for row in result["rows"]:
+        for w in row["warnings"]:
+            if w["severity"] == "warning":
+                warn_texts.append(w["message"])
+                break
+    if warn_texts:
+        preview = " | ".join(warn_texts[:3])
+        if len(warn_texts) > 3:
+            preview += f" (+{len(warn_texts) - 3} more)"
+        messages.warning(request, f"Ingredient formatting check: {preview}")
+
+
+def recipe_ingredients_lint_view(request: HttpRequest) -> HttpResponse:
+    """
+    JSON endpoint evaluating ingredient names and amounts/units against shopping-list
+    formatting heuristics and database unit consistency conventions.
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return JsonResponse({"error": "Authentication required."}, status=403)
+
+    names: list[str] = []
+    amounts: list[str] = []
+    if request.method == "POST":
+        content_type = (request.content_type or "").lower()
+        if "application/json" in content_type:
+            try:
+                payload = json.loads(request.body.decode("utf-8") or "{}")
+            except (ValueError, UnicodeDecodeError):
+                payload = {}
+            for row in payload.get("rows", []):
+                if isinstance(row, dict):
+                    names.append(str(row.get("name", "")))
+                    amounts.append(str(row.get("amount", "")))
+        else:
+            names = request.POST.getlist("ingredient_name[]")
+            amounts = request.POST.getlist("ingredient_amount[]")
+    else:
+        names = [request.GET.get("name", "")]
+        amounts = [request.GET.get("amount", "")]
+
+    return JsonResponse(lint_recipe_ingredients(names, amounts))

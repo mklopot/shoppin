@@ -169,6 +169,22 @@ INVARIANT_UNITS: tuple[str, ...] = (
     "doz", "pt", "pkg", "ml", "l", "L", "gal", "g", "kg", "t", "T"
 )
 
+_COMPOUND_TAIL_RE = re.compile(
+    r"^(.+?)((?:,\s*\d.+?)?\s+and\s+(?:\d|a\b|an\b|one\b|two\b|three\b|four\b|half\b|quarter\b).*)$",
+    re.IGNORECASE,
+)
+
+_COMPOUND_WORD_NUMS: dict[str, float] = {
+    "a": 1.0,
+    "an": 1.0,
+    "one": 1.0,
+    "two": 2.0,
+    "three": 3.0,
+    "four": 4.0,
+    "half": 0.5,
+    "quarter": 0.25,
+}
+
 
 def singularize(word: str) -> str:
     """
@@ -199,6 +215,12 @@ def singularize(word: str) -> str:
         fraction_str = fraction_prefix_match.group(1)
         sub_word = fraction_prefix_match.group(2)
         return f"{fraction_str} {singularize(sub_word)}"
+
+    # 2b. Check compound unit tail (e.g. 'gallons and 1 cup' -> 'gallon and 1 cup')
+    compound_match = _COMPOUND_TAIL_RE.match(clean)
+    if compound_match:
+        head_unit, tail_clause = compound_match.group(1).strip(), compound_match.group(2)
+        return f"{singularize(head_unit)}{tail_clause}"
 
     # 3. Check 'X of Y' phrases (e.g. 'cloves of garlic', 'heads of lettuce')
     of_match = re.match(r"^(.+)\s+of\s+(.+)$", clean, re.IGNORECASE)
@@ -263,6 +285,12 @@ def pluralize(word: str) -> str:
         fraction_str = fraction_prefix_match.group(1)
         sub_word = fraction_prefix_match.group(2)
         return f"{fraction_str} {pluralize(sub_word)}"
+
+    # 3b. Check compound unit tail (e.g. 'gallon and 1 cup' -> 'gallons and 1 cup')
+    compound_match = _COMPOUND_TAIL_RE.match(clean)
+    if compound_match:
+        head_unit, tail_clause = compound_match.group(1).strip(), compound_match.group(2)
+        return f"{pluralize(head_unit)}{tail_clause}"
 
     # 4. 'X of Y' phrases (e.g. 'clove of garlic' -> 'cloves of garlic')
     of_match = re.match(r"^(.+)\s+of\s+(.+)$", clean, re.IGNORECASE)
@@ -393,21 +421,49 @@ def parse_fractional_unit(unit_str: str) -> tuple[float, str]:
     return 1.0, clean
 
 
-def get_unit_family(unit_str: str) -> tuple[str | None, float, bool]:
-    """
-    Determine the measurement family and base unit scale factor for a unit string.
+def _parse_compound_clause(clause: str) -> tuple[float, str] | None:
+    """Parse '<number/fraction/word> <unit>' inside a compound unit tail."""
+    clean = (clause or "").strip()
+    if not clean:
+        return None
+    m = re.match(r"^(\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)\s+(.+)$", clean)
+    if m:
+        qty_str, unit_str = m.group(1).strip(), m.group(2).strip()
+        parts = qty_str.split()
+        try:
+            if len(parts) == 2:
+                amt = float(int(parts[0]) + Fraction(parts[1]))
+            elif "/" in qty_str:
+                amt = float(Fraction(qty_str))
+            else:
+                amt = float(qty_str)
+        except (ValueError, ZeroDivisionError):
+            return None
+        return amt, unit_str
 
-    Returns:
-        tuple of (family_name, scale_to_base, is_abbreviation).
-    """
-    clean = unit_str.strip()
+    word_match = re.match(r"^([a-zA-Z]+)\s+(.+)$", clean)
+    if word_match:
+        w_low = word_match.group(1).lower()
+        rest = word_match.group(2).strip()
+        if w_low in _COMPOUND_WORD_NUMS and rest:
+            if rest.lower().startswith("a "):
+                rest = rest[2:].strip()
+            return _COMPOUND_WORD_NUMS[w_low], rest
+    return None
+
+
+def _get_single_unit_family(unit_str: str) -> tuple[str | None, float, bool]:
+    """Resolve measurement family and base scale factor for a non-compound unit string."""
+    clean = (unit_str or "").strip()
     if not clean:
         return None, 1.0, False
 
     multiplier, base_unit = parse_fractional_unit(clean)
     base_lower = base_unit.lower()
-
-    is_abbr = base_lower in ("tsp", "t", "tbsp", "t", "fl oz", "fl. oz", "c", "pt", "qt", "gal", "oz", "lb", "lbs", "g", "kg", "ml", "l")
+    is_abbr = base_lower in (
+        "tsp", "t", "tbsp", "fl oz", "fl. oz", "c", "pt", "qt", "gal",
+        "oz", "lb", "lbs", "g", "kg", "ml", "l",
+    )
 
     if base_lower in VOLUME_UNITS_IN_TSP:
         return "volume_us", VOLUME_UNITS_IN_TSP[base_lower] * multiplier, is_abbr
@@ -421,12 +477,70 @@ def get_unit_family(unit_str: str) -> tuple[str | None, float, bool]:
     return None, multiplier, False
 
 
+def _split_compound_unit(unit_str: str) -> tuple[str, list[str]]:
+    """Split compound units like 'gallons, 1 pint and 1 cup' into (head_unit, [tail_clauses])."""
+    clean = (unit_str or "").strip()
+    if not clean:
+        return "", []
+    compound_match = _COMPOUND_TAIL_RE.match(clean)
+    if not compound_match:
+        return clean, []
+    head = compound_match.group(1).strip()
+    tail_raw = re.sub(r"^(?:,|and)\s*", "", compound_match.group(2).strip(), flags=re.IGNORECASE)
+    clauses = [
+        p.strip()
+        for p in re.split(r"\s+and\s+|,\s*", tail_raw, flags=re.IGNORECASE)
+        if p and p.strip()
+    ]
+    return head, clauses
+
+
+def to_base_quantity(amount: Decimal | float | int, unit_str: str) -> tuple[str | None, float, bool]:
+    """
+    Convert a possibly compound quantity like (1, 'gallon and 1 cup') or (2, 'pints')
+    into (family_name, total_in_base_units, is_abbreviated).
+    """
+    head, tail_clauses = _split_compound_unit(unit_str)
+    fam, scale, is_abbr = _get_single_unit_family(head)
+    if fam is None or not tail_clauses:
+        return fam, float(amount) * scale, is_abbr
+
+    total_base = float(amount) * scale
+    any_abbr = is_abbr
+    for clause in tail_clauses:
+        parsed = _parse_compound_clause(clause)
+        if not parsed:
+            return None, float(amount), False
+        c_amt, c_unit = parsed
+        c_fam, c_scale, c_abbr = _get_single_unit_family(c_unit)
+        if c_fam != fam:
+            return None, float(amount), False
+        total_base += c_amt * c_scale
+        any_abbr = any_abbr or c_abbr
+    return fam, total_base, any_abbr
+
+
+def get_unit_family(unit_str: str) -> tuple[str | None, float, bool]:
+    """
+    Determine the measurement family and base unit scale factor for a unit string.
+
+    Returns:
+        tuple of (family_name, scale_to_base, is_abbreviation).
+    """
+    clean = (unit_str or "").strip()
+    if not clean:
+        return None, 1.0, False
+    if _COMPOUND_TAIL_RE.match(clean):
+        return to_base_quantity(1, clean)
+    return _get_single_unit_family(clean)
+
+
 def can_combine_units(unit1: str, unit2: str) -> bool:
     """
     Determine whether two measurement units are compatible and can be combined.
 
     Units can combine if they are identical (singularized), or if both belong to the same
-    convertible measurement system (e.g. pints and quarts, ounces and pounds).
+    convertible measurement system (e.g. pints and quarts, ounces and pounds, compound volume).
     """
     u1_clean = unit1.strip()
     u2_clean = unit2.strip()
@@ -448,6 +562,217 @@ def can_combine_units(unit1: str, unit2: str) -> bool:
     return False
 
 
+def _unit_label(qty: float, abbr: str, singular: str, plural: str, use_abbr: bool) -> str:
+    """Select abbreviated or singular/plural full unit label for a numeric quantity."""
+    if use_abbr:
+        return abbr
+    return singular if round(qty, 2) == 1.0 else plural
+
+
+def _format_compound_parts(parts: list[tuple[Decimal, str]]) -> tuple[Decimal, str]:
+    """
+    Format decomposed [(qty, unit_label), ...] into a ShoppingListItem-compatible (amount, unit_str).
+    Example: [(1, 'gallon'), (1, 'cup')] -> (Decimal('1.00'), 'gallon and 1 cup').
+    """
+    head_amt, head_unit = parts[0]
+    head_dec = Decimal(str(head_amt)).quantize(Decimal("0.01"))
+    if len(parts) == 1:
+        return head_dec, head_unit
+
+    tail_strs = [f"{format_amount(amt)} {unit}".strip() for amt, unit in parts[1:]]
+    if len(tail_strs) == 1:
+        return head_dec, f"{head_unit} and {tail_strs[0]}"
+    return head_dec, f"{head_unit}, " + " and ".join([", ".join(tail_strs[:-1]), tail_strs[-1]])
+
+
+def _is_clean_multiple(ratio: float, allowed_fracs: tuple[float, ...], tol: float = 0.012) -> bool:
+    """Return True if the fractional remainder of ratio matches an allowed culinary fraction."""
+    frac = ratio - int(ratio)
+    if frac < tol or abs(frac - 1.0) < tol:
+        return True
+    return any(abs(frac - target) <= tol for target in allowed_fracs)
+
+
+def _decompose_volume_us_remainder(
+    rem_tsp: float,
+    prefer_abbr: bool,
+    prefer_c_abbr: bool,
+) -> list[tuple[Decimal, str]]:
+    """Decompose remaining tsp under a larger US volume unit into readable whole/fractional parts."""
+    parts: list[tuple[Decimal, str]] = []
+    remaining = rem_tsp
+    steps = (
+        ("qt", "quart", "quarts", 192.0, prefer_abbr),
+        ("pt", "pint", "pints", 96.0, prefer_abbr),
+        ("c", "cup", "cups", 48.0, prefer_c_abbr),
+        ("tbsp", "tablespoon", "tablespoons", 3.0, prefer_abbr),
+    )
+    for abbr, sing, plur, factor, use_abbr in steps:
+        if len(parts) >= 2:
+            break
+        if remaining + 0.2 < factor:
+            continue
+        if abs(remaining - factor) < 0.25:
+            whole = 1
+        else:
+            whole = int((remaining + 0.05) // factor)
+        if whole >= 1:
+            parts.append((Decimal(str(whole)), _unit_label(float(whole), abbr, sing, plur, use_abbr)))
+            remaining = max(0.0, remaining - whole * factor)
+            if remaining < 0.25:
+                return parts
+
+    if remaining >= 0.25:
+        # Clean sub-cup fraction like 1/2, 1/3, 2/3, 1/4, 3/4 cup instead of messy tbsp/tsp
+        if 12.0 <= remaining < 48.0 and _is_clean_multiple(remaining / 48.0, (0.25, 1.0 / 3.0, 0.5, 2.0 / 3.0, 0.75)):
+            cup_val = round(remaining / 48.0, 2)
+            parts.append((Decimal(str(cup_val)), _unit_label(1.0, "c", "cup", "cups", prefer_c_abbr)))
+        else:
+            tsp_val = round(remaining, 2)
+            if abs(tsp_val - round(tsp_val)) < 0.1 and tsp_val >= 1.0:
+                tsp_val = float(round(tsp_val))
+            parts.append((Decimal(str(tsp_val)), _unit_label(tsp_val, "tsp", "teaspoon", "teaspoons", prefer_abbr)))
+    return parts
+
+
+def _format_volume_us(
+    total_tsp: float,
+    prefer_abbr: bool,
+    prefer_c_abbr: bool,
+) -> tuple[Decimal, str]:
+    """Format US volume base total (in tsp) into standard or compound units."""
+    if total_tsp >= 12.0 and abs(total_tsp - round(total_tsp)) <= 0.22:
+        total_tsp = float(round(total_tsp))
+
+    # Gallons (1 gallon = 768 tsp = 16 cups)
+    if total_tsp >= 768.0 or abs(total_tsp - 768.0) < 0.25:
+        whole_gal = int((total_tsp + 0.25) // 768.0)
+        rem_tsp = max(0.0, total_tsp - whole_gal * 768.0)
+        if rem_tsp < 0.25:
+            return Decimal(str(whole_gal)).quantize(Decimal("0.01")), _unit_label(
+                float(whole_gal), "gal", "gallon", "gallons", prefer_abbr
+            )
+        if abs(rem_tsp - 384.0) < 0.25:
+            half_gal = whole_gal + 0.5
+            return Decimal(str(half_gal)).quantize(Decimal("0.01")), _unit_label(
+                half_gal, "gal", "gallon", "gallons", prefer_abbr
+            )
+        head = (Decimal(str(whole_gal)), _unit_label(float(whole_gal), "gal", "gallon", "gallons", prefer_abbr))
+        rem_parts = _decompose_volume_us_remainder(rem_tsp, prefer_abbr, prefer_c_abbr)
+        return _format_compound_parts([head, *rem_parts[:2]])
+
+    # Quarts (1 quart = 192 tsp = 2 pints)
+    if total_tsp >= 192.0:
+        quarts = round(total_tsp / 192.0, 2)
+        if _is_clean_multiple(total_tsp / 192.0, (0.5,)):
+            return Decimal(str(quarts)).quantize(Decimal("0.01")), _unit_label(
+                quarts, "qt", "quart", "quarts", prefer_abbr
+            )
+        whole_qt = int((total_tsp + 0.2) // 192.0)
+        rem_tsp = max(0.0, total_tsp - whole_qt * 192.0)
+        head = (Decimal(str(whole_qt)), _unit_label(float(whole_qt), "qt", "quart", "quarts", prefer_abbr))
+        rem_parts = _decompose_volume_us_remainder(rem_tsp, prefer_abbr, prefer_c_abbr)
+        return _format_compound_parts([head, *rem_parts[:2]])
+
+    # Pints (1 pint = 96 tsp = 2 cups)
+    if total_tsp >= 96.0:
+        pints = round(total_tsp / 96.0, 2)
+        if _is_clean_multiple(total_tsp / 96.0, (0.5,)):
+            return Decimal(str(pints)).quantize(Decimal("0.01")), _unit_label(
+                pints, "pt", "pint", "pints", prefer_abbr
+            )
+        whole_pt = int((total_tsp + 0.2) // 96.0)
+        rem_tsp = max(0.0, total_tsp - whole_pt * 96.0)
+        head = (Decimal(str(whole_pt)), _unit_label(float(whole_pt), "pt", "pint", "pints", prefer_abbr))
+        rem_parts = _decompose_volume_us_remainder(rem_tsp, prefer_abbr, prefer_c_abbr)
+        return _format_compound_parts([head, *rem_parts[:2]])
+
+    # Cups (1 cup = 48 tsp)
+    if total_tsp >= 16.0:
+        cups = round(total_tsp / 48.0, 2)
+        if _is_clean_multiple(total_tsp / 48.0, (0.25, 1.0 / 3.0, 0.5, 2.0 / 3.0, 0.75)):
+            return Decimal(str(cups)).quantize(Decimal("0.01")), _unit_label(
+                cups, "c", "cup", "cups", prefer_c_abbr
+            )
+        if total_tsp >= 48.0:
+            whole_cups = int((total_tsp + 0.2) // 48.0)
+            rem_tsp = max(0.0, total_tsp - whole_cups * 48.0)
+            head = (Decimal(str(whole_cups)), _unit_label(float(whole_cups), "c", "cup", "cups", prefer_c_abbr))
+            rem_parts = _decompose_volume_us_remainder(rem_tsp, prefer_abbr, prefer_c_abbr)
+            return _format_compound_parts([head, *rem_parts[:2]])
+        return Decimal(str(cups)).quantize(Decimal("0.01")), _unit_label(
+            cups, "c", "cup", "cups", prefer_c_abbr
+        )
+
+    # Tablespoons (1 tbsp = 3 tsp)
+    if total_tsp >= 3.0:
+        if abs(total_tsp % 3.0) < 0.05 or abs((total_tsp % 3.0) - 3.0) < 0.05:
+            tbsp = round(total_tsp / 3.0, 2)
+            return Decimal(str(tbsp)).quantize(Decimal("0.01")), _unit_label(
+                tbsp, "tbsp", "tablespoon", "tablespoons", prefer_abbr
+            )
+        whole_tbsp = int(total_tsp // 3.0)
+        rem_tsp = round(total_tsp - whole_tbsp * 3.0, 2)
+        if whole_tbsp >= 1 and rem_tsp >= 0.25:
+            head = (Decimal(str(whole_tbsp)), _unit_label(float(whole_tbsp), "tbsp", "tablespoon", "tablespoons", prefer_abbr))
+            rem_unit = _unit_label(rem_tsp, "tsp", "teaspoon", "teaspoons", prefer_abbr)
+            return _format_compound_parts([head, (Decimal(str(rem_tsp)), rem_unit)])
+
+    tsp_val = round(total_tsp, 2)
+    return Decimal(str(tsp_val)).quantize(Decimal("0.01")), _unit_label(
+        tsp_val, "tsp", "teaspoon", "teaspoons", prefer_abbr
+    )
+
+
+def _format_weight_us(total_oz: float, prefer_abbr: bool) -> tuple[Decimal, str]:
+    """Format US weight (oz, lb) cleanly, using compound 'lb and oz' when non-quarterly."""
+    if total_oz >= 16.0:
+        lbs = round(total_oz / 16.0, 2)
+        if _is_clean_multiple(total_oz / 16.0, (0.25, 0.5, 0.75)):
+            return Decimal(str(lbs)).quantize(Decimal("0.01")), _unit_label(
+                lbs, "lb", "pound", "pounds", prefer_abbr
+            )
+        whole_lb = int(total_oz // 16.0)
+        rem_oz = round(total_oz - whole_lb * 16.0, 2)
+        head = (Decimal(str(whole_lb)), _unit_label(float(whole_lb), "lb", "pound", "pounds", prefer_abbr))
+        rem_unit = _unit_label(rem_oz, "oz", "ounce", "ounces", prefer_abbr)
+        return _format_compound_parts([head, (Decimal(str(rem_oz)), rem_unit)])
+
+    oz_val = round(total_oz, 2)
+    return Decimal(str(oz_val)).quantize(Decimal("0.01")), _unit_label(
+        oz_val, "oz", "ounce", "ounces", prefer_abbr
+    )
+
+
+def _format_metric(
+    total_base: float,
+    prefer_abbr: bool,
+    small_abbr: str,
+    small_sing: str,
+    small_plur: str,
+    big_abbr: str,
+    big_sing: str,
+    big_plur: str,
+) -> tuple[Decimal, str]:
+    """Format metric weight/volume (g/kg or ml/l) without losing sub-10g/ml precision."""
+    if total_base >= 1000.0:
+        big_rounded = round(total_base / 1000.0, 2)
+        if abs(big_rounded * 1000.0 - total_base) < 0.5:
+            return Decimal(str(big_rounded)).quantize(Decimal("0.01")), _unit_label(
+                big_rounded, big_abbr, big_sing, big_plur, prefer_abbr
+            )
+        whole_big = int(total_base // 1000.0)
+        rem_small = round(total_base - whole_big * 1000.0, 2)
+        head = (Decimal(str(whole_big)), _unit_label(float(whole_big), big_abbr, big_sing, big_plur, prefer_abbr))
+        rem_unit = _unit_label(rem_small, small_abbr, small_sing, small_plur, prefer_abbr)
+        return _format_compound_parts([head, (Decimal(str(rem_small)), rem_unit)])
+
+    small_val = round(total_base, 2)
+    return Decimal(str(small_val)).quantize(Decimal("0.01")), _unit_label(
+        small_val, small_abbr, small_sing, small_plur, prefer_abbr
+    )
+
+
 def combine_amounts_and_units(
     amount1: Decimal | float | int,
     unit1: str,
@@ -455,25 +780,8 @@ def combine_amounts_and_units(
     unit2: str,
 ) -> tuple[Decimal, str]:
     """
-    Combine two quantities and their measurement units, converting up to natural units.
-
-    Examples:
-    - 1 pint + 1 pint = 1 quart
-    - 1 pt + 1 pt = 1 qt
-    - 2 quarts + 2 quarts = 1 gallon
-    - 1/3 cup + 1/3 cup = 2/3 cup
-    - 2/3 cup + 1/3 cup = 1 cup
-    - 8 oz + 8 oz = 1 lb
-    - 500 g + 500 g = 1 kg
-
-    Args:
-        amount1: First quantity.
-        unit1: First unit.
-        amount2: Second quantity.
-        unit2: Second unit.
-
-    Returns:
-        tuple of (new_amount as Decimal, new_unit as str).
+    Combine two quantities and their measurement units, converting up to natural units
+    and expressing mixed US totals clearly (e.g. '10 cups + 7 cups' -> '1 gallon and 1 cup').
     """
     amt1 = float(amount1)
     amt2 = float(amount2)
@@ -484,85 +792,22 @@ def combine_amounts_and_units(
     if not u1_clean and not u2_clean:
         return Decimal(str(amt1 + amt2)).quantize(Decimal("0.01")), ""
 
-    fam1, scale1, is_abbr1 = get_unit_family(u1_clean)
-    fam2, scale2, is_abbr2 = get_unit_family(u2_clean)
-    prefer_abbr = is_abbr1 or is_abbr2
+    fam1, total1, is_abbr1 = to_base_quantity(amt1, u1_clean)
+    fam2, total2, is_abbr2 = to_base_quantity(amt2, u2_clean)
+    prefer_abbr = is_abbr1 and is_abbr2 if (fam1 == "volume_us" and is_abbr1 != is_abbr2) else (is_abbr1 or is_abbr2)
+    prefer_c_abbr = u1_clean.lower() == "c" and u2_clean.lower() == "c"
 
-    # Check US Volume (tsp, tbsp, fl oz, cup, pint, quart, gallon)
     if fam1 == "volume_us" and fam2 == "volume_us":
-        total_tsp = (amt1 * scale1) + (amt2 * scale2)
+        return _format_volume_us(total1 + total2, prefer_abbr, prefer_c_abbr)
 
-        # 1 gallon = 768 tsp (4 quarts)
-        if total_tsp >= 768.0 and (total_tsp % 768.0 == 0 or total_tsp >= 1536.0):
-            gallons = round(total_tsp / 768.0, 2)
-            unit_name = "gal" if prefer_abbr else ("gallon" if gallons == 1 else "gallons")
-            return Decimal(str(gallons)).quantize(Decimal("0.01")), unit_name
-
-        # 1 quart = 192 tsp (2 pints)
-        # e.g. 1 pint + 1 pint = 2 pints = 192 tsp = 1 quart!
-        if total_tsp >= 192.0:
-            quarts = round(total_tsp / 192.0, 2)
-            # If it's a clean multiple of quarts or > 1 quart
-            if quarts.is_integer() or total_tsp >= 192.0:
-                unit_name = "qt" if prefer_abbr else ("quart" if quarts == 1 else "quarts")
-                return Decimal(str(quarts)).quantize(Decimal("0.01")), unit_name
-
-        # 1 pint = 96 tsp (2 cups)
-        # e.g. 1 cup + 1 cup = 2 cups = 96 tsp = 1 pint!
-        if total_tsp >= 96.0:
-            pints = round(total_tsp / 96.0, 2)
-            unit_name = "pt" if prefer_abbr else ("pint" if pints == 1 else "pints")
-            return Decimal(str(pints)).quantize(Decimal("0.01")), unit_name
-
-        # 1 cup = 48 tsp (16 tbsp = 8 fl oz)
-        # Handles fractional cups (e.g. 1/3 cup + 1/3 cup = 2/3 cup, 2/3 cup + 1/3 cup = 1 cup)
-        if total_tsp >= 16.0:
-            cups = round(total_tsp / 48.0, 2)
-            unit_name = "c" if prefer_abbr else ("cup" if cups == 1 else "cups")
-            return Decimal(str(cups)).quantize(Decimal("0.01")), unit_name
-
-        # 1 tbsp = 3 tsp
-        if total_tsp >= 3.0 and total_tsp % 3.0 == 0:
-            tbsp = round(total_tsp / 3.0, 2)
-            unit_name = "tbsp" if prefer_abbr else ("tablespoon" if tbsp == 1 else "tablespoons")
-            return Decimal(str(tbsp)).quantize(Decimal("0.01")), unit_name
-
-        unit_name = "tsp" if prefer_abbr else ("teaspoon" if total_tsp == 1 else "teaspoons")
-        return Decimal(str(round(total_tsp, 2))).quantize(Decimal("0.01")), unit_name
-
-    # Check US Weight (oz, lb)
     if fam1 == "weight_us" and fam2 == "weight_us":
-        total_oz = (amt1 * scale1) + (amt2 * scale2)
-        # 16 oz = 1 lb (e.g. 8 oz + 8 oz = 1 lb)
-        if total_oz >= 16.0:
-            lbs = round(total_oz / 16.0, 2)
-            unit_name = "lb" if prefer_abbr else ("pound" if lbs == 1 else "pounds")
-            return Decimal(str(lbs)).quantize(Decimal("0.01")), unit_name
+        return _format_weight_us(total1 + total2, is_abbr1 or is_abbr2)
 
-        unit_name = "oz" if prefer_abbr else ("ounce" if total_oz == 1 else "ounces")
-        return Decimal(str(round(total_oz, 2))).quantize(Decimal("0.01")), unit_name
-
-    # Check Metric Weight (g, kg)
     if fam1 == "weight_metric" and fam2 == "weight_metric":
-        total_g = (amt1 * scale1) + (amt2 * scale2)
-        if total_g >= 1000.0:
-            kgs = round(total_g / 1000.0, 2)
-            unit_name = "kg" if prefer_abbr else ("kilogram" if kgs == 1 else "kilograms")
-            return Decimal(str(kgs)).quantize(Decimal("0.01")), unit_name
+        return _format_metric(total1 + total2, is_abbr1 or is_abbr2, "g", "gram", "grams", "kg", "kilogram", "kilograms")
 
-        unit_name = "g" if prefer_abbr else ("gram" if total_g == 1 else "grams")
-        return Decimal(str(round(total_g, 2))).quantize(Decimal("0.01")), unit_name
-
-    # Check Metric Volume (ml, l)
     if fam1 == "volume_metric" and fam2 == "volume_metric":
-        total_ml = (amt1 * scale1) + (amt2 * scale2)
-        if total_ml >= 1000.0:
-            liters = round(total_ml / 1000.0, 2)
-            unit_name = "l" if prefer_abbr else ("liter" if liters == 1 else "liters")
-            return Decimal(str(liters)).quantize(Decimal("0.01")), unit_name
-
-        unit_name = "ml" if prefer_abbr else ("milliliter" if total_ml == 1 else "milliliters")
-        return Decimal(str(round(total_ml, 2))).quantize(Decimal("0.01")), unit_name
+        return _format_metric(total1 + total2, is_abbr1 or is_abbr2, "ml", "milliliter", "milliliters", "l", "liter", "liters")
 
     # Units with explicit fraction (e.g. unit1 = '1/3 cup', unit2 = '1/3 cup')
     mult1, base1 = parse_fractional_unit(u1_clean)
@@ -673,12 +918,10 @@ def is_quantity_increased(
     u1_clean = unit1.strip()
     u2_clean = unit2.strip()
 
-    fam1, scale1, _ = get_unit_family(u1_clean)
-    fam2, scale2, _ = get_unit_family(u2_clean)
+    fam1, val1, _ = to_base_quantity(amount1, u1_clean)
+    fam2, val2, _ = to_base_quantity(amount2, u2_clean)
 
     if fam1 is not None and fam1 == fam2:
-        val1 = float(amount1) * scale1
-        val2 = float(amount2) * scale2
         return val2 > val1
 
     if singularize(u1_clean.lower()) == singularize(u2_clean.lower()):

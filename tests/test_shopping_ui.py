@@ -1185,4 +1185,50 @@ def test_mobile_navigation_tabs_high_contrast(client, active_list):
     assert "bg-gray-950 text-white" in recipes_tab_chunk
 
 
+@pytest.mark.django_db
+def test_compound_gallon_and_cup_display_and_edit_roundtrip(client, active_list):
+    """Combining 10 cups + 7 cups or 1 gallon + 1 cup displays '1 gallon and 1 cup' and edits cleanly."""
+    # 1. 10 cups + 7 cups -> 1 gallon and 1 cup
+    client.post(reverse("shopping:add_item"), {"name": "Whole Milk", "amount": "10 cups"})
+    resp_milk = client.post(reverse("shopping:add_item"), {"name": "Whole Milk", "amount": "7 cups"})
+    assert resp_milk.status_code == 200
+    milk = active_list.items.get(name="Whole Milk")
+    assert milk.amount == Decimal("1.00")
+    assert milk.amount_unit == "gallon and 1 cup"
+    assert f"{milk.amount_display} {milk.unit_display}" == "1 gallon and 1 cup"
+    assert b"1 gallon and 1 cup" in resp_milk.content
 
+    # 2. 1 gallon + 1 cup -> 1 gallon and 1 cup
+    client.post(reverse("shopping:add_item"), {"name": "Chicken Broth", "amount": "1 gallon"})
+    resp_broth = client.post(reverse("shopping:add_item"), {"name": "Chicken Broth", "amount": "1 cup"})
+    assert resp_broth.status_code == 200
+    broth = active_list.items.get(name="Chicken Broth")
+    assert broth.amount == Decimal("1.00")
+    assert broth.amount_unit == "gallon and 1 cup"
+    assert b"1 gallon and 1 cup" in resp_broth.content
+
+    # 3. Edit dialog renders '1 gallon and 1 cup' and saving aisle preserves lock and quantity
+    modal = client.get(reverse("shopping:edit_item", args=[broth.id]))
+    assert b'value="1 gallon and 1 cup"' in modal.content
+    client.post(
+        reverse("shopping:edit_item", args=[broth.id]),
+        {
+            "name": "Chicken Broth",
+            "amount": "1 gallon and 1 cup",
+            "category": broth.category,
+            "aisle": "Aisle 4",
+            "purpose": "Soup",
+        },
+    )
+    broth.refresh_from_db()
+    assert broth.amount == Decimal("1.00")
+    assert broth.amount_unit == "gallon and 1 cup"
+    assert broth.locked is True
+    assert broth.aisle == "Aisle 4"
+
+    # 4. Adding 15 more cups turns 1 gallon and 1 cup into 2 gallons
+    resp_more = client.post(reverse("shopping:add_item"), {"name": "Chicken Broth", "amount": "15 cups"})
+    broth.refresh_from_db()
+    assert broth.amount == Decimal("2.00")
+    assert broth.amount_unit == "gallons"
+    assert b"2 gallons" in resp_more.content

@@ -227,3 +227,43 @@ def test_categorizer_tally_occurrences():
     assert categorizer.get_category("black bean patty") == "frozen"
     assert categorizer.get_category("bell pepper") == "produce"
     assert categorizer.get_category("unknown_exotic_food_123") == "other"
+
+
+def test_compound_unit_combining_and_recombining():
+    from apps.core.utils import can_combine_units, is_quantity_increased
+
+    # 10 cups + 7 cups -> 1 gallon and 1 cup (not 17 cups)
+    amt1, unit1 = combine_amounts_and_units(10, "cups", 7, "cups")
+    assert amt1 == Decimal("1.00")
+    assert unit1 == "gallon and 1 cup"
+
+    # 1 gallon + 1 cup -> 1 gallon and 1 cup
+    amt2, unit2 = combine_amounts_and_units(1, "gallon", 1, "cup")
+    assert amt2 == Decimal("1.00")
+    assert unit2 == "gallon and 1 cup"
+
+    # Re-combining compound unit with another cup -> 1 gallon and 1 pint
+    assert can_combine_units("gallon and 1 cup", "cup") is True
+    amt3, unit3 = combine_amounts_and_units(Decimal("1.00"), "gallon and 1 cup", 1, "cup")
+    assert amt3 == Decimal("1.00")
+    assert unit3 == "gallon and 1 pint"
+
+    # Re-combining 1 gallon and 1 cup + 15 cups -> 2 gallons
+    amt4, unit4 = combine_amounts_and_units(Decimal("1.00"), "gallon and 1 cup", 15, "cups")
+    assert amt4 == Decimal("2.00")
+    assert unit4 == "gallons"
+
+    # Other mixed US & metric compound cases
+    assert combine_amounts_and_units(1, "quart", 1, "cup") == (Decimal("1.00"), "quart and 1 cup")
+    assert combine_amounts_and_units(1, "cup", 1, "tablespoon") == (Decimal("1.00"), "cup and 1 tablespoon")
+    assert combine_amounts_and_units(1, "lb", 3, "oz") == (Decimal("1.00"), "lb and 3 oz")
+    assert combine_amounts_and_units(1, "kg", 5, "g") == (Decimal("1.00"), "kg and 5 g")
+
+    # Inflection preserves compound tail intact
+    assert pluralize_unit("gallon and 1 cup") == "gallons and 1 cup"
+    assert singularize_unit("gallons and 1 cup") == "gallon and 1 cup"
+
+    # Quantity comparison across compound vs simple units
+    assert is_quantity_increased(Decimal("1.00"), "gallon and 1 cup", Decimal("1.00"), "gallon and 2 cups") is True
+    assert is_quantity_increased(Decimal("1.00"), "gallon and 1 cup", Decimal("1.00"), "gallon and 1 cup") is False
+    assert is_quantity_increased(Decimal("1.00"), "gallon and 2 cups", Decimal("1.00"), "gallon") is False

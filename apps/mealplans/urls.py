@@ -26,4 +26,8 @@ urlpatterns = [
     path("ratings/submit-made/", views.submit_made_ratings, name="submit_made_ratings"),
     path("clear/", views.clear_meal_plan, name="clear"),
     path("recipe/<int:recipe_id>/modal/", views.recipe_modal, name="recipe_modal"),
+    path("archive/", views.archived_meals_view, name="archive"),
+    path("archive/<int:archive_id>/load/", views.load_archived_meal, name="load_archived_meal"),
+    path("archive/<int:archive_id>/rate/", views.rate_archived_meal_view, name="rate_archived_meal"),
+    path("archive/<int:archive_id>/delete/", views.delete_archived_meal_view, name="delete_archived_meal"),
 ]

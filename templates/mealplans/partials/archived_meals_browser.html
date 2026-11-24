@@ -1,0 +1,48 @@
+<div class="space-y-3">
+    <form id="archived-meals-filter-form"
+          hx-get="{% url 'mealplans:archive' %}"
+          hx-target="#archived-meals-results"
+          hx-swap="outerHTML"
+          hx-trigger="input changed delay:250ms from:#archive-search-input, change from:#archive-search-by, change from:#archive-sort-by, submit"
+          class="flex flex-wrap items-center gap-2 text-xs bg-gray-50 border border-gray-300 p-2.5">
+        <input type="hidden" name="embed" value="{% if embed_in_mealplan %}1{% endif %}">
+        <div class="flex-1 min-w-[200px]">
+            <label for="archive-search-input" class="sr-only">Search archived meals</label>
+            <input type="search"
+                   id="archive-search-input"
+                   name="q"
+                   value="{{ archive_query|default:'' }}"
+                   placeholder="Search by title words, dish, or ingredient..."
+                   autocomplete="off"
+                   class="w-full border border-gray-400 px-2.5 py-1.5 bg-white text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
+        </div>
+
+        <div class="flex items-center gap-1">
+            <label for="archive-search-by" class="text-[11px] font-bold text-gray-700">In:</label>
+            <select id="archive-search-by" name="search_by"
+                    class="border border-gray-400 px-2 py-1.5 bg-white text-gray-900 rounded-none text-xs">
+                <option value="all" {% if archive_search_by == "all" or not archive_search_by %}selected{% endif %}>Title, Dish &amp; Ingredient</option>
+                <option value="title" {% if archive_search_by == "title" %}selected{% endif %}>Title Words</option>
+                <option value="dish" {% if archive_search_by == "dish" %}selected{% endif %}>Dish Name</option>
+                <option value="ingredient" {% if archive_search_by == "ingredient" %}selected{% endif %}>Ingredient</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-1">
+            <label for="archive-sort-by" class="text-[11px] font-bold text-gray-700">Sort:</label>
+            <select id="archive-sort-by" name="sort"
+                    class="border border-gray-400 px-2 py-1.5 bg-white text-gray-900 rounded-none text-xs">
+                <option value="recent" {% if archive_sort_by == "recent" or not archive_sort_by %}selected{% endif %}>Most Recent</option>
+                <option value="rating_desc" {% if archive_sort_by == "rating_desc" or archive_sort_by == "rating" %}selected{% endif %}>Highest Rated</option>
+                <option value="rating_asc" {% if archive_sort_by == "rating_asc" %}selected{% endif %}>Lowest Rated</option>
+                <option value="name" {% if archive_sort_by == "name" %}selected{% endif %}>Title (A-Z)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="border border-gray-700 bg-gray-800 hover:bg-black text-white font-semibold px-3 py-1.5 rounded-none">
+            Search
+        </button>
+    </form>
+
+    {% include "mealplans/partials/archived_meals_results.html" %}
+</div>

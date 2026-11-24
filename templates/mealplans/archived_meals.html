@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Archived Meals - Shoppin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-400 pb-2.5">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">Archived Meals</h1>
+            <p class="text-xs text-gray-600">
+                Past meals made in <strong>{{ workspace.name }}</strong> &mdash; search, sort by rating, and load copies back into your Meal Plan.
+            </p>
+        </div>
+        <a href="{% url 'mealplans:detail' %}"
+           class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-3 py-1.5 text-xs">
+            &larr; Back to Meal Plan
+        </a>
+    </div>
+
+    {% if not can_write %}
+    <div class="px-3.5 py-2.5 bg-blue-50 border border-blue-300 text-xs text-blue-950">
+        You have <strong>Viewer</strong> access to <strong>{{ workspace.name }}</strong>. You can browse and search archived meals; loading copies or rating requires Editor access.
+    </div>
+    {% endif %}
+
+    {% include "mealplans/partials/archived_meals_browser.html" %}
+</div>
+{% endblock %}

@@ -8,7 +8,9 @@ rules (e.g. 'every dinner needs a veggie protein').
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class MealPlan(models.Model):
@@ -300,3 +302,153 @@ class MealDish(models.Model):
         if not self.created_at or not self.recipe or not self.recipe.updated_at:
             return False
         return (self.recipe.updated_at - self.created_at).total_seconds() > 1
+
+
+class ArchivedMeal(models.Model):
+    """
+    Per-workspace snapshot of a meal that was marked as made.
+
+    Preserves the meal's title, dishes, ingredient names, and optional rating even after the
+    active planned meal is removed, allowing search, rating-based sorting, and loading copies.
+    """
+
+    workspace = models.ForeignKey(
+        "core.Workspace",
+        on_delete=models.CASCADE,
+        related_name="archived_meals",
+    )
+    name = models.CharField(max_length=255)
+    emoji = models.CharField(max_length=10, blank=True)
+    made_at = models.DateTimeField(default=timezone.now, db_index=True)
+    made_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="archived_meals",
+    )
+    made_by_name = models.CharField(max_length=150, blank=True, default="")
+    rating = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Optional overall meal rating (1-5 stars); falls back to average recipe rating",
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ["-made_at", "-id"]
+
+    @property
+    def made_actor_display(self) -> str:
+        """Return display name of the user who marked this meal as made."""
+        if self.made_by:
+            first_name = (self.made_by.first_name or "").strip()
+            return first_name or self.made_by.username
+        return self.made_by_name or "Someone"
+
+    @property
+    def display_rating(self) -> float | None:
+        """Return explicit meal rating if set, else annotated/live average rating across dishes."""
+        if self.rating is not None:
+            return float(self.rating)
+        annotated = getattr(self, "effective_rating", None)
+        if annotated is not None:
+            return round(float(annotated), 1)
+        scores: list[int] = []
+        for d in self.dishes.all():
+            if d.recipe_id and d.recipe:
+                scores.extend(r.stars for r in d.recipe.ratings.all())
+        if not scores:
+            return None
+        return round(sum(scores) / len(scores), 1)
+
+    def __str__(self) -> str:
+        """Return formatted archived meal title and completion date."""
+        return f"{self.emoji} {self.name}".strip()
+
+
+class ArchivedMealDish(models.Model):
+    """
+    A snapshot of an individual recipe dish or single item inside an ArchivedMeal.
+    """
+
+    archived_meal = models.ForeignKey(
+        ArchivedMeal,
+        on_delete=models.CASCADE,
+        related_name="dishes",
+    )
+    recipe = models.ForeignKey(
+        "recipes.Recipe",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="archived_meal_dishes",
+    )
+    is_single_item = models.BooleanField(default=False)
+    dish_name = models.CharField(max_length=255)
+    item_name = models.CharField(max_length=255, blank=True, default="")
+    amount = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("1.00"))
+    amount_unit = models.CharField(max_length=50, blank=True, default="")
+    scale_factor = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("1.00"))
+    order = models.PositiveIntegerField(default=0)
+    ingredient_names_text = models.TextField(
+        blank=True,
+        default="",
+        help_text="Searchable snapshot of ingredient names in this dish at archive time",
+    )
+    made_at = models.DateTimeField(null=True, blank=True)
+    made_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="archived_made_dishes",
+    )
+    made_by_name = models.CharField(max_length=150, blank=True, default="")
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    @property
+    def display_name(self) -> str:
+        """Return live recipe name if linked, else archived dish/item name."""
+        if not self.is_single_item and self.recipe_id and self.recipe:
+            return self.recipe.name
+        return self.dish_name or self.item_name
+
+    @property
+    def scale_display(self) -> str:
+        """Return formatted scaling factor like '2x' (empty if 1x)."""
+        if self.scale_factor == Decimal("1.00"):
+            return ""
+        return f"{self.scale_factor.normalize():f}x"
+
+    @property
+    def quantity_display(self) -> str:
+        """Return formatted amount and unit for single-item archived entries."""
+        from apps.core.utils import format_amount, pluralize_unit, singularize_unit
+
+        eff = (self.amount * self.scale_factor).quantize(Decimal("0.01"))
+        amt_str = format_amount(eff)
+        if not self.amount_unit:
+            return amt_str
+        unit_str = (
+            singularize_unit(self.amount_unit)
+            if eff == Decimal("1.00") or eff == 1
+            else pluralize_unit(self.amount_unit)
+        )
+        return f"{amt_str} {unit_str}".strip()
+
+    @property
+    def ingredient_names_list(self) -> list[str]:
+        """Return clean list of ingredient names from live recipe or archived snapshot."""
+        if not self.is_single_item and self.recipe_id and self.recipe:
+            live = [ing.name for ing in self.recipe.ingredients.all() if ing.name]
+            if live:
+                return live
+        return [s.strip() for s in self.ingredient_names_text.split(",") if s.strip()]
+
+    def __str__(self) -> str:
+        """Return archived dish display string."""
+        return self.display_name

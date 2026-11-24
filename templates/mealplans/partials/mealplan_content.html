@@ -23,16 +23,21 @@
             <h1 class="text-xl font-bold text-gray-900 tracking-tight">Meal Plan</h1>
         </div>
 
-        {% if can_write and meals %}
         <div class="flex items-center space-x-2 text-xs">
-            <form hx-post="{% url 'mealplans:clear' %}" hx-target="#mealplan-content" hx-swap="outerHTML" hx-confirm="Are you sure you want to clear the entire meal plan and remove its ingredients from the shopping list?">
+            <a href="{% url 'mealplans:archive' %}"
+               class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1 inline-flex items-center gap-1">
+                <span aria-hidden="true">📦</span>
+                <span>Archived Meals ({{ archived_count|default:0 }})</span>
+            </a>
+            {% if can_write and meals %}
+            <form hx-post="{% url 'mealplans:clear' %}" hx-target="#mealplan-content" hx-swap="outerHTML" hx-confirm="Are you sure you want to clear the entire meal plan and remove its ingredients from the shopping list?" class="inline">
                 {% csrf_token %}
                 <button type="submit" class="border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 font-medium px-2.5 py-1">
                     Clear Plan
                 </button>
             </form>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     {% if not can_write %}
@@ -448,4 +453,34 @@
         </form>
     </div>
     {% endif %}
+
+    <!-- Archived Meals Drawer (Collapsed by Default, Lazy-Loaded on Expand) -->
+    <details id="archived-meals-details" class="border border-gray-300 bg-gray-50/50 text-xs">
+        <summary hx-get="{% url 'mealplans:archive' %}?embed=1&amp;panel=1"
+                 hx-target="#archived-meals-drawer-body"
+                 hx-swap="innerHTML"
+                 hx-trigger="click once"
+                 class="cursor-pointer font-bold px-3 py-2 text-gray-900 flex items-center justify-between select-none hover:bg-gray-100">
+            <span class="flex items-center space-x-1.5">
+                <span aria-hidden="true">📦</span>
+                <span>Archived Meals (Made Previously)</span>
+                <span class="ml-1 text-[11px] font-normal text-gray-700 bg-white border border-gray-300 px-1.5 py-0.2">
+                    {{ archived_count|default:0 }}
+                </span>
+            </span>
+            <span class="text-gray-600 text-[11px] font-medium underline">Browse &amp; Load Copies &rsaquo;</span>
+        </summary>
+        <div class="p-3 border-t border-gray-300 bg-white space-y-2.5">
+            <div class="flex justify-end">
+                <a href="{% url 'mealplans:archive' %}" class="text-[11px] text-blue-700 hover:underline font-medium">
+                    Open Full Archive Page &rarr;
+                </a>
+            </div>
+            <div id="archived-meals-drawer-body">
+                <a href="{% url 'mealplans:archive' %}" class="text-xs text-blue-700 hover:underline font-medium">
+                    View Archived Meals &rarr;
+                </a>
+            </div>
+        </div>
+    </details>
 </div>

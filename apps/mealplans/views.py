@@ -14,7 +14,13 @@ from django.views.decorators.http import require_POST
 
 from apps.core.services.moderation_service import contains_obscene_language
 from apps.core.services.workspace_service import get_active_workspace
-from apps.mealplans.models import Meal, MealDish, MealPlanRule
+from apps.mealplans.models import ArchivedMeal, Meal, MealDish, MealPlanRule
+from apps.mealplans.services.archive_service import (
+    archive_made_meal,
+    load_archived_meal_copy,
+    rate_archived_meal,
+    search_archived_meals,
+)
 from apps.mealplans.services.mealplan_service import (
     add_item_to_meal,
     add_meal_to_plan,
@@ -64,6 +70,7 @@ def _build_mealplan_context(
     can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.prefetch_related("recipes", "dishes__recipe", "dishes__made_by").all() if meal_plan else []
     rules = meal_plan.rules.all() if meal_plan else []
+    archived_count = ArchivedMeal.objects.filter(workspace=workspace).count() if workspace else 0
     context: dict[str, Any] = {
         "workspace": workspace,
         "shopping_list": shopping_list,
@@ -78,6 +85,7 @@ def _build_mealplan_context(
         "meals_ready": status_info["meals_ready"],
         "meals_missing_optional": status_info["meals_missing_optional"],
         "available_recipes": available_recipes,
+        "archived_count": archived_count,
         "can_write": can_write,
         "toast_messages": toast_messages or [],
     }
@@ -519,11 +527,22 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     meal_name = meal.name
 
     effective_workspace = _resolve_meal_workspace(meal, workspace)
-    dishes = list(meal.dishes.select_related("recipe").all())
+    dishes = list(
+        meal.dishes.select_related("recipe", "made_by").prefetch_related("recipe__ingredients").all()
+    )
     recipes = []
     toast_messages = []
 
     handled_recipe_ids = {dish.recipe_id for dish in dishes if dish.recipe_id}
+
+    # Snapshot completed meal into per-workspace archive before removing dishes and deleting meal
+    archive_made_meal(
+        meal,
+        dishes=dishes,
+        user=user,
+        workspace=effective_workspace,
+        request=request,
+    )
 
     # 1. Record made (only for dishes not already marked made) & clean up shopping items
     for dish in dishes:
@@ -544,7 +563,7 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     # 2. Delete the meal itself
     meal.delete()
 
-    toast_messages.append(f"🍽 Marked entire meal '{meal_name}' as made and removed from plan.")
+    toast_messages.append(f"🍽 Marked entire meal '{meal_name}' as made, archived it, and removed from plan.")
     actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
     broadcast_mealplan_update(
         request,
@@ -805,3 +824,122 @@ def delete_meal_rule(request: HttpRequest, rule_id: int) -> HttpResponse:
         shopping_list=get_active_list(request),
     )
     return meal_plan_view(request, toast_messages=toast_messages)
+
+
+def _build_archive_results_context(request: HttpRequest, workspace: Any, user: Any) -> dict[str, Any]:
+    """Extract shared search/sort params and assemble ArchivedMeals listing context."""
+    params = request.POST if request.method == "POST" else request.GET
+    q = (params.get("q") or "").strip()
+    search_by = (params.get("search_by") or "all").strip()
+    sort_by = (params.get("sort") or "recent").strip()
+    embed = (params.get("embed") or "") == "1"
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    archived_meals = search_archived_meals(
+        workspace,
+        query=q,
+        search_by=search_by,
+        sort_by=sort_by,
+    )
+    return {
+        "workspace": workspace,
+        "archived_meals": archived_meals,
+        "archive_query": q,
+        "archive_search_by": search_by,
+        "archive_sort_by": sort_by,
+        "embed_in_mealplan": embed,
+        "can_write": can_write,
+    }
+
+
+def archived_meals_view(request: HttpRequest) -> HttpResponse:
+    """Render or search/sort per-workspace archived meals."""
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        login_url = f"{reverse('core:login')}?next={request.path}"
+        if request.headers.get("HX-Request"):
+            resp = HttpResponse(status=401)
+            resp["HX-Redirect"] = login_url
+            return resp
+        return redirect(login_url)
+
+    workspace = get_active_workspace(request)
+    if not workspace or not workspace.can_read(user):
+        return HttpResponseForbidden("Access denied.")
+
+    context = _build_archive_results_context(request, workspace, user)
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        if request.GET.get("panel") == "1":
+            return render(request, "mealplans/partials/archived_meals_browser.html", context)
+        return render(request, "mealplans/partials/archived_meals_results.html", context)
+    return render(request, "mealplans/archived_meals.html", context)
+
+
+@require_POST
+def load_archived_meal(request: HttpRequest, archive_id: int) -> HttpResponse:
+    """Load a copy of an archived meal and its dishes into the workspace's active Meal Plan."""
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    archived_meal = get_object_or_404(ArchivedMeal, id=archive_id, workspace=workspace)
+    meal_plan = get_active_meal_plan(request, workspace)
+    shopping_list = get_active_list(request)
+    custom_name = (request.POST.get("name") or "").strip() or None
+
+    new_meal, dishes_loaded, _ = load_archived_meal_copy(
+        archived_meal,
+        meal_plan,
+        shopping_list,
+        request=request,
+        custom_name=custom_name,
+    )
+    toast = (
+        f"📋 Loaded copy of '{new_meal.name}' "
+        f"({dishes_loaded} dish{'es' if dishes_loaded != 1 else ''}) into Meal Plan"
+    )
+    if request.headers.get("HX-Request") and request.headers.get("HX-Target") == "mealplan-content":
+        return meal_plan_view(request, toast_messages=[toast])
+    messages.success(request, toast)
+    return redirect("mealplans:detail")
+
+
+@require_POST
+def rate_archived_meal_view(request: HttpRequest, archive_id: int) -> HttpResponse:
+    """Set or update the star rating for an archived meal."""
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    archived_meal = get_object_or_404(ArchivedMeal, id=archive_id, workspace=workspace)
+    raw_rating = (request.POST.get("rating") or "").strip()
+    try:
+        stars = int(raw_rating) if raw_rating else None
+    except ValueError:
+        stars = None
+    if stars is not None and stars <= 0:
+        stars = None
+    rate_archived_meal(archived_meal, stars)
+
+    if request.headers.get("HX-Request"):
+        context = _build_archive_results_context(request, workspace, getattr(request, "user", None))
+        return render(request, "mealplans/partials/archived_meals_results.html", context)
+    return redirect("mealplans:archive")
+
+
+@require_POST
+def delete_archived_meal_view(request: HttpRequest, archive_id: int) -> HttpResponse:
+    """Delete an archived meal entry from the workspace archive."""
+    forbidden = _check_mealplan_write(request)
+    if forbidden:
+        return forbidden
+
+    workspace = get_active_workspace(request)
+    archived_meal = get_object_or_404(ArchivedMeal, id=archive_id, workspace=workspace)
+    archived_meal.delete()
+
+    if request.headers.get("HX-Request"):
+        context = _build_archive_results_context(request, workspace, getattr(request, "user", None))
+        return render(request, "mealplans/partials/archived_meals_results.html", context)
+    return redirect("mealplans:archive")

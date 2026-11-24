@@ -516,8 +516,13 @@ def test_mark_dish_made_and_rating_prompt(client, mealplan_setup):
     assert resp.status_code == 200
     html = resp.content.decode("utf-8")
 
-    # Verify dish removed from meal
-    assert not meal.recipes.filter(id=recipe.id).exists()
+    # Verify dish stays visible in meal with made attribution
+    dish = MealDish.objects.get(meal=meal, recipe=recipe)
+    assert dish.is_made is True
+    assert dish.made_by == owner
+    assert dish.made_at is not None
+    assert f"Made by {owner.username}" in html
+    assert "Dish marked as made, shopping list updated" in html
     # Verify shopping list ingredients deducted/removed
     assert not shopping_list.items.filter(name="Ground Beef").exists()
 
@@ -1112,7 +1117,7 @@ def test_single_item_dedicated_entry_view_and_exempt_from_ratings(client, mealpl
     assert sl_item.amount == Decimal("2.00")
     assert sl_item.amount_unit == "loaves"
 
-    # 2. Mark single item as made individually -> removed from meal & shopping list, NO rating modal
+    # 2. Mark single item as made individually -> stays visible with made attribution, removes shopping item, NO rating modal
     resp_made_single = client.post(
         reverse("mealplans:mark_dish_made", args=[meal.id, single_dish.id]),
     )
@@ -1120,7 +1125,11 @@ def test_single_item_dedicated_entry_view_and_exempt_from_ratings(client, mealpl
     made_html = resp_made_single.content.decode("utf-8")
     assert "recipe-rating-modal" not in made_html
     assert resp_made_single.context["recipes"] == []
-    assert not MealDish.objects.filter(id=single_dish.id).exists()
+    single_dish.refresh_from_db()
+    assert single_dish.is_made is True
+    assert single_dish.made_by == owner
+    assert single_dish.made_at is not None
+    assert f"Made by {owner.username}" in made_html
     assert not shopping_list.items.filter(name="Garlic Bread").exists()
 
     # 3. Meal with BOTH a recipe dish and a single item -> mark_meal_made only prompts rating for the recipe
@@ -1330,3 +1339,127 @@ def test_recipe_modal_shows_edit_link_according_to_permissions(client, mealplan_
     session.save()
     viewer_html = client.get(modal_url).content.decode("utf-8")
     assert f'href="{edit_url}"' not in viewer_html
+
+
+@pytest.mark.django_db
+def test_mark_single_dish_made_keeps_dish_visible_with_attribution_and_readiness(client, mealplan_setup):
+    """
+    When an individual dish in a meal is marked as made:
+    - The dish remains visible in the meal showing made status, timestamp, and actor
+    - Its shopping list items are deducted while remaining unmade dishes still govern readiness
+    - Scale and Made controls for the made dish are hidden and blocked from mutation/double-counting
+    - Marking the whole meal made afterwards cleans up everything without double-counting made dishes
+    """
+    ws = mealplan_setup["workspace"]
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    editor = mealplan_setup["editor"]
+    editor.first_name = "Alex"
+    editor.save(update_fields=["first_name"])
+    recipe1 = mealplan_setup["recipe"]
+
+    recipe2 = Recipe.objects.create(
+        name="Simple Pasta",
+        cuisine="Italian",
+        directions="Boil pasta.",
+    )
+    Ingredient.objects.create(
+        recipe=recipe2,
+        name="Penne Pasta",
+        amount=Decimal("1.00"),
+        amount_unit="box",
+    )
+
+    meal = add_meal_to_plan(meal_plan, "Mixed Dinner")
+    add_recipe_to_meal(meal, recipe1, shopping_list)
+    add_recipe_to_meal(meal, recipe2, shopping_list)
+    add_item_to_meal(meal, "Garlic Bread", shopping_list, amount_override="1 loaf")
+    dish1 = MealDish.objects.get(meal=meal, recipe=recipe1)
+    dish2 = MealDish.objects.get(meal=meal, recipe=recipe2)
+    dish3 = MealDish.objects.get(meal=meal, item_name="Garlic Bread")
+
+    # Mark recipe1 & Garlic Bread items as GOT, leave Penne Pasta as NEED
+    for item_name in ("Ground Beef", "Tortillas", "Cilantro", "Garlic Bread"):
+        item = shopping_list.items.get(name=item_name)
+        item.status = ItemStatus.GOT
+        item.save(update_fields=["status"])
+
+    client.force_login(editor)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+
+    # 1. Mark dish1 as made -> stays visible with Alex's attribution & timestamp
+    resp = client.post(reverse("mealplans:mark_dish_made", args=[meal.id, dish1.id]), HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    dish1.refresh_from_db()
+    assert dish1.is_made is True
+    assert dish1.made_by == editor
+    assert dish1.made_by_name == "Alex"
+    assert dish1.made_at is not None
+    recipe1.refresh_from_db()
+    assert recipe1.times_made == 1
+    assert RecipeMadeLog.objects.filter(recipe=recipe1).count() == 1
+    assert not shopping_list.items.filter(name="Ground Beef").exists()
+
+    # Check rendered meal plan content directly
+    plan_html = client.get(reverse("mealplans:detail")).content.decode("utf-8")
+    assert re.search(
+        r"Made by Alex\s*&bull;\s*[A-Z][a-z]{2}\s+\d{1,2},\s+\d{1,2}:\d{2}\s+[AP]M",
+        plan_html,
+    )
+    # Dish 1's mark_dish_made and scale_dish controls are hidden, while delete_dish remains; dish 2 still has them
+    assert reverse("mealplans:mark_dish_made", args=[meal.id, dish1.id]) not in plan_html
+    assert reverse("mealplans:scale_dish", args=[meal.id, dish1.id]) not in plan_html
+    assert reverse("mealplans:delete_dish", args=[meal.id, dish1.id]) in plan_html
+    assert reverse("mealplans:mark_dish_made", args=[meal.id, dish2.id]) in plan_html
+    assert reverse("mealplans:scale_dish", args=[meal.id, dish2.id]) in plan_html
+    assert reverse("mealplans:mark_dish_made", args=[meal.id, dish3.id]) in plan_html
+
+    # Recipe modal for dish1 shows the made-by banner
+    modal_html = client.get(
+        f"{reverse('mealplans:recipe_modal', args=[recipe1.id])}?meal_id={meal.id}&dish_id={dish1.id}"
+    ).content.decode("utf-8")
+    assert "Marked as made" in modal_html
+    assert "Alex" in modal_html
+
+    # 2. Readiness: dish1 is in dishes_made; meal is not ready while dish2 still needs Penne Pasta
+    status = compute_cooking_status(meal_plan, shopping_list)
+    assert dish1.id in status["dishes_made"]
+    assert meal.id not in status["meals_ready"]
+
+    pasta = shopping_list.items.get(name="Penne Pasta")
+    pasta.status = ItemStatus.GOT
+    pasta.save(update_fields=["status"])
+    status_ready = compute_cooking_status(meal_plan, shopping_list)
+    assert dish1.id in status_ready["dishes_made"]
+    assert meal.id in status_ready["meals_ready"]
+
+    # 3. Re-posting mark_dish_made or scale_dish on dish1 does not double-count or mutate scale
+    resp_repeat = client.post(reverse("mealplans:mark_dish_made", args=[meal.id, dish1.id]), HTTP_HX_REQUEST="true")
+    assert resp_repeat.status_code == 200
+    recipe1.refresh_from_db()
+    assert recipe1.times_made == 1
+    assert RecipeMadeLog.objects.filter(recipe=recipe1).count() == 1
+
+    resp_scale = client.post(
+        reverse("mealplans:scale_dish", args=[meal.id, dish1.id]),
+        {"scale_factor": "3"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert resp_scale.status_code == 200
+    dish1.refresh_from_db()
+    assert dish1.scale_factor == Decimal("1.00")
+
+    # 4. Marking the entire meal made cleans up the meal and increments recipe2 without double-counting recipe1
+    resp_meal = client.post(reverse("mealplans:mark_meal_made", args=[meal.id]), HTTP_HX_REQUEST="true")
+    assert resp_meal.status_code == 200
+    assert resp_meal.context["recipes"] == [recipe2]
+    recipe1.refresh_from_db()
+    recipe2.refresh_from_db()
+    assert recipe1.times_made == 1
+    assert recipe2.times_made == 1
+    assert RecipeMadeLog.objects.filter(recipe=recipe1).count() == 1
+    assert RecipeMadeLog.objects.filter(recipe=recipe2).count() == 1
+    assert not Meal.objects.filter(id=meal.id).exists()
+    assert shopping_list.items.count() == 0

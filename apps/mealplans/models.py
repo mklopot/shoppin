@@ -119,7 +119,7 @@ class Meal(models.Model):
         Return list of MealDish objects, preserving order and falling back gracefully
         if a recipe is attached in M2M without an explicit MealDish record.
         """
-        dishes = list(self.dishes.select_related("recipe").all())
+        dishes = list(self.dishes.select_related("recipe", "made_by").all())
         if dishes:
             return dishes
         results = []
@@ -170,6 +170,25 @@ class MealDish(models.Model):
         help_text="Portion scaling factor (e.g. 0.5 for half, 2.0 for double)",
     )
     order = models.PositiveIntegerField(default=0)
+    made_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when this dish occurrence was marked as made",
+    )
+    made_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="made_meal_dishes",
+        help_text="User who marked this dish occurrence as made",
+    )
+    made_by_name = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        help_text="Cached display name of the user who marked this dish occurrence as made",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -180,6 +199,19 @@ class MealDish(models.Model):
         super().clean()
         from apps.core.services.moderation_service import check_model_instance_for_moderation
         check_model_instance_for_moderation(self)
+
+    @property
+    def is_made(self) -> bool:
+        """Return True if this planned dish occurrence has been marked as made."""
+        return self.made_at is not None
+
+    @property
+    def made_actor_display(self) -> str:
+        """Return display name of the user who marked this dish as made."""
+        if self.made_by:
+            first_name = (self.made_by.first_name or "").strip()
+            return first_name or self.made_by.username
+        return self.made_by_name or "Someone"
 
     @property
     def is_single_item(self) -> bool:

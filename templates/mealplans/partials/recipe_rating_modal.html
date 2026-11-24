@@ -29,7 +29,11 @@
                     <span>{% if is_entire_meal %}Meal Made: {{ meal_name }}{% else %}Dish Made: {{ recipes.0.name }}{% endif %}</span>
                 </h3>
                 <p class="text-xs text-gray-600 mt-0.5">
+                    {% if is_entire_meal %}
                     Removed from meal plan &amp; recipe counter updated. How did it turn out?
+                    {% else %}
+                    Dish marked as made, shopping list updated &amp; recipe counter updated. How did it turn out?
+                    {% endif %}
                 </p>
             </div>
             <button type="button"

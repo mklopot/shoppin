@@ -24,6 +24,7 @@ from apps.mealplans.services.mealplan_service import (
     delete_meal_from_plan,
     get_active_meal_plan,
     get_recipe_ingredients_status,
+    mark_dish_as_made,
     remove_dish_from_meal,
     remove_recipe_from_meal,
     scale_meal_dish,
@@ -47,6 +48,41 @@ def _resolve_meal_workspace(meal: Meal | None, fallback_workspace: Any) -> Any:
     if meal and meal.meal_plan and meal.meal_plan.workspace:
         return meal.meal_plan.workspace
     return fallback_workspace
+
+
+def _build_mealplan_context(
+    user: Any,
+    workspace: Any,
+    meal_plan: Any,
+    shopping_list: Any,
+    toast_messages: list[str] | None = None,
+    **extra: Any,
+) -> dict[str, Any]:
+    """Assemble shared meal plan rendering context with readiness statuses and dish metadata."""
+    status_info = compute_cooking_status(meal_plan, shopping_list)
+    available_recipes = Recipe.objects.all().order_by("name")
+    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    meals = meal_plan.meals.prefetch_related("recipes", "dishes__recipe", "dishes__made_by").all() if meal_plan else []
+    rules = meal_plan.rules.all() if meal_plan else []
+    context: dict[str, Any] = {
+        "workspace": workspace,
+        "shopping_list": shopping_list,
+        "meal_plan": meal_plan,
+        "meals": meals,
+        "rules": rules,
+        "recipes_ready": status_info["recipes_ready"],
+        "recipes_missing_optional": status_info["recipes_missing_optional"],
+        "dishes_ready": status_info["dishes_ready"],
+        "dishes_missing_optional": status_info["dishes_missing_optional"],
+        "dishes_made": status_info["dishes_made"],
+        "meals_ready": status_info["meals_ready"],
+        "meals_missing_optional": status_info["meals_missing_optional"],
+        "available_recipes": available_recipes,
+        "can_write": can_write,
+        "toast_messages": toast_messages or [],
+    }
+    context.update(extra)
+    return context
 
 
 def _check_mealplan_write(request: HttpRequest) -> HttpResponseForbidden | None:
@@ -79,31 +115,14 @@ def meal_plan_view(
     shopping_list = get_active_list(request)
     meal_plan = get_active_meal_plan(request, workspace)
 
-    status_info = compute_cooking_status(meal_plan, shopping_list)
-    available_recipes = Recipe.objects.all().order_by("name")
-
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
-
-    meals = meal_plan.meals.prefetch_related("recipes").all()
-    rules = meal_plan.rules.all() if meal_plan else []
-
-    context: dict[str, Any] = {
-        "workspace": workspace,
-        "shopping_list": shopping_list,
-        "meal_plan": meal_plan,
-        "meals": meals,
-        "rules": rules,
-        "recipes_ready": status_info["recipes_ready"],
-        "recipes_missing_optional": status_info["recipes_missing_optional"],
-        "dishes_ready": status_info["dishes_ready"],
-        "dishes_missing_optional": status_info["dishes_missing_optional"],
-        "meals_ready": status_info["meals_ready"],
-        "meals_missing_optional": status_info["meals_missing_optional"],
-        "available_recipes": available_recipes,
-        "can_write": can_write,
-        "toast_messages": toast_messages or [],
-    }
+    context = _build_mealplan_context(
+        user=user,
+        workspace=workspace,
+        meal_plan=meal_plan,
+        shopping_list=shopping_list,
+        toast_messages=toast_messages,
+    )
 
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
         return render(request, "mealplans/partials/mealplan_content.html", context)
@@ -314,6 +333,9 @@ def scale_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse
     if not dish:
         return HttpResponseForbidden("Dish not found.")
 
+    if dish.is_made:
+        return meal_plan_view(request, toast_messages=[f"'{dish.display_name}' was already marked as made."])
+
     shopping_list = get_active_list(request)
     scale_raw = request.POST.get("scale_factor", "1").strip()
     try:
@@ -376,10 +398,8 @@ def delete_dish(request: HttpRequest, meal_id: int, dish_id: int) -> HttpRespons
 def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResponse:
     """
     Mark an individual recipe dish or single-item occurrence in a meal as made.
-    For recipe dishes: increments recipe times_made counter, logs cooking event, removes
-    that specific dish from the meal plan, and prompts for recipe rating.
-    For single items: removes the item from the meal plan and shopping list without
-    prompting for ratings or feedback.
+    Keeps the dish visible inside the meal with made timestamp & user attribution
+    while deducting its ingredients from the shopping list and prompting for rating.
     """
     forbidden = _check_mealplan_write(request)
     if forbidden:
@@ -388,49 +408,48 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
     meal = get_object_or_404(Meal, id=meal_id)
     dish = MealDish.objects.filter(id=dish_id, meal=meal).first()
     if not dish:
-        dish = MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+        dish = (
+            MealDish.objects.filter(meal=meal, recipe_id=dish_id, made_at__isnull=True).first()
+            or MealDish.objects.filter(meal=meal, recipe_id=dish_id).first()
+        )
 
     shopping_list = get_active_list(request)
     workspace = get_active_workspace(request)
     meal_plan = get_active_meal_plan(request, workspace)
     user = getattr(request, "user", None)
+    effective_workspace = _resolve_meal_workspace(meal, workspace)
+
+    if dish and dish.is_made:
+        context = _build_mealplan_context(
+            user=user,
+            workspace=effective_workspace,
+            meal_plan=meal_plan,
+            shopping_list=shopping_list,
+            toast_messages=[f"✓ '{dish.display_name}' was already marked as made by {dish.made_actor_display}."],
+            recipes=[],
+            recipe=None,
+            existing_ratings={},
+            meal_name=meal.name,
+            is_entire_meal=False,
+        )
+        return render(request, "mealplans/partials/recipe_rating_modal.html", context)
 
     if dish and dish.is_single_item:
         item_name = dish.display_name
-        remove_dish_from_meal(dish, shopping_list, request)
-        toast_messages = [f"✓ Marked '{item_name}' as made and removed from meal plan"]
-        actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
-        broadcast_mealplan_update(
-            request,
-            toast_message=f"✓ {actor} marked '{item_name}' as made",
+        mark_dish_as_made(dish, user=user, shopping_list=shopping_list, request=request)
+        toast_messages = [f"✓ Marked '{item_name}' as made (shopping list updated)"]
+        context = _build_mealplan_context(
+            user=user,
+            workspace=effective_workspace,
+            meal_plan=meal_plan,
             shopping_list=shopping_list,
+            toast_messages=toast_messages,
+            recipes=[],
+            recipe=None,
+            existing_ratings={},
+            meal_name=meal.name,
+            is_entire_meal=False,
         )
-        status_info = compute_cooking_status(meal_plan, shopping_list)
-        available_recipes = Recipe.objects.all().order_by("name")
-        can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
-        meals = meal_plan.meals.prefetch_related("recipes").all()
-        rules = meal_plan.rules.all() if meal_plan else []
-        context = {
-            "recipes": [],
-            "recipe": None,
-            "existing_ratings": {},
-            "meal_name": meal.name,
-            "is_entire_meal": False,
-            "workspace": workspace,
-            "shopping_list": shopping_list,
-            "meal_plan": meal_plan,
-            "meals": meals,
-            "rules": rules,
-            "recipes_ready": status_info["recipes_ready"],
-            "recipes_missing_optional": status_info["recipes_missing_optional"],
-            "dishes_ready": status_info["dishes_ready"],
-            "dishes_missing_optional": status_info["dishes_missing_optional"],
-            "meals_ready": status_info["meals_ready"],
-            "meals_missing_optional": status_info["meals_missing_optional"],
-            "available_recipes": available_recipes,
-            "can_write": can_write,
-            "toast_messages": toast_messages,
-        }
         return render(request, "mealplans/partials/recipe_rating_modal.html", context)
 
     if dish:
@@ -438,19 +457,20 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
     else:
         recipe = get_object_or_404(Recipe, id=dish_id)
 
-    effective_workspace = _resolve_meal_workspace(meal, workspace)
-
     # 1. Record recipe made & increment counter
     record_recipe_made(recipe, user=user, workspace=effective_workspace)
     attach_recipe_made_counts(recipe, user=user, workspace=effective_workspace)
 
-    # 2. Remove dish from meal and synchronize shopping list
+    # 2. Mark dish as made (keeping it visible in the meal) & synchronize shopping list
     if dish:
-        remove_dish_from_meal(dish, shopping_list, request)
+        mark_dish_as_made(dish, user=user, shopping_list=shopping_list, request=request)
     else:
         remove_recipe_from_meal(meal, recipe, shopping_list, request)
+        meal.recipes.add(recipe)
+        legacy_dish = MealDish.objects.create(meal=meal, recipe=recipe)
+        mark_dish_as_made(legacy_dish, user=user, shopping_list=None, request=request)
 
-    # 3. Toast message & WebSocket broadcast
+    # 3. Toast message & WebSocket broadcast already sent by mark_dish_as_made
     count_parts = [f"Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''} total"]
     if effective_workspace and recipe.workspace_made_count is not None:
         count_parts.append(f"Workspace: {recipe.workspace_made_count}")
@@ -459,46 +479,23 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
     toast_messages = [
         f"✓ Marked '{recipe.name}' as made! ({' · '.join(count_parts)})"
     ]
-    actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
-    broadcast_mealplan_update(
-        request,
-        toast_message=f"✓ {actor} marked '{recipe.name}' as made",
-        shopping_list=shopping_list,
-    )
 
-    # 4. Context for meal plan content re-render
-    status_info = compute_cooking_status(meal_plan, shopping_list)
-    available_recipes = Recipe.objects.all().order_by("name")
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
-    meals = meal_plan.meals.prefetch_related("recipes").all()
-    rules = meal_plan.rules.all() if meal_plan else []
-
-    # Check for existing user rating
     existing_rating = None
     if user and user.is_authenticated:
         existing_rating = RecipeRating.objects.filter(recipe=recipe, user=user).first()
 
-    context = {
-        "recipes": [recipe],
-        "recipe": recipe,
-        "existing_ratings": {recipe.id: existing_rating} if existing_rating else {},
-        "meal_name": meal.name,
-        "is_entire_meal": False,
-        "workspace": effective_workspace,
-        "shopping_list": shopping_list,
-        "meal_plan": meal_plan,
-        "meals": meals,
-        "rules": rules,
-        "recipes_ready": status_info["recipes_ready"],
-        "recipes_missing_optional": status_info["recipes_missing_optional"],
-        "dishes_ready": status_info["dishes_ready"],
-        "dishes_missing_optional": status_info["dishes_missing_optional"],
-        "meals_ready": status_info["meals_ready"],
-        "meals_missing_optional": status_info["meals_missing_optional"],
-        "available_recipes": available_recipes,
-        "can_write": can_write,
-        "toast_messages": toast_messages,
-    }
+    context = _build_mealplan_context(
+        user=user,
+        workspace=effective_workspace,
+        meal_plan=meal_plan,
+        shopping_list=shopping_list,
+        toast_messages=toast_messages,
+        recipes=[recipe],
+        recipe=recipe,
+        existing_ratings={recipe.id: existing_rating} if existing_rating else {},
+        meal_name=meal.name,
+        is_entire_meal=False,
+    )
     return render(request, "mealplans/partials/recipe_rating_modal.html", context)
 
 
@@ -526,16 +523,18 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     recipes = []
     toast_messages = []
 
-    # 1. Record made & remove ingredients for all dish occurrences in the meal
+    handled_recipe_ids = {dish.recipe_id for dish in dishes if dish.recipe_id}
+
+    # 1. Record made (only for dishes not already marked made) & clean up shopping items
     for dish in dishes:
-        if dish.recipe:
+        if dish.recipe and not dish.is_made:
             recipes.append(dish.recipe)
             record_recipe_made(dish.recipe, user=user, workspace=effective_workspace)
         remove_dish_from_meal(dish, shopping_list, request)
 
     # Fallback for any legacy recipes in M2M without MealDish
     for recipe in list(meal.recipes.all()):
-        if recipe not in recipes:
+        if recipe.id not in handled_recipe_ids and recipe not in recipes:
             recipes.append(recipe)
             record_recipe_made(recipe, user=user, workspace=effective_workspace)
             remove_recipe_from_meal(meal, recipe, shopping_list, request)
@@ -553,14 +552,6 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
         shopping_list=shopping_list,
     )
 
-    # 3. Context for meal plan content re-render
-    status_info = compute_cooking_status(meal_plan, shopping_list)
-    available_recipes = Recipe.objects.all().order_by("name")
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
-    meals = meal_plan.meals.prefetch_related("recipes").all()
-    rules = meal_plan.rules.all() if meal_plan else []
-
-    # Check for existing user ratings
     existing_ratings = {}
     if user and user.is_authenticated:
         for r in recipes:
@@ -568,26 +559,17 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
             if rating:
                 existing_ratings[r.id] = rating
 
-    context = {
-        "recipes": recipes,
-        "existing_ratings": existing_ratings,
-        "meal_name": meal_name,
-        "is_entire_meal": True,
-        "workspace": effective_workspace,
-        "shopping_list": shopping_list,
-        "meal_plan": meal_plan,
-        "meals": meals,
-        "rules": rules,
-        "recipes_ready": status_info["recipes_ready"],
-        "recipes_missing_optional": status_info["recipes_missing_optional"],
-        "dishes_ready": status_info["dishes_ready"],
-        "dishes_missing_optional": status_info["dishes_missing_optional"],
-        "meals_ready": status_info["meals_ready"],
-        "meals_missing_optional": status_info["meals_missing_optional"],
-        "available_recipes": available_recipes,
-        "can_write": can_write,
-        "toast_messages": toast_messages,
-    }
+    context = _build_mealplan_context(
+        user=user,
+        workspace=effective_workspace,
+        meal_plan=meal_plan,
+        shopping_list=shopping_list,
+        toast_messages=toast_messages,
+        recipes=recipes,
+        existing_ratings=existing_ratings,
+        meal_name=meal_name,
+        is_entire_meal=True,
+    )
     return render(request, "mealplans/partials/recipe_rating_modal.html", context)
 
 

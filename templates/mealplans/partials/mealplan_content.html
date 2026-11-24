@@ -165,10 +165,12 @@
             <div class="space-y-1.5 pl-5">
                 {% for dish in meal.dishes_list %}
                 {% if dish.is_single_item %}
-                <div class="flex items-center justify-between py-1 px-2 hover:bg-teal-50/70 text-xs border-l-2 border-l-teal-600 border border-teal-200 bg-teal-50/30">
+                <div class="flex items-center justify-between py-1 px-2 text-xs border-l-2 {% if dish.is_made %}border-l-emerald-600 border border-emerald-200 bg-emerald-50/50{% else %}hover:bg-teal-50/70 border-l-teal-600 border border-teal-200 bg-teal-50/30{% endif %}">
                     <div class="flex items-center space-x-2">
                         <!-- Single Item Readiness Indicator -->
-                        {% if dish.id in dishes_ready %}
+                        {% if dish.is_made %}
+                        <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex-shrink-0" role="img" aria-label="Status: Made" title="Made by {{ dish.made_actor_display }} on {{ dish.made_at|date:'M j, Y, g:i A' }}">&#10003;</span>
+                        {% elif dish.id in dishes_ready %}
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" role="img" aria-label="Status: Ready" title="In cart or at home!"></span>
                         {% elif dish.id in dishes_missing_optional %}
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" role="img" aria-label="Status: Skipped on shopping list" title="Skipped on shopping list"></span>
@@ -182,14 +184,21 @@
                                 <span aria-hidden="true">🛒</span>
                                 <span>Single Item</span>
                             </span>
-                            <span class="font-medium text-gray-900">{{ dish.display_name }}</span>
-                            <span class="inline-flex items-center px-1.5 py-0.2 text-[11px] font-semibold bg-white text-teal-900 border border-teal-300 rounded-none"
+                            <span class="font-medium {% if dish.is_made %}line-through text-gray-500{% else %}text-gray-900{% endif %}">{{ dish.display_name }}</span>
+                            <span class="inline-flex items-center px-1.5 py-0.2 text-[11px] font-semibold {% if dish.is_made %}bg-white/80 text-emerald-900 border border-emerald-200{% else %}bg-white text-teal-900 border border-teal-300{% endif %} rounded-none"
                                   title="Quantity on shopping list for {{ meal.name }}">
                                 Qty: {{ dish.quantity_display }}
                             </span>
-                            {% if not can_write and dish.scale_display %}
+                            {% if dish.is_made or not can_write %}{% if dish.scale_display %}
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-none">
                                 {{ dish.scale_display }}
+                            </span>
+                            {% endif %}{% endif %}
+                            {% if dish.is_made %}
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 text-[10px] font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-none"
+                                  title="Marked made by {{ dish.made_actor_display }} on {{ dish.made_at|date:'M j, Y, g:i A' }}">
+                                <span aria-hidden="true">&#10003;</span>
+                                <span>Made by {{ dish.made_actor_display }} &bull; {{ dish.made_at|date:"M j, g:i A" }}</span>
                             </span>
                             {% endif %}
                         </div>
@@ -197,6 +206,7 @@
 
                     {% if can_write %}
                     <div class="flex items-center space-x-1.5 flex-shrink-0">
+                        {% if not dish.is_made %}
                         <!-- Per-occurrence Scale Control -->
                         <form hx-post="{% url 'mealplans:scale_dish' meal.id dish.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline-flex items-center" title="Quantity scale factor. Change and press Enter or defocus to apply.">
                             {% csrf_token %}
@@ -219,6 +229,7 @@
                                 <span>Made</span>
                             </button>
                         </form>
+                        {% endif %}
                         <form hx-post="{% url 'mealplans:delete_dish' meal.id dish.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-gray-500 hover:text-red-600 font-bold text-xs px-1 leading-none" aria-label="Remove {{ dish.display_name }} from {{ meal.name }}" title="Remove this single item from meal and shopping list">
@@ -230,10 +241,12 @@
                 </div>
                 {% else %}
                 {% with recipe=dish.recipe %}
-                <div class="flex items-center justify-between py-1 px-2 hover:bg-gray-50 text-xs border border-gray-100 bg-gray-50/40">
+                <div class="flex items-center justify-between py-1 px-2 text-xs border {% if dish.is_made %}border-emerald-200 bg-emerald-50/50{% else %}hover:bg-gray-50 border-gray-100 bg-gray-50/40{% endif %}">
                     <div class="flex items-center space-x-2">
                         <!-- Recipe Readiness Indicator -->
-                        {% if recipe.id in recipes_ready %}
+                        {% if dish.is_made %}
+                        <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex-shrink-0" role="img" aria-label="Status: Made" title="Made by {{ dish.made_actor_display }} on {{ dish.made_at|date:'M j, Y, g:i A' }}">&#10003;</span>
+                        {% elif recipe.id in recipes_ready %}
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" role="img" aria-label="Status: Ready to cook" title="Ready to cook!"></span>
                         {% elif recipe.id in recipes_missing_optional %}
                         <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" role="img" aria-label="Status: Missing only optional or skipped ingredients" title="Missing only optional or skipped ingredients"></span>
@@ -243,7 +256,7 @@
 
                         <div class="flex items-center space-x-1.5 flex-wrap">
                             <button type="button" hx-get="{% url 'mealplans:recipe_modal' recipe.id %}?meal_id={{ meal.id }}&dish_id={{ dish.id }}" hx-target="#modal-placeholder"
-                                    class="font-medium text-gray-900 hover:text-blue-700 hover:underline text-left">
+                                    class="font-medium {% if dish.is_made %}line-through text-gray-500 hover:text-emerald-800{% else %}text-gray-900 hover:text-blue-700{% endif %} hover:underline text-left">
                                 {{ recipe.name }}
                             </button>
                             {% if dish.is_recipe_updated_since_added %}
@@ -253,10 +266,17 @@
                                 <span>Updated</span>
                             </span>
                             {% endif %}
-                            {% if not can_write and dish.scale_display %}
+                            {% if dish.is_made or not can_write %}{% if dish.scale_display %}
                             <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-none"
                                   title="Scaled {{ dish.scale_display }} ({{ dish.scaled_portions }} servings)">
                                 {{ dish.scale_display }}
+                            </span>
+                            {% endif %}{% endif %}
+                            {% if dish.is_made %}
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 text-[10px] font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-none"
+                                  title="Marked made by {{ dish.made_actor_display }} on {{ dish.made_at|date:'M j, Y, g:i A' }}">
+                                <span aria-hidden="true">&#10003;</span>
+                                <span>Made by {{ dish.made_actor_display }} &bull; {{ dish.made_at|date:"M j, g:i A" }}</span>
                             </span>
                             {% endif %}
                         </div>
@@ -264,6 +284,7 @@
 
                     {% if can_write %}
                     <div class="flex items-center space-x-1.5 flex-shrink-0">
+                        {% if not dish.is_made %}
                         <!-- Per-occurrence Scale Control -->
                         <form hx-post="{% url 'mealplans:scale_dish' meal.id dish.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline-flex items-center" title="Portion scale factor ({{ dish.scaled_portions }} servings). Change and press Enter or defocus to apply.">
                             {% csrf_token %}
@@ -286,6 +307,7 @@
                                 <span>Made</span>
                             </button>
                         </form>
+                        {% endif %}
                         <form hx-post="{% url 'mealplans:delete_dish' meal.id dish.id %}" hx-target="#mealplan-content" hx-swap="outerHTML" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-gray-500 hover:text-red-600 font-bold text-xs px-1 leading-none" aria-label="Remove this {{ recipe.name }} from {{ meal.name }}" title="Remove this dish occurrence from meal">

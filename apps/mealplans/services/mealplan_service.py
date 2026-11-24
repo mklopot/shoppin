@@ -9,6 +9,7 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import HttpRequest
+from django.utils import timezone
 
 from apps.core.categorizer import categorizer
 from apps.core.services.workspace_service import get_active_workspace
@@ -464,6 +465,101 @@ def add_item_to_meal(
     return dish, target_item
 
 
+def _deduct_dish_from_shopping_list(
+    dish: MealDish,
+    shopping_list: ShoppingList | None,
+) -> None:
+    """Remove or reduce shopping list obligations attributed to a MealDish occurrence."""
+    if not shopping_list:
+        return
+
+    recipe = dish.recipe
+    factor = dish.scale_factor or Decimal("1.00")
+    sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
+    dish_sources = sources_qs.filter(meal_dish=dish)
+    affected_item_ids = list(dish_sources.values_list("item_id", flat=True).distinct())
+    dish_sources.delete()
+
+    for item_id in affected_item_ids:
+        item = ShoppingListItem.objects.filter(id=item_id).first()
+        if item:
+            item.recalculate_from_attributions()
+
+    # Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
+    if not affected_item_ids and recipe:
+        recipe_purpose_name = clean_purpose(recipe.name)
+        for ingredient in recipe.ingredients.all():
+            scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
+            normalized_name = singularize(ingredient.name.lower())
+            items = shopping_list.items.filter(name__iexact=ingredient.name)
+            if not items.exists():
+                items = [
+                    it for it in shopping_list.items.all()
+                    if singularize(it.name.lower()) == normalized_name
+                ]
+
+            for item in items:
+                if item.attributions.exists():
+                    continue
+                if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe_purpose_name in item.purpose or recipe.name in item.purpose:
+                    try:
+                        new_amount = item.amount - scaled_amount
+                    except Exception:
+                        new_amount = Decimal("0.00")
+
+                    if new_amount <= Decimal("0.00"):
+                        item.delete()
+                    else:
+                        item.amount = new_amount
+                        clean_existing = clean_purpose(item.purpose)
+                        purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe_purpose_name not in p and recipe.name not in p]
+                        if purposes:
+                            item.purpose = ", ".join(purposes)
+                            item.save()
+                        else:
+                            item.delete()
+
+
+def mark_dish_as_made(
+    dish: MealDish,
+    user: Any = None,
+    shopping_list: ShoppingList | None = None,
+    request: HttpRequest | None = None,
+) -> bool:
+    """
+    Mark an individual MealDish occurrence as made while keeping it visible inside the meal
+    with completion timestamp and actor attribution, and deducting its shopping list items.
+    """
+    if dish.is_made:
+        return False
+
+    meal = dish.meal
+    if not shopping_list:
+        shopping_list = meal.meal_plan.workspace.get_primary_list() if (meal.meal_plan and meal.meal_plan.workspace) else None
+
+    _deduct_dish_from_shopping_list(dish, shopping_list)
+
+    actor_user = user if (user and getattr(user, "is_authenticated", False)) else None
+    if not actor_user and request and getattr(request, "user", None) and request.user.is_authenticated:
+        actor_user = request.user
+
+    actor_name = ((actor_user.first_name or "").strip() or actor_user.username) if actor_user else "Someone"
+    dish.made_at = timezone.now()
+    dish.made_by = actor_user
+    dish.made_by_name = actor_name
+    dish.save(update_fields=["made_at", "made_by", "made_by_name"])
+
+    sender_id = request.headers.get("X-Client-Id") if request else ""
+    if shopping_list:
+        broadcast_shopping_list_update(
+            shopping_list=shopping_list,
+            toast_message=f"✓ {actor_name} marked '{dish.display_name}' as made",
+            actor_name=actor_name,
+            sender_client_id=sender_id,
+        )
+    return True
+
+
 def remove_dish_from_meal(
     dish: MealDish,
     shopping_list: ShoppingList | None = None,
@@ -480,61 +576,16 @@ def remove_dish_from_meal(
     meal = dish.meal
     recipe = dish.recipe
     dish_name = dish.display_name
-    factor = dish.scale_factor or Decimal("1.00")
 
     if not shopping_list:
         shopping_list = meal.meal_plan.workspace.get_primary_list() if (meal.meal_plan and meal.meal_plan.workspace) else None
 
-    # 1. Query and remove immutable source attributions for this dish occurrence
-    if shopping_list:
-        sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
-        dish_sources = sources_qs.filter(meal_dish=dish)
-        affected_item_ids = list(dish_sources.values_list("item_id", flat=True).distinct())
-        dish_sources.delete()
+    _deduct_dish_from_shopping_list(dish, shopping_list)
 
-        for item_id in affected_item_ids:
-            item = ShoppingListItem.objects.filter(id=item_id).first()
-            if item:
-                item.recalculate_from_attributions()
-
-        # 2. Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
-        if not affected_item_ids and recipe:
-            recipe_purpose_name = clean_purpose(recipe.name)
-            for ingredient in recipe.ingredients.all():
-                scaled_amount = (ingredient.amount * factor).quantize(Decimal("0.01"))
-                normalized_name = singularize(ingredient.name.lower())
-                items = shopping_list.items.filter(name__iexact=ingredient.name)
-                if not items.exists():
-                    items = [
-                        it for it in shopping_list.items.all()
-                        if singularize(it.name.lower()) == normalized_name
-                    ]
-
-                for item in items:
-                    if item.attributions.exists():
-                        continue
-                    if item.source_recipe == recipe or f"For {recipe.name}" in item.purpose or recipe_purpose_name in item.purpose or recipe.name in item.purpose:
-                        try:
-                            new_amount = item.amount - scaled_amount
-                        except Exception:
-                            new_amount = Decimal("0.00")
-
-                        if new_amount <= Decimal("0.00"):
-                            item.delete()
-                        else:
-                            item.amount = new_amount
-                            clean_existing = clean_purpose(item.purpose)
-                            purposes = [p.strip() for p in clean_existing.split(",") if p.strip() and recipe_purpose_name not in p and recipe.name not in p]
-                            if purposes:
-                                item.purpose = ", ".join(purposes)
-                                item.save()
-                            else:
-                                item.delete()
-
-    # 3. Delete the MealDish instance
+    # Delete the MealDish instance
     dish.delete()
 
-    # 4. Only disassociate recipe from meal M2M if no other MealDish for this recipe remains
+    # Only disassociate recipe from meal M2M if no other MealDish for this recipe remains
     if recipe and not meal.dishes.filter(recipe=recipe).exists():
         meal.recipes.remove(recipe)
 
@@ -615,7 +666,7 @@ def scale_meal_dish(
     except Exception:
         factor = Decimal("1.00")
 
-    if factor == dish.scale_factor:
+    if dish.is_made or factor == dish.scale_factor:
         return
 
     dish.scale_factor = factor
@@ -904,6 +955,7 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
         "recipes_missing_optional": set(),
         "dishes_ready": set(),
         "dishes_missing_optional": set(),
+        "dishes_made": set(),
         "meals_ready": set(),
         "meals_missing_optional": set(),
     }
@@ -914,6 +966,7 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
     recipes_missing_optional = set()
     dishes_ready = set()
     dishes_missing_optional = set()
+    dishes_made = set()
 
     all_meals = list(
         meal_plan.meals.prefetch_related(
@@ -992,6 +1045,11 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
         if dishes:
             dish_statuses: list[str] = []
             for dish in dishes:
+                if dish.made_at is not None:
+                    dishes_made.add(dish.id)
+                    dishes_ready.add(dish.id)
+                    dish_statuses.append("ready")
+                    continue
                 if dish.recipe:
                     st = _resolve_recipe_status(dish.recipe)
                 else:
@@ -1028,6 +1086,7 @@ def compute_cooking_status(meal_plan: MealPlan | None, shopping_list: ShoppingLi
         "recipes_missing_optional": recipes_missing_optional,
         "dishes_ready": dishes_ready,
         "dishes_missing_optional": dishes_missing_optional,
+        "dishes_made": dishes_made,
         "meals_ready": meals_ready,
         "meals_missing_optional": meals_missing_optional,
     }

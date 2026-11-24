@@ -23,8 +23,15 @@ from apps.core.utils import (
 from apps.mealplans.models import Meal, MealDish, MealPlan
 from apps.mealplans.services.emojifier import get_meal_emoji
 from apps.recipes.models import Recipe
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
+from apps.shopping.models import (
+    ItemHistoryAction,
+    ItemStatus,
+    ShoppingList,
+    ShoppingListItem,
+    ShoppingListItemSource,
+)
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
+from apps.shopping.services.item_history_service import format_quantity_text, log_item_history
 from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
 
@@ -129,8 +136,14 @@ def delete_meal_from_plan(
         meal_sources.delete()
         for item_id in affected_item_ids:
             item = ShoppingListItem.objects.filter(id=item_id).first()
-            if item:
-                item.recalculate_from_attributions()
+            if item and item.recalculate_from_attributions():
+                log_item_history(
+                    item,
+                    ItemHistoryAction.DEDUCTED,
+                    f"Removed contribution from deleted meal '{meal.name}' → remaining {format_quantity_text(item.amount, item.amount_unit)}",
+                    request=request,
+                    related_meal=meal,
+                )
 
     meal.delete()
 
@@ -280,6 +293,21 @@ def add_recipe_to_meal(
             purpose=recipe_purpose_name,
         )
         target_item.recalculate_from_attributions()
+        added_qty = format_quantity_text(scaled_amount, ingredient.amount_unit)
+        total_qty = format_quantity_text(target_item.amount, target_item.amount_unit)
+        hist_summary = (
+            f"Added +{added_qty} for recipe '{recipe.name}' (Meal: '{meal.name}') → total {total_qty}"
+            if existing
+            else f"Added {total_qty} for recipe '{recipe.name}' (Meal: '{meal.name}')"
+        )
+        log_item_history(
+            target_item,
+            ItemHistoryAction.ADDED_SOURCE if existing else ItemHistoryAction.CREATED,
+            hist_summary,
+            request=request,
+            related_recipe=recipe,
+            related_meal=meal,
+        )
 
     # Warm missing aisles in background so user request returns immediately
     if shopping_list.active_store:
@@ -444,6 +472,20 @@ def add_item_to_meal(
         purpose=meal_purpose_name,
     )
     target_item.recalculate_from_attributions()
+    added_qty = format_quantity_text(scaled_amount, unit_val)
+    total_qty = format_quantity_text(target_item.amount, target_item.amount_unit)
+    hist_summary = (
+        f"Added +{added_qty} for single item in meal '{meal.name}' → total {total_qty}"
+        if existing
+        else f"Added {total_qty} for meal '{meal.name}'"
+    )
+    log_item_history(
+        target_item,
+        ItemHistoryAction.ADDED_SOURCE if existing else ItemHistoryAction.CREATED,
+        hist_summary,
+        request=request,
+        related_meal=meal,
+    )
 
     if shopping_list.active_store:
         warm_store_aisles_async(shopping_list)
@@ -468,6 +510,10 @@ def add_item_to_meal(
 def _deduct_dish_from_shopping_list(
     dish: MealDish,
     shopping_list: ShoppingList | None,
+    *,
+    request: HttpRequest | None = None,
+    user: Any = None,
+    reason: str = "dish updated",
 ) -> None:
     """Remove or reduce shopping list obligations attributed to a MealDish occurrence."""
     if not shopping_list:
@@ -477,13 +523,29 @@ def _deduct_dish_from_shopping_list(
     factor = dish.scale_factor or Decimal("1.00")
     sources_qs = ShoppingListItemSource.objects.filter(item__shopping_list=shopping_list)
     dish_sources = sources_qs.filter(meal_dish=dish)
-    affected_item_ids = list(dish_sources.values_list("item_id", flat=True).distinct())
+    affected_rows = list(dish_sources.values_list("item_id", "amount", "amount_unit"))
+    affected_item_ids = list(dict.fromkeys(row[0] for row in affected_rows))
     dish_sources.delete()
 
     for item_id in affected_item_ids:
         item = ShoppingListItem.objects.filter(id=item_id).first()
-        if item:
-            item.recalculate_from_attributions()
+        if item and item.recalculate_from_attributions():
+            deducted_parts = [
+                format_quantity_text(amt, u)
+                for src_item_id, amt, u in affected_rows
+                if src_item_id == item_id
+            ]
+            deducted_label = ", ".join(deducted_parts) or "dish quantity"
+            remaining_label = format_quantity_text(item.amount, item.amount_unit)
+            log_item_history(
+                item,
+                ItemHistoryAction.DEDUCTED,
+                f"Deducted {deducted_label} ({reason}: '{dish.display_name}') → remaining {remaining_label}",
+                request=request,
+                user=user,
+                related_recipe=dish.recipe,
+                related_meal=dish.meal,
+            )
 
     # Backward compatibility fallback for legacy items not tracked by ShoppingListItemSource
     if not affected_item_ids and recipe:
@@ -516,6 +578,15 @@ def _deduct_dish_from_shopping_list(
                         if purposes:
                             item.purpose = ", ".join(purposes)
                             item.save()
+                            log_item_history(
+                                item,
+                                ItemHistoryAction.DEDUCTED,
+                                f"Deducted {format_quantity_text(scaled_amount, ingredient.amount_unit)} ({reason}: '{dish.display_name}') → remaining {format_quantity_text(item.amount, item.amount_unit)}",
+                                request=request,
+                                user=user,
+                                related_recipe=recipe,
+                                related_meal=dish.meal,
+                            )
                         else:
                             item.delete()
 
@@ -537,7 +608,13 @@ def mark_dish_as_made(
     if not shopping_list:
         shopping_list = meal.meal_plan.workspace.get_primary_list() if (meal.meal_plan and meal.meal_plan.workspace) else None
 
-    _deduct_dish_from_shopping_list(dish, shopping_list)
+    _deduct_dish_from_shopping_list(
+        dish,
+        shopping_list,
+        request=request,
+        user=user,
+        reason="dish marked as made",
+    )
 
     actor_user = user if (user and getattr(user, "is_authenticated", False)) else None
     if not actor_user and request and getattr(request, "user", None) and request.user.is_authenticated:
@@ -580,7 +657,12 @@ def remove_dish_from_meal(
     if not shopping_list:
         shopping_list = meal.meal_plan.workspace.get_primary_list() if (meal.meal_plan and meal.meal_plan.workspace) else None
 
-    _deduct_dish_from_shopping_list(dish, shopping_list)
+    _deduct_dish_from_shopping_list(
+        dish,
+        shopping_list,
+        request=request,
+        reason="dish removed from meal",
+    )
 
     # Delete the MealDish instance
     dish.delete()
@@ -634,8 +716,15 @@ def remove_recipe_from_meal(
 
     for item_id in affected_item_ids:
         item = ShoppingListItem.objects.filter(id=item_id).first()
-        if item:
-            item.recalculate_from_attributions()
+        if item and item.recalculate_from_attributions():
+            log_item_history(
+                item,
+                ItemHistoryAction.DEDUCTED,
+                f"Deducted '{recipe.name}' removed from meal '{meal.name}' → remaining {format_quantity_text(item.amount, item.amount_unit)}",
+                request=request,
+                related_recipe=recipe,
+                related_meal=meal,
+            )
 
     meal.recipes.remove(recipe)
 
@@ -743,8 +832,17 @@ def scale_meal_dish(
                 )
                 affected_items.add(item)
 
+        scale_tag = f"{factor.normalize():f}x"
         for item in affected_items:
-            item.recalculate_from_attributions()
+            if item.recalculate_from_attributions():
+                log_item_history(
+                    item,
+                    ItemHistoryAction.SCALED,
+                    f"Scaled '{dish.display_name}' to {scale_tag} → total {format_quantity_text(item.amount, item.amount_unit)}",
+                    request=request,
+                    related_recipe=dish.recipe,
+                    related_meal=dish.meal,
+                )
 
         actor_name = (request.user.first_name or "").strip() or request.user.username if (request and request.user.is_authenticated) else "unknown"
         sender_id = request.headers.get("X-Client-Id") if request else ""

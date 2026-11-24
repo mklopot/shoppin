@@ -31,6 +31,7 @@ from apps.core.utils import (
 )
 from apps.shopping.models import (
     GroupBy,
+    ItemHistoryAction,
     ItemStatus,
     ListMode,
     ShoppingList,
@@ -41,6 +42,14 @@ from apps.shopping.models import (
 )
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
 from apps.shopping.services.cleanup_service import purge_expired_completed_items
+from apps.shopping.services.item_history_service import (
+    format_item_diff_summary,
+    format_quantity_text,
+    get_item_associations_and_history,
+    log_item_history,
+    snapshot_item_fields,
+    transfer_item_history,
+)
 from apps.shopping.services.list_organizer import ShoppingListOrganizer
 from apps.shopping.services.preset_service import check_and_apply_due_preset_schedules
 from apps.shopping.services.store_service import (
@@ -374,6 +383,10 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
         return forbidden
 
     if new_status in ItemStatus.values:
+        prev_status = item.status
+        prev_label = ItemStatus(prev_status).label if prev_status in ItemStatus.values else prev_status
+        new_label = ItemStatus(new_status).label if new_status in ItemStatus.values else new_status
+
         if new_status == ItemStatus.NEED:
             normalized_name = singularize(item.name.lower().strip())
             existing_need: ShoppingListItem | None = None
@@ -388,6 +401,8 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
                     break
 
             if existing_need:
+                merged_src_name = item.name
+                merged_src_qty = format_quantity_text(item.amount, item.amount_unit)
                 # Merge into existing_need rather than leaving duplicate rows on the list
                 if not existing_need.attributions.exists() and existing_need.amount > Decimal("0.00"):
                     ShoppingListItemSource.objects.create(
@@ -411,8 +426,16 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
                 existing_need.locked = True
                 _set_item_audit(existing_need, request)
                 existing_need.recalculate_from_attributions()
+                transfer_item_history(item, existing_need)
                 item.delete()
                 item = existing_need
+                new_total = format_quantity_text(item.amount, item.amount_unit)
+                log_item_history(
+                    item,
+                    ItemHistoryAction.MERGED,
+                    f"Moved '{merged_src_name}' ({merged_src_qty}) from {prev_label} to To Buy and merged → total {new_total}",
+                    request=request,
+                )
             else:
                 item.status = new_status
                 item.locked = True
@@ -427,6 +450,14 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
                         "updated_at",
                     ]
                 )
+                if prev_status != new_status:
+                    log_item_history(
+                        item,
+                        ItemHistoryAction.STATUS_CHANGED,
+                        f"Status changed: {prev_label} → {new_label}",
+                        request=request,
+                        related_list=item.shopping_list,
+                    )
         else:
             item.status = new_status
             _set_item_audit(item, request)
@@ -439,6 +470,13 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
                     "updated_at",
                 ]
             )
+            if prev_status != new_status:
+                log_item_history(
+                    item,
+                    ItemHistoryAction.STATUS_CHANGED,
+                    f"Status changed: {prev_label} → {new_label}",
+                    request=request,
+                )
 
     shopping_list = item.shopping_list
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
@@ -544,6 +582,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
             existing = candidate
             break
 
+    prev_status = None
     if not existing:
         for candidate in shopping_list.items.filter(status__in=[ItemStatus.HAVE, ItemStatus.DONT_NEED]):
             if (
@@ -552,6 +591,7 @@ def add_item(request: HttpRequest) -> HttpResponse:
                 and candidate.brand.lower() == brand.lower()
                 and candidate.vendor.lower() == vendor.lower()
             ):
+                prev_status = candidate.status
                 candidate.status = ItemStatus.NEED
                 existing = candidate
                 break
@@ -590,6 +630,19 @@ def add_item(request: HttpRequest) -> HttpResponse:
             ]
         )
         existing.recalculate_from_attributions()
+        added_qty = format_quantity_text(amount, amount_unit)
+        total_qty = format_quantity_text(existing.amount, existing.amount_unit)
+        restored_note = (
+            f"Restored from {ItemStatus(prev_status).label} to To Buy; "
+            if prev_status and prev_status in ItemStatus.values and prev_status != ItemStatus.NEED
+            else ""
+        )
+        log_item_history(
+            existing,
+            ItemHistoryAction.ADDED_SOURCE,
+            f"{restored_note}Added +{added_qty} (Purpose: {purpose}) → total {total_qty}",
+            request=request,
+        )
     else:
         max_order = shopping_list.items.count()
         audit_user = request.user if request.user.is_authenticated else None
@@ -622,6 +675,12 @@ def add_item(request: HttpRequest) -> HttpResponse:
             amount=amount,
             amount_unit=amount_unit,
             purpose=purpose,
+        )
+        log_item_history(
+            new_item,
+            ItemHistoryAction.CREATED,
+            f"Added {format_quantity_text(amount, amount_unit)} to {shopping_list.name} (Purpose: {purpose})",
+            request=request,
         )
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
@@ -750,6 +809,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
     if request.method == "POST":
         old_amount = item.amount
         old_unit = item.amount_unit
+        before_snap = snapshot_item_fields(item)
 
         item.name = request.POST.get("name", item.name).strip()
         amount_string = request.POST.get("amount", str(item.amount))
@@ -796,13 +856,27 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
                 existing = candidate
                 break
 
+        edit_diff = format_item_diff_summary(before_snap, item)
         if existing:
+            edited_src_name = item.name
+            edited_src_qty = format_quantity_text(item.amount, item.amount_unit)
             _merge_edited_item_into_existing(existing, item)
             _set_item_audit(existing, request)
             existing.save()
 
+            transfer_item_history(item, existing)
             # Delete the redundant edited item
             item.delete()
+            new_total = format_quantity_text(existing.amount, existing.amount_unit)
+            merge_msg = f"Merged edited '{edited_src_name}' ({edited_src_qty}) into '{existing.name}' → total {new_total}"
+            if edit_diff:
+                merge_msg += f" ({edit_diff})"
+            log_item_history(
+                existing,
+                ItemHistoryAction.MERGED,
+                merge_msg,
+                request=request,
+            )
 
             # Update store aisle learning cache if aisle is set (zeroing bay out if aisle was changed)
             if existing.aisle and existing.shopping_list.active_store:
@@ -836,6 +910,14 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
         _set_item_audit(item, request)
         item.save()
+        post_save_diff = format_item_diff_summary(before_snap, item)
+        if post_save_diff:
+            log_item_history(
+                item,
+                ItemHistoryAction.EDITED,
+                post_save_diff,
+                request=request,
+            )
 
         # If user explicitly edited aisle and store is active, update store learning cache (zeroing out bay)
         if item.aisle and item.shopping_list.active_store:
@@ -865,6 +947,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
     known_aisles = get_known_aisles(item.shopping_list.active_store)
     group_by = request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
     request.session["shopping_list_group_by"] = group_by
+    advanced_context = get_item_associations_and_history(item)
     return render(
         request,
         "shopping/partials/item_edit_modal.html",
@@ -873,6 +956,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             "known_categories": known_categories,
             "known_aisles": known_aisles,
             "group_by": group_by,
+            **advanced_context,
         },
     )
 
@@ -938,6 +1022,12 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
             "updated_at",
         ]
     )
+    log_item_history(
+        item,
+        ItemHistoryAction.LOCKED_TOGGLED,
+        "Confirmed needed (Pantry Check lock enabled)" if item.locked else "Unchecked confirmation (Pantry Check lock removed)",
+        request=request,
+    )
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, item.shopping_list, group_by)
@@ -978,6 +1068,12 @@ def toggle_priority(request: HttpRequest, item_id: int) -> HttpResponse:
             "status_changed_by_name",
             "updated_at",
         ]
+    )
+    log_item_history(
+        item,
+        ItemHistoryAction.PRIORITY_TOGGLED,
+        "Marked as High Priority" if item.priority else "Removed High Priority",
+        request=request,
     )
 
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)

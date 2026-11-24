@@ -10,6 +10,7 @@ from django.contrib import admin
 from apps.shopping.models import (
     ShoppingList,
     ShoppingListItem,
+    ShoppingListItemHistory,
     ShoppingListItemSource,
     StoreItemAisle,
     StoreLocation,
@@ -20,6 +21,13 @@ class ShoppingListItemSourceInline(admin.TabularInline):
     """Inline admin editor for source attributions on a shopping list item."""
     model = ShoppingListItemSource
     extra = 0
+
+
+class ShoppingListItemHistoryInline(admin.TabularInline):
+    """Read-only inline audit trail on a shopping list item."""
+    model = ShoppingListItemHistory
+    extra = 0
+    readonly_fields = ("action", "summary", "actor", "actor_name", "related_recipe", "related_meal", "related_list", "created_at")
 
 
 
@@ -79,7 +87,7 @@ class ShoppingListItemAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "category", "optional", "status_changed_by")
     search_fields = ("name", "brand", "vendor", "purpose", "aisle", "status_changed_by_name")
-    inlines = [ShoppingListItemSourceInline]
+    inlines = [ShoppingListItemSourceInline, ShoppingListItemHistoryInline]
 
 
 @admin.register(ShoppingListItemSource)
@@ -88,4 +96,12 @@ class ShoppingListItemSourceAdmin(admin.ModelAdmin):
     list_display = ("item", "amount", "amount_unit", "purpose", "meal", "recipe", "preset_list", "is_one_time", "created_at")
     list_filter = ("is_one_time", "preset_list")
     search_fields = ("item__name", "purpose", "recipe__name", "meal__name")
+
+
+@admin.register(ShoppingListItemHistory)
+class ShoppingListItemHistoryAdmin(admin.ModelAdmin):
+    """Admin manager for shopping list item audit history entries."""
+    list_display = ("item", "action", "summary", "actor_name", "related_recipe", "related_list", "created_at")
+    list_filter = ("action", "created_at")
+    search_fields = ("item__name", "summary", "actor_name", "related_recipe__name", "related_list__name")
 

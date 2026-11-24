@@ -717,3 +717,92 @@ class ShoppingListItemSource(models.Model):
     def __str__(self) -> str:
         return f"{self.amount} {self.amount_unit} for {self.purpose or 'unknown'} -> {self.item.name}"
 
+
+class ItemHistoryAction(models.TextChoices):
+    """Action types recorded in ShoppingListItemHistory."""
+
+    CREATED = "created", "Added"
+    ADDED_SOURCE = "added_source", "Quantity Added"
+    EDITED = "edited", "Edited"
+    STATUS_CHANGED = "status_changed", "Status Changed"
+    LOCKED_TOGGLED = "locked_toggled", "Pantry Check"
+    PRIORITY_TOGGLED = "priority_toggled", "Priority"
+    SCALED = "scaled", "Scaled"
+    DEDUCTED = "deducted", "Reduced"
+    MERGED = "merged", "Merged"
+    PRESET_TOGGLED = "preset_toggled", "Schedule Toggle"
+
+
+class ShoppingListItemHistory(models.Model):
+    """
+    Append-only audit trail recording every user or system action on a ShoppingListItem,
+    along with timestamps, actor attribution, and associated recipe/meal/list links.
+    """
+
+    item = models.ForeignKey(
+        ShoppingListItem,
+        on_delete=models.CASCADE,
+        related_name="history_logs",
+    )
+    action = models.CharField(
+        max_length=32,
+        choices=ItemHistoryAction.choices,
+        default=ItemHistoryAction.EDITED,
+    )
+    summary = models.TextField(
+        help_text="Human-readable summary of the action taken on this item",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_item_history_logs",
+    )
+    actor_name = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        help_text="Cached display name of the user or system actor who performed this action",
+    )
+    related_recipe = models.ForeignKey(
+        "recipes.Recipe",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_item_history_logs",
+    )
+    related_meal = models.ForeignKey(
+        "mealplans.Meal",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_item_history_logs",
+    )
+    related_list = models.ForeignKey(
+        ShoppingList,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shopping_item_history_logs",
+    )
+    created_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    @property
+    def actor_display(self) -> str:
+        """Return user-friendly actor name for display in item history."""
+        if self.actor:
+            first_name = (self.actor.first_name or "").strip()
+            return first_name or self.actor.username
+        raw = (self.actor_name or "").strip()
+        if raw and raw.lower() != "unknown":
+            return raw
+        return raw or "System"
+
+    def __str__(self) -> str:
+        """Return compact representation of history entry."""
+        return f"[{self.action}] {self.item.name}: {self.summary}"
+

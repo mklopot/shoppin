@@ -34,12 +34,18 @@ def _capture_affected_items(
     )
 
 
-def _reconcile_affected_items(instance: Any, clear_fields: dict[str, Any]) -> None:
+def _reconcile_affected_items(
+    instance: Any,
+    clear_fields: dict[str, Any],
+    origin_desc: str = "",
+) -> None:
     """Recalculate or clear orphaned source links on ShoppingListItems after deletion."""
+    from apps.shopping.services.item_history_service import log_signal_source_deletion
+
     for item_id in getattr(instance, "_cleanup_attr_item_ids", []):
         item = ShoppingListItem.objects.filter(id=item_id).first()
-        if item:
-            item.recalculate_from_attributions()
+        if item and item.recalculate_from_attributions() and origin_desc:
+            log_signal_source_deletion(item, origin_desc)
 
     legacy_item_ids = getattr(instance, "_cleanup_legacy_item_ids", [])
     if legacy_item_ids and clear_fields:
@@ -65,6 +71,7 @@ def reconcile_items_after_recipe_delete(sender: Any, instance: Recipe, **kwargs:
     _reconcile_affected_items(
         instance,
         {"source_recipe": None, "source_meal": None, "source_ingredient": None},
+        origin_desc=f"recipe '{instance.name}'",
     )
 
 
@@ -84,6 +91,7 @@ def reconcile_items_after_meal_delete(sender: Any, instance: Meal, **kwargs: Any
     _reconcile_affected_items(
         instance,
         {"source_meal": None, "source_recipe": None, "source_ingredient": None},
+        origin_desc=f"meal '{instance.name}'",
     )
 
 
@@ -104,4 +112,8 @@ def reconcile_items_after_preset_delete(sender: Any, instance: ShoppingList, **k
     """Recalculate or unlink shopping list items after a preset list is deleted."""
     if not instance.is_preset:
         return
-    _reconcile_affected_items(instance, {"source_preset": None})
+    _reconcile_affected_items(
+        instance,
+        {"source_preset": None},
+        origin_desc=f"preset list '{instance.name}'",
+    )

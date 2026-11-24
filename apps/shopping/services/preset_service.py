@@ -22,8 +22,15 @@ from django.utils import timezone
 from apps.core.categorizer import categorizer
 from apps.core.models import Workspace
 from apps.core.utils import can_combine_units, clean_purpose, parse_amount_and_unit, singularize
-from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
+from apps.shopping.models import (
+    ItemHistoryAction,
+    ItemStatus,
+    ShoppingList,
+    ShoppingListItem,
+    ShoppingListItemSource,
+)
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
+from apps.shopping.services.item_history_service import format_quantity_text, log_item_history
 from apps.shopping.services.store_service import resolve_store_aisle, warm_store_aisles_async
 
 logger = logging.getLogger(__name__)
@@ -112,6 +119,8 @@ def add_preset_item(
     category: str = "",
     optional: bool = False,
     is_active: bool = True,
+    request: HttpRequest | None = None,
+    user: Any = None,
 ) -> ShoppingListItem:
     """
     Add a new item to a preset list template.
@@ -153,6 +162,14 @@ def add_preset_item(
         is_active=is_active,
         purpose=f"Preset: {preset_list.name}",
         status=ItemStatus.NEED,
+    )
+    log_item_history(
+        item,
+        ItemHistoryAction.CREATED,
+        f"Created {format_quantity_text(amount_val, unit_val)} in preset list '{preset_list.name}'",
+        request=request,
+        user=user,
+        related_list=preset_list,
     )
     logger.debug("Added item '%s' to preset '%s'", clean_name, preset_list.name)
     return item
@@ -355,6 +372,28 @@ def _add_or_combine_preset_item(
         purpose=f"Preset: {preset_list.name}",
     )
     target_item.recalculate_from_attributions()
+    added_qty = format_quantity_text(item.amount, item.amount_unit)
+    total_qty = format_quantity_text(target_item.amount, target_item.amount_unit)
+    if existing:
+        summary = (
+            f"Scheduled preset '{preset_list.name}' added +{added_qty} → total {total_qty}"
+            if is_scheduled
+            else f"Loaded +{added_qty} from preset '{preset_list.name}' → total {total_qty}"
+        )
+    else:
+        summary = (
+            f"Auto-added {total_qty} from scheduled preset '{preset_list.name}'"
+            if is_scheduled
+            else f"Loaded {total_qty} from preset list '{preset_list.name}'"
+        )
+    log_item_history(
+        target_item,
+        ItemHistoryAction.ADDED_SOURCE if existing else ItemHistoryAction.CREATED,
+        summary,
+        user=None if is_scheduled else actual_user,
+        actor_name="System (Scheduled)" if is_scheduled else actor_name,
+        related_list=preset_list,
+    )
     return target_item
 
 
@@ -386,8 +425,15 @@ def load_preset_items_to_shopping_list(
         sources.delete()
         for item_id in affected_item_ids:
             it = ShoppingListItem.objects.filter(id=item_id).first()
-            if it:
-                it.recalculate_from_attributions()
+            if it and it.recalculate_from_attributions():
+                log_item_history(
+                    it,
+                    ItemHistoryAction.DEDUCTED,
+                    f"Replaced prior contribution from preset '{preset_list.name}' → remaining {format_quantity_text(it.amount, it.amount_unit)}",
+                    request=request,
+                    user=user,
+                    related_list=preset_list,
+                )
         target_list.items.filter(source_preset=preset_list, attributions__isnull=True).delete()
 
     source_items = preset_list.items.all().order_by("order", "id")
@@ -452,8 +498,14 @@ def unload_preset_from_shopping_list(
     sources.delete()
     for item_id in affected_item_ids:
         it = ShoppingListItem.objects.filter(id=item_id).first()
-        if it:
-            it.recalculate_from_attributions()
+        if it and it.recalculate_from_attributions():
+            log_item_history(
+                it,
+                ItemHistoryAction.DEDUCTED,
+                f"Unloaded preset '{preset_list.name}' contribution → remaining {format_quantity_text(it.amount, it.amount_unit)}",
+                request=request,
+                related_list=preset_list,
+            )
 
     # 2. Also remove any legacy unlinked items
     removed_count, _ = target_list.items.filter(source_preset=preset_list).delete()
@@ -521,8 +573,14 @@ def apply_preset_scheduled_refresh(
     sources.delete()
     for item_id in affected_item_ids:
         it = ShoppingListItem.objects.filter(id=item_id).first()
-        if it:
-            it.recalculate_from_attributions()
+        if it and it.recalculate_from_attributions():
+            log_item_history(
+                it,
+                ItemHistoryAction.DEDUCTED,
+                f"Cleared previous scheduled entry from '{preset_list.name}' → remaining {format_quantity_text(it.amount, it.amount_unit)}",
+                actor_name="System (Scheduled)",
+                related_list=preset_list,
+            )
 
     removed_unlinked, _ = target_list.items.filter(source_preset=preset_list, attributions__isnull=True).delete()
     removed_count = len(affected_item_ids) + removed_unlinked

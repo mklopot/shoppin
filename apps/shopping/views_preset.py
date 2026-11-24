@@ -26,8 +26,14 @@ from django.views.decorators.http import require_http_methods, require_POST
 from apps.core.categorizer import categorizer
 from apps.core.services.workspace_service import get_active_workspace
 from apps.core.utils import parse_amount_and_unit
-from apps.shopping.models import ShoppingList
+from apps.shopping.models import ItemHistoryAction, ShoppingList
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
+from apps.shopping.services.item_history_service import (
+    format_item_diff_summary,
+    get_item_associations_and_history,
+    log_item_history,
+    snapshot_item_fields,
+)
 from apps.shopping.services.preset_service import (
     add_preset_item,
     apply_preset_scheduled_refresh,
@@ -373,6 +379,7 @@ def preset_add_item(request: HttpRequest, preset_id: int) -> HttpResponse:
         vendor=vendor,
         category=category,
         optional=optional,
+        request=request,
     )
 
     if request.headers.get("HX-Request"):
@@ -400,6 +407,7 @@ def preset_edit_item(request: HttpRequest, preset_id: int, item_id: int) -> Http
         if workspace and not workspace.can_read(user):
             return HttpResponseForbidden("Read-only access.")
         known_categories = get_known_categories()
+        advanced_context = get_item_associations_and_history(item)
         return render(
             request,
             "presets/partials/item_edit_modal.html",
@@ -408,12 +416,14 @@ def preset_edit_item(request: HttpRequest, preset_id: int, item_id: int) -> Http
                 "item": item,
                 "known_categories": known_categories,
                 "can_write": can_write,
+                **advanced_context,
             },
         )
 
     if not can_write:
         return HttpResponseForbidden("Read-only access.")
 
+    before_snap = snapshot_item_fields(item)
     name = request.POST.get("name", "").strip()
     if name:
         item.name = name
@@ -430,6 +440,15 @@ def preset_edit_item(request: HttpRequest, preset_id: int, item_id: int) -> Http
     if "is_active" in request.POST:
         item.is_active = request.POST.get("is_active") in ("on", "true", "1")
     item.save()
+    edit_diff = format_item_diff_summary(before_snap, item)
+    if edit_diff:
+        log_item_history(
+            item,
+            ItemHistoryAction.EDITED,
+            edit_diff,
+            request=request,
+            related_list=preset_list,
+        )
 
     items = preset_list.items.all().order_by("order", "id")
     return render(
@@ -454,6 +473,13 @@ def preset_item_toggle_active(request: HttpRequest, preset_id: int, item_id: int
     else:
         item.is_active = not item.is_active
     item.save(update_fields=["is_active", "updated_at"])
+    log_item_history(
+        item,
+        ItemHistoryAction.PRESET_TOGGLED,
+        "Activated for recurring schedule" if item.is_active else "Paused from recurring schedule",
+        request=request,
+        related_list=preset_list,
+    )
 
     actor_name = request.user.username if (request.user and request.user.is_authenticated) else "unknown"
     sender_id = request.headers.get("X-Client-Id", "")

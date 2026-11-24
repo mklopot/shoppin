@@ -1853,3 +1853,64 @@ def test_recipe_form_guide_and_lint_endpoint_and_save_warnings(client: Client, a
     assert "Ingredient formatting check:" in detail_html
     assert "onion" in detail_html
     assert "sour cream" in detail_html
+
+
+@pytest.mark.django_db
+def test_ingredient_lint_rejects_made_up_and_mismatched_units_with_live_hints(client: Client, auth_user):
+    """Unrecognized/made-up units like '1 strip' for 'apple' warn with count/weight/volume live hints."""
+    user, workspace = auth_user
+
+    # 1. 'apple', '1 strip' with no DB profile -> warning + count/weight/volume unit_hints
+    res_strip = lint_ingredient("apple", "1 strip", profiles={})
+    assert any(
+        w["code"] == "unusual_unit" and w["severity"] == "warning" and "strip" in w["message"].lower()
+        for w in res_strip["warnings"]
+    )
+    assert res_strip["unit_hints"] == ["1", "1 lb", "1 cup"]
+
+    # 2. Seed DB with a normal unitless apple entry AND a poisoned 'strip' entry -> 'strip' never pollutes hints
+    r_seed = Recipe.objects.create(name="Charoset", directions="Mix.")
+    Ingredient.objects.create(recipe=r_seed, name="Apples", amount=Decimal("6.00"), amount_unit="")
+    r_poison = Recipe.objects.create(name="Bad Entry", directions="Test.")
+    Ingredient.objects.create(recipe=r_poison, name="apple", amount=Decimal("1.00"), amount_unit="strip")
+
+    profiles = get_ingredient_unit_profiles(use_cache=False)
+    assert all(e["unit"] != "strip" for e in profiles.get("apple", {}).get("unit_entries", []))
+    res_strip_db = lint_ingredient("apple", "1 strip", profiles=profiles)
+    assert any(w["code"] == "unusual_unit" and w["severity"] == "warning" for w in res_strip_db["warnings"])
+    assert res_strip_db["unit_hints"] == ["1", "1 lb", "1 cup"]
+
+    # 3. Valid apple units (count, weight, volume) have zero warnings; count also provides standard unit_hints
+    res_count = lint_ingredient("apple", "2", profiles=profiles)
+    assert res_count["warnings"] == []
+    assert res_count["unit_hints"] == ["2", "1 lb", "1 cup"]
+    assert lint_ingredient("apple", "1 lb", profiles=profiles)["warnings"] == []
+    assert lint_ingredient("apple", "8 oz", profiles=profiles)["warnings"] == []
+    assert lint_ingredient("apple", "1 cup", profiles=profiles)["warnings"] == []
+
+    # 4. Anatomically mismatched or size-only units on produce also warn with live hints
+    for bad_amt in ("1 clove", "1 sprig", "1 ear", "1 pinch", "1 tsp", "1 large"):
+        res_bad = lint_ingredient("apple", bad_amt, profiles=profiles)
+        assert any(w["code"] == "unusual_unit" and w["severity"] == "warning" for w in res_bad["warnings"]), bad_amt
+        assert res_bad["unit_hints"], bad_amt
+
+    # 5. Valid item-specific culinary units stay clean
+    assert lint_ingredient("bacon", "4 strips", profiles={})["warnings"] == []
+    assert lint_ingredient("garlic", "2 cloves", profiles={})["warnings"] == []
+    assert lint_ingredient("lemon juice", "1 tsp", profiles={})["warnings"] == []
+    assert lint_ingredient("apple cider vinegar", "0.5 cup", profiles={})["warnings"] == []
+
+    # 6. Live lint JSON endpoint returns warnings and unit hints for apple + 1 strip
+    client.force_login(user)
+    session = client.session
+    session["active_workspace_id"] = workspace.id
+    session.save()
+    resp = client.post(
+        reverse("recipes:lint_ingredients"),
+        json.dumps({"rows": [{"name": "apple", "amount": "1 strip"}]}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["warning_count"] == 1
+    assert data["rows"][0]["unit_hints"] == ["1", "1 lb", "1 cup"]

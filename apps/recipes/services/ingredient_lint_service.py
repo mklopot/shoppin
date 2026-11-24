@@ -148,6 +148,102 @@ CONTAINERS_DEFAULT_8OZ: set[str] = {
     "cheddar cheese", "mozzarella", "feta",
 }
 
+COUNTABLE_PRODUCE_KEYWORDS: set[str] = {
+    "apple", "apples", "banana", "bananas", "orange", "oranges", "lemon", "lemons",
+    "lime", "limes", "pear", "pears", "peach", "peaches", "plum", "plums",
+    "mango", "mangoes", "avocado", "avocados", "onion", "onions", "shallot", "shallots",
+    "scallion", "scallions", "tomato", "tomatoes", "potato", "potatoes", "yam", "yams",
+    "carrot", "carrots", "cucumber", "cucumbers", "zucchini", "zucchinis", "squash",
+    "pepper", "peppers", "jalapeno", "jalapenos", "chili", "chilis", "chilies",
+    "beet", "beets", "turnip", "turnips", "radish", "radishes", "eggplant", "eggplants",
+    "nectarine", "nectarines", "apricot", "apricots", "grapefruit", "grapefruits",
+    "kiwi", "kiwis",
+}
+
+WHOLE_FRUIT_KEYWORDS: set[str] = {
+    "apple", "apples", "banana", "bananas", "orange", "oranges", "pear", "pears",
+    "peach", "peaches", "plum", "plums", "mango", "mangoes", "avocado", "avocados",
+    "nectarine", "nectarines", "apricot", "apricots", "grapefruit", "grapefruits",
+    "kiwi", "kiwis",
+}
+
+DISCRETE_MEAT_CUT_KEYWORDS: set[str] = {
+    "breast", "breasts", "thigh", "thighs", "drumstick", "wing", "wings",
+    "chop", "chops", "steak", "steaks", "cutlet", "cutlets", "fillet", "fillets",
+    "patty", "patties", "sausage", "hot dog", "hot dogs", "link", "links",
+}
+
+DISCRETE_BAKERY_KEYWORDS: set[str] = {
+    "bagel", "bagels", "bun", "buns", "roll", "rolls", "tortilla", "tortillas",
+    "pita", "croissant", "english muffin", "cracker", "crackers", "cookie", "cookies",
+}
+
+COUNTABLE_BULK_SUFFIXES: tuple[str, ...] = (
+    "powder", "juice", "sauce", "paste", "oil", "vinegar", "noodles", "soup",
+    "puree", "broth", "stock", "extract", "butter", "cream", "zest", "cider",
+    "jam", "jelly", "syrup",
+)
+
+ALLOWED_UNIT_MODIFIERS: set[str] = {
+    "small", "medium", "med", "large", "extra-large", "whole", "heaping",
+    "level", "packed", "scant", "fresh", "dried",
+}
+
+UNIT_FLUID_OZ_ALIASES: set[str] = {
+    "fl oz", "fl. oz", "fluid oz", "fluid ounce", "fluid ounces",
+}
+
+ANATOMICAL_UNIT_ALLOWED_KEYWORDS: dict[str, set[str]] = {
+    "clove": {"garlic", "clove", "shallot"},
+    "ear": {"corn"},
+    "sprig": {
+        "rosemary", "thyme", "parsley", "cilantro", "mint", "dill", "oregano",
+        "sage", "basil", "tarragon", "marjoram", "lavender", "chive", "chives",
+        "herb", "bay",
+    },
+    "rib": {"celery", "pork", "beef", "lamb", "rib", "ribs", "chard"},
+    "stalk": {
+        "celery", "lemongrass", "broccoli", "rhubarb", "fennel", "scallion",
+        "green onion", "onion", "leek", "asparagus", "brussels",
+    },
+    "head": {
+        "lettuce", "cabbage", "garlic", "broccoli", "cauliflower", "romaine",
+        "iceberg", "radicchio", "endive", "escarole", "kale", "bok choy", "napa",
+    },
+    "bulb": {"fennel", "garlic", "onion", "shallot", "ginger"},
+    "loaf": {
+        "bread", "brioche", "baguette", "challah", "sourdough", "rye",
+        "ciabatta", "focaccia", "meatloaf",
+    },
+    "sheet": {
+        "puff pastry", "pastry", "phyllo", "filo", "nori", "seaweed", "lasagna",
+        "dough", "wonton", "egg roll", "wrapper", "gelatin", "parchment", "foil",
+    },
+    "bunch": {
+        "kale", "spinach", "chard", "collard", "mustard greens", "arugula",
+        "watercress", "cilantro", "parsley", "dill", "mint", "basil", "thyme",
+        "rosemary", "oregano", "sage", "chives", "scallion", "green onion",
+        "onion", "radish", "carrot", "beet", "asparagus", "broccoli",
+        "broccolini", "grape", "grapes", "banana", "bananas", "celery", "herb", "leek",
+    },
+    "leaf": {
+        "bay", "basil", "mint", "sage", "lettuce", "cabbage", "cilantro",
+        "parsley", "spinach", "kale", "chard", "curry", "tea", "oregano",
+        "thyme", "shiso", "banana", "collard", "romaine",
+    },
+    "stick": {
+        "butter", "margarine", "shortening", "cream", "cheese", "mozzarella",
+        "cinnamon", "celery", "carrot", "rhubarb", "pepperoni", "lemongrass",
+        "vanilla", "pretzel", "breadstick", "bouillon", "miso",
+    },
+    "drop": {
+        "extract", "vanilla", "oil", "water", "juice", "vinegar", "sauce",
+        "coloring", "essence", "bitters", "honey", "syrup", "liquid",
+    },
+    "bun": {"bun", "buns", "hamburger", "hot dog", "slider", "brioche"},
+    "patty": {"patty", "patties", "burger", "sausage"},
+}
+
 
 def _normalize_ingredient_key(name: str) -> str:
     """Return normalized singularized lookup key for database consistency matching."""
@@ -158,11 +254,11 @@ def _normalize_ingredient_key(name: str) -> str:
 
 
 def _is_valid_db_unit(unit: str) -> bool:
-    """Filter out malformed legacy unit artifacts such as leading '/2 cup'."""
+    """Accept empty (count) or recognized culinary units so malformed DB tokens cannot pollute hints."""
     u = (unit or "").strip()
     if not u:
         return True
-    return not (u.startswith("/") or not any(ch.isalpha() for ch in u))
+    return _is_known_unit_token(u)
 
 
 def _suggest_amount_for_unit(
@@ -452,13 +548,70 @@ def _extract_suggested_clean_name(raw_name: str) -> tuple[str | None, list[str],
     return cleaned_result, prep_notes, warnings
 
 
-def _infer_sensible_units_for_item(name: str, category: str) -> list[str]:
+def _name_matches_keywords(name_lower: str, keywords: set[str]) -> bool:
+    """Return True when any multi-word or singularized token keyword matches name_lower."""
+    tokens = set(re.findall(r"[a-zA-Z]+", name_lower))
+    singular_tokens = {singularize(t).lower() for t in tokens}
+    all_tokens = tokens | singular_tokens
+    return any(
+        kw in all_tokens or (kw in name_lower and (" " in kw or len(kw) >= 4))
+        for kw in keywords
+    )
+
+
+def _is_countable_produce(name: str) -> bool:
+    """Return True for whole countable fruits and vegetables sold by piece, weight, or volume."""
+    low = re.sub(r"\s+", " ", (name or "").strip().lower())
+    if not low or any(suf in low for suf in COUNTABLE_BULK_SUFFIXES):
+        return False
+    return _name_matches_keywords(low, COUNTABLE_PRODUCE_KEYWORDS)
+
+
+def _merge_unit_hints(*groups: list[str], limit: int = 3) -> list[str]:
+    """Merge unit hint lists in priority order while removing duplicates."""
+    merged: list[str] = []
+    for grp in groups:
+        for h in grp:
+            clean = (h or "").strip()
+            if clean and clean not in merged:
+                merged.append(clean)
+                if len(merged) >= limit:
+                    return merged
+    return merged
+
+
+def _infer_sensible_units_for_item(
+    name: str,
+    category: str,
+    user_amount: Decimal | None = None,
+) -> list[str]:
     """Infer sensible default '<amount> <unit>' suggestions based on food type and category."""
     low = (name or "").lower().strip()
     cat = (category or "").lower().strip()
+    amt_str = format_amount(user_amount) if (user_amount and user_amount > Decimal("0.00")) else "1"
+    tokens = set(re.findall(r"[a-zA-Z]+", low))
+    sing_tokens = {singularize(t).lower() for t in tokens}
+    all_tokens = tokens | sing_tokens
 
+    if low == "egg" or "eggs" in all_tokens or "egg" in all_tokens:
+        if "noodles" not in all_tokens and "substitute" not in all_tokens:
+            return [amt_str]
+    if "garlic" in all_tokens and "powder" not in all_tokens and "salt" not in all_tokens:
+        return ["2 cloves", "1 head"]
+    if "celery" in all_tokens and "salt" not in all_tokens and "seed" not in all_tokens:
+        return ["2 ribs", "1 bunch", "1 cup"]
     if any(k in low for k in CONTAINERS_DEFAULT_8OZ):
         return ["8 oz", "1 cup", "1 tbsp"]
+    if _is_countable_produce(low):
+        return _merge_unit_hints([amt_str, "1 lb", "1 cup"], limit=3)
+    if all_tokens & DISCRETE_MEAT_CUT_KEYWORDS:
+        return _merge_unit_hints([amt_str, "1 lb", "8 oz"], limit=3)
+    if all_tokens & DISCRETE_BAKERY_KEYWORDS:
+        return _merge_unit_hints([amt_str, "1 package"], limit=3)
+    if any(k in low for k in ("rosemary", "thyme", "cilantro", "parsley", "mint", "dill", "basil")):
+        return ["1 bunch", "2 sprigs", "1 tbsp"]
+    if any(k in low for k in ("lettuce", "cabbage", "broccoli", "cauliflower")):
+        return ["1 head", "1 lb", "1 cup"]
     if any(k in low for k in SPICE_OR_SEASONING_KEYWORDS) or cat in ("spices", "seasoning mix"):
         return ["1 tsp", "1 tbsp"]
     if any(k in low for k in ("olive oil", "vegetable oil", "canola oil", "sesame oil", "vinegar", "soy sauce", "oil")) or cat == "oil":
@@ -504,10 +657,41 @@ def _requires_unit_by_nature(name: str) -> tuple[bool, str]:
     return False, cat
 
 
+EXTRA_CULINARY_UNITS: set[str] = {
+    "stick", "sticks", "dash", "dashes", "bulb", "bulbs", "ear", "ears",
+    "sprig", "sprigs", "rib", "ribs", "stalk", "stalks", "sheet", "sheets",
+    "block", "blocks", "carton", "cartons", "tub", "tubs", "box", "boxes",
+    "pack", "packs", "packet", "packets", "pouch", "pouches", "drop", "drops",
+    "leaf", "leaves", "piece", "pieces", "patty", "patties", "bun", "buns",
+}
+
+KNOWN_UNIT_TOKENS: set[str] = (
+    {u.lower() for u in COMMON_UNITS}
+    | EXTRA_CULINARY_UNITS
+    | {u.lower() for u in VOLUME_UNITS_IN_TSP}
+    | {u.lower() for u in WEIGHT_US_IN_OZ}
+    | {u.lower() for u in WEIGHT_METRIC_IN_G}
+    | {u.lower() for u in VOLUME_METRIC_IN_ML}
+)
+
+
+def _extract_unit_core_singular(parsed_unit: str) -> str:
+    """Extract the singularized core unit word after stripping size/pack modifiers."""
+    clean = re.sub(r"\s+", " ", (parsed_unit or "").strip().lower()).rstrip(".,")
+    if not clean:
+        return ""
+    if clean in UNIT_FLUID_OZ_ALIASES:
+        return "fl oz"
+    parts = clean.split()
+    while len(parts) > 1 and parts[0] in ALLOWED_UNIT_MODIFIERS:
+        parts.pop(0)
+    return singularize(" ".join(parts)).lower()
+
+
 def _is_unit_absurd_for_item(name: str, unit: str) -> str | None:
     """Return warning message when a supplied unit makes no practical culinary sense."""
     low = (name or "").lower().strip()
-    u_sing = singularize((unit or "").strip()).lower()
+    u_sing = _extract_unit_core_singular(unit)
     if not low or not u_sing:
         return None
 
@@ -524,15 +708,29 @@ def _is_unit_absurd_for_item(name: str, unit: str) -> str | None:
     if u_sing in SMALL_SPICE_UNITS and singular_tokens <= {"egg", "eggs", "large", "medium", "small"}:
         return f"'{unit}' does not make sense for '{name}'. Enter a whole egg count (e.g. '2')."
 
+    if u_sing in ANATOMICAL_UNIT_ALLOWED_KEYWORDS:
+        if not _name_matches_keywords(low, ANATOMICAL_UNIT_ALLOWED_KEYWORDS[u_sing]):
+            if _is_countable_produce(low):
+                return (
+                    f"Stores do not sell '{name}' by the '{unit}'. "
+                    f"Enter a whole count, weight (e.g. '1 lb'), or volume (e.g. '1 cup')."
+                )
+            return f"'{unit}' does not make culinary sense for '{name}'."
+
+    if _is_countable_produce(low) and u_sing in ("pinch", "pinches", "dash", "dashes"):
+        return (
+            f"'{unit}' is not a sensible unit for '{name}'. "
+            "Use whole count (e.g. '1'), weight ('1 lb'), or volume ('1 cup')."
+        )
+
+    if (singular_tokens & WHOLE_FRUIT_KEYWORDS) and not any(s in low for s in COUNTABLE_BULK_SUFFIXES):
+        if u_sing in SMALL_SPICE_UNITS:
+            return (
+                f"'{unit}' is unusually small for '{name}'. "
+                "Enter a whole count (e.g. '1'), weight ('1 lb', '8 oz'), or volume ('1 cup')."
+            )
+
     return None
-
-
-EXTRA_CULINARY_UNITS: set[str] = {
-    "stick", "sticks", "dash", "dashes", "bulb", "bulbs", "ear", "ears",
-    "sprig", "sprigs", "rib", "ribs", "stalk", "stalks", "sheet", "sheets",
-    "block", "blocks", "carton", "cartons", "tub", "tubs", "box", "boxes",
-    "pack", "packs", "packet", "packets", "pouch", "pouches", "drop", "drops",
-}
 
 
 UNIT_CANONICAL_ALIASES: dict[str, str] = {
@@ -565,22 +763,23 @@ def _canonical_db_unit(unit: str) -> str:
     return UNIT_CANONICAL_ALIASES.get(clean) or UNIT_CANONICAL_ALIASES.get(sing) or sing
 
 
-def _is_known_unit_token(parsed_unit: str) -> bool:
-    """Return True if parsed_unit matches a recognized culinary measurement unit."""
-    if not parsed_unit:
+def _is_known_unit_token(parsed_unit: str, item_name: str = "") -> bool:
+    """Return True if parsed_unit matches a recognized store/culinary measurement unit."""
+    clean = re.sub(r"\s+", " ", (parsed_unit or "").strip().lower()).rstrip(".,")
+    if not clean or clean.startswith("/") or not any(ch.isalpha() for ch in clean):
         return False
-    lower = parsed_unit.lower()
-    u_tokens = lower.split()
-    known = COMMON_UNITS | EXTRA_CULINARY_UNITS
-    return (
-        singularize(lower) in known
-        or lower in known
-        or lower in VOLUME_UNITS_IN_TSP
-        or lower in WEIGHT_US_IN_OZ
-        or lower in WEIGHT_METRIC_IN_G
-        or lower in VOLUME_METRIC_IN_ML
-        or any(tok in known for tok in u_tokens)
-    )
+    if clean in UNIT_FLUID_OZ_ALIASES:
+        return True
+    u_tokens = clean.split()
+    if any(tok.startswith("/") for tok in u_tokens):
+        return False
+    if len(u_tokens) > 1 and not all(tok in ALLOWED_UNIT_MODIFIERS for tok in u_tokens[:-1]):
+        return False
+    core = u_tokens[-1]
+    core_sing = singularize(core).lower()
+    if core_sing == "strip":
+        return "bacon" in (item_name or "").lower()
+    return core in KNOWN_UNIT_TOKENS or core_sing in KNOWN_UNIT_TOKENS
 
 
 def _are_units_consistent(unit_a: str, unit_b: str) -> bool:
@@ -638,7 +837,7 @@ def lint_ingredient(
             "message": "Amount should be greater than 0.",
         })
 
-    is_known_unit = _is_known_unit_token(parsed_unit)
+    is_known_unit = _is_known_unit_token(parsed_unit, eval_name)
     profile = profiles.get(eval_key) or profiles.get(_normalize_ingredient_key(raw_name))
 
     if profile and profile["unit_entries"] and not profile["mostly_unitless"]:
@@ -653,40 +852,81 @@ def lint_ingredient(
 
     requires_unit_nature, inferred_cat = _requires_unit_by_nature(eval_name)
     db_expects_unit = bool(profile and profile["mostly_measured"])
+    is_produce = _is_countable_produce(eval_name)
+    inferred_defaults = _infer_sensible_units_for_item(eval_name, inferred_cat, user_amount=parsed_amount)
+    amt_label = format_amount(parsed_amount)
 
-    if not parsed_unit and (db_expects_unit or requires_unit_nature):
-        unit_hints = (unit_hints or _infer_sensible_units_for_item(eval_name, inferred_cat))[:3]
-        example_display = unit_hints[0] if unit_hints else "8 oz"
-        amt_label = format_amount(parsed_amount)
-        if profile and profile["unit_entries"]:
-            preferred_list = ", ".join(e["unit"] for e in profile["unit_entries"][:3])
-            msg = (
-                f"'{amt_label} {eval_name}' is missing a unit and is unclear on a shopping list — "
-                f"try '{example_display} {eval_name}' (other recipes use: {preferred_list})."
-            )
-        else:
-            msg = (
-                f"'{amt_label} {eval_name}' is missing a unit — use a measurement unit such as "
-                f"'{example_display} {eval_name}' so it makes sense on the shopping list."
-            )
-        warnings.append({
-            "code": "missing_unit",
-            "severity": "warning",
-            "message": msg,
-            "suggested_amount": example_display,
-        })
+    if not parsed_unit:
+        if db_expects_unit or requires_unit_nature:
+            unit_hints = _merge_unit_hints(unit_hints, inferred_defaults, limit=3)
+            example_display = unit_hints[0] if unit_hints else "8 oz"
+            if profile and profile["unit_entries"]:
+                preferred_list = ", ".join(e["unit"] for e in profile["unit_entries"][:3])
+                msg = (
+                    f"'{amt_label} {eval_name}' is missing a unit and is unclear on a shopping list — "
+                    f"try '{example_display} {eval_name}' (other recipes use: {preferred_list})."
+                )
+            else:
+                msg = (
+                    f"'{amt_label} {eval_name}' is missing a unit — use a measurement unit such as "
+                    f"'{example_display} {eval_name}' so it makes sense on the shopping list."
+                )
+            warnings.append({
+                "code": "missing_unit",
+                "severity": "warning",
+                "message": msg,
+                "suggested_amount": example_display,
+            })
+        elif is_produce and not unit_hints:
+            unit_hints = inferred_defaults[:3]
     elif parsed_unit:
         absurd_msg = _is_unit_absurd_for_item(eval_name, parsed_unit)
         if absurd_msg:
             if not requires_unit_nature and not db_expects_unit:
-                unit_hints = [format_amount(parsed_amount)]
+                unit_hints = _merge_unit_hints([amt_label], unit_hints, inferred_defaults, limit=3)
             else:
-                unit_hints = (unit_hints or _infer_sensible_units_for_item(eval_name, inferred_cat))[:3]
+                unit_hints = _merge_unit_hints(unit_hints, inferred_defaults, limit=3)
             warnings.append({
                 "code": "unusual_unit",
                 "severity": "warning",
                 "message": absurd_msg,
                 "suggested_amount": unit_hints[0] if unit_hints else None,
+            })
+        elif not is_known_unit:
+            db_measured_hints = [e["example"] for e in (profile["unit_entries"][:2] if profile and profile.get("unit_entries") else [])]
+            if not requires_unit_nature and not db_expects_unit:
+                unit_hints = _merge_unit_hints([amt_label], db_measured_hints, inferred_defaults, limit=3)
+            else:
+                unit_hints = _merge_unit_hints(unit_hints, db_measured_hints, inferred_defaults, limit=3)
+            example_display = unit_hints[0] if unit_hints else "1"
+            unit_sing = singularize(parsed_unit.lower()).lower()
+            if unit_sing in SIZE_MODIFIER_WORDS:
+                msg = (
+                    f"'{parsed_unit}' is a size adjective rather than a store unit for '{eval_name}'. "
+                    f"Use count (e.g. '{amt_label}') or weight/volume (e.g. '1 lb', '1 cup')."
+                )
+            elif is_produce or (not requires_unit_nature):
+                msg = (
+                    f"'{parsed_unit}' is not a standard grocery or recipe unit for '{eval_name}'. "
+                    f"Stores sell '{eval_name}' by count (e.g. '{amt_label}'), weight (e.g. '1 lb', '8 oz'), "
+                    "or volume (e.g. '1 cup')."
+                )
+            elif profile and profile["unit_entries"]:
+                preferred_list = ", ".join(e["unit"] for e in profile["unit_entries"][:3])
+                msg = (
+                    f"'{parsed_unit}' is not a recognized unit for '{eval_name}'. "
+                    f"Try '{example_display}' (other recipes use: {preferred_list})."
+                )
+            else:
+                msg = (
+                    f"'{parsed_unit}' is not a recognized grocery or recipe unit for '{eval_name}'. "
+                    f"Try a standard measurement such as '{example_display}'."
+                )
+            warnings.append({
+                "code": "unusual_unit",
+                "severity": "warning",
+                "message": msg,
+                "suggested_amount": example_display,
             })
         elif profile and profile["unit_entries"] and not profile["mostly_unitless"]:
             used_singulars = {singularize(e["unit"].lower()) for e in profile["unit_entries"]}
@@ -699,8 +939,6 @@ def lint_ingredient(
                 suggested_amt = f"{format_amount(parsed_amount)} {preferred_unit}"
                 if any(k in eval_key for k in CONTAINERS_DEFAULT_8OZ) and singularize(preferred_unit) in ("oz", "ounce") and parsed_amount == Decimal("1.00"):
                     suggested_amt = f"8 {preferred_unit}"
-                if not is_known_unit:
-                    suggested_amt = profile["unit_entries"][0]["example"]
                 warnings.append({
                     "code": "inconsistent_unit",
                     "severity": "info",
@@ -711,16 +949,6 @@ def lint_ingredient(
                     ),
                     "suggested_amount": suggested_amt,
                 })
-        elif profile and profile["mostly_unitless"] and profile["unitless_count"] >= 2 and not is_known_unit:
-            warnings.append({
-                "code": "inconsistent_unit",
-                "severity": "info",
-                "message": (
-                    f"Other recipes enter '{profile['canonical_name']}' as a count without a unit "
-                    f"(e.g. '{format_amount(parsed_amount)}')."
-                ),
-                "suggested_amount": format_amount(parsed_amount),
-            })
 
     return {
         "name": raw_name,

@@ -441,7 +441,7 @@
                     </li>
                     <li>
                         <strong>Use sensible, consistent units:</strong>
-                        Enter measurements that match how ingredients are sold and used in other recipes &mdash; e.g., <code>8 oz</code> for <code>sour cream</code> (not bare <code>1</code>).
+                        Enter measurements that match how ingredients are sold (count, weight, volume, or package) and used in other recipes &mdash; e.g., <code>8 oz</code> for <code>sour cream</code> (not bare <code>1</code>), or <code>1</code> / <code>1 lb</code> / <code>1 cup</code> for <code>apple</code> (not <code>1 strip</code>).
                     </li>
                 </ul>
             </div>
@@ -1122,8 +1122,11 @@ function renderRowLintFeedback(rowEl, rowResult) {
             ));
         }
         if (w.suggested_amount && amtInput && !w.suggested_name) {
+            const setLabel = /^\d+(?:\.\d+)?$/.test(w.suggested_amount)
+                ? `${w.suggested_amount} (count)`
+                : w.suggested_amount;
             actions.appendChild(createChipButton(
-                `Set "${w.suggested_amount}"`,
+                `Set "${setLabel}"`,
                 isWarn
                     ? 'px-1.5 py-0.5 bg-white border border-amber-400 hover:bg-amber-100 text-amber-950 font-semibold cursor-pointer text-[10px]'
                     : 'px-1.5 py-0.5 bg-white border border-blue-400 hover:bg-blue-100 text-blue-950 font-semibold cursor-pointer text-[10px]',
@@ -1147,17 +1150,20 @@ function renderRowLintFeedback(rowEl, rowResult) {
     if (hasNameWarning && nameInput) nameInput.classList.add('border-amber-500', 'bg-amber-50/40');
     if (hasAmtWarning && amtInput) amtInput.classList.add('border-amber-500', 'bg-amber-50/40');
 
-    // Show quick DB unit consistency pills when helpful
+    // Show quick DB / food-type unit consistency pills when helpful
     const hints = rowResult.unit_hints || [];
     if (hints.length > 0 && amtInput) {
         const hintWrap = document.createElement('div');
         hintWrap.className = 'flex flex-wrap items-center gap-1 text-[10px] text-gray-700';
         const lbl = document.createElement('span');
-        lbl.textContent = rowResult.db_usage_summary ? `${rowResult.db_usage_summary}:` : 'Suggested units:';
+        lbl.textContent = rowResult.db_usage_summary
+            ? `${rowResult.db_usage_summary}:`
+            : (warnings.length > 0 ? 'Suggested units:' : 'Standard units:');
         hintWrap.appendChild(lbl);
         hints.forEach(h => {
+            const chipLabel = /^\d+(?:\.\d+)?$/.test(h) ? `${h} (count)` : h;
             hintWrap.appendChild(createChipButton(
-                h,
+                chipLabel,
                 'px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-900 font-medium cursor-pointer text-[10px]',
                 () => {
                     amtInput.value = h;

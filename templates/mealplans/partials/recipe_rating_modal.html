@@ -56,7 +56,7 @@
                         {% endif %}
                         <div>
                             <h4 class="font-bold text-xs text-gray-900 leading-tight">{{ r.name }}</h4>
-                            <span class="text-[11px] text-emerald-800 font-medium block mt-0.5">Made {{ r.times_made }} time{{ r.times_made|pluralize }}</span>
+                            {% include "recipes/partials/made_counts.html" with target=r primary_class="text-[11px] text-emerald-800 font-medium mt-0.5" sub_class="text-[11px] text-gray-700 mt-0.5" %}
                         </div>
                     </div>
                 </div>

@@ -34,8 +34,19 @@ from apps.mealplans.services.suggestion_service import (
     get_dish_suggestions,
 )
 from apps.recipes.models import Recipe, RecipeRating
-from apps.recipes.services.recipe_service import record_recipe_made, submit_recipe_rating
+from apps.recipes.services.recipe_service import (
+    attach_recipe_made_counts,
+    record_recipe_made,
+    submit_recipe_rating,
+)
 from apps.shopping.views import get_active_list
+
+
+def _resolve_meal_workspace(meal: Meal | None, fallback_workspace: Any) -> Any:
+    """Return the meal plan workspace when available, else the active workspace."""
+    if meal and meal.meal_plan and meal.meal_plan.workspace:
+        return meal.meal_plan.workspace
+    return fallback_workspace
 
 
 def _check_mealplan_write(request: HttpRequest) -> HttpResponseForbidden | None:
@@ -427,8 +438,11 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
     else:
         recipe = get_object_or_404(Recipe, id=dish_id)
 
+    effective_workspace = _resolve_meal_workspace(meal, workspace)
+
     # 1. Record recipe made & increment counter
-    record_recipe_made(recipe, user=user)
+    record_recipe_made(recipe, user=user, workspace=effective_workspace)
+    attach_recipe_made_counts(recipe, user=user, workspace=effective_workspace)
 
     # 2. Remove dish from meal and synchronize shopping list
     if dish:
@@ -437,8 +451,13 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
         remove_recipe_from_meal(meal, recipe, shopping_list, request)
 
     # 3. Toast message & WebSocket broadcast
+    count_parts = [f"Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''} total"]
+    if effective_workspace and recipe.workspace_made_count is not None:
+        count_parts.append(f"Workspace: {recipe.workspace_made_count}")
+    if user and getattr(user, "is_authenticated", False) and recipe.user_made_count is not None:
+        count_parts.append(f"You: {recipe.user_made_count}")
     toast_messages = [
-        f"✓ Marked '{recipe.name}' as made! (Made {recipe.times_made} time{'s' if recipe.times_made != 1 else ''})"
+        f"✓ Marked '{recipe.name}' as made! ({' · '.join(count_parts)})"
     ]
     actor = (request.user.first_name or "").strip() or request.user.username if (request.user and request.user.is_authenticated) else "Someone"
     broadcast_mealplan_update(
@@ -465,7 +484,7 @@ def mark_dish_made(request: HttpRequest, meal_id: int, dish_id: int) -> HttpResp
         "existing_ratings": {recipe.id: existing_rating} if existing_rating else {},
         "meal_name": meal.name,
         "is_entire_meal": False,
-        "workspace": workspace,
+        "workspace": effective_workspace,
         "shopping_list": shopping_list,
         "meal_plan": meal_plan,
         "meals": meals,
@@ -502,6 +521,7 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     user = getattr(request, "user", None)
     meal_name = meal.name
 
+    effective_workspace = _resolve_meal_workspace(meal, workspace)
     dishes = list(meal.dishes.select_related("recipe").all())
     recipes = []
     toast_messages = []
@@ -510,15 +530,17 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
     for dish in dishes:
         if dish.recipe:
             recipes.append(dish.recipe)
-            record_recipe_made(dish.recipe, user=user)
+            record_recipe_made(dish.recipe, user=user, workspace=effective_workspace)
         remove_dish_from_meal(dish, shopping_list, request)
 
     # Fallback for any legacy recipes in M2M without MealDish
     for recipe in list(meal.recipes.all()):
         if recipe not in recipes:
             recipes.append(recipe)
-            record_recipe_made(recipe, user=user)
+            record_recipe_made(recipe, user=user, workspace=effective_workspace)
             remove_recipe_from_meal(meal, recipe, shopping_list, request)
+
+    attach_recipe_made_counts(recipes, user=user, workspace=effective_workspace)
 
     # 2. Delete the meal itself
     meal.delete()
@@ -551,7 +573,7 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
         "existing_ratings": existing_ratings,
         "meal_name": meal_name,
         "is_entire_meal": True,
-        "workspace": workspace,
+        "workspace": effective_workspace,
         "shopping_list": shopping_list,
         "meal_plan": meal_plan,
         "meals": meals,
@@ -666,12 +688,15 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     ready_count = got_count + have_count
 
     workspace = get_active_workspace(request)
+    effective_workspace = _resolve_meal_workspace(meal, workspace)
     meal_plan = get_active_meal_plan(request, workspace)
     user = getattr(request, "user", None)
     can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.all() if meal_plan else []
+    attach_recipe_made_counts(recipe, user=user, workspace=effective_workspace)
 
     context = {
+        "workspace": effective_workspace,
         "recipe": recipe,
         "ingredients_with_status": ingredients_with_status,
         "total_ingredients": total_ingredients,

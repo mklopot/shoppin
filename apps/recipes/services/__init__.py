@@ -17,6 +17,7 @@ from apps.recipes.services.recipe_scraper import (
 )
 from apps.recipes.services.recipe_service import (
     add_recipe_to_shopping_list,
+    attach_recipe_made_counts,
     create_or_update_recipe,
     get_filter_options,
     parse_tag_list,
@@ -42,4 +43,5 @@ __all__ = [
     "submit_recipe_rating",
     "record_recipe_made",
     "add_recipe_to_shopping_list",
+    "attach_recipe_made_counts",
 ]

@@ -1,0 +1,29 @@
+{% if layout == "badges" %}
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-900 border border-emerald-300" title="Total times this recipe has been made">
+    Made {{ target.times_made }} time{{ target.times_made|pluralize }}{% if user.is_authenticated %} Total{% endif %}
+</span>
+{% if user.is_authenticated and workspace %}
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-900 border border-blue-300" title="Times made by anyone in {{ workspace.name }}">
+    Workspace: {{ target.workspace_made_count|default:0 }}
+</span>
+{% endif %}
+{% if user.is_authenticated %}
+<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-900 border border-amber-300" title="Times made by you">
+    By You: {{ target.user_made_count|default:0 }}
+</span>
+{% endif %}
+{% elif layout == "inline" %}
+<span class="{{ primary_class|default:'text-emerald-800 font-semibold' }}">{{ prefix|default:"" }}Made {{ target.times_made }} time{{ target.times_made|pluralize }}{% if user.is_authenticated %} total{% endif %}</span>
+{% if user.is_authenticated %}
+<span class="{{ sub_class|default:'text-gray-700' }}">({% if workspace %}<span title="Made by anyone in {{ workspace.name }}">{{ workspace_label|default:"Workspace" }}: <strong class="text-gray-900">{{ target.workspace_made_count|default:0 }}</strong></span> &bull; {% endif %}<span title="Made by you">You: <strong class="text-gray-900">{{ target.user_made_count|default:0 }}</strong></span>)</span>
+{% endif %}
+{% else %}
+<span class="{{ primary_class|default:'font-semibold text-emerald-800' }} block">
+    Made {{ target.times_made }} time{{ target.times_made|pluralize }}{% if user.is_authenticated %} total{% endif %}
+</span>
+{% if user.is_authenticated %}
+<span class="{{ sub_class|default:'text-[11px] text-gray-700 mt-0.5' }} block">
+    {% if workspace %}<span title="Made by anyone in {{ workspace.name }}">{{ workspace_label|default:"Workspace" }}: <strong class="text-gray-900">{{ target.workspace_made_count|default:0 }}</strong></span> &bull; {% endif %}<span title="Made by you">You: <strong class="text-gray-900">{{ target.user_made_count|default:0 }}</strong></span>
+</span>
+{% endif %}
+{% endif %}

@@ -6,7 +6,20 @@ from decimal import Decimal
 from typing import Any
 
 from django.core.exceptions import ValidationError
-from django.db.models import Avg, Case, F, IntegerField, Q, QuerySet, Value, When
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    QuerySet,
+    Subquery,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce
 from django.http import HttpRequest
 
 from apps.core.categorizer import categorizer
@@ -824,10 +837,91 @@ def submit_recipe_rating(recipe: Recipe, user: Any, stars: int, thumbs_up: bool)
     return rating
 
 
+def _build_workspace_made_log_q(workspace: Any) -> Q | None:
+    """Return a Q filter matching RecipeMadeLog rows attributable to workspace."""
+    if not workspace:
+        return None
+    member_ids = set(workspace.memberships.values_list("user_id", flat=True))
+    if workspace.owner_id:
+        member_ids.add(workspace.owner_id)
+    if member_ids:
+        return Q(workspace=workspace) | Q(workspace__isnull=True, user_id__in=member_ids)
+    return Q(workspace=workspace)
+
+
+def _made_count_subquery(filter_q: Q) -> Coalesce:
+    """Build a zero-defaulted correlated Subquery counting matching RecipeMadeLog rows."""
+    subq = (
+        RecipeMadeLog.objects.filter(recipe_id=OuterRef("pk"))
+        .filter(filter_q)
+        .order_by()
+        .values("recipe_id")
+        .annotate(total=Count("id"))
+        .values("total")[:1]
+    )
+    return Coalesce(Subquery(subq), Value(0), output_field=IntegerField())
+
+
+def _grouped_made_counts(recipe_ids: list[int], filter_q: Q) -> dict[int, int]:
+    """Return {recipe_id: count} in one grouped query for the given recipe IDs."""
+    rows = (
+        RecipeMadeLog.objects.filter(recipe_id__in=recipe_ids)
+        .filter(filter_q)
+        .order_by()
+        .values("recipe_id")
+        .annotate(total=Count("id"))
+    )
+    return {row["recipe_id"]: row["total"] for row in rows}
+
+
+def attach_recipe_made_counts(
+    recipes_or_qs: Any,
+    user: Any = None,
+    workspace: Any = None,
+) -> Any:
+    """
+    Attach ``workspace_made_count`` and ``user_made_count`` to a Recipe, iterable of
+    Recipes, or Recipe QuerySet without causing N+1 queries or join multiplication.
+    """
+    is_auth = bool(user and getattr(user, "is_authenticated", False))
+    ws_q = _build_workspace_made_log_q(workspace)
+    user_q = Q(user=user) if is_auth else None
+
+    if isinstance(recipes_or_qs, QuerySet):
+        return recipes_or_qs.annotate(
+            workspace_made_count=(
+                _made_count_subquery(ws_q)
+                if ws_q is not None
+                else Value(None, output_field=IntegerField())
+            ),
+            user_made_count=(
+                _made_count_subquery(user_q)
+                if user_q is not None
+                else Value(None, output_field=IntegerField())
+            ),
+        )
+
+    if recipes_or_qs is None:
+        return None
+
+    recipe_list = [recipes_or_qs] if isinstance(recipes_or_qs, Recipe) else list(recipes_or_qs)
+    recipe_ids = [r.id for r in recipe_list if getattr(r, "id", None)]
+
+    ws_counts = _grouped_made_counts(recipe_ids, ws_q) if (recipe_ids and ws_q is not None) else {}
+    user_counts = _grouped_made_counts(recipe_ids, user_q) if (recipe_ids and user_q is not None) else {}
+
+    for r in recipe_list:
+        r.workspace_made_count = ws_counts.get(r.id, 0) if ws_q is not None else None
+        r.user_made_count = user_counts.get(r.id, 0) if user_q is not None else None
+
+    return recipes_or_qs
+
+
 def record_recipe_made(
     recipe: Recipe,
     user: Any = None,
     notes: str = "",
+    workspace: Any = None,
 ) -> RecipeMadeLog | None:
     """
     Increment times_made counter on a recipe and record a RecipeMadeLog entry.
@@ -836,6 +930,7 @@ def record_recipe_made(
         recipe: Target Recipe.
         user: Optional User who prepared the dish.
         notes: Optional preparation notes or remarks.
+        workspace: Optional active Workspace where the recipe was cooked.
 
     Returns:
         The created RecipeMadeLog instance if user is authenticated, else None.
@@ -844,7 +939,12 @@ def record_recipe_made(
     recipe.refresh_from_db(fields=["times_made"])
 
     if user and getattr(user, "is_authenticated", False):
-        return RecipeMadeLog.objects.create(recipe=recipe, user=user, notes=notes)
+        return RecipeMadeLog.objects.create(
+            recipe=recipe,
+            user=user,
+            workspace=workspace,
+            notes=notes,
+        )
     return None
 
 

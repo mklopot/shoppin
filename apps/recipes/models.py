@@ -606,6 +606,14 @@ class RecipeMadeLog(models.Model):
         on_delete=models.CASCADE,
         related_name="recipe_made_logs",
     )
+    workspace = models.ForeignKey(
+        "core.Workspace",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recipe_made_logs",
+        help_text="Workspace in which this recipe was marked made",
+    )
     made_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)
 

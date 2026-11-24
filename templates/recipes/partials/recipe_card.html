@@ -142,7 +142,7 @@
         </div>
 
         <!-- Lower Line: Ratings, Endorsements & Times Made -->
-        <div class="flex items-center justify-between pt-1.5 border-t border-gray-200/80 text-[11px] text-gray-600">
+        <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-1.5 border-t border-gray-200/80 text-[11px] text-gray-600">
             <!-- Ratings & Thumbs Up -->
             <div class="flex items-center space-x-2">
                 {% if recipe.average_rating %}
@@ -158,11 +158,9 @@
             </div>
 
             <!-- Times Made -->
-            <div>
+            <div class="text-right">
                 {% if recipe.times_made > 0 %}
-                <span class="text-emerald-800 font-medium">
-                    Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}
-                </span>
+                {% include "recipes/partials/made_counts.html" with target=recipe primary_class="text-emerald-800 font-medium" sub_class="text-[10px] text-gray-700 mt-0.5" %}
                 {% endif %}
             </div>
         </div>

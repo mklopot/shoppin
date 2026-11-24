@@ -3,6 +3,7 @@ Unit and integration tests for Meal Plans, recipe dish integration,
 ingredient loading, readiness calculation, and emojification.
 """
 
+import re
 from decimal import Decimal
 
 import pytest
@@ -24,7 +25,8 @@ from apps.mealplans.services.mealplan_service import (
     scale_meal_dish,
     update_meal_name,
 )
-from apps.recipes.models import Ingredient, Recipe
+from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog
+from apps.recipes.services.recipe_service import record_recipe_made
 from apps.shopping.models import ItemStatus
 
 User = get_user_model()
@@ -1154,3 +1156,132 @@ def test_single_item_dedicated_entry_view_and_exempt_from_ratings(client, mealpl
     assert not Meal.objects.filter(id=solo_meal.id).exists()
     assert not shopping_list.items.filter(name="Everything Bagels").exists()
 
+
+@pytest.mark.django_db
+def test_made_counts_breakdown_total_workspace_and_user(client, mealplan_setup):
+    """
+    Verify recipe UI and cooking endpoints track and display total times made,
+    times made by anyone in the current workspace, and times made by the current user.
+    """
+    owner = mealplan_setup["owner"]
+    editor = mealplan_setup["editor"]
+    ws1 = mealplan_setup["workspace"]
+    meal_plan1 = mealplan_setup["meal_plan"]
+    shopping_list1 = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    ws2 = create_workspace("Cabin Kitchen", owner)
+    outsider = User.objects.create_user(username="outside_cook", password="password")
+    ws_outsider = create_workspace("Outside Kitchen", outsider)
+
+    # Mark dish made twice by owner in ws1 via endpoint (1x via mark_dish_made, 1x via mark_meal_made)
+    meal1 = add_meal_to_plan(meal_plan1, "Tuesday Tacos")
+    add_recipe_to_meal(meal1, recipe, shopping_list1)
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws1.id
+    session.save()
+
+    resp_dish = client.post(reverse("mealplans:mark_dish_made", args=[meal1.id, recipe.id]), HTTP_HX_REQUEST="true")
+    assert resp_dish.status_code == 200
+    dish_html = resp_dish.content.decode("utf-8")
+    assert "Made 1 time total" in dish_html
+    assert "Workspace: 1" in dish_html
+    assert "You: 1" in dish_html
+
+    meal2 = add_meal_to_plan(meal_plan1, "Friday Tacos")
+    add_recipe_to_meal(meal2, recipe, shopping_list1)
+    resp_meal = client.post(reverse("mealplans:mark_meal_made", args=[meal2.id]), HTTP_HX_REQUEST="true")
+    assert resp_meal.status_code == 200
+    meal_html = resp_meal.content.decode("utf-8")
+    assert "Made 2 times total" in meal_html
+    assert re.search(r"Workspace:\s*<strong[^>]*>2</strong>", meal_html)
+    assert re.search(r"You:\s*<strong[^>]*>2</strong>", meal_html)
+
+    # Editor (also a member of ws1) cooks the recipe once in ws1
+    meal3 = add_meal_to_plan(meal_plan1, "Editor Tacos")
+    add_recipe_to_meal(meal3, recipe, shopping_list1)
+    client.force_login(editor)
+    session = client.session
+    session["active_workspace_id"] = ws1.id
+    session.save()
+    resp_ed = client.post(reverse("mealplans:mark_dish_made", args=[meal3.id, recipe.id]), HTTP_HX_REQUEST="true")
+    assert resp_ed.status_code == 200
+    ed_html = resp_ed.content.decode("utf-8")
+    assert "Made 3 times total" in ed_html
+    assert "Workspace: 3" in ed_html
+    assert "You: 1" in ed_html
+
+    # Owner cooks the recipe once in ws2, outsider cooks 3 times in ws_outsider
+    record_recipe_made(recipe, user=owner, workspace=ws2)
+    for _ in range(3):
+        record_recipe_made(recipe, user=outsider, workspace=ws_outsider)
+
+    # Legacy log (workspace=None) by a ws1 member also counts in ws1 and for that user
+    record_recipe_made(recipe, user=editor, workspace=None)
+
+    recipe.refresh_from_db()
+    assert recipe.times_made == 8
+    assert RecipeMadeLog.objects.filter(recipe=recipe, workspace=ws1).count() == 3
+    assert RecipeMadeLog.objects.filter(recipe=recipe, workspace=ws2).count() == 1
+
+    # Check all recipe views as owner in ws1: Total=8, ws1=4 (owner 2 + editor 1 + legacy editor 1), owner=3
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws1.id
+    session.save()
+
+    detail_html = client.get(reverse("recipes:detail", args=[recipe.id])).content.decode("utf-8")
+    assert "Made 8 times Total" in detail_html
+    assert "Workspace: 4" in detail_html
+    assert "By You: 3" in detail_html
+    assert "In Culinary Workspace:" in detail_html
+
+    modal_html = client.get(
+        reverse("recipes:detail", args=[recipe.id]) + "?modal=1", HTTP_HX_REQUEST="true"
+    ).content.decode("utf-8")
+    assert "Made 8 times total" in modal_html
+    assert "Workspace:" in modal_html and ">4<" in modal_html
+    assert "You:" in modal_html and ">3<" in modal_html
+
+    list_html = client.get(reverse("recipes:list")).content.decode("utf-8")
+    assert "Made 8 times total" in list_html
+    assert "Workspace:" in list_html and ">4<" in list_html
+    assert "You:" in list_html and ">3<" in list_html
+
+    prompt_html = client.get(reverse("recipes:prompt_add_to_mealplan", args=[recipe.id])).content.decode("utf-8")
+    assert "Made 8 times total" in prompt_html
+    assert "Workspace:" in prompt_html and ">4<" in prompt_html
+    assert "You:" in prompt_html and ">3<" in prompt_html
+
+    mp_modal_html = client.get(reverse("mealplans:recipe_modal", args=[recipe.id])).content.decode("utf-8")
+    assert "Made 8 times total" in mp_modal_html
+    assert "Workspace:" in mp_modal_html and ">4<" in mp_modal_html
+    assert "You:" in mp_modal_html and ">3<" in mp_modal_html
+
+    # Switch owner to ws2 ("Cabin Kitchen"): Total=8, ws2=1 (owner in ws2 only), owner=3
+    session = client.session
+    session["active_workspace_id"] = ws2.id
+    session.save()
+    ws2_detail = client.get(reverse("recipes:detail", args=[recipe.id])).content.decode("utf-8")
+    assert "Made 8 times Total" in ws2_detail
+    assert "Workspace: 1" in ws2_detail
+    assert "By You: 3" in ws2_detail
+    assert "In Cabin Kitchen:" in ws2_detail
+
+    # Check editor in ws1: Total=8, ws1=4, editor=2 (1 in ws1 + 1 legacy)
+    client.force_login(editor)
+    session = client.session
+    session["active_workspace_id"] = ws1.id
+    session.save()
+    ed_detail = client.get(reverse("recipes:detail", args=[recipe.id])).content.decode("utf-8")
+    assert "Made 8 times Total" in ed_detail
+    assert "Workspace: 4" in ed_detail
+    assert "By You: 2" in ed_detail
+
+    # Anonymous viewer sees only total count without Workspace / By You labels
+    client.logout()
+    anon_detail = client.get(reverse("recipes:detail", args=[recipe.id])).content.decode("utf-8")
+    assert "Made 8 times" in anon_detail
+    assert "Workspace:" not in anon_detail
+    assert "By You:" not in anon_detail

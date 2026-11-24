@@ -30,10 +30,10 @@
             {% endif %}
             <div class="min-w-0 flex-1">
                 <h4 class="font-bold text-xs text-gray-900 truncate">{{ recipe.name }}</h4>
-                <div class="text-[11px] text-gray-500 flex items-center space-x-2 mt-0.5">
+                <div class="text-[11px] text-gray-500 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                     {% if recipe.cuisine %}<span>{{ recipe.cuisine }}</span>{% endif %}
                     {% if recipe.prep_time_minutes %}<span>⏱ {{ recipe.prep_time_minutes }}m prep</span>{% endif %}
-                    {% if recipe.times_made > 0 %}<span>• Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span>{% endif %}
+                    {% if recipe.times_made > 0 %}{% include "recipes/partials/made_counts.html" with target=recipe layout="inline" prefix="&bull; " primary_class="text-emerald-800 font-medium" sub_class="text-gray-700" %}{% endif %}
                 </div>
             </div>
         </div>

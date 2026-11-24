@@ -4,7 +4,7 @@
         <div class="flex items-start justify-between border-b border-gray-300 pb-3 flex-shrink-0">
             <div>
                 <h3 id="recipe-detail-modal-title" class="font-bold text-lg text-gray-900 leading-tight">{{ recipe.name }}</h3>
-                <div class="flex items-center space-x-2 text-xs text-gray-500 mt-1">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 mt-1">
                     {% if recipe.cuisine %}
                     <span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 border border-gray-300">{{ recipe.cuisine }}</span>
                     {% endif %}
@@ -17,7 +17,7 @@
                     {% if recipe.portions %}
                     <span>Portions: {{ recipe.portions }}</span>
                     {% endif %}
-                    <span class="text-emerald-800 font-semibold">Made {{ recipe.times_made }} time{{ recipe.times_made|pluralize }}</span>
+                    {% include "recipes/partials/made_counts.html" with target=recipe layout="inline" primary_class="text-emerald-800 font-semibold" sub_class="text-[11px] text-gray-700" %}
                 </div>
             </div>
             <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" aria-label="Close dialog" class="text-gray-500 hover:text-gray-900 text-2xl font-bold leading-none"><span aria-hidden="true">&times;</span></button>

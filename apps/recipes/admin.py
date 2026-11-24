@@ -120,5 +120,6 @@ class RecipeCommentAdmin(admin.ModelAdmin):
 @admin.register(RecipeMadeLog)
 class RecipeMadeLogAdmin(admin.ModelAdmin):
     """Admin interface for user cooking history logs."""
-    list_display = ("recipe", "user", "made_at")
-    search_fields = ("recipe__name", "user__username")
+    list_display = ("recipe", "user", "workspace", "made_at")
+    list_filter = ("workspace",)
+    search_fields = ("recipe__name", "user__username", "workspace__name")

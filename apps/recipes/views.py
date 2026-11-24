@@ -24,6 +24,7 @@ from apps.mealplans.services.mealplan_service import (
 from apps.recipes.models import Recipe, RecipeRating
 from apps.recipes.services.recipe_scraper import import_recipe_from_url, scrape_recipe_data
 from apps.recipes.services.recipe_service import (
+    attach_recipe_made_counts,
     create_or_update_recipe,
     fork_recipe,
     get_filter_options,
@@ -122,7 +123,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         params[f"exclude_{facet}"] = excludes[facet]
         params[facet] = includes[facet][0] if includes[facet] else ""
 
-    recipes = search_recipes(params, user=user, workspace=workspace)
+    recipes = attach_recipe_made_counts(search_recipes(params, user=user, workspace=workspace), user=user, workspace=workspace)
     filter_options = get_filter_options()
     meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
     meals = meal_plan.meals.all() if meal_plan else []
@@ -267,6 +268,8 @@ def recipe_detail_view(
     meal_plan = get_active_meal_plan(request, workspace) if is_authenticated else None
 
     can_write = workspace.can_write(user) if (is_authenticated and workspace) else False
+
+    attach_recipe_made_counts(recipe, user=user, workspace=workspace)
 
     user_rating = None
     if is_authenticated:
@@ -673,6 +676,7 @@ def recipe_prompt_mealplan_view(
     meals = meal_plan.meals.all() if meal_plan else []
     can_write = workspace.can_write(user) if workspace else True
     is_in_workspace = recipe.shared_workspaces.filter(id=workspace.id).exists() if workspace else False
+    attach_recipe_made_counts(recipe, user=user, workspace=workspace)
 
     context = {
         "recipe": recipe,

@@ -1285,3 +1285,48 @@ def test_made_counts_breakdown_total_workspace_and_user(client, mealplan_setup):
     assert "Made 8 times" in anon_detail
     assert "Workspace:" not in anon_detail
     assert "By You:" not in anon_detail
+
+
+@pytest.mark.django_db
+def test_recipe_modal_shows_edit_link_according_to_permissions(client, mealplan_setup):
+    """Meal plan dish modal shows Edit Recipe / Modify link to writers and hides it from viewers."""
+    ws = mealplan_setup["workspace"]
+    owner = mealplan_setup["owner"]
+    editor = mealplan_setup["editor"]
+    viewer = mealplan_setup["viewer"]
+    meal_plan = mealplan_setup["meal_plan"]
+    shopping_list = mealplan_setup["shopping_list"]
+    recipe = mealplan_setup["recipe"]
+
+    meal = add_meal_to_plan(meal_plan, "Dinner")
+    add_recipe_to_meal(meal, recipe, shopping_list)
+    edit_url = reverse("recipes:edit", args=[recipe.id])
+    modal_url = f"{reverse('mealplans:recipe_modal', args=[recipe.id])}?meal_id={meal.id}"
+
+    # 1. Curated/unowned recipe (created_by=None) -> owner sees Edit Recipe link
+    client.force_login(owner)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+    owner_html = client.get(modal_url).content.decode("utf-8")
+    assert f'href="{edit_url}"' in owner_html
+    assert "Edit Recipe" in owner_html
+
+    # 2. Recipe owned by owner -> editor sees Modify / Adapt link to recipes:edit
+    recipe.created_by = owner
+    recipe.save(update_fields=["created_by"])
+    client.force_login(editor)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+    editor_html = client.get(modal_url).content.decode("utf-8")
+    assert f'href="{edit_url}"' in editor_html
+    assert "Modify / Adapt" in editor_html
+
+    # 3. Read-only viewer -> edit link hidden
+    client.force_login(viewer)
+    session = client.session
+    session["active_workspace_id"] = ws.id
+    session.save()
+    viewer_html = client.get(modal_url).content.decode("utf-8")
+    assert f'href="{edit_url}"' not in viewer_html

@@ -161,9 +161,18 @@
             <div></div>
             {% endif %}
 
-            <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" class="border border-gray-400 bg-white hover:bg-gray-100 px-4 py-1.5 text-xs text-gray-700 font-medium">
-                Close
-            </button>
+            <div class="flex items-center gap-2 ml-auto">
+                {% if can_write %}
+                <a href="{% url 'recipes:edit' recipe.id %}"
+                   class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-3 py-1.5 text-xs inline-flex items-center space-x-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
+                    <span aria-hidden="true">✏️</span>
+                    <span>{% if is_owner %}Edit Recipe{% else %}Modify / Adapt{% endif %}</span>
+                </a>
+                {% endif %}
+                <button type="button" onclick="document.getElementById('recipe-detail-modal').remove()" class="border border-gray-400 bg-white hover:bg-gray-100 px-4 py-1.5 text-xs text-gray-700 font-medium">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 </div>

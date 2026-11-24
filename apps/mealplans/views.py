@@ -691,7 +691,14 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     effective_workspace = _resolve_meal_workspace(meal, workspace)
     meal_plan = get_active_meal_plan(request, workspace)
     user = getattr(request, "user", None)
-    can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
+    is_auth = bool(user and user.is_authenticated)
+    can_write = effective_workspace.can_write(user) if (is_auth and effective_workspace) else False
+    is_owner = is_auth and (
+        (recipe.created_by == user)
+        or (recipe.created_by is None)
+        or getattr(user, "is_superuser", False)
+        or getattr(user, "is_staff", False)
+    )
     meals = meal_plan.meals.all() if meal_plan else []
     attach_recipe_made_counts(recipe, user=user, workspace=effective_workspace)
 
@@ -709,6 +716,7 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
         "meal_dish": meal_dish,
         "meals": meals,
         "can_write": can_write,
+        "is_owner": is_owner,
     }
     return render(request, "mealplans/partials/recipe_modal.html", context)
 

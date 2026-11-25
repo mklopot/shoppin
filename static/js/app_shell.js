@@ -105,7 +105,7 @@
                 progressValue = Math.min(0.88, progressValue + (0.9 - progressValue) * 0.22);
                 bar.style.transform = `scaleX(${progressValue})`;
             }, 220);
-        }, 120);
+        }, 80);
     }
 
     function finishProgressBar() {
@@ -489,6 +489,51 @@
         });
     }
 
+    let navLoadingFailsafeTimer = null;
+
+    function resolveActiveNavKey(pathname, search) {
+        const full = `${pathname}${search || ''}`;
+        if (pathname.includes('/mealplans')) return 'mealplan';
+        if (pathname.includes('/recipes')) return 'recipes';
+        if (pathname.includes('/preset')) return 'presets';
+        if (pathname.includes('/pantry-check') || full.includes('mode=pantry')) return 'pantry';
+        return 'shopping';
+    }
+
+    function clearNavTabPending() {
+        if (navLoadingFailsafeTimer) {
+            clearTimeout(navLoadingFailsafeTimer);
+            navLoadingFailsafeTimer = null;
+        }
+        document.querySelectorAll('[data-nav-loading="true"]').forEach((el) => {
+            el.removeAttribute('data-nav-loading');
+            el.removeAttribute('aria-busy');
+        });
+    }
+
+    function setNavTabPending(pathname, search) {
+        clearNavTabPending();
+        updateNavActiveState(pathname, search);
+        const key = resolveActiveNavKey(pathname, search);
+        document.querySelectorAll('nav[aria-label="Primary Navigation"] a, #mobile-nav-tabs a').forEach((a) => {
+            const href = a.getAttribute('href') || '';
+            const mode = a.getAttribute('data-mode-switch');
+            const matches = (
+                (mode && mode === key)
+                || (!mode && key === 'mealplan' && href.includes('/mealplans'))
+                || (!mode && key === 'recipes' && href.includes('/recipes'))
+                || (!mode && key === 'presets' && href.includes('/preset'))
+            );
+            if (matches) {
+                a.setAttribute('data-nav-loading', 'true');
+                a.setAttribute('aria-busy', 'true');
+            }
+        });
+        navLoadingFailsafeTimer = setTimeout(() => {
+            clearNavTabPending();
+        }, 15000);
+    }
+
     function storeSwrSnapshot(url, html, title) {
         const norm = normalizePath(url);
         if (!norm || !html) return;
@@ -551,6 +596,7 @@
     }
 
     function applyBoostedMainHtml(fullHtml, targetUrl, pushHistory) {
+        clearNavTabPending();
         const { main: incomingMain, title } = parseTitleAndMain(fullHtml);
         const currentMain = document.getElementById('main-content');
         if (!incomingMain || !currentMain) return false;
@@ -588,6 +634,14 @@
         updateNavActiveState(u.pathname, u.search);
     }, { capture: true, passive: true });
 
+    const revertUnclickedNavHover = function (e) {
+        const link = e.target && e.target.closest && e.target.closest('nav[aria-label="Primary Navigation"] a, #mobile-nav-tabs a');
+        if (!link || document.querySelector('[data-nav-loading="true"]')) return;
+        updateNavActiveState(window.location.pathname, window.location.search);
+    };
+    document.addEventListener('pointerleave', revertUnclickedNavHover, { capture: true, passive: true });
+    document.addEventListener('pointercancel', revertUnclickedNavHover, { capture: true, passive: true });
+
     document.addEventListener('click', function (e) {
         if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
         const link = e.target && e.target.closest && e.target.closest('a[href]');
@@ -611,8 +665,11 @@
         // Same-route click skips redundant nav
         if (norm === normalizePath(window.location.href)) {
             e.preventDefault();
+            clearNavTabPending();
             return;
         }
+
+        const targetUrlObj = new URL(norm, window.location.origin);
 
         const swr = getSwrSnapshot(norm) || (window.ShoppinPrefetch && window.ShoppinPrefetch.getCached(norm, 60000));
         if (swr && swr.html && swr.html.includes('id="main-content"')) {
@@ -664,6 +721,11 @@
             return;
         }
 
+        // Immediate tab spinner + active feedback while waiting on network or inflight prefetch
+        if (link.closest('nav[aria-label="Primary Navigation"], #mobile-nav-tabs')) {
+            setNavTabPending(targetUrlObj.pathname, targetUrlObj.search);
+        }
+
         const inflightEntry = window.ShoppinPrefetch && window.ShoppinPrefetch.getInflight
             ? window.ShoppinPrefetch.getInflight(norm)
             : null;
@@ -674,6 +736,7 @@
             startProgressBar();
             inflightEntry.then((entry) => {
                 finishProgressBar();
+                clearNavTabPending();
                 if (entry && entry.html && entry.html.includes('id="main-content"')) {
                     storeSwrSnapshot(norm, entry.html);
                     const applied = applyBoostedMainHtml(entry.html, norm, true);
@@ -682,6 +745,8 @@
                 window.location.href = norm;
             }).catch(() => {
                 finishProgressBar();
+                clearNavTabPending();
+                updateNavActiveState(window.location.pathname, window.location.search);
                 window.location.href = norm;
             });
         }
@@ -799,13 +864,25 @@
         if (detail && detail.target) {
             reinitPageModules(detail.target);
             if (detail.target.id === 'main-content') {
+                clearNavTabPending();
                 updateNavActiveState(window.location.pathname, window.location.search);
             }
         }
     });
 
-    document.addEventListener('htmx:responseError', finishProgressBar);
-    document.addEventListener('htmx:sendError', finishProgressBar);
+    function handleNavRequestFailure() {
+        finishProgressBar();
+        clearNavTabPending();
+        updateNavActiveState(window.location.pathname, window.location.search);
+    }
+
+    document.addEventListener('htmx:responseError', handleNavRequestFailure);
+    document.addEventListener('htmx:sendError', handleNavRequestFailure);
+    document.addEventListener('htmx:abort', handleNavRequestFailure);
+    window.addEventListener('pageshow', () => {
+        clearNavTabPending();
+        updateNavActiveState(window.location.pathname, window.location.search);
+    });
 
     // Seed initial full-page SWR cache once loaded
     document.addEventListener('DOMContentLoaded', () => {
@@ -832,6 +909,10 @@
         invalidateWorkspaceCache,
         purgeClientCaches,
         updateNavActiveState,
+        setNavTabPending,
+        clearNavTabPending,
+        startProgressBar,
+        finishProgressBar,
         reinitPageModules,
         renderStorePickerSkeletonHtml
     };

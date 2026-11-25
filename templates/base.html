@@ -190,6 +190,59 @@
         .htmx-request-dim.htmx-request {
             opacity: 0.7;
         }
+        /* Primary Navbar Tab Tactile Press & Pending Load Feedback */
+        nav[aria-label="Primary Navigation"] a,
+        #mobile-nav-tabs a {
+            position: relative;
+            transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease, transform 90ms ease;
+        }
+        nav[aria-label="Primary Navigation"] a:active,
+        #mobile-nav-tabs a:active {
+            transform: scale(0.97);
+        }
+        nav[aria-label="Primary Navigation"] a[data-nav-loading="true"] {
+            background-color: #ecfdf5;
+            color: #065f46 !important;
+            border-bottom-color: #10b981 !important;
+        }
+        #mobile-nav-tabs a[data-nav-loading="true"] {
+            background-color: #065f46 !important;
+            border-color: #065f46 !important;
+            color: #ffffff !important;
+        }
+        @keyframes navBarSweep {
+            0% { background-position: -120% 0; }
+            100% { background-position: 220% 0; }
+        }
+        @keyframes navSpinnerSpin {
+            to { transform: rotate(360deg); }
+        }
+        nav[aria-label="Primary Navigation"] a[data-nav-loading="true"]::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -2px;
+            height: 2.5px;
+            background-image: linear-gradient(90deg, transparent 0%, #059669 45%, #4f46e5 55%, transparent 100%);
+            background-size: 55% 100%;
+            background-repeat: no-repeat;
+            animation: navBarSweep 0.95s ease-in-out infinite;
+            pointer-events: none;
+        }
+        nav[aria-label="Primary Navigation"] a[data-nav-loading="true"]::after,
+        #mobile-nav-tabs a[data-nav-loading="true"]::after {
+            content: "";
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            margin-left: 6px;
+            border-radius: 9999px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            animation: navSpinnerSpin 0.65s linear infinite;
+            flex-shrink: 0;
+        }
         /* Top GPU progress bar & Skeleton Shimmers */
         #global-nav-progress {
             transform-origin: left center;
@@ -267,6 +320,11 @@
 
         /* WCAG 2.2.2 & 2.3.3 Reduced Motion for accessibility */
         @media (prefers-reduced-motion: reduce) {
+            nav[aria-label="Primary Navigation"] a[data-nav-loading="true"]::after,
+            #mobile-nav-tabs a[data-nav-loading="true"]::after {
+                border-top-color: currentColor;
+                opacity: 0.75;
+            }
             *, ::before, ::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
@@ -1231,8 +1289,8 @@
     <script src="{% static 'js/lazy_assets.js' %}?v=20261124_v1"></script>
     <script src="{% static 'js/prefetcher.js' %}?v=20261124_v1"></script>
     <script src="{% static 'js/mutation_queue.js' %}?v=20261124_v1"></script>
-    <script src="{% static 'js/app_shell.js' %}?v=20261124_v1"></script>
-    <script src="{% static 'js/shopping_sync.js' %}?v=20261124_v1"></script>
+    <script src="{% static 'js/app_shell.js' %}?v=20261124_v2"></script>
+    <script src="{% static 'js/shopping_sync.js' %}?v=20261124_v2"></script>
     <script src="{% static 'js/shortcuts.js' %}?v=20261124_v1"></script>
 
     {% block extra_scripts %}{% endblock %}

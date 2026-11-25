@@ -601,3 +601,111 @@ def test_browser_rapid_pantry_burst_never_drops_or_reverts_skip(live_server):
     assert items[2].status == ItemStatus.DONT_NEED
     assert items[3].status == ItemStatus.HAVE
     assert ShoppingListItem.objects.filter(shopping_list=s_list, name__icontains="Sourdough").exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_browser_navbar_tab_loading_feedback(live_server):
+    sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
+    from apps.core.models import TermsOfServiceAcceptance
+
+    user = User.objects.create_user(username="browser_nav_user", password="pw123456")
+    ws = Workspace.objects.create(name="Nav WS", owner=user)
+    TermsOfServiceAcceptance.objects.create(user=user, version=TermsOfServiceAcceptance.CURRENT_VERSION)
+    s_list = ShoppingList.objects.create(name="Nav List", workspace=ws, owner=user)
+    ShoppingListItem.objects.create(
+        shopping_list=s_list, name="Apples", amount=Decimal("2.00"), category="produce", status=ItemStatus.NEED
+    )
+    MealPlan.objects.create(workspace=ws, name="Weekly")
+
+    def _run_nav_feedback():
+        base_url = live_server.url
+        with sync_playwright() as p:
+            browser = _launch_browser(p)
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            console_errors = []
+            page.on("pageerror", lambda err: console_errors.append(str(err)))
+
+            _login_playwright_page(page, base_url, "browser_nav_user", "pw123456")
+
+            # Introduce realistic 280ms latency on Pantry Check fetch & Meal Plan XHR (never prefetch)
+            page.add_init_script("""
+                (() => {
+                    const origFetch = window.fetch.bind(window);
+                    window.fetch = function(input, init) {
+                        const url = typeof input === 'string' ? input : (input && input.url) || '';
+                        const hdrs = (init && init.headers) || {};
+                        const isPrefetch = hdrs['X-Prefetch'] === '1';
+                        if ((!isPrefetch && url.includes('/pantry-check/')) || url.includes('/mealplans/')) {
+                            return new Promise((resolve, reject) => {
+                                setTimeout(() => origFetch(input, init).then(resolve, reject), 320);
+                            });
+                        }
+                        return origFetch(input, init);
+                    };
+
+                    const origSend = XMLHttpRequest.prototype.send;
+                    const origOpen = XMLHttpRequest.prototype.open;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        this.__navTestUrl = url || '';
+                        return origOpen.apply(this, arguments);
+                    };
+                    XMLHttpRequest.prototype.send = function(body) {
+                        if (this.__navTestUrl && this.__navTestUrl.includes('/mealplans/')) {
+                            const self = this;
+                            setTimeout(() => origSend.call(self, body), 320);
+                            return;
+                        }
+                        return origSend.apply(this, arguments);
+                    };
+                })();
+            """)
+
+            page.goto(f"{base_url}/", wait_until="networkidle")
+            # Ensure fresh fetch (bypass any hover prefetch cache)
+            page.evaluate("window.ShoppinPrefetch && window.ShoppinPrefetch.purgeAll()")
+
+            # 1. Click Pantry Check tab -> immediate pending feedback while request is in flight
+            pantry_dt = page.locator("nav[aria-label='Primary Navigation'] a[data-mode-switch='pantry']")
+            pantry_mb = page.locator("#mobile-nav-tabs a[data-mode-switch='pantry']")
+            pantry_dt.click()
+
+            assert pantry_dt.get_attribute("data-nav-loading") == "true"
+            assert pantry_dt.get_attribute("aria-busy") == "true"
+            assert pantry_dt.get_attribute("aria-current") == "page"
+            assert pantry_mb.get_attribute("data-nav-loading") == "true"
+            spinner_width = page.evaluate("""() => {
+                const el = document.querySelector("nav[aria-label='Primary Navigation'] a[data-mode-switch='pantry']");
+                return el ? getComputedStyle(el, '::after').width : '';
+            }""")
+            assert spinner_width == "11px"
+
+            page.wait_for_function(
+                "() => document.getElementById('shopping-list-content')?.getAttribute('data-mode') === 'pantry'",
+                timeout=5000,
+            )
+            page.wait_for_timeout(40)
+            assert pantry_dt.get_attribute("data-nav-loading") is None
+            assert pantry_dt.get_attribute("aria-busy") is None
+            assert pantry_dt.get_attribute("aria-current") == "page"
+
+            # 2. Click Meal Plan tab -> immediate pending feedback during boosted HTMX wait, clears on settle
+            page.evaluate("window.ShoppinPrefetch && window.ShoppinPrefetch.purgeAll()")
+            mp_dt = page.locator("nav[aria-label='Primary Navigation'] a[href='/mealplans/']")
+            mp_mb = page.locator("#mobile-nav-tabs a[href='/mealplans/']")
+            mp_dt.click()
+
+            assert mp_dt.get_attribute("data-nav-loading") == "true"
+            assert mp_dt.get_attribute("aria-busy") == "true"
+            assert mp_dt.get_attribute("aria-current") == "page"
+            assert mp_mb.get_attribute("data-nav-loading") == "true"
+
+            page.wait_for_selector("#mealplan-content", timeout=5000)
+            page.wait_for_timeout(40)
+            assert mp_dt.get_attribute("data-nav-loading") is None
+            assert mp_dt.get_attribute("aria-busy") is None
+            assert mp_dt.get_attribute("aria-current") == "page"
+            assert not console_errors, f"Uncaught browser console/page errors: {console_errors}"
+            browser.close()
+
+    _run_in_thread(_run_nav_feedback)

@@ -894,6 +894,10 @@
         if (pushHistory && window.history && window.history.pushState) {
             window.history.pushState({ mode: targetMode, scrollY: anchor.scrollY }, pageTitle, targetUrl);
         }
+        if (window.ShoppinShell) {
+            window.ShoppinShell.clearNavTabPending?.();
+            window.ShoppinShell.finishProgressBar?.();
+        }
         updateNavTabsStyling(targetMode);
         initSortables();
         applyPresetListsCardState();
@@ -927,14 +931,35 @@
             return;
         }
 
-        fetch(targetUrl, {
-            credentials: 'same-origin',
-            headers: {
-                'HX-Request': 'true',
-                'HX-Target': 'shopping-list-content',
-                'X-Client-Id': window.CLIENT_ID || 'client_web'
-            }
-        }).then((resp) => resp.text()).then((html) => {
+        const pendingPath = targetMode === 'pantry' ? '/pantry-check/' : '/';
+        const pendingSearch = targetMode === 'pantry' ? '' : '?mode=shopping';
+        if (window.ShoppinShell) {
+            window.ShoppinShell.setNavTabPending?.(pendingPath, pendingSearch);
+            window.ShoppinShell.startProgressBar?.();
+        }
+
+        const inflight = window.ShoppinPrefetch && window.ShoppinPrefetch.getInflight
+            ? window.ShoppinPrefetch.getInflight(targetUrl)
+            : null;
+        const fetchPromise = inflight
+            ? inflight.then((entry) => (entry && entry.html ? entry.html : fetch(targetUrl, {
+                credentials: 'same-origin',
+                headers: {
+                    'HX-Request': 'true',
+                    'HX-Target': 'shopping-list-content',
+                    'X-Client-Id': window.CLIENT_ID || 'client_web'
+                }
+            }).then((resp) => resp.text())))
+            : fetch(targetUrl, {
+                credentials: 'same-origin',
+                headers: {
+                    'HX-Request': 'true',
+                    'HX-Target': 'shopping-list-content',
+                    'X-Client-Id': window.CLIENT_ID || 'client_web'
+                }
+            }).then((resp) => resp.text());
+
+        fetchPromise.then((html) => {
             if (window.ShoppinMorph) {
                 window.ShoppinMorph.swapFromHtml('#shopping-list-content', html);
             } else {
@@ -948,6 +973,10 @@
             finishModeSwitch(targetMode, targetUrl, anchor, draft, pushHistory);
         }).catch(() => {
             isSwitchingMode = false;
+            if (window.ShoppinShell) {
+                window.ShoppinShell.clearNavTabPending?.();
+                window.ShoppinShell.finishProgressBar?.();
+            }
             window.location.href = targetUrl;
         });
     }

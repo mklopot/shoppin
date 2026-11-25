@@ -90,7 +90,7 @@
                           class="inline">
                         {% csrf_token %}
                         <button type="submit"
-                                onclick="return confirm('Remove {{ item.name|escapejs }} from this preset list?');"
+
                                 class="p-1 text-gray-500 hover:text-red-600"
                                 aria-label="Delete item {{ item.name }}"
                                 title="Delete Item">

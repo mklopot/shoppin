@@ -9,6 +9,7 @@ walking order sorts.
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 from django.http import HttpRequest
 
@@ -129,6 +130,28 @@ class ShoppingListOrganizer:
         return {group_name: grouped_need[group_name] for group_name in sorted_keys}
 
     @staticmethod
+    def is_background_prefetch(request: HttpRequest | None) -> bool:
+        """
+        Return True if the request is a passive hover prefetch, SWR probe, or browser speculation.
+
+        Args:
+            request: Optional HttpRequest instance.
+
+        Returns:
+            True when session view state should not be mutated by this request.
+        """
+        if not request:
+            return False
+        headers = request.headers
+        sec_purpose = (headers.get("Sec-Purpose") or headers.get("Purpose") or "").lower()
+        return (
+            headers.get("X-Prefetch") == "1"
+            or headers.get("X-SWR-Revalidate") == "1"
+            or "prefetch" in sec_purpose
+            or "prerender" in sec_purpose
+        )
+
+    @staticmethod
     def resolve_view_mode(
         request: HttpRequest | None,
         requested_mode: str | None = None,
@@ -145,16 +168,25 @@ class ShoppingListOrganizer:
         """
         mode = requested_mode
         if not mode and request:
-            mode = (
-                request.GET.get("mode")
-                or request.POST.get("mode")
-                or request.session.get("shopping_mode", ListMode.SHOPPING)
-            )
+            mode = request.GET.get("mode") or request.POST.get("mode")
+
+        if not mode and request and request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+            current_url = request.headers.get("HX-Current-URL", "")
+            if current_url:
+                parsed = urlsplit(current_url)
+                query_mode = (parse_qs(parsed.query).get("mode") or [None])[0]
+                if query_mode in (ListMode.SHOPPING, ListMode.PANTRY):
+                    mode = query_mode
+                elif parsed.path.startswith("/pantry-check"):
+                    mode = ListMode.PANTRY
+
+        if not mode and request:
+            mode = request.session.get("shopping_mode", ListMode.SHOPPING)
 
         if mode not in (ListMode.SHOPPING, ListMode.PANTRY):
             mode = ListMode.SHOPPING
 
-        if request and not request.GET.get("tour"):
+        if request and not request.GET.get("tour") and not ShoppingListOrganizer.is_background_prefetch(request):
             request.session["shopping_mode"] = mode
 
         return mode

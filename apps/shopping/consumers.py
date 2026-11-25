@@ -60,4 +60,5 @@ class ShoppingListConsumer(AsyncJsonWebsocketConsumer):
             "toast_messages": event.get("toast_messages", []),
             "actor_name": event.get("actor_name", "unknown"),
             "sender_client_id": event.get("sender_client_id", ""),
+            "entity_type": event.get("entity_type", "all"),
         })

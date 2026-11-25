@@ -6,7 +6,7 @@
 <div class="space-y-6" id="preset-detail-container" data-refresh-url="{% url 'shopping:preset_detail' preset_list.id %}">
     <!-- Navigation Back Link -->
     <div>
-        <a href="{% url 'shopping:preset_list_index' %}"
+        <a href="{% url 'shopping:preset_list_index' %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true"
            class="inline-flex items-center text-xs font-medium text-gray-500 hover:text-gray-800">
             ← Back to Preset Lists
         </a>

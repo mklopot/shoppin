@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from apps.core.idempotency import mark_purge_client_caches
 from apps.core.models import Workspace, WorkspaceRole
 from apps.core.services.workspace_service import (
     clear_workspace_data,
@@ -64,8 +65,8 @@ def switch_workspace(request: HttpRequest, workspace_id: int) -> HttpResponse:
             new_query,
             parsed.fragment,
         ))
-        return redirect(cleaned_url)
-    return redirect("shopping:list")
+        return mark_purge_client_caches(redirect(cleaned_url))
+    return mark_purge_client_caches(redirect("shopping:list"))
 
 
 @require_POST
@@ -394,7 +395,20 @@ def switch_persona(request: HttpRequest, username: str) -> HttpResponse:
     if not next_url or not next_url.startswith("/") or any(next_url.startswith(p) for p in disallowed_prefixes):
         next_url = reverse("shopping:list")
 
-    return redirect(next_url)
+    return mark_purge_client_caches(redirect(next_url))
+
+
+def service_worker_view(request: HttpRequest) -> HttpResponse:
+    """Serve the root-scoped PWA service worker with strict cache revalidation headers."""
+    sw_path = settings.BASE_DIR / "static" / "js" / "sw.js"
+    try:
+        content = sw_path.read_text(encoding="utf-8")
+    except OSError:
+        content = ""
+    response = HttpResponse(content, content_type="application/javascript; charset=utf-8")
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    return response
 
 
 def health_check(request: HttpRequest) -> JsonResponse:

@@ -16,7 +16,7 @@
 </div>
 {% endif %}
 
-<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" data-mode="{{ mode }}" data-group-by="{{ group_by }}">
+<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" data-mode="{{ mode }}" data-group-by="{{ group_by }}" data-can-write="{{ can_write|yesno:'true,false' }}">
 
     {% if not can_write %}
     <!-- Read-Only / Static View Banner -->
@@ -43,7 +43,7 @@
     <div class="flex flex-wrap items-center gap-1.5 py-1 text-xs text-gray-700 bg-gray-50 border border-gray-200 px-2.5">
         <span class="font-bold text-gray-600 uppercase text-[10px] tracking-wider">Planned Meals:</span>
         {% for m in planned_meals %}
-        <a href="{% url 'mealplans:detail' %}" class="inline-flex items-center space-x-1 px-2 py-0.5 bg-white border border-gray-300 hover:border-gray-500 hover:bg-gray-50 text-xs text-gray-800">
+        <a href="{% url 'mealplans:detail' %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true" class="inline-flex items-center space-x-1 px-2 py-0.5 bg-white border border-gray-300 hover:border-gray-500 hover:bg-gray-50 text-xs text-gray-800">
             <span class="font-medium">{{ m.name }}</span>
             {% if m.emoji %}<span>{{ m.emoji }}</span>{% endif %}
         </a>
@@ -73,7 +73,7 @@
                 <span class="text-[11px] text-gray-500 hidden sm:inline">&ndash; Check box to load/unload items. Indicators show loaded status & schedule.</span>
             </div>
             <div class="flex items-center space-x-3">
-                <a href="{% url 'shopping:preset_list_index' %}" onclick="event.stopPropagation()" class="text-[11px] text-indigo-700 hover:underline font-semibold flex items-center space-x-1">
+                <a href="{% url 'shopping:preset_list_index' %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true" onclick="event.stopPropagation()" class="text-[11px] text-indigo-700 hover:underline font-semibold flex items-center space-x-1">
                     <span>Manage Presets &rarr;</span>
                 </a>
                 <span id="preset-lists-caret" class="text-gray-400 transition-transform duration-150 inline-block text-xs" style="{% if not preset_lists_open %}transform: rotate(-90deg);{% endif %}" aria-hidden="true">&#9662;</span>
@@ -151,38 +151,7 @@
             {% endfor %}
         </div>
     </div>
-    <script>
-        function togglePresetListsCard() {
-            const body = document.getElementById('preset-lists-body');
-            const caret = document.getElementById('preset-lists-caret');
-            const header = document.querySelector('[aria-controls="preset-lists-body"]');
-            if (!body) return;
-            const isHidden = body.classList.toggle('hidden');
-            if (caret) caret.style.transform = isHidden ? 'rotate(-90deg)' : '';
-            if (header) header.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
-            const state = isHidden ? 'false' : 'true';
-            try { localStorage.setItem('preset_lists_open', state); } catch (_) {}
-            try { document.cookie = 'preset_lists_open=' + state + '; path=/; max-age=31536000; SameSite=Lax'; } catch (_) {}
-        }
-        function applyPresetListsCardState() {
-            try {
-                let isOpen = localStorage.getItem('preset_lists_open');
-                if (isOpen === null) {
-                    const match = document.cookie.match(/(^|;)\s*preset_lists_open=([^;]+)/);
-                    if (match) isOpen = match[2];
-                }
-                if (isOpen === 'false') {
-                    const body = document.getElementById('preset-lists-body');
-                    const caret = document.getElementById('preset-lists-caret');
-                    const header = document.querySelector('[aria-controls="preset-lists-body"]');
-                    if (body) body.classList.add('hidden');
-                    if (caret) caret.style.transform = 'rotate(-90deg)';
-                    if (header) header.setAttribute('aria-expanded', 'false');
-                }
-            } catch (_) {}
-        }
-        applyPresetListsCardState();
-    </script>
+
 
     {% if can_write %}
     <!-- Secondary Controls Bar: Store Selector, Sort Order -->
@@ -257,6 +226,7 @@
                 + Add Item
             </button>
         </form>
+        <div id="quick-add-preview" class="hidden flex flex-wrap items-center gap-1.5 mt-1.5" aria-live="polite"></div>
     </div>
     {% endif %}
 
@@ -423,7 +393,7 @@
                                     </button>
                                 </form>
                                 {% endif %}
-                                <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                                <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                                     <span aria-hidden="true">✏️</span>
                                 </button>
                             </div>
@@ -438,7 +408,7 @@
                 All items in To Buy have been checked off!
             </div>
         {% else %}
-            <div class="p-6 text-center text-gray-500 text-xs">
+            <div id="to-buy-empty-initial" class="p-6 text-center text-gray-500 text-xs">
                 No items on shopping list. Add an item above or load meals from a meal plan.
             </div>
         {% endif %}
@@ -506,7 +476,7 @@
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                         <span aria-hidden="true">✏️</span>
                     </button>
                 </div>
@@ -582,7 +552,7 @@
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
                         <span aria-hidden="true">✏️</span>
                     </button>
                 </div>

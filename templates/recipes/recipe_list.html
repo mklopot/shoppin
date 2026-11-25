@@ -72,6 +72,7 @@
                            hx-target="#recipe-results-container"
                            hx-swap="outerHTML"
                            hx-trigger="keyup changed delay:250ms, search"
+                           hx-sync="this:replace"
                            hx-include="#recipe-filter-form"
                            class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-300 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">
                 </div>
@@ -341,12 +342,15 @@
         });
     }
 
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('#walkthrough-modal')) return;
-        if (!e.target.closest('.facet-dropdown')) {
-            closeAllFacetMenus();
-        }
-    });
+    if (!window.__recipeFacetClickBound) {
+        window.__recipeFacetClickBound = true;
+        document.addEventListener('click', function(e) {
+            if (!e.target || typeof e.target.closest !== 'function' || e.target.closest('#walkthrough-modal')) return;
+            if (!e.target.closest('.facet-dropdown')) {
+                closeAllFacetMenus();
+            }
+        });
+    }
 
     function filterFacetList(key, query) {
         const list = document.getElementById(`facet-list-${key}`);

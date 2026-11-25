@@ -31,6 +31,25 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}?v=8">
     <link rel="manifest" href="{% static 'site.webmanifest' %}?v=8">
     <meta name="theme-color" content="#059669">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <!-- Preconnect Hints & Speculation Rules (Chromium Zero-RTT Tab Preload) -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <script type="speculationrules">
+    {
+        "prefetch": [
+            {
+                "source": "document",
+                "where": { "href_matches": ["/", "/pantry-check/", "/mealplans/", "/recipes/", "/preset-lists/"] },
+                "eagerness": "conservative"
+
+
+            }
+        ]
+    }
+    </script>
 
     <!-- Tailwind CSS (CDN) + Semantic Theme Configuration -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,21 +79,34 @@
         };
     </script>
 
-    <!-- HTMX + Extensions -->
+
+
+
+
+
+
+    <!-- HTMX + Extensions (Idiomorph surgical DOM morphing) -->
     <meta name="htmx-config" content='{"globalViewTransitions": false, "getCacheBusterParam": true}'>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
 
-    <!-- SortableJS for Drag-and-Drop Reordering -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    <!-- SortableJS for Drag-and-Drop Reordering (deferred; Leaflet & MDTimePicker load lazily on demand) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 
-    <!-- MDTimePicker (Material Design / Android Time Picker) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@dmuy/timepicker@2.0.2/dist/mdtimepicker.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@dmuy/timepicker@2.0.2/dist/mdtimepicker.min.js"></script>
 
-    <!-- Leaflet.js Interactive Maps -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+
+
+
+
+
+
+
+
+
+
+
 
     <style>
         body { font-family: Arial, Helvetica, sans-serif; }
@@ -106,7 +138,7 @@
         .item-row.item-moving {
             opacity: 0.5;
             transform: scale(0.99);
-            pointer-events: none;
+            /* non-blocking */
             transition: opacity 0.06s ease-out, transform 0.06s ease-out;
         }
 
@@ -114,7 +146,7 @@
             background-color: #d1fae5 !important; /* Soft mint / emerald-100 */
             opacity: 0.7;
             transform: translateX(4px);
-            pointer-events: none;
+            /* non-blocking */
             transition: all 0.06s ease-out;
         }
         .item-row.item-got-optimistic .item-title {
@@ -126,7 +158,7 @@
             background-color: #fef3c7 !important; /* Soft amber / amber-100 */
             opacity: 0.7;
             transform: translateX(4px);
-            pointer-events: none;
+            /* non-blocking */
             transition: all 0.06s ease-out;
         }
         .item-row.item-have-optimistic .item-title {
@@ -137,7 +169,7 @@
         .item-row.item-skip-optimistic {
             opacity: 0.35;
             transform: translateX(-4px);
-            pointer-events: none;
+            /* non-blocking */
             transition: all 0.06s ease-out;
         }
         .item-row.item-skip-optimistic .item-title {
@@ -149,13 +181,40 @@
             background-color: #dbeafe !important; /* Soft sky / blue-100 */
             opacity: 0.75;
             transform: translateX(4px);
-            pointer-events: none;
+            /* non-blocking */
             transition: all 0.06s ease-out;
         }
 
         /* Loading state during HTMX requests */
-        .htmx-request {
-            opacity: 0.6;
+        /* Scoped button-only request feedback (never dim entire containers!) */
+        .htmx-request-dim.htmx-request {
+            opacity: 0.7;
+        }
+        /* Top GPU progress bar & Skeleton Shimmers */
+        #global-nav-progress {
+            transform-origin: left center;
+            transform: scaleX(0);
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+        @keyframes skeletonShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton-shimmer {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.2s ease-in-out infinite;
+        }
+        /* Rendering containment for long lists & recipe grids */
+        .item-row {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 42px;
+        }
+        .recipe-card,
+        .archived-meal-card {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 280px;
         }
 
         /* Ensure Material / Android Time Picker overlays all modals and dialogs */
@@ -249,7 +308,9 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen flex flex-col bg-white text-gray-900 antialiased text-sm">
+<body class="min-h-screen flex flex-col bg-white text-gray-900 antialiased text-sm" data-workspace-id="{{ active_workspace.id|default:'' }}" data-user-id="{{ request.user.id|default:'anon' }}">
+    <!-- Top Fixed Progress Bar (activated cleanly after 120ms threshold) -->
+    <div id="global-nav-progress" aria-hidden="true" class="fixed top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-600 via-indigo-600 to-emerald-600 z-[80] pointer-events-none"></div>
     <!-- Skip to Main Content Link (Keyboard / Screen Reader Accessibility) -->
     <a href="#main-content"
        class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-gray-950 focus:font-bold focus:shadow-xl focus:border focus:border-gray-900 focus:outline-none">
@@ -270,7 +331,7 @@
                         </span>
                     </a>
                     <!-- Desktop Primary Navigation Tabs -->
-                    <nav aria-label="Primary Navigation" class="hidden sm:flex space-x-1 text-xs h-11 items-stretch">
+                    <nav aria-label="Primary Navigation" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML" class="hidden sm:flex space-x-1 text-xs h-11 items-stretch">
                         <a href="{% url 'shopping:list' %}?mode=shopping"
                            data-mode-switch="shopping"
                            {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}aria-current="page"{% endif %}
@@ -303,6 +364,7 @@
 
                 <!-- Right: Workspace Selector, User / Login, & Persona Switcher -->
                 <div class="flex items-center space-x-1 sm:space-x-2 text-xs flex-shrink-0">
+                    <span id="global-sync-indicator" class="hidden" aria-live="polite"></span>
                     {% if request.user.is_authenticated %}
                     <!-- Workspace Dropdown (Authenticated) -->
                     {% include "core/partials/workspace_dropdown.html" %}
@@ -424,7 +486,7 @@
             </div>
 
             <!-- Mobile Navigation Tabs (Scrollable Horizontal Strip with High Contrast) -->
-            <nav id="mobile-nav-tabs" aria-label="Mobile Navigation" class="sm:hidden flex items-stretch space-x-1 text-xs overflow-x-auto border-t border-gray-200 py-1 scrollbar-none -mx-3 px-3">
+            <nav id="mobile-nav-tabs" aria-label="Mobile Navigation" hx-boost="true" hx-target="#main-content" hx-select="#main-content" hx-swap="outerHTML" class="sm:hidden flex items-stretch space-x-1 text-xs overflow-x-auto border-t border-gray-200 py-1 scrollbar-none -mx-3 px-3">
                 <a href="{% url 'shopping:list' %}?mode=shopping"
                    data-mode-switch="shopping"
                    {% if 'mealplans' not in request.path and 'recipes' not in request.path and 'preset' not in request.path and 'pantry-check' not in request.path and mode != 'pantry' %}aria-current="page"{% endif %}
@@ -456,6 +518,11 @@
         </div>
     </header>
 
+    <!-- Offline Snapshot Banner (triggered by Service Worker only when network unreachable) -->
+    <div id="sw-offline-banner" role="status" aria-live="polite" class="hidden bg-amber-50 border-b border-amber-300 px-3 py-1.5 text-center text-xs text-amber-950 font-medium">
+        ⚡ Working from cached offline snapshot &mdash; changes are saved locally and will sync automatically when online.
+    </div>
+
     <!-- Main Content -->
     <main id="main-content" tabindex="-1" class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-3 focus:outline-none">
         {% block content %}{% endblock %}
@@ -479,6 +546,8 @@
                 <span class="text-gray-400" aria-hidden="true">&bull;</span>
                 {% endblock %}
                 <a href="mailto:support@recipe.klopot.tech" class="text-gray-700 hover:text-black underline font-medium">Contact</a>
+                <span class="text-gray-400" aria-hidden="true">&bull;</span>
+                <button type="button" onclick="window.openShortcutsModal && window.openShortcutsModal()" class="text-gray-700 hover:text-black underline font-medium cursor-pointer">Shortcuts (?)</button>
             </div>
         </div>
     </footer>
@@ -673,7 +742,7 @@
         });
 
         document.addEventListener('click', function(e) {
-            if (e.target.closest('#walkthrough-modal')) return;
+            if (!e.target || typeof e.target.closest !== 'function' || e.target.closest('#walkthrough-modal')) return;
             const wsContainer = document.getElementById('workspace-dropdown-container');
             const personaContainer = document.getElementById('persona-dropdown-container');
             const userContainer = document.getElementById('user-dropdown-container');
@@ -799,262 +868,151 @@
             evt.detail.headers['X-Client-Id'] = window.CLIENT_ID;
         });
 
-        const MAX_TOASTS = 3;
-
-        function showToast(message) {
-            if (!message) return;
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-            const toast = document.createElement('div');
-            toast.className = 'toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none cursor-pointer';
-            const span = document.createElement('span');
-            span.className = 'font-medium pr-2';
-            span.textContent = message;
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'text-gray-500 hover:text-gray-800 font-bold text-base ml-2 leading-none focus:outline-none';
-            btn.innerHTML = '&times;';
-            btn.onclick = function(e) {
-                e.stopPropagation();
-                dismissToast(toast);
-            };
-            toast.appendChild(span);
-            toast.appendChild(btn);
-            toast.onclick = function() {
-                dismissToast(toast);
-            };
-            container.appendChild(toast);
-            initToasts();
-        }
-        window.showToast = showToast;
-
-        function dismissToast(el) {
-            if (!el || el.dataset.dismissing) return;
-            el.dataset.dismissing = "true";
-            el.style.transition = "opacity 0.22s ease-out, transform 0.22s ease-out";
-            el.style.opacity = "0";
-            el.style.transform = window.innerWidth >= 640 ? "translateY(-8px) scale(0.97)" : "translateY(8px) scale(0.97)";
-            setTimeout(() => {
-                el.remove();
-            }, 220);
-        }
-
-        function initToasts() {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-
-            // Enforce maximum visible toasts queue (Option 3)
-            const activeToasts = Array.from(container.querySelectorAll('.toast-item')).filter(
-                t => !t.dataset.dismissing
-            );
-            if (activeToasts.length > MAX_TOASTS) {
-                const excess = activeToasts.length - MAX_TOASTS;
-                for (let i = 0; i < excess; i++) {
-                    dismissToast(activeToasts[i]);
-                }
-            }
-
-            container.querySelectorAll('.toast-item:not([data-toast-initialized])').forEach(toast => {
-                toast.dataset.toastInitialized = "true";
-                if (!toast.onclick) {
-                    toast.style.cursor = "pointer";
-                    toast.onclick = function() {
-                        dismissToast(toast);
-                    };
-                }
-                setTimeout(() => {
-                    dismissToast(toast);
-                }, 3500);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', initToasts);
-        document.addEventListener('htmx:afterSwap', initToasts);
-
-        // Global Multi-Tab WebSocket Synchronization
+        // Global Multi-Tab WebSocket Synchronization (Debounced Morphing, Zero Grey-Out)
         (function initGlobalWebSocketSync() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws/shopping/`;
+            const wsUrl = protocol + '//' + window.location.host + '/ws/shopping/';
             let socket = null;
             let reconnectTimeout = null;
+            let wsNeedsResync = false;
+            let tabHiddenAt = 0;
 
-            // Debounced & Queue-Safe Shopping List Auto-Refresh
-            let listRefreshTimer = null;
-            let listRefreshInFlight = false;
-            let listRefreshQueued = false;
+            function makeDebouncedMorphRefresh(containerId) {
+                let timer = null;
+                let inFlight = false;
+                let queued = false;
 
-            function triggerShoppingListRefresh() {
-                const listContainer = document.getElementById('shopping-list-content');
-                if (!listContainer) return;
+                return function trigger() {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    if (inFlight) { queued = true; return; }
+                    if (timer) clearTimeout(timer);
 
-                if (listRefreshInFlight) {
-                    listRefreshQueued = true;
-                    return;
-                }
+                    timer = setTimeout(async () => {
+                        const cur = document.getElementById(containerId);
+                        if (!cur) return;
 
-                if (listRefreshTimer) {
-                    clearTimeout(listRefreshTimer);
-                }
-
-                listRefreshTimer = setTimeout(() => {
-                    const currentContainer = document.getElementById('shopping-list-content');
-                    if (!currentContainer) return;
-
-                    // Defer if user is actively typing in an input inside shopping list
-                    const activeEl = document.activeElement;
-                    if (activeEl && currentContainer.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-                        listRefreshTimer = setTimeout(triggerShoppingListRefresh, 1200);
-                        return;
-                    }
-
-                    const refreshUrl = currentContainer.getAttribute('data-refresh-url') || window.location.href;
-                    listRefreshInFlight = true;
-
-                    // Failsafe timeout to prevent in-flight lock from getting stuck
-                    const failsafe = setTimeout(() => { listRefreshInFlight = false; }, 4000);
-
-                    htmx.ajax('GET', refreshUrl, {
-                        target: '#shopping-list-content',
-                        swap: 'outerHTML'
-                    }).then(() => {
-                        clearTimeout(failsafe);
-                        listRefreshInFlight = false;
-                        if (listRefreshQueued) {
-                            listRefreshQueued = false;
-                            triggerShoppingListRefresh();
+                        // Defer background refresh while local outbox actions are pending or in flight
+                        if (window.ShoppinQueue && window.ShoppinQueue.hasPendingWork && window.ShoppinQueue.hasPendingWork()) {
+                            timer = setTimeout(trigger, 250);
+                            return;
                         }
-                    }).catch(() => {
-                        clearTimeout(failsafe);
-                        listRefreshInFlight = false;
-                    });
-                }, 180);
+
+                        // Never interrupt active form typing inside container
+                        const activeEl = document.activeElement;
+                        if (activeEl && cur.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+                            timer = setTimeout(trigger, 900);
+                            return;
+                        }
+
+                        const epochAtStart = window.ShoppinQueue && window.ShoppinQueue.getMutationEpoch
+                            ? window.ShoppinQueue.getMutationEpoch()
+                            : 0;
+                        const refreshUrl = cur.getAttribute('data-refresh-url') || window.location.href;
+                        inFlight = true;
+                        const failsafe = setTimeout(() => { inFlight = false; }, 4500);
+
+                        try {
+                            const resp = await fetch(refreshUrl, {
+                                credentials: 'same-origin',
+                                headers: {
+                                    'HX-Request': 'true',
+                                    'HX-Target': containerId,
+                                    'X-Client-Id': window.CLIENT_ID
+                                }
+                            });
+                            if (resp.ok) {
+                                const epochNow = window.ShoppinQueue && window.ShoppinQueue.getMutationEpoch
+                                    ? window.ShoppinQueue.getMutationEpoch()
+                                    : 0;
+                                const pendingNow = window.ShoppinQueue && window.ShoppinQueue.hasPendingWork
+                                    ? window.ShoppinQueue.hasPendingWork()
+                                    : false;
+                                if (epochNow !== epochAtStart || pendingNow) {
+                                    queued = true;
+                                    return;
+                                }
+                                const html = await resp.text();
+                                if (window.ShoppinMorph) {
+                                    window.ShoppinMorph.swapFromHtml('#' + containerId, html);
+                                }
+                            }
+                        } catch (_) {
+                        } finally {
+                            clearTimeout(failsafe);
+                            inFlight = false;
+                            if (queued) {
+                                queued = false;
+                                trigger();
+                            }
+                        }
+                    }, 180);
+                };
             }
 
-            // Debounced & Queue-Safe Meal Plan Auto-Refresh
-            let mealplanRefreshTimer = null;
-            let mealplanRefreshInFlight = false;
-            let mealplanRefreshQueued = false;
-
-            function triggerMealPlanRefresh() {
-                const container = document.getElementById('mealplan-content');
-                if (!container) return;
-
-                if (mealplanRefreshInFlight) {
-                    mealplanRefreshQueued = true;
-                    return;
-                }
-
-                if (mealplanRefreshTimer) {
-                    clearTimeout(mealplanRefreshTimer);
-                }
-
-                mealplanRefreshTimer = setTimeout(() => {
-                    const currentContainer = document.getElementById('mealplan-content');
-                    if (!currentContainer) return;
-
-                    // Defer if user is actively typing in an input inside meal plan
-                    const activeEl = document.activeElement;
-                    if (activeEl && currentContainer.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-                        mealplanRefreshTimer = setTimeout(triggerMealPlanRefresh, 1200);
-                        return;
-                    }
-
-                    const refreshUrl = currentContainer.getAttribute('data-refresh-url') || window.location.href;
-                    mealplanRefreshInFlight = true;
-
-                    // Failsafe timeout to prevent in-flight lock from getting stuck
-                    const failsafe = setTimeout(() => { mealplanRefreshInFlight = false; }, 4000);
-
-                    htmx.ajax('GET', refreshUrl, {
-                        target: '#mealplan-content',
-                        swap: 'outerHTML'
-                    }).then(() => {
-                        clearTimeout(failsafe);
-                        mealplanRefreshInFlight = false;
-                        if (mealplanRefreshQueued) {
-                            mealplanRefreshQueued = false;
-                            triggerMealPlanRefresh();
-                        }
-                    }).catch(() => {
-                        clearTimeout(failsafe);
-                        mealplanRefreshInFlight = false;
-                    });
-                }, 180);
-            }
+            const triggerShoppingListRefresh = makeDebouncedMorphRefresh('shopping-list-content');
+            const triggerMealPlanRefresh = makeDebouncedMorphRefresh('mealplan-content');
+            const triggerPresetDetailRefresh = makeDebouncedMorphRefresh('preset-detail-container');
+            const triggerPresetGridRefresh = makeDebouncedMorphRefresh('preset-index-grid-container');
 
             function connect() {
                 if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
                     return;
                 }
-
                 try {
                     socket = new WebSocket(wsUrl);
-                } catch (err) {
+                } catch (_) {
+                    wsNeedsResync = true;
                     scheduleReconnect();
                     return;
                 }
 
                 socket.onopen = function() {
-                    // Check for any due schedules upon connection
-                    try {
-                        socket.send(JSON.stringify({ type: 'check_schedules' }));
-                    } catch (_) {}
+                    const shouldResync = wsNeedsResync;
+                    wsNeedsResync = false;
+                    try { socket.send(JSON.stringify({ type: 'check_schedules' })); } catch (_) {}
+                    if (shouldResync) {
+                        triggerShoppingListRefresh();
+                        triggerMealPlanRefresh();
+                        triggerPresetDetailRefresh();
+                        triggerPresetGridRefresh();
+                    }
                 };
 
                 socket.onmessage = function(event) {
                     try {
                         const data = JSON.parse(event.data);
                         const isSender = data.sender_client_id && data.sender_client_id === window.CLIENT_ID;
-
-                        // If another tab, user, or background worker/schedule made the change:
                         if (!isSender) {
-                            // 1. Show notification toast (only when a non-empty toast message is provided)
-                            const primaryToast = (data.toast_message || "").trim();
-                            const multiToast = (Array.isArray(data.toast_messages) && data.toast_messages.length > 0 && typeof data.toast_messages[0] === 'string') ? data.toast_messages[0].trim() : "";
-                            if (primaryToast) {
-                                showToast(primaryToast);
-                            } else if (multiToast) {
-                                showToast(multiToast);
+                            const primaryToast = (data.toast_message || '').trim();
+                            const multiToast = (Array.isArray(data.toast_messages) && data.toast_messages.length > 0 && typeof data.toast_messages[0] === 'string')
+                                ? data.toast_messages[0].trim() : '';
+                            if (primaryToast && window.showToast) {
+                                window.showToast(primaryToast);
+                            } else if (multiToast && window.showToast) {
+                                window.showToast(multiToast);
                             }
 
-                            // 2. Auto-update Shopping List content if present on page
+                            if (window.ShoppinShell) window.ShoppinShell.invalidateWorkspaceCache();
+
                             triggerShoppingListRefresh();
-
-                            // 3. Auto-update Preset Detail view if present on page
-                            const presetDetailContainer = document.getElementById('preset-detail-container');
-                            if (presetDetailContainer) {
-                                const refreshUrl = presetDetailContainer.getAttribute('data-refresh-url') || window.location.href;
-                                htmx.ajax('GET', refreshUrl, {
-                                    target: '#preset-detail-container',
-                                    select: '#preset-detail-container',
-                                    swap: 'outerHTML'
-                                });
+                            if (data.entity_type !== 'shopping_meta') {
+                                triggerPresetDetailRefresh();
+                                triggerPresetGridRefresh();
+                                triggerMealPlanRefresh();
                             }
-
-                            // 4. Auto-update Preset Lists Index grid if present on page
-                            const presetGridContainer = document.getElementById('preset-index-grid-container');
-                            if (presetGridContainer) {
-                                const refreshUrl = presetGridContainer.getAttribute('data-refresh-url') || window.location.href;
-                                htmx.ajax('GET', refreshUrl, {
-                                    target: '#preset-index-grid-container',
-                                    select: '#preset-index-grid-container',
-                                    swap: 'outerHTML'
-                                });
-                            }
-
-                            // 5. Auto-update Mealplan content if present on page
-                            triggerMealPlanRefresh();
                         }
                     } catch (err) {
-                        console.error("[Shoppin Sync] Error parsing WebSocket message:", err);
+                        console.error('[Shoppin Sync] Error parsing WebSocket message:', err);
                     }
                 };
 
                 socket.onclose = function() {
+                    wsNeedsResync = true;
                     scheduleReconnect();
                 };
-
                 socket.onerror = function() {
+                    wsNeedsResync = true;
                     try { socket.close(); } catch (_) {}
                 };
             }
@@ -1070,94 +1028,36 @@
 
             connect();
 
-            // Periodic heartbeat to ensure due schedules process even if tab remains idle
             setInterval(function() {
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     try { socket.send(JSON.stringify({ type: 'check_schedules' })); } catch (_) {}
                 }
             }, 30000);
 
-            // Trigger check when user returns or focuses the window
             window.addEventListener('focus', function() {
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     try { socket.send(JSON.stringify({ type: 'check_schedules' })); } catch (_) {}
                 }
-                if (document.getElementById('shopping-list-content')) {
+                if (wsNeedsResync) {
+                    wsNeedsResync = false;
                     triggerShoppingListRefresh();
-                }
-                if (document.getElementById('mealplan-content')) {
                     triggerMealPlanRefresh();
                 }
             });
 
-            // Dynamically manage HTMX view transitions & re-sync tabs when visibility changes
             document.addEventListener('visibilitychange', function() {
-                if (window.htmx && window.htmx.config) {
-                    window.htmx.config.globalViewTransitions = !document.hidden;
-                }
-                if (!document.hidden) {
-                    if (listRefreshQueued || document.getElementById('shopping-list-content')) {
-                        listRefreshQueued = false;
+                if (document.hidden) {
+                    tabHiddenAt = Date.now();
+                    if (window.htmx && window.htmx.config) window.htmx.config.globalViewTransitions = false;
+                } else {
+                    const awayMs = tabHiddenAt ? (Date.now() - tabHiddenAt) : 0;
+                    if (wsNeedsResync || awayMs > 5000) {
+                        wsNeedsResync = false;
                         triggerShoppingListRefresh();
-                    }
-                    if (mealplanRefreshQueued || document.getElementById('mealplan-content')) {
-                        mealplanRefreshQueued = false;
                         triggerMealPlanRefresh();
                     }
                 }
             });
-            if (document.hidden && window.htmx && window.htmx.config) {
-                window.htmx.config.globalViewTransitions = false;
-            }
-        })();
-
-        // Instant Optimistic Feedback for Shopping List Actions (0ms response)
-        (function() {
-            function applyOptimisticFeedback(target) {
-                if (!target) return;
-                const row = target.closest('.item-row');
-                if (!row) return;
-
-                const form = target.closest('form');
-                const action = (form ? (form.getAttribute('hx-post') || form.getAttribute('action') || '') : '') || target.getAttribute('hx-post') || '';
-                if (!action) return;
-
-                if (action.includes('/status/GOT')) {
-                    row.classList.add('item-got-optimistic');
-                } else if (action.includes('/status/HAVE')) {
-                    row.classList.add('item-have-optimistic');
-                } else if (action.includes('/status/DONT_NEED')) {
-                    row.classList.add('item-skip-optimistic');
-                } else if (action.includes('/status/NEED')) {
-                    row.classList.add('item-need-optimistic');
-                } else if (action.includes('/toggle-priority') || action.includes('/toggle-lock')) {
-                    row.classList.add('item-moving');
-                }
-            }
-
-            document.addEventListener('submit', function (event) {
-                applyOptimisticFeedback(event.target);
-            }, true);
-
-            document.addEventListener('click', function (event) {
-                let target = event.target;
-                if (!target) return;
-                if (target.nodeType === 3) target = target.parentElement;
-                if (!target || typeof target.closest !== 'function') return;
-                const btn = target.closest('button, [hx-post]');
-                if (btn && btn.closest('.item-row')) {
-                    applyOptimisticFeedback(btn);
-                }
-            }, true);
-
-            // Revert optimistic styling if network request fails
-            function clearOptimistic() {
-                document.querySelectorAll('.item-moving, .item-got-optimistic, .item-have-optimistic, .item-skip-optimistic, .item-need-optimistic').forEach(el => {
-                    el.classList.remove('item-moving', 'item-got-optimistic', 'item-have-optimistic', 'item-skip-optimistic', 'item-need-optimistic');
-                });
-            }
-            document.addEventListener('htmx:responseError', clearOptimistic);
-            document.addEventListener('htmx:sendError', clearOptimistic);
         })();
 
         // Centralized Accessible Modal Dialog Manager (WCAG 2.1.2, 2.4.3, 4.1.2)
@@ -1273,7 +1173,8 @@
 
             // HTMX integration
             document.addEventListener('htmx:afterSwap', function(e) {
-                if (e.target && (e.target.id === 'modal-placeholder' || e.target.closest('#modal-placeholder'))) {
+                const swapTarget = (e.detail && e.detail.target) || e.target;
+                if (swapTarget && (swapTarget.id === 'modal-placeholder' || (typeof swapTarget.closest === 'function' && swapTarget.closest('#modal-placeholder')))) {
                     const openModals = getOpenModals();
                     if (openModals.length) {
                         onModalOpened(openModals[openModals.length - 1]);
@@ -1325,6 +1226,14 @@
         <option value="{{ ing_suggestion }}">
         {% endfor %}
     </datalist>
+
+    <!-- Core Responsiveness, Prefetch, Mutation Queue, App-Shell & Shortcuts Engines -->
+    <script src="{% static 'js/lazy_assets.js' %}?v=20261124_v1"></script>
+    <script src="{% static 'js/prefetcher.js' %}?v=20261124_v1"></script>
+    <script src="{% static 'js/mutation_queue.js' %}?v=20261124_v1"></script>
+    <script src="{% static 'js/app_shell.js' %}?v=20261124_v1"></script>
+    <script src="{% static 'js/shopping_sync.js' %}?v=20261124_v1"></script>
+    <script src="{% static 'js/shortcuts.js' %}?v=20261124_v1"></script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

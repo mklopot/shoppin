@@ -700,7 +700,10 @@ def add_item(request: HttpRequest) -> HttpResponse:
         actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
-    return render_list_response(request, context, toast_message=toast)
+    response = render_list_response(request, context, toast_message=toast)
+    target_item = existing or new_item
+    response["X-Created-Item-Id"] = str(target_item.id)
+    return response
 
 
 def _ensure_item_has_attribution(
@@ -836,7 +839,8 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
         is_obscene, _ = contains_obscene_language(f"{item.name} {item.brand} {item.vendor} {item.purpose} {item.aisle}")
         if is_obscene:
             group_by = request.POST.get("group_by") or request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
-            context = _build_list_context(request, item.shopping_list, group_by)
+            mode = request.POST.get("mode") or request.GET.get("mode")
+            context = _build_list_context(request, item.shopping_list, group_by, mode=mode)
             return render_list_response(
                 request,
                 context,
@@ -892,7 +896,8 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
             group_by = request.POST.get("group_by") or request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
             request.session["shopping_list_group_by"] = group_by
-            context = _build_list_context(request, existing.shopping_list, group_by)
+            mode = request.POST.get("mode") or request.GET.get("mode")
+            context = _build_list_context(request, existing.shopping_list, group_by, mode=mode)
             unit_str = f" {existing.unit_display}" if existing.unit_display else ""
             toast = f"Combined into '{existing.name}' ({existing.amount_display}{unit_str})"
             existing_actor = existing.status_actor_first_name or "Someone"
@@ -933,7 +938,8 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
 
         group_by = request.POST.get("group_by") or request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
         request.session["shopping_list_group_by"] = group_by
-        context = _build_list_context(request, item.shopping_list, group_by)
+        mode = request.POST.get("mode") or request.GET.get("mode")
+        context = _build_list_context(request, item.shopping_list, group_by, mode=mode)
         edit_actor = item.status_actor_first_name or "Someone"
         broadcast_shopping_list_update(
             shopping_list=item.shopping_list,
@@ -946,7 +952,9 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
     known_categories = get_known_categories()
     known_aisles = get_known_aisles(item.shopping_list.active_store)
     group_by = request.GET.get("group_by") or request.session.get("shopping_list_group_by") or GroupBy.CATEGORY
-    request.session["shopping_list_group_by"] = group_by
+    if not ShoppingListOrganizer.is_background_prefetch(request):
+        request.session["shopping_list_group_by"] = group_by
+    mode = ShoppingListOrganizer.resolve_view_mode(request, request.GET.get("mode"))
     advanced_context = get_item_associations_and_history(item)
     return render(
         request,
@@ -956,6 +964,7 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             "known_categories": known_categories,
             "known_aisles": known_aisles,
             "group_by": group_by,
+            "mode": mode,
             **advanced_context,
         },
     )
@@ -1011,7 +1020,11 @@ def toggle_lock_item(request: HttpRequest, item_id: int) -> HttpResponse:
     if forbidden:
         return forbidden
 
-    item.locked = not item.locked
+    target_locked = request.POST.get("target_locked")
+    if target_locked in ("true", "false"):
+        item.locked = target_locked == "true"
+    else:
+        item.locked = not item.locked
     _set_item_audit(item, request)
     item.save(
         update_fields=[
@@ -1058,7 +1071,11 @@ def toggle_priority(request: HttpRequest, item_id: int) -> HttpResponse:
     if forbidden:
         return forbidden
 
-    item.priority = not item.priority
+    target_priority = request.POST.get("target_priority")
+    if target_priority in ("true", "false"):
+        item.priority = target_priority == "true"
+    else:
+        item.priority = not item.priority
     _set_item_audit(item, request)
     item.save(
         update_fields=[
@@ -1088,6 +1105,7 @@ def toggle_priority(request: HttpRequest, item_id: int) -> HttpResponse:
         toast_message=f"📌 {actor_name} {status_str} '{item.name}'",
         actor_name=actor_name,
         sender_client_id=_get_client_id(request),
+        entity_type="shopping_meta",
     )
 
     return render_list_response(request, context, toast_message=toast)
@@ -1185,7 +1203,7 @@ def find_nearest_store(request: HttpRequest) -> HttpResponse:
     resolved_name = discovery["resolved_location_name"]
 
     group_by = request.GET.get("group_by") or request.POST.get("group_by") or GroupBy.AISLE
-    mode = request.GET.get("mode") or request.POST.get("mode") or "shopping"
+    mode = ShoppingListOrganizer.resolve_view_mode(request, request.GET.get("mode") or request.POST.get("mode"))
 
     stores_json = json.dumps([
         {
@@ -1262,6 +1280,7 @@ def reorder_items(request: HttpRequest) -> HttpResponse:
         broadcast_shopping_list_update(
             shopping_list=shopping_list,
             sender_client_id=_get_client_id(request),
+            entity_type="shopping_meta",
         )
         return HttpResponse(status=204)
     except Exception as error:
@@ -1317,6 +1336,7 @@ def reorder_sections(request: HttpRequest) -> HttpResponse:
             broadcast_shopping_list_update(
                 shopping_list=shopping_list,
                 sender_client_id=_get_client_id(request),
+                entity_type="shopping_meta",
             )
 
         return HttpResponse(status=204)

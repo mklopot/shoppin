@@ -12,6 +12,7 @@ from apps.core import auth_views, tos_views, views
 
 urlpatterns = [
     path('health/', views.health_check, name='health_check'),
+    path('sw.js', views.service_worker_view, name='service_worker'),
     path('admin/', admin.site.urls),
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
     # Terms of Service & Compliance

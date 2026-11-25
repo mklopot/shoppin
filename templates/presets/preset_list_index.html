@@ -42,7 +42,7 @@
                 <div class="flex items-start justify-between gap-2">
                     <div>
                         <h2 class="text-lg font-bold text-gray-900 hover:text-indigo-600 truncate">
-                            <a href="{% url 'shopping:preset_detail' preset.id %}">{{ preset.name }}</a>
+                            <a href="{% url 'shopping:preset_detail' preset.id %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true">{{ preset.name }}</a>
                         </h2>
                         <div class="mt-1 text-xs text-gray-500">
                             <span>📋 {{ preset.items.count }} item{{ preset.items.count|pluralize }}</span>
@@ -154,7 +154,7 @@
 
             <!-- Card Actions Footer -->
             <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between text-xs">
-                <a href="{% url 'shopping:preset_detail' preset.id %}"
+                <a href="{% url 'shopping:preset_detail' preset.id %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true"
                    class="font-medium text-indigo-600 hover:text-indigo-900">
                     Edit Items &rarr;
                 </a>

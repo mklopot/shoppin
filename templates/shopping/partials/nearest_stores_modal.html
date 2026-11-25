@@ -116,7 +116,7 @@
 
         const resultsContainer = document.getElementById('store-picker-results');
         if (resultsContainer) {
-            resultsContainer.style.opacity = '0.55';
+            resultsContainer.innerHTML = '<div class="py-2 space-y-2"><div class="h-12 w-full skeleton-shimmer"></div><div class="h-12 w-full skeleton-shimmer"></div><div class="h-12 w-full skeleton-shimmer"></div></div>';
         }
 
         htmx.ajax('POST', '{% url "shopping:nearest_store" %}', {
@@ -309,17 +309,20 @@
         }
     };
 
-    // Initialize Leaflet Map once
+    // Initialize Leaflet Map once (awaiting on-demand Leaflet asset load if needed)
     (function initStorePickerMap() {
-        if (window._storePickerMapInstance) {
-            try {
-                window._storePickerMapInstance.remove();
-            } catch (_) {}
-            window._storePickerMapInstance = null;
-        }
-
-        const mapEl = document.getElementById('store-picker-map');
-        if (!mapEl || typeof L === 'undefined') return;
+        const loader = (window.ShoppinAssets && window.ShoppinAssets.loadLeaflet) ? window.ShoppinAssets.loadLeaflet() : Promise.resolve();
+        loader.then(function() {
+            if (window._storePickerMapInstance) {
+                try { window._storePickerMapInstance.remove(); } catch (_) {}
+                window._storePickerMapInstance = null;
+            }
+            const mapEl = document.getElementById('store-picker-map');
+            if (!mapEl || typeof L === 'undefined') return;
+            _mountLeafletMap(mapEl);
+        });
+    })();
+    function _mountLeafletMap(mapEl) {
 
         const centerLat = {{ center_lat|default:39.7392 }};
         const centerLon = {{ center_lon|default:-104.9903 }};
@@ -373,7 +376,7 @@
         setTimeout(function() {
             map.invalidateSize();
         }, 150);
-    })();
+    }
 </script>
 <script id="store-picker-initial-data" type="application/json">
     {{ stores_json|safe }}

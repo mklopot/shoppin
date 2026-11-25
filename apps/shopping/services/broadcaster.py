@@ -20,6 +20,7 @@ def broadcast_shopping_list_update(
     actor_name: str | None = None,
     sender_client_id: str | None = None,
     toast_messages: list[str] | None = None,
+    entity_type: str = "all",
 ) -> None:
     """
     Broadcast a real-time update notification to all clients viewing the shopping list.
@@ -47,6 +48,7 @@ def broadcast_shopping_list_update(
             "toast_messages": resolved_messages,
             "actor_name": actor_name or "unknown",
             "sender_client_id": sender_client_id or "",
+            "entity_type": entity_type or "all",
         }
 
         # Broadcast to both the global channel group and list-specific channel group

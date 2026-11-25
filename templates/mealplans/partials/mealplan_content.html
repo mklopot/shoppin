@@ -24,7 +24,7 @@
         </div>
 
         <div class="flex items-center space-x-2 text-xs">
-            <a href="{% url 'mealplans:archive' %}"
+            <a href="{% url 'mealplans:archive' %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true"
                class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1 inline-flex items-center gap-1">
                 <span aria-hidden="true">📦</span>
                 <span>Archived Meals ({{ archived_count|default:0 }})</span>
@@ -472,12 +472,12 @@
         </summary>
         <div class="p-3 border-t border-gray-300 bg-white space-y-2.5">
             <div class="flex justify-end">
-                <a href="{% url 'mealplans:archive' %}" class="text-[11px] text-blue-700 hover:underline font-medium">
+                <a href="{% url 'mealplans:archive' %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true" class="text-[11px] text-blue-700 hover:underline font-medium">
                     Open Full Archive Page &rarr;
                 </a>
             </div>
             <div id="archived-meals-drawer-body">
-                <a href="{% url 'mealplans:archive' %}" class="text-xs text-blue-700 hover:underline font-medium">
+                <a href="{% url 'mealplans:archive' %}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true" class="text-xs text-blue-700 hover:underline font-medium">
                     View Archived Meals &rarr;
                 </a>
             </div>

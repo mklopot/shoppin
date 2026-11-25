@@ -121,7 +121,10 @@ if (typeof initAndroidTimePickers === 'undefined') {
         }
     };
 
-    window.triggerClockDialPicker = function(btn) {
+    window.triggerClockDialPicker = async function(btn) {
+        if (typeof mdtimepicker === 'undefined' && window.ShoppinAssets && window.ShoppinAssets.loadTimePicker) {
+            try { await window.ShoppinAssets.loadTimePicker(); } catch (_) { return; }
+        }
         const container = btn.closest('.occurrence-picker-block');
         if (!container) return;
         const textInput = container.querySelector('.occurrence-time-input');

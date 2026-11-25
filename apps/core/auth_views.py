@@ -12,6 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from apps.core.idempotency import mark_purge_client_caches
 from apps.core.services.oauth_service import (
     get_google_auth_url,
     handle_google_callback,
@@ -35,6 +36,8 @@ def login_view(request: HttpRequest) -> HttpResponse:
     """
     if request.user.is_authenticated:
         next_url = request.GET.get("next") or reverse("recipes:list")
+        if not next_url.startswith("/") or any(next_url.startswith(p) for p in DISALLOWED_LOGIN_REDIRECT_PREFIXES):
+            next_url = reverse("recipes:list")
         if not next_url.startswith("/") or any(next_url.startswith(p) for p in DISALLOWED_LOGIN_REDIRECT_PREFIXES):
             next_url = reverse("recipes:list")
         return redirect(next_url)
@@ -135,4 +138,4 @@ def logout_view(request: HttpRequest) -> HttpResponse:
     next_url = request.GET.get("next") or reverse("recipes:list")
     if not next_url.startswith("/"):
         next_url = reverse("recipes:list")
-    return redirect(next_url)
+    return mark_purge_client_caches(redirect(next_url))

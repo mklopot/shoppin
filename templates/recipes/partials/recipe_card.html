@@ -1,4 +1,4 @@
-<div class="bg-white border border-gray-300 hover:border-gray-500 shadow-sm transition-all duration-150 flex flex-col justify-between overflow-hidden group">
+<div class="recipe-card bg-white border border-gray-300 hover:border-gray-500 shadow-sm transition-all duration-150 flex flex-col justify-between overflow-hidden group">
     <!-- Card Top / Image -->
     <div>
         {% if recipe.primary_photo_url %}
@@ -58,7 +58,7 @@
         <div class="p-3.5 space-y-2">
             <!-- Title -->
             <h2 class="text-base font-bold text-gray-900 tracking-tight leading-snug group-hover:text-blue-900">
-                <a href="{{ recipe.get_absolute_url }}">
+                <a href="{{ recipe.get_absolute_url }}" hx-boost="true" hx-target="#main-content" hx-select="#main-content" data-boost-nav="true">
                     {{ recipe.name }}
                 </a>
             </h2>

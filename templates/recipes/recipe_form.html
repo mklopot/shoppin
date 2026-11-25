@@ -864,7 +864,7 @@
 
 <!-- Dynamic Ingredient Row Script -->
 <script>
-let nextIngredientRowSeq = 0;
+var nextIngredientRowSeq = window.nextIngredientRowSeq || 0;
 
 function addIngredientRow() {
     nextIngredientRowSeq += 1;

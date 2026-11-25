@@ -5,8 +5,10 @@
     {% if can_write %}
     <button type="button"
             onclick="document.getElementById('preset-edit-title-form').classList.remove('hidden'); document.getElementById('preset-title-container').classList.add('hidden'); document.getElementById('preset-title-input').focus();"
-            class="text-gray-700 hover:text-gray-950 text-xs font-medium px-2.5 py-1 border border-gray-400 bg-gray-50 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900">
-        Rename
+            aria-label="Edit preset list name"
+            title="Edit preset list name"
+            class="text-gray-700 hover:text-gray-950 text-xs min-w-[24px] min-h-[24px] inline-flex items-center justify-center p-1 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 rounded-none">
+        <span aria-hidden="true">??</span>
     </button>
     {% endif %}
 </div>

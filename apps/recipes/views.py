@@ -79,7 +79,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         "cuisine": "Cuisine",
         "dish_type": "Dish",
         "meal_type": "Meal",
-        "dietary": "Diet",
+        "dietary": "Dietary Restrictions",
         "occasion": "Occasion",
         "equipment": "Equipment",
         "difficulty": "Difficulty",
@@ -165,6 +165,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         {
             "key": "cuisine",
             "label": "Cuisine",
+            "all_label": "All Cuisines",
             "options": _format_options(filter_options["cuisines"]),
             "included": includes["cuisine"],
             "excluded": excludes["cuisine"],
@@ -172,6 +173,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         {
             "key": "dish_type",
             "label": "Dish Type",
+            "all_label": "All Dish Types",
             "options": _format_options(filter_options["dish_types"]),
             "included": includes["dish_type"],
             "excluded": excludes["dish_type"],
@@ -179,13 +181,15 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         {
             "key": "meal_type",
             "label": "Meal Type",
+            "all_label": "All Meal Types",
             "options": _format_options(filter_options["meal_types"]),
             "included": includes["meal_type"],
             "excluded": excludes["meal_type"],
         },
         {
             "key": "dietary",
-            "label": "Dietary",
+            "label": "Dietary Restrictions",
+            "all_label": "All Dietary Restrictions",
             "options": _format_options(filter_options["dietary_options"]),
             "included": includes["dietary"],
             "excluded": excludes["dietary"],
@@ -193,6 +197,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         {
             "key": "occasion",
             "label": "Occasion",
+            "all_label": "All Occasions",
             "options": _format_options(filter_options["occasions"]),
             "included": includes["occasion"],
             "excluded": excludes["occasion"],
@@ -200,6 +205,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         {
             "key": "equipment",
             "label": "Equipment",
+            "all_label": "All Equipment",
             "options": _format_options(filter_options["equipment_options"]),
             "included": includes["equipment"],
             "excluded": excludes["equipment"],
@@ -207,6 +213,7 @@ def recipe_list_view(request: HttpRequest) -> HttpResponse:
         {
             "key": "difficulty",
             "label": "Difficulty",
+            "all_label": "All Difficulty Levels",
             "options": _format_options(filter_options["difficulties"]),
             "included": includes["difficulty"],
             "excluded": excludes["difficulty"],

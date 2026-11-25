@@ -90,7 +90,7 @@
                 {% if recipe.is_web_imported %}
                 <span>Imported from the web by <strong class="text-gray-800">{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"N j, Y" }}</span>
                 {% else %}
-                <span>Originally created by <strong class="text-gray-800">{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"N j, Y" }}</span>
+                <span>Originally submitted by <strong class="text-gray-800">{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"N j, Y" }}</span>
                 {% endif %}
                 {% if is_in_current_workspace and sharer_display %}
                 <span class="text-gray-300">•</span>
@@ -148,7 +148,7 @@
         <div class="space-y-2 pt-1 text-xs">
             {% if recipe.dietary_restrictions %}
             <div class="flex items-center space-x-2">
-                <span class="font-bold text-gray-600 min-w-[120px]">Dietary / Allergens:</span>
+                <span class="font-bold text-gray-600 min-w-[120px]">Dietary Restrictions / Allergens:</span>
                 <div class="flex flex-wrap gap-1">
                     {% for tag in recipe.dietary_restrictions %}
                     <span class="px-2 py-0.5 {% if 'meat' in tag|lower %}bg-red-50 border border-red-200 text-red-900{% elif 'dairy' in tag|lower and 'free' not in tag|lower %}bg-blue-50 border border-blue-200 text-blue-900{% else %}bg-emerald-50 border border-emerald-200 text-emerald-900{% endif %} font-medium">
@@ -645,7 +645,7 @@
             {% if recipe.is_web_imported %}
             Imported from the web by <strong>{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"F j, Y" }}.
             {% else %}
-            Original recipe created by <strong>{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"F j, Y" }}.
+            Originally submitted by <strong>{{ recipe.original_author_display }}</strong> on {{ recipe.original_date|date:"F j, Y" }}.
             {% endif %}
         </p>
         {% endif %}

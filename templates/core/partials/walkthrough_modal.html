@@ -117,7 +117,7 @@
                     Pantry check & confirming needed items
                 </h3>
                 <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
-                    Audit your pantry before you shop. Items needing verification begin unconfirmed. Tapping 'Need' confirms you need to buy it and moves it to your active shopping list; tapping 'Have' confirms you already have it at home.
+                    Audit your pantry before you shop. Items needing verification begin unconfirmed. Tapping 'Need' confirms you need to buy it, tapping 'Have' confirms you already have it at home, and tapping 'Skip' defers it if not buying this time (note: dishes with skipped ingredients will not show as ready to cook).
                 </p>
             </div>
 
@@ -127,7 +127,7 @@
                     Search and filter recipes
                 </h3>
                 <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
-                    Filter recipes by cuisine, meal type, diet, and equipment. Use (+) to require tags or (-) to exclude ingredients. Recipes can be browsed without logging in.
+                    Filter recipes by cuisine, meal type, dietary restrictions, and equipment. Use (+) to require tags or (-) to exclude ingredients. Recipes can be browsed without logging in.
                 </p>
             </div>
 
@@ -137,7 +137,7 @@
                     All Cuisines filter pulldown
                 </h3>
                 <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
-                    Cuisine is shown here as an example of how each filter dropdown works across meal types, cooking methods, and dietary tags. Tap any option to require it (+), or tap minus (-) to exclude specific ingredients or diets.
+                    Cuisine is shown here as an example of how each filter dropdown works across meal types, cooking methods, and dietary restrictions. Tap any option to require it (+), or tap minus (-) to exclude specific ingredients or dietary restrictions.
                 </p>
             </div>
 
@@ -201,13 +201,13 @@
                 </p>
             </div>
 
-            <!-- Step 15: Re-running the Product Tour Anytime -->
+            <!-- Step 15: Re-running the Site Tutorial Anytime -->
             <div id="tour-pane-14" class="tour-pane space-y-1 hidden">
                 <h3 class="tour-pane-title text-xs sm:text-sm font-bold text-gray-950">
-                    Re-run the product tour anytime
+                    Re-run the site tutorial anytime
                 </h3>
                 <p class="text-[11px] sm:text-xs text-gray-700 leading-relaxed">
-                    You can re-launch this interactive tour anytime by clicking your avatar in the top right and selecting <strong>Product Tour</strong>.
+                    You can re-launch this interactive tutorial anytime by clicking your avatar in the top right and selecting <strong>Site Tutorial</strong>.
                 </p>
             </div>
 
@@ -870,14 +870,14 @@
                 }, 80);
             }
         },
-        // Step 14: Re-running the Product Tour Anytime from Avatar Menu
+        // Step 14: Re-running the Site Tutorial Anytime from Avatar Menu
         {
             path: null,
             pathCheck: function() {
                 return true;
             },
             selector: '#user-dropdown-menu, #user-dropdown-container, #user-dropdown-btn',
-            badge: 'Re-run Product Tour',
+            badge: 'Re-run Site Tutorial',
             onEnter: function() {
                 if (typeof closeWorkspaceDropdown === 'function') closeWorkspaceDropdown();
                 cleanupTourDemoData();
@@ -1063,7 +1063,7 @@
         const nextBtn = document.getElementById('tour-next-btn');
         if (nextBtn) {
             if (currentTourStep === totalTourSteps - 1) {
-                nextBtn.textContent = 'Finish Tour';
+                nextBtn.textContent = 'Finish Tutorial';
                 nextBtn.onclick = closeWalkthroughModal;
             } else {
                 nextBtn.textContent = 'Next →';

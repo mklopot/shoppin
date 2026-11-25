@@ -376,6 +376,9 @@ def test_shopping_and_pantry_mode_switching_and_persistence(client, active_list)
 
     # Banner is visible
     assert "Pantry Check Mode:" in pantry_content
+    assert "not buying this time" in pantry_content
+    assert "Dishes with skipped ingredients will not show as ready to cook." in pantry_content
+    assert "not buying today" not in pantry_content
     assert "Ready to shop &rarr;" in pantry_content
 
     # Under To Buy in Pantry mode:

@@ -77,12 +77,10 @@
                     <button type="button"
                             hx-get="{% url 'shopping:preset_edit_item' preset_list.id item.id %}"
                             hx-target="#modal-placeholder"
-                            class="p-1 text-gray-500 hover:text-indigo-600"
+                            class="text-gray-500 hover:text-gray-900 px-1 py-0.5 text-xs"
                             aria-label="Edit item {{ item.name }}"
                             title="Edit Item">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                        </svg>
+                        <span aria-hidden="true">??</span>
                     </button>
                     <form hx-post="{% url 'shopping:preset_delete_item' preset_list.id item.id %}"
                           hx-target="#preset-items-container"

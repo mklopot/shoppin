@@ -852,6 +852,8 @@ def test_edit_meal_name_endpoints(client, mealplan_setup):
     html = resp_post.content.decode("utf-8")
     assert "Pizza Party Friday" in html
     assert "🍕" in html
+    assert "✏️" in html
+    assert "✎" not in html
     meal.refresh_from_db()
     assert meal.name == "Pizza Party Friday"
     assert "🍕" in meal.emoji

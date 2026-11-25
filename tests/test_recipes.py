@@ -261,7 +261,7 @@ def test_recipe_list_view_multi_filters_htmx(client: Client, sample_recipes, aut
     # Should render active inclusion and exclusion badges
     assert "Dish: Casserole" in content
     assert "Dish: Stew" in content
-    assert "NOT Diet: Vegetarian" in content
+    assert "NOT Dietary Restrictions: Vegetarian" in content
 
 
 @pytest.mark.django_db
@@ -1277,8 +1277,9 @@ def test_recipe_detail_and_form_ui_for_web_imported_recipes(client: Client, auth
     assert "Imported from the web by" in html
     assert "Original recipe created by" not in html
     assert "Originally created by" not in html
+    assert "Originally submitted by" not in html
 
-    # Non-web-imported recipe displays "Original recipe created by"
+    # Non-web-imported recipe displays "Originally submitted by"
     orig_recipe = Recipe.objects.create(
         name="Handcrafted Stew",
         description="Made from scratch.",
@@ -1289,8 +1290,9 @@ def test_recipe_detail_and_form_ui_for_web_imported_recipes(client: Client, auth
     )
     resp_orig = client.get(orig_recipe.get_absolute_url())
     html_orig = resp_orig.content.decode("utf-8")
-    assert "Original recipe created by" in html_orig
-    assert "Originally created by" in html_orig
+    assert "Originally submitted by" in html_orig
+    assert "Originally created by" not in html_orig
+    assert "Original recipe created by" not in html_orig
     assert "Imported from the web by" not in html_orig
 
     # 2. Edit form disables "Make public" toggle and shows review notice
@@ -1914,3 +1916,18 @@ def test_ingredient_lint_rejects_made_up_and_mismatched_units_with_live_hints(cl
     data = resp.json()
     assert data["warning_count"] == 1
     assert data["rows"][0]["unit_hints"] == ["1", "1 lb", "1 cup"]
+
+
+@pytest.mark.django_db
+def test_recipe_search_facet_labels(client: Client):
+    """Verify recipe search dropdown labels render Difficulty Levels and Dietary Restrictions."""
+    resp = client.get(reverse("recipes:list"))
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "All Difficulty Levels" in html
+    assert "All Dietary Restrictions" in html
+    assert "Dietary Restrictions Filters" in html
+    assert "All Equipment" in html
+    assert "All Difficultys" not in html
+    assert "All Dietarys" not in html
+    assert "All Equipments" not in html

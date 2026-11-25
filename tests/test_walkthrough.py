@@ -34,7 +34,7 @@ def test_walkthrough_modal_content_renders():
     assert "Organize with workspaces" in html
     assert "Preset lists and reusable templates" in html
     assert "Automated recurring schedules" in html
-    assert "Re-run the product tour anytime" in html
+    assert "Finish Tutorial" in html and "Finish Tour" not in html and "dishes with skipped ingredients will not show as ready to cook" in html and "Re-run the site tutorial anytime" in html
     assert "totalTourSteps = 15" in html
 
     # Verify unblurred spotlight quadrants & green spotlight border
@@ -113,7 +113,7 @@ def test_tour_navigation_tab_destinations_and_elements(db):
 
 @pytest.mark.django_db
 def test_avatar_menu_contains_product_tour_item(db):
-    """Verify that logged in user avatar menu contains the Product Tour button."""
+    """Verify that logged in user avatar menu contains the Site Tutorial button."""
     user = User.objects.create_user(username="testtourist", password="password123")
     client = Client()
     client.force_login(user)
@@ -122,7 +122,7 @@ def test_avatar_menu_contains_product_tour_item(db):
     assert response.status_code == 200
     content = response.content.decode("utf-8")
 
-    assert "Product Tour" in content
+    assert "Site Tutorial" in content
     assert "startProductTour()" in content
 
 

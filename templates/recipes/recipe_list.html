@@ -117,7 +117,7 @@
                             aria-haspopup="true"
                             aria-expanded="false"
                             class="w-full flex items-center justify-between border border-gray-300 bg-white text-xs px-2 py-1.5 text-gray-800 hover:bg-gray-50 focus:outline-none focus:border-gray-500 shadow-sm transition-colors rounded-none {% if f.included or f.excluded %}border-emerald-600 bg-emerald-50/40{% endif %}">
-                        <span class="truncate font-medium text-gray-700">All {{ f.label }}s</span>
+                        <span class="truncate font-medium text-gray-700">{{ f.all_label|default:f.label }}</span>
                         <span class="flex items-center space-x-1 ml-1 flex-shrink-0">
                             <span id="facet-badge-{{ f.key }}"
                                   class="{% if not f.included and not f.excluded %}hidden{% endif %} px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-600 text-white leading-tight">

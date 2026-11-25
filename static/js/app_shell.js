@@ -839,11 +839,11 @@
             startProgressBar();
         }
 
-        // Archived drawer lazy-load skeleton
-        if (elt && elt.closest && elt.closest('#archived-meals-details')) {
-            const body = document.getElementById('archived-meals-drawer-body');
-            if (body) {
-                body.innerHTML = '<div class="space-y-2 py-1"><div class="h-14 w-full skeleton-shimmer"></div><div class="h-14 w-full skeleton-shimmer"></div></div>';
+        // Archived meals modal lazy-load skeleton
+        if (elt && elt.id === 'open-archive-modal-btn') {
+            const mp = document.getElementById('modal-placeholder');
+            if (mp && !mp.innerHTML.trim()) {
+                mp.innerHTML = '<div id="modal-container" class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Loading Archived Meals"><div class="bg-white border-2 border-gray-800 w-full max-w-2xl p-4 space-y-3 shadow-xl"><div class="h-6 w-48 skeleton-shimmer"></div><div class="h-14 w-full skeleton-shimmer"></div><div class="h-14 w-full skeleton-shimmer"></div></div></div>';
             }
         }
     });
@@ -874,6 +874,10 @@
         finishProgressBar();
         clearNavTabPending();
         updateNavActiveState(window.location.pathname, window.location.search);
+        const mp = document.getElementById('modal-placeholder');
+        if (mp && mp.querySelector('[aria-label="Loading Archived Meals"]')) {
+            mp.innerHTML = '';
+        }
     }
 
     document.addEventListener('htmx:responseError', handleNavRequestFailure);

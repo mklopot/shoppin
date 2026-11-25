@@ -868,6 +868,8 @@ def archived_meals_view(request: HttpRequest) -> HttpResponse:
 
     context = _build_archive_results_context(request, workspace, user)
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        if request.GET.get("modal") == "1":
+            return render(request, "mealplans/partials/archive_modal.html", context)
         if request.GET.get("panel") == "1":
             return render(request, "mealplans/partials/archived_meals_browser.html", context)
         return render(request, "mealplans/partials/archived_meals_results.html", context)

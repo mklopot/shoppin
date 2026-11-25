@@ -30,6 +30,7 @@
                 <form hx-post="{% url 'mealplans:load_archived_meal' arch.id %}"
                       hx-target="#mealplan-content"
                       hx-swap="outerHTML"
+                      hx-on::after-request="if(event.detail.successful){ const mp = document.getElementById('modal-placeholder'); if(mp) mp.innerHTML=''; document.getElementById('modal-container')?.remove(); }"
                       class="inline">
                     {% csrf_token %}
                     <button type="submit"

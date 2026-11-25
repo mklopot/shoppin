@@ -1,0 +1,50 @@
+<div id="modal-container"
+     class="fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="archive-modal-title"
+     onclick="if(event.target === this) document.getElementById('modal-placeholder').innerHTML = ''">
+    <div class="bg-white border-2 border-gray-800 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-xl">
+        <!-- Modal Header -->
+        <div class="px-4 py-3 bg-gray-100 border-b border-gray-300 flex justify-between items-center gap-3 shrink-0">
+            <h2 id="archive-modal-title" class="text-base font-bold text-gray-900 flex items-center space-x-2">
+                <span aria-hidden="true">📦</span>
+                <span>Add Meal from Archive</span>
+                <span class="text-xs font-normal text-gray-700 bg-white border border-gray-300 px-1.5 py-0.2">
+                    {{ archived_count|default:0 }}
+                </span>
+            </h2>
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'mealplans:archive' %}"
+                   hx-boost="true"
+                   hx-target="#main-content"
+                   hx-select="#main-content"
+                   data-boost-nav="true"
+                   onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                   class="text-xs text-blue-700 hover:underline font-medium">
+                    Open Full Archive Page &rarr;
+                </a>
+                <button type="button"
+                        onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                        class="text-gray-500 hover:text-gray-900 text-lg font-bold leading-none px-1 cursor-pointer"
+                        aria-label="Close modal">
+                    &times;
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-4 overflow-y-auto">
+            {% include "mealplans/partials/archived_meals_browser.html" %}
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-4 py-2.5 bg-gray-50 border-t border-gray-300 flex justify-end shrink-0">
+            <button type="button"
+                    onclick="document.getElementById('modal-placeholder').innerHTML = ''"
+                    class="px-3 py-1.5 border border-gray-300 bg-white text-xs font-medium text-gray-700 hover:bg-gray-100 cursor-pointer">
+                Close
+            </button>
+        </div>
+    </div>
+</div>

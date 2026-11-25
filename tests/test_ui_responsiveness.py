@@ -16,7 +16,14 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from apps.core.models import Workspace
-from apps.mealplans.models import Meal, MealDish, MealPlan, MealPlanRule
+from apps.mealplans.models import (
+    ArchivedMeal,
+    ArchivedMealDish,
+    Meal,
+    MealDish,
+    MealPlan,
+    MealPlanRule,
+)
 from apps.recipes.models import Recipe
 from apps.shopping.models import (
     ItemStatus,
@@ -709,3 +716,104 @@ def test_browser_navbar_tab_loading_feedback(live_server):
             browser.close()
 
     _run_in_thread(_run_nav_feedback)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_browser_add_meal_from_archive_modal(live_server):
+    sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
+    from apps.core.models import TermsOfServiceAcceptance
+
+    user = User.objects.create_user(username="browser_arch_user", password="pw123456")
+    ws = Workspace.objects.create(name="Archive Browser WS", owner=user)
+    TermsOfServiceAcceptance.objects.create(user=user, version=TermsOfServiceAcceptance.CURRENT_VERSION)
+    ShoppingList.objects.create(name="Archive List", workspace=ws, owner=user)
+    MealPlan.objects.create(workspace=ws, name="Weekly")
+
+    fajitas_recipe = Recipe.objects.create(
+        name="Steak Fajitas",
+        directions="Grill steak and peppers.",
+        portions=4,
+        created_by=user,
+    )
+    fajitas_recipe.shared_workspaces.add(ws)
+
+    arch1 = ArchivedMeal.objects.create(workspace=ws, name="Friday Fajitas", made_by=user)
+    ArchivedMealDish.objects.create(
+        archived_meal=arch1,
+        recipe=fajitas_recipe,
+        dish_name="Steak Fajitas",
+        scale_factor=Decimal("1.00"),
+    )
+    arch2 = ArchivedMeal.objects.create(workspace=ws, name="Sunday Pancakes", made_by=user)
+    ArchivedMealDish.objects.create(
+        archived_meal=arch2,
+        is_single_item=True,
+        dish_name="Maple Syrup",
+        item_name="Maple Syrup",
+        amount=Decimal("1.00"),
+        amount_unit="bottle",
+    )
+
+    def _run_archive_modal():
+        base_url = live_server.url
+        with sync_playwright() as p:
+            browser = _launch_browser(p)
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            console_errors = []
+            page.on("pageerror", lambda err: console_errors.append(str(err)))
+
+            _login_playwright_page(page, base_url, "browser_arch_user", "pw123456")
+            page.goto(f"{base_url}/mealplans/", wait_until="networkidle")
+
+            # Bottom archived drawer removed; button sits inside #add-meal-container next to + Add Meal
+            assert page.locator("#archived-meals-details").count() == 0
+            add_btn = page.locator("#add-meal-container button[type='submit']")
+            arch_btn = page.locator("#open-archive-modal-btn")
+            assert add_btn.is_visible()
+            assert arch_btn.is_visible()
+            assert "Add Meal from Archive" in arch_btn.inner_text()
+
+            add_box = add_btn.bounding_box()
+            arch_box = arch_btn.bounding_box()
+            assert add_box and arch_box
+            assert abs(add_box["y"] - arch_box["y"]) < 10
+
+            # Click "Add Meal from Archive" -> opens modal inside #modal-placeholder
+            arch_btn.click()
+            page.wait_for_selector("#modal-container #archive-modal-title", timeout=5000)
+            assert page.locator("#modal-container").is_visible()
+            assert "Friday Fajitas" in page.locator("#archived-meals-results").inner_text()
+            assert "Sunday Pancakes" in page.locator("#archived-meals-results").inner_text()
+
+            # Close via Close button works cleanly
+            page.locator("#modal-container button:has-text('Close')").click()
+            page.wait_for_function(
+                "() => !document.getElementById('modal-container')",
+                timeout=3000,
+            )
+
+            # Re-open, search inside modal, and load copy into active meal plan
+            arch_btn.click()
+            page.wait_for_selector("#modal-container #archived-meals-filter-form", timeout=5000)
+            page.fill("#archived-meals-filter-form input[name='q']", "Fajitas")
+            page.wait_for_function(
+                "() => !document.getElementById('archived-meals-results')?.innerText.includes('Sunday Pancakes')",
+                timeout=5000,
+            )
+            assert "Friday Fajitas" in page.locator("#archived-meals-results").inner_text()
+
+            # Click "+ Load Copy to Plan" -> swaps #mealplan-content and closes modal automatically
+            page.locator("#archived-meals-results button:has-text('+ Load Copy to Plan')").click()
+            page.wait_for_function(
+                "() => document.getElementById('mealplan-content')?.innerText.includes('Friday Fajitas')",
+                timeout=5000,
+            )
+            page.wait_for_function(
+                "() => !document.getElementById('modal-container')",
+                timeout=5000,
+            )
+            assert not console_errors, f"Uncaught browser console/page errors: {console_errors}"
+            browser.close()
+
+    _run_in_thread(_run_archive_modal)

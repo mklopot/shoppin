@@ -234,8 +234,32 @@ def test_load_copy_of_archived_meal_permissions_and_shopping_list_sync(client, a
     _login(client, owner, ws2.id)
     assert client.post(reverse("mealplans:load_archived_meal", args=[archived.id])).status_code == 404
 
-    # Lazy-loaded embedded browser partial renders cleanly with embed_in_mealplan flag
+    # Owner sees "Add Meal from Archive" next to "+ Add Meal" and no bottom drawer; viewer does not
+    _login(client, viewer, ws1.id)
+    viewer_plan_html = client.get(reverse("mealplans:detail")).content.decode("utf-8")
+    assert 'id="open-archive-modal-btn"' not in viewer_plan_html
+    assert 'id="archived-meals-details"' not in viewer_plan_html
+
     _login(client, owner, ws1.id)
+    owner_plan_html = client.get(reverse("mealplans:detail")).content.decode("utf-8")
+    assert 'id="open-archive-modal-btn"' in owner_plan_html
+    assert "Add Meal from Archive" in owner_plan_html
+    assert 'id="archived-meals-details"' not in owner_plan_html
+
+    # Archive modal partial renders cleanly with search/sort browser and modal-close hook
+    modal_resp = client.get(
+        reverse("mealplans:archive"),
+        {"embed": "1", "modal": "1"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert modal_resp.status_code == 200
+    modal_html = modal_resp.content.decode("utf-8")
+    assert 'id="archive-modal-title"' in modal_html
+    assert 'id="archived-meals-filter-form"' in modal_html
+    assert 'hx-target="#mealplan-content"' in modal_html
+    assert "modal-placeholder" in modal_html
+
+    # Lazy-loaded embedded browser partial renders cleanly with embed_in_mealplan flag
     panel_resp = client.get(
         reverse("mealplans:archive"),
         {"embed": "1", "panel": "1"},

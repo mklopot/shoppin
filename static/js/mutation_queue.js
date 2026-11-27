@@ -278,11 +278,34 @@
         action.body = body;
     }
 
+    function rekeyTempRowInDom(tempId, realId) {
+        if (!tempId || !realId || String(tempId) === String(realId)) return;
+        const row = document.getElementById(`item-row-${tempId}`);
+        if (!row) return;
+        // If canonical row already exists in DOM (e.g. merged into existing item), avoid ID collision
+        if (!document.getElementById(`item-row-${realId}`)) {
+            row.id = `item-row-${realId}`;
+            row.style.viewTransitionName = `item-row-${realId}`;
+        }
+        row.setAttribute('data-item-id', String(realId));
+        row.removeAttribute('data-optimistic-pending');
+        row.querySelectorAll('[hx-get], [hx-post], [action]').forEach((el) => {
+            ['hx-get', 'hx-post', 'action'].forEach((attr) => {
+                const val = el.getAttribute(attr);
+                if (val && val.includes(tempId)) {
+                    el.setAttribute(attr, val.replaceAll(tempId, String(realId)));
+                }
+            });
+        });
+        if (window.htmx) window.htmx.process(row);
+    }
+
     function applyOutboxResponse(action, response, responseHtml, ctx = {}) {
         // Record newly created canonical ID for optimistic ghost rows
         const createdId = response.headers.get('X-Created-Item-Id');
         if (createdId && action.meta && action.meta.tempId) {
             tempIdMap.set(String(action.meta.tempId), String(createdId));
+            rekeyTempRowInDom(String(action.meta.tempId), String(createdId));
         }
 
         if (window.ShoppinPrefetch) {
@@ -360,6 +383,7 @@
             let hadItems = false;
             let processedCount = 0;
             let lastShoppingHtml = null;
+            let forceReconcileShopping = false;
             let haltedByNetworkOrServer = false;
 
             try {
@@ -404,6 +428,13 @@
                             if (html && html.includes('id="shopping-list-content"')) {
                                 lastShoppingHtml = html;
                             }
+                            if (
+                                response.headers.get('X-Item-Merged') === '1'
+                                || Boolean(response.headers.get('X-Created-Item-Id'))
+                            ) {
+                                forceReconcileShopping = true;
+                                pendingReconcileTargets.add('#shopping-list-content');
+                            }
                             const hasMoreWork = remaining.length > 0 || pendingHolds.size > 0;
                             applyOutboxResponse(current, response, html, { hasMoreWork });
                         } else if (response.status >= 500 || response.status === 408 || response.status === 429) {
@@ -446,7 +477,7 @@
                 const shouldReconcileShopping = (
                     burstComplete
                     && lastShoppingHtml
-                    && (processedCount > 1 || pendingReconcileTargets.has('#shopping-list-content'))
+                    && (forceReconcileShopping || processedCount > 1 || pendingReconcileTargets.has('#shopping-list-content'))
                 );
                 if (shouldReconcileShopping && window.ShoppinMorph && document.getElementById('shopping-list-content')) {
                     pendingReconcileTargets.delete('#shopping-list-content');

@@ -16,7 +16,7 @@
 </div>
 {% endif %}
 
-<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" data-mode="{{ mode }}" data-group-by="{{ group_by }}" data-can-write="{{ can_write|yesno:'true,false' }}">
+<div id="shopping-list-content" class="space-y-4" data-refresh-url="{% url 'shopping:list' %}?group_by={{ group_by }}&mode={{ mode }}" data-mode="{{ mode }}" data-group-by="{{ group_by }}" data-can-write="{{ can_write|yesno:'true,false' }}" data-actor-display="{{ actor_display|default:'' }}">
 
     {% if not can_write %}
     <!-- Read-Only / Static View Banner -->
@@ -203,7 +203,7 @@
 
     <!-- Add Item Bar (High Density, Simple Border) -->
     <div class="bg-gray-50 border border-gray-300 p-2">
-        <form hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
+        <form id="quick-add-form" hx-post="{% url 'shopping:add_item' %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="flex flex-wrap items-center gap-1.5 text-xs">
             {% csrf_token %}
             <input type="text" name="name" id="add-item-name" aria-label="Item name" placeholder="Item name (e.g. celery, butter, bread)" list="all-ingredients-datalist" required autocomplete="off"
                    class="flex-1 min-w-[140px] sm:min-w-[180px] border border-gray-400 px-2.5 py-1 bg-white focus:outline-none focus:border-gray-900 rounded-none text-xs">
@@ -280,7 +280,7 @@
                     <!-- Items List (Drag & Drop for individual items within section) -->
                     <div class="sortable-group divide-y divide-gray-200" data-group="{{ group_title }}">
                         {% for item in items %}
-                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-locked="{% if item.locked %}true{% else %}false{% endif %}" data-group-name="{{ group_title }}" style="view-transition-name: item-row-{{ item.id }};">
+                        <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors {% if item.locked and mode == 'pantry' %}bg-blue-50/40{% endif %}" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-item-amount="{{ item.amount_display }}" data-item-unit="{{ item.amount_unit }}" data-item-unit-display="{{ item.unit_display }}" data-item-category="{{ item.category }}" data-item-aisle="{{ item.aisle }}" data-item-brand="{{ item.brand }}" data-item-vendor="{{ item.vendor }}" data-item-purpose="{{ item.purpose_display }}" data-priority="{% if item.priority %}true{% else %}false{% endif %}" data-locked="{% if item.locked %}true{% else %}false{% endif %}" data-group-name="{{ group_title }}" style="view-transition-name: item-row-{{ item.id }};">
                             <!-- Left: Drag handle + Name + Specs -->
                             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                                 {% if can_write %}
@@ -321,10 +321,10 @@
                                             {% endif %}
                                         {% endif %}
                                     {% endif %}
-                                    <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+                                    <span class="item-qty font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                                     <!-- Secondary details -->
-                                    <span class="text-gray-600 ml-2">
+                                    <span class="item-secondary-details text-gray-600 ml-2">
                                         {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
                                         {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
                                         {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
@@ -393,7 +393,7 @@
                                     </button>
                                 </form>
                                 {% endif %}
-                                <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                                <button type="button" hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5 cursor-pointer" aria-label="Edit item {{ item.name }}" title="Edit">
                                     <span aria-hidden="true">✏️</span>
                                 </button>
                             </div>
@@ -432,7 +432,7 @@
 
         <div id="got-items-list" class="divide-y divide-emerald-200">
             {% for item in got_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-emerald-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-item-amount="{{ item.amount_display }}" data-item-unit="{{ item.amount_unit }}" data-item-unit-display="{{ item.unit_display }}" data-item-category="{{ item.category }}" data-item-aisle="{{ item.aisle }}" data-item-brand="{{ item.brand }}" data-item-vendor="{{ item.vendor }}" data-item-purpose="{{ item.purpose_display }}" data-priority="{% if item.priority %}true{% else %}false{% endif %}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status check + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     <span class="status-icon text-emerald-700 font-bold select-none text-sm" aria-hidden="true">✓</span>
@@ -454,10 +454,10 @@
                                         </span>
                                         {% endif %}
                                     {% endif %}
-                        <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+                        <span class="item-qty font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                         <!-- Secondary details -->
-                        <span class="text-gray-600 ml-2">
+                        <span class="item-secondary-details text-gray-600 ml-2">
                             {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
                             {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
@@ -476,7 +476,7 @@
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                    <button type="button" hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5 cursor-pointer" aria-label="Edit item {{ item.name }}" title="Edit">
                         <span aria-hidden="true">✏️</span>
                     </button>
                 </div>
@@ -504,7 +504,7 @@
 
         <div id="pantry-items-list" class="divide-y divide-blue-200">
             {% for item in pantry_items %}
-            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
+            <div id="item-row-{{ item.id }}" class="item-row py-1.5 px-3 flex items-center justify-between hover:bg-blue-100/50 text-xs transition-colors" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-status="{{ item.status }}" data-item-amount="{{ item.amount_display }}" data-item-unit="{{ item.amount_unit }}" data-item-unit-display="{{ item.unit_display }}" data-item-category="{{ item.category }}" data-item-aisle="{{ item.aisle }}" data-item-brand="{{ item.brand }}" data-item-vendor="{{ item.vendor }}" data-item-purpose="{{ item.purpose_display }}" data-priority="{% if item.priority %}true{% else %}false{% endif %}" data-group-name="{% if group_by == 'aisle' %}{{ item.effective_aisle|default:'Other' }}{% elif group_by == 'priority' %}{% if item.priority %}Priority Items{% else %}Standard Items{% endif %}{% else %}{{ item.category|default:'other'|title }}{% endif %}" style="view-transition-name: item-row-{{ item.id }};">
                 <!-- Left: Status Icon + Name + Specs -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
                     {% if item.status == 'HAVE' %}
@@ -530,10 +530,10 @@
                                         </span>
                                         {% endif %}
                                     {% endif %}
-                        <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
+                        <span class="item-qty font-normal text-gray-700 ml-1.5 whitespace-nowrap">{{ item.amount_display }}{% if item.unit_display %} {{ item.unit_display }}{% endif %}</span>
 
                         <!-- Secondary details -->
-                        <span class="text-gray-600 ml-2">
+                        <span class="item-secondary-details text-gray-600 ml-2">
                             {% if item.purpose_display %}<span class="inline-block italic text-gray-600">For {{ item.purpose_display }}</span>{% endif %}
                             {% if item.optional %}<span class="inline-block italic text-gray-600 ml-1">[optional]</span>{% endif %}
                             {% if item.brand %}<span class="inline-block ml-1 italic text-gray-700">Brand: {{ item.brand }}</span>{% endif %}
@@ -552,7 +552,7 @@
                             📋 Need
                         </button>
                     </form>
-                    <button hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item {{ item.name }}" title="Edit">
+                    <button type="button" hx-get="{% url 'shopping:edit_item' item.id %}?group_by={{ group_by }}&mode={{ mode }}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5 cursor-pointer" aria-label="Edit item {{ item.name }}" title="Edit">
                         <span aria-hidden="true">✏️</span>
                     </button>
                 </div>
@@ -561,4 +561,8 @@
             {% endfor %}
         </div>
     </div>
+    {% if can_write %}
+    <datalist id="category-datalist">{% for category_option in known_categories %}<option value="{{ category_option }}">{% endfor %}</datalist>
+    <datalist id="aisle-datalist">{% for aisle_option in known_aisles %}<option value="{{ aisle_option }}">{% endfor %}</datalist>
+    {% endif %}
 </div>

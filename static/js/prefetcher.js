@@ -59,6 +59,7 @@
 
     function isPrefetchSafeUrl(normUrl) {
         if (!normUrl) return false;
+        if (normUrl.includes('/item/tmp_')) return false;
         const blocked = ['/login', '/logout', '/accounts/', '/admin/', '/core/dev/', '/core/workspace/switch'];
         return !blocked.some((p) => normUrl.startsWith(p));
     }

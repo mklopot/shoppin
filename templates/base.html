@@ -958,7 +958,7 @@
 
                         // Never interrupt active form typing inside container
                         const activeEl = document.activeElement;
-                        if (activeEl && cur.contains(activeEl) && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
+                        if (activeEl && cur.contains(activeEl) && ((activeEl.tagName === 'INPUT' && (activeEl.id !== 'add-item-name' || (activeEl.value || '').trim() !== '')) || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT')) {
                             timer = setTimeout(trigger, 900);
                             return;
                         }
@@ -1287,10 +1287,10 @@
 
     <!-- Core Responsiveness, Prefetch, Mutation Queue, App-Shell & Shortcuts Engines -->
     <script src="{% static 'js/lazy_assets.js' %}?v=20261124_v1"></script>
-    <script src="{% static 'js/prefetcher.js' %}?v=20261124_v1"></script>
-    <script src="{% static 'js/mutation_queue.js' %}?v=20261124_v1"></script>
-    <script src="{% static 'js/app_shell.js' %}?v=20261124_v2"></script>
-    <script src="{% static 'js/shopping_sync.js' %}?v=20261124_v2"></script>
+    <script src="{% static 'js/prefetcher.js' %}?v=20261126_v1"></script>
+    <script src="{% static 'js/mutation_queue.js' %}?v=20261126_v1"></script>
+    <script src="{% static 'js/app_shell.js' %}?v=20261126_v1"></script>
+    <script src="{% static 'js/shopping_sync.js' %}?v=20261126_v1"></script>
     <script src="{% static 'js/shortcuts.js' %}?v=20261124_v1"></script>
 
     {% block extra_scripts %}{% endblock %}

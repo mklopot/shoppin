@@ -1235,3 +1235,40 @@ def test_compound_gallon_and_cup_display_and_edit_roundtrip(client, active_list)
     assert broth.amount == Decimal("2.00")
     assert broth.amount_unit == "gallons"
     assert b"2 gallons" in resp_more.content
+
+
+@pytest.mark.django_db
+def test_set_status_need_combines_singular_plural_preserves_priority_and_headers(client, active_list):
+    """Moving 'Apples' to NEED when 'Apple' is already in To Buy merges immediately, preserves priority & audit, and sets merge headers."""
+    apple = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Apple",
+        amount=Decimal("1.00"),
+        category="produce",
+        status=ItemStatus.NEED,
+        priority=False,
+        order=10,
+    )
+    apples = ShoppingListItem.objects.create(
+        shopping_list=active_list,
+        name="Apples",
+        amount=Decimal("2.00"),
+        category="produce",
+        status=ItemStatus.DONT_NEED,
+        priority=True,
+        order=11,
+    )
+
+    resp = client.post(reverse("shopping:set_status", args=[apples.id, "NEED"]))
+    assert resp.status_code == 200
+    assert resp.headers.get("X-Item-Merged") == "1"
+    assert resp.headers.get("X-Merged-Into-Item-Id") == str(apple.id)
+    assert not ShoppingListItem.objects.filter(id=apples.id).exists()
+
+    apple.refresh_from_db()
+    assert apple.amount == Decimal("3.00")
+    assert apple.priority is True
+    assert apple.locked is True
+    assert apple.status_changed_at is not None
+    assert apple.status_changed_by is not None
+    assert b"Combined" in resp.content

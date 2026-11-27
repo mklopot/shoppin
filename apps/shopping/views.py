@@ -180,9 +180,11 @@ def _build_list_context(
     if user and user.is_authenticated:
         can_write = workspace.can_write(user) if workspace else True
         user_role = workspace.get_user_role(user) if workspace else "owner"
+        actor_display = ((user.first_name or "").strip() or (user.username or "").strip()) if is_shared else ""
     else:
         can_write = False
         user_role = "guest"
+        actor_display = ""
 
     meal_plan = workspace.get_meal_plan() if workspace else None
     planned_meals = list(meal_plan.meals.prefetch_related("recipes").all()) if meal_plan else []
@@ -212,6 +214,7 @@ def _build_list_context(
         "preset_lists_open": preset_lists_open,
         "can_write": can_write,
         "user_role": user_role,
+        "actor_display": actor_display,
         "grouped_need": grouped_need,
         "need_count": len(need_items),
         "need_confirmed_count": need_confirmed_count,
@@ -382,6 +385,8 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
     if forbidden:
         return forbidden
 
+    merged = False
+    merged_src_name = ""
     if new_status in ItemStatus.values:
         prev_status = item.status
         prev_label = ItemStatus(prev_status).label if prev_status in ItemStatus.values else prev_status
@@ -401,31 +406,23 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
                     break
 
             if existing_need:
+                merged = True
                 merged_src_name = item.name
                 merged_src_qty = format_quantity_text(item.amount, item.amount_unit)
                 # Merge into existing_need rather than leaving duplicate rows on the list
                 if not existing_need.attributions.exists() and existing_need.amount > Decimal("0.00"):
-                    ShoppingListItemSource.objects.create(
-                        item=existing_need,
-                        is_one_time=True,
-                        amount=existing_need.amount,
-                        amount_unit=existing_need.amount_unit,
-                        purpose=clean_purpose(existing_need.purpose) or "one-time purchase",
-                    )
+                    _ensure_item_has_attribution(existing_need)
                 if not item.attributions.exists() and item.amount > Decimal("0.00"):
-                    ShoppingListItemSource.objects.create(
-                        item=existing_need,
-                        is_one_time=True,
-                        amount=item.amount,
-                        amount_unit=item.amount_unit,
-                        purpose=clean_purpose(item.purpose) or "one-time purchase",
-                    )
+                    _ensure_item_has_attribution(existing_need, source_item=item)
                 else:
                     item.attributions.update(item=existing_need)
 
+                if item.priority:
+                    existing_need.priority = True
                 existing_need.locked = True
                 _set_item_audit(existing_need, request)
-                existing_need.recalculate_from_attributions()
+                existing_need.recalculate_from_attributions(save=False)
+                existing_need.save()
                 transfer_item_history(item, existing_need)
                 item.delete()
                 item = existing_need
@@ -482,28 +479,41 @@ def set_item_status(request: HttpRequest, item_id: int, new_status: str) -> Http
     group_by = request.GET.get("group_by", GroupBy.CATEGORY)
     context = _build_list_context(request, shopping_list, group_by)
 
-    status_messages = {
-        ItemStatus.GOT: f"🛒 You got '{item.name}'",
-        ItemStatus.HAVE: f"🏠 You marked '{item.name}' as Already in Pantry",
-        ItemStatus.DONT_NEED: f"⏭ You skipped '{item.name}'",
-        ItemStatus.NEED: f"📋 You moved '{item.name}' back to To Buy",
-    }
-    toast = status_messages.get(new_status, f"You updated '{item.name}'")
+    if merged:
+        unit_str = f" {item.unit_display}" if item.unit_display else ""
+        toast = f"📋 Combined '{merged_src_name}' into '{item.name}' ({item.amount_display}{unit_str})"
+    else:
+        status_messages = {
+            ItemStatus.GOT: f"🛒 You got '{item.name}'",
+            ItemStatus.HAVE: f"🏠 You marked '{item.name}' as Already in Pantry",
+            ItemStatus.DONT_NEED: f"⏭ You skipped '{item.name}'",
+            ItemStatus.NEED: f"📋 You moved '{item.name}' back to To Buy",
+        }
+        toast = status_messages.get(new_status, f"You updated '{item.name}'")
 
     actor_name = item.status_actor_first_name or "Someone"
-    other_status_messages = {
-        ItemStatus.GOT: f"🛒 {actor_name} got '{item.name}'",
-        ItemStatus.HAVE: f"🏠 {actor_name} marked '{item.name}' as in Pantry",
-        ItemStatus.DONT_NEED: f"⏭ {actor_name} skipped '{item.name}'",
-        ItemStatus.NEED: f"📋 {actor_name} moved '{item.name}' back to To Buy",
-    }
+    if merged:
+        unit_str = f" {item.unit_display}" if item.unit_display else ""
+        broadcast_toast = f"📋 {actor_name} combined '{merged_src_name}' into '{item.name}' ({item.amount_display}{unit_str})"
+    else:
+        other_status_messages = {
+            ItemStatus.GOT: f"🛒 {actor_name} got '{item.name}'",
+            ItemStatus.HAVE: f"🏠 {actor_name} marked '{item.name}' as in Pantry",
+            ItemStatus.DONT_NEED: f"⏭ {actor_name} skipped '{item.name}'",
+            ItemStatus.NEED: f"📋 {actor_name} moved '{item.name}' back to To Buy",
+        }
+        broadcast_toast = other_status_messages.get(new_status, f"{actor_name} updated '{item.name}'")
     broadcast_shopping_list_update(
         shopping_list=shopping_list,
-        toast_message=other_status_messages.get(new_status, f"{actor_name} updated '{item.name}'"),
+        toast_message=broadcast_toast,
         actor_name=actor_name,
         sender_client_id=_get_client_id(request),
     )
-    return render_list_response(request, context, toast_message=toast)
+    response = render_list_response(request, context, toast_message=toast)
+    if merged:
+        response["X-Item-Merged"] = "1"
+        response["X-Merged-Into-Item-Id"] = str(item.id)
+    return response
 
 
 @require_POST
@@ -569,15 +579,15 @@ def add_item(request: HttpRequest) -> HttpResponse:
         aisle = ""
 
     # Check for deduplication / stacking with an existing NEED item
-    normalized_name = singularize(raw_name.lower())
+    normalized_name = singularize(raw_name.lower().strip())
 
     existing: ShoppingListItem | None = None
     for candidate in shopping_list.items.filter(status=ItemStatus.NEED):
         if (
-            singularize(candidate.name.lower()) == normalized_name
+            singularize(candidate.name.lower().strip()) == normalized_name
             and can_combine_units(candidate.amount_unit, amount_unit)
-            and candidate.brand.lower() == brand.lower()
-            and candidate.vendor.lower() == vendor.lower()
+            and candidate.brand.lower().strip() == brand.lower().strip()
+            and candidate.vendor.lower().strip() == vendor.lower().strip()
         ):
             existing = candidate
             break
@@ -586,10 +596,10 @@ def add_item(request: HttpRequest) -> HttpResponse:
     if not existing:
         for candidate in shopping_list.items.filter(status__in=[ItemStatus.HAVE, ItemStatus.DONT_NEED]):
             if (
-                singularize(candidate.name.lower()) == normalized_name
+                singularize(candidate.name.lower().strip()) == normalized_name
                 and can_combine_units(candidate.amount_unit, amount_unit)
-                and candidate.brand.lower() == brand.lower()
-                and candidate.vendor.lower() == vendor.lower()
+                and candidate.brand.lower().strip() == brand.lower().strip()
+                and candidate.vendor.lower().strip() == vendor.lower().strip()
             ):
                 prev_status = candidate.status
                 candidate.status = ItemStatus.NEED
@@ -703,6 +713,9 @@ def add_item(request: HttpRequest) -> HttpResponse:
     response = render_list_response(request, context, toast_message=toast)
     target_item = existing or new_item
     response["X-Created-Item-Id"] = str(target_item.id)
+    if existing:
+        response["X-Item-Merged"] = "1"
+        response["X-Merged-Into-Item-Id"] = str(existing.id)
     return response
 
 
@@ -848,14 +861,14 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
             )
 
         # Check if editing this item allows it to combine with another item on the list
-        normalized_name = singularize(item.name.lower())
+        normalized_name = singularize(item.name.lower().strip())
         existing: ShoppingListItem | None = None
         for candidate in item.shopping_list.items.filter(status=item.status).exclude(id=item.id):
             if (
-                singularize(candidate.name.lower()) == normalized_name
+                singularize(candidate.name.lower().strip()) == normalized_name
                 and can_combine_units(candidate.amount_unit, item.amount_unit)
-                and candidate.brand.lower() == item.brand.lower()
-                and candidate.vendor.lower() == item.vendor.lower()
+                and candidate.brand.lower().strip() == item.brand.lower().strip()
+                and candidate.vendor.lower().strip() == item.vendor.lower().strip()
             ):
                 existing = candidate
                 break
@@ -907,7 +920,10 @@ def edit_item(request: HttpRequest, item_id: int) -> HttpResponse:
                 actor_name=existing_actor,
                 sender_client_id=_get_client_id(request),
             )
-            return render_list_response(request, context, toast_message=toast)
+            response = render_list_response(request, context, toast_message=toast)
+            response["X-Item-Merged"] = "1"
+            response["X-Merged-Into-Item-Id"] = str(existing.id)
+            return response
 
         # Requirement: If not combined, check if amount or unit was increased by editing
         if is_quantity_increased(old_amount, old_unit, item.amount, item.amount_unit):

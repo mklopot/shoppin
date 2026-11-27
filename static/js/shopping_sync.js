@@ -63,7 +63,7 @@
             }
         });
         const amtText = String(rawAmount || '1').trim() || '1';
-        const match = amtText.match(/^(\d+(?:[.\x2f]\d+)?)\s*(.*)$/);
+        const match = amtText.match(/^(\d+(?:\s+\d+\x2f\d+|[.\x2f]\d+)?)\s*(.*)$/);
         const amountDisplay = match ? match[1] : amtText;
         const unitDisplay = match ? match[2].trim() : '';
         return {
@@ -73,6 +73,233 @@
             priority,
             category: estimateCategory(cleanName)
         };
+    }
+
+    const CLIENT_SINGULAR_EXCEPTIONS = {
+        loaves: 'loaf',
+        leaves: 'leaf',
+        halves: 'half',
+        calves: 'calf',
+        knives: 'knife',
+        cloves: 'clove',
+        slices: 'slice',
+        tomatoes: 'tomato',
+        potatoes: 'potato',
+        mangoes: 'mango',
+        avocadoes: 'avocado',
+        lbs: 'lb'
+    };
+
+    const CLIENT_UNCOUNTABLES = new Set([
+        'asparagus', 'hummus', 'couscous', 'citrus', 'molasses', 'pasta', 'rice', 'lettuce', 'spinach', 'celery', 'broccoli', 'garlic', 'ginger', 'cheese', 'milk', 'butter', 'bread', 'beef', 'chicken', 'pork', 'fish', 'water', 'oil', 'flour', 'sugar', 'salt', 'oats'
+    ]);
+
+    function singularizeClient(word) {
+        const clean = String(word || '').trim().toLowerCase();
+        if (!clean) return '';
+        if (CLIENT_UNCOUNTABLES.has(clean)) return clean;
+        if (CLIENT_SINGULAR_EXCEPTIONS[clean]) return CLIENT_SINGULAR_EXCEPTIONS[clean];
+        if (clean.length > 3 && clean.endsWith('ies')) {
+            return clean.slice(0, -3) + 'y';
+        }
+        if (clean.length > 3 && clean.endsWith('oes')) {
+            return clean.slice(0, -2);
+        }
+        if (clean.length > 3 && /(?:ch|sh|x|z|ss)es$/.test(clean)) {
+            return clean.slice(0, -2);
+        }
+        if (clean.length > 2 && clean.endsWith('s') && !/(?:ss|us|is)$/.test(clean)) {
+            return clean.slice(0, -1);
+        }
+        return clean;
+    }
+
+    const VOLUME_UNITS = new Set([
+        'tsp', 'teaspoon', 'tbsp', 'tablespoon', 'fl oz', 'fluid ounce',
+        'cup', 'pt', 'pint', 'qt', 'quart', 'gal', 'gallon',
+        'ml', 'milliliter', 'l', 'liter'
+    ]);
+
+    const WEIGHT_UNITS = new Set([
+        'oz', 'ounce', 'lb', 'pound', 'g', 'gram', 'kg', 'kilogram'
+    ]);
+
+    function getUnitFamilyClient(unit) {
+        const norm = singularizeClient(unit);
+        if (!norm) return null;
+        if (VOLUME_UNITS.has(norm)) return 'volume';
+        if (WEIGHT_UNITS.has(norm)) return 'weight';
+        return null;
+    }
+
+    function canCombineUnitsClient(u1, u2) {
+        const c1 = String(u1 || '').trim();
+        const c2 = String(u2 || '').trim();
+        if (!c1 && !c2) return true;
+        if (!c1 || !c2) return false;
+        if (singularizeClient(c1) === singularizeClient(c2)) return true;
+        const f1 = getUnitFamilyClient(c1);
+        const f2 = getUnitFamilyClient(c2);
+        return Boolean(f1 && f1 === f2);
+    }
+
+    function parseNumericAmountClient(raw) {
+        const s = String(raw || '').trim();
+        if (!s) return null;
+        const mixed = s.match(/^(\d+)\s+(\d+)\x2f(\d+)$/);
+        if (mixed) {
+            const denom = parseFloat(mixed[3]);
+            return denom ? parseFloat(mixed[1]) + (parseFloat(mixed[2]) / denom) : null;
+        }
+        const frac = s.match(/^(\d+)\x2f(\d+)$/);
+        if (frac) {
+            const denom = parseFloat(frac[2]);
+            return denom ? parseFloat(frac[1]) / denom : null;
+        }
+        const num = parseFloat(s);
+        return Number.isFinite(num) ? num : null;
+    }
+
+    function formatAmountClient(num) {
+        if (!Number.isFinite(num)) return '';
+        const rounded = Math.round(num * 100) / 100;
+        if (Math.abs(rounded - Math.round(rounded)) < 0.001) {
+            return String(Math.round(rounded));
+        }
+        return String(rounded).replace(/0+$/, '').replace(/\.$/, '');
+    }
+
+    function getCurrentAuditMeta() {
+        const listContent = document.getElementById('shopping-list-content');
+        const actorDisplay = (listContent?.getAttribute('data-actor-display') || '').trim();
+        const now = new Date();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const dateStr = `${mm}/${dd}`;
+        const title = actorDisplay
+            ? `Date placed or updated by ${actorDisplay}`
+            : 'Date placed or updated';
+        const text = actorDisplay ? `${actorDisplay} ${dateStr}` : dateStr;
+        const html = `<span class="item-audit-meta ml-1.5 text-gray-700 italic text-xs select-none" title="${escapeHtml(title)}">${escapeHtml(text)}</span>`;
+        return { actorDisplay, dateStr, title, text, html };
+    }
+
+    function getRowData(row) {
+        if (!row) return null;
+        const titleText = row.querySelector('.item-title')?.textContent?.trim() || '';
+        const qtyText = row.querySelector('.item-qty')?.textContent?.trim() || '';
+        const fallbackParsed = parseQuickAddClient(titleText, qtyText || '1', false);
+        const amount = row.getAttribute('data-item-amount') || fallbackParsed.amountDisplay || '1';
+        const unit = row.hasAttribute('data-item-unit')
+            ? (row.getAttribute('data-item-unit') || '')
+            : fallbackParsed.unitDisplay;
+        const unitDisplay = row.hasAttribute('data-item-unit-display')
+            ? (row.getAttribute('data-item-unit-display') || '')
+            : unit;
+        const isPriority = row.getAttribute('data-priority') === 'true'
+            || Boolean(row.querySelector('button[title*="Remove priority"], button[title*="click to remove priority"]'));
+        return {
+            id: row.getAttribute('data-item-id') || '',
+            name: row.getAttribute('data-item-name') || titleText,
+            status: row.getAttribute('data-item-status') || 'NEED',
+            amount,
+            unit,
+            unitDisplay,
+            category: row.getAttribute('data-item-category') || row.getAttribute('data-group-name') || '',
+            aisle: row.getAttribute('data-item-aisle') || '',
+            brand: row.getAttribute('data-item-brand') || '',
+            vendor: row.getAttribute('data-item-vendor') || '',
+            purpose: row.getAttribute('data-item-purpose') || '',
+            priority: isPriority,
+            locked: row.getAttribute('data-locked') === 'true',
+            groupName: row.getAttribute('data-group-name') || row.closest('.section-group-block')?.getAttribute('data-group-name') || 'Other'
+        };
+    }
+
+    function findMatchingRowInContainer(containerSelector, name, opts = {}) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return null;
+        const targetNorm = singularizeClient(name);
+        if (!targetNorm) return null;
+        const targetBrand = String(opts.brand || '').trim().toLowerCase();
+        const targetVendor = String(opts.vendor || '').trim().toLowerCase();
+        const targetUnit = String(opts.unit || '').trim();
+        const excludeId = opts.excludeItemId ? String(opts.excludeItemId) : null;
+
+        const rows = container.querySelectorAll('.item-row');
+        for (let i = 0; i < rows.length; i++) {
+            const cand = rows[i];
+            if (cand.dataset && cand.dataset.pendingDelete === '1') continue;
+            const candId = cand.getAttribute('data-item-id') || '';
+            if (excludeId && candId === excludeId) continue;
+            const candData = getRowData(cand);
+            if (!candData) continue;
+            if (
+                singularizeClient(candData.name) === targetNorm
+                && canCombineUnitsClient(candData.unit, targetUnit)
+                && candData.brand.trim().toLowerCase() === targetBrand
+                && candData.vendor.trim().toLowerCase() === targetVendor
+            ) {
+                return cand;
+            }
+        }
+        return null;
+    }
+
+    function updateRowAuditMeta(row) {
+        if (!row) return;
+        const audit = getCurrentAuditMeta();
+        const auditEl = row.querySelector('.item-audit-meta, .item-secondary-details > span[title*="Date placed"]');
+        if (auditEl) {
+            auditEl.textContent = audit.text;
+            auditEl.setAttribute('title', audit.title);
+        }
+    }
+
+    function mergeIntoExistingRowDom(targetRow, addedData, opts = {}) {
+        if (!targetRow || !addedData) return;
+        const targetData = getRowData(targetRow);
+        if (!targetData) return;
+
+        const sameUnit = singularizeClient(targetData.unit) === singularizeClient(addedData.unit);
+        const a1 = parseNumericAmountClient(targetData.amount);
+        const a2 = parseNumericAmountClient(addedData.amount);
+        if (sameUnit && a1 !== null && a2 !== null) {
+            const nextAmt = formatAmountClient(a1 + a2);
+            targetRow.setAttribute('data-item-amount', nextAmt);
+            const qtyEl = targetRow.querySelector('.item-qty');
+            if (qtyEl) {
+                const unitDisp = targetData.unitDisplay || targetData.unit || addedData.unitDisplay || addedData.unit || '';
+                qtyEl.textContent = unitDisp ? `${nextAmt} ${unitDisp}` : nextAmt;
+            }
+        }
+
+        if (addedData.priority && !targetData.priority) {
+            targetRow.setAttribute('data-priority', 'true');
+            const titleEl = targetRow.querySelector('.item-title');
+            if (titleEl && !targetRow.querySelector('button[title*="Remove priority"], button[title*="click to remove priority"]')) {
+                const badge = document.createElement('span');
+                badge.className = 'ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none whitespace-nowrap';
+                badge.innerHTML = '<span aria-hidden="true">🚩</span><span>Priority</span>';
+                titleEl.after(badge);
+                targetRow.querySelector('.item-priority-toggle-btn')?.closest('form')?.remove();
+            }
+        }
+
+        if (opts.lockInPantry) {
+            targetRow.setAttribute('data-locked', 'true');
+            targetRow.classList.add('bg-blue-50/40');
+            const titleEl = targetRow.querySelector('.item-title');
+            if (titleEl && !targetRow.querySelector('.item-need-tag')) {
+                const tag = document.createElement('span');
+                tag.className = 'item-need-tag ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none whitespace-nowrap inline-flex items-center';
+                tag.textContent = '📋 Need';
+                titleEl.after(tag);
+            }
+        }
+
+        updateRowAuditMeta(targetRow);
+        animateRow(targetRow, '#dbeafe');
     }
 
     // -------------------------------------------------------------------------
@@ -124,7 +351,7 @@
         const { groupBy = 'category', mode = 'shopping', isLocked = false, isPriority = false } = opts;
         const csrf = getCsrf();
         const safeName = escapeHtml(itemName);
-        const editBtn = `<button hx-get="/item/${itemId}/edit/?group_by=${groupBy}&mode=${mode}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5" aria-label="Edit item ${safeName}" title="Edit"><span aria-hidden="true">✏️</span></button>`;
+        const editBtn = `<button type="button" hx-get="/item/${itemId}/edit/?group_by=${groupBy}&mode=${mode}" hx-target="#modal-placeholder" class="text-gray-500 hover:text-gray-900 px-1 py-0.5 cursor-pointer" aria-label="Edit item ${safeName}" title="Edit"><span aria-hidden="true">✏️</span></button>`;
 
         if (status === 'GOT') {
             return `
@@ -210,7 +437,13 @@
         } else {
             handleLocalHaveOrSkip(itemId, row, status, { silentToast: true });
         }
-        Q()?.enqueue(url, body, { itemId, targetStatus: status, type: 'status', coalesceKey: `status:item:${itemId}` });
+        Q()?.enqueue(url, body, {
+            itemId,
+            targetStatus: status,
+            type: 'status',
+            reconcileTarget: status === 'NEED' ? '#shopping-list-content' : null,
+            coalesceKey: `status:item:${itemId}`
+        });
     }
 
     function handleLocalGot(itemId, row, opts = {}) {
@@ -284,9 +517,43 @@
 
     function handleLocalNeed(itemId, row, opts = {}) {
         const { sectionsContainer, groupBy, mode } = getListMeta();
-        if (!sectionsContainer) return;
+        if (!sectionsContainer) return null;
 
         const previousStatus = row.getAttribute('data-item-status') || 'GOT';
+        const rowData = getRowData(row);
+        const itemName = (rowData && rowData.name) || row.getAttribute('data-item-name') || 'item';
+
+        // Combine at the very first opportunity if a matching NEED item is already in To Buy!
+        const matchRow = findMatchingRowInContainer('#section-groups-container', itemName, {
+            brand: rowData?.brand || '',
+            vendor: rowData?.vendor || '',
+            unit: rowData?.unit || '',
+            excludeItemId: itemId
+        });
+
+        if (matchRow) {
+            row.remove();
+            if (previousStatus === 'GOT') {
+                adjustCount('got-items-count', -1);
+                const gotList = document.getElementById('got-items-list');
+                if (gotList && gotList.children.length === 0) {
+                    document.getElementById('got-section-container')?.classList.add('hidden');
+                }
+            } else {
+                adjustCount('pantry-items-count', -1);
+                const pantryList = document.getElementById('pantry-items-list');
+                if (pantryList && pantryList.children.length === 0) {
+                    document.getElementById('pantry-section-container')?.classList.add('hidden');
+                }
+            }
+            mergeIntoExistingRowDom(matchRow, rowData, { lockInPantry: mode === 'pantry' });
+            const matchName = matchRow.getAttribute('data-item-name') || itemName;
+            if (!opts.silentToast) {
+                triggerToast(`📋 Combined '${itemName}' into '${matchName}'`, { type: 'info' });
+            }
+            return { mergedIntoId: matchRow.getAttribute('data-item-id') };
+        }
+
         let groupName = row.getAttribute('data-group-name');
         if (!groupName || groupName === 'null') groupName = 'Other';
 
@@ -314,7 +581,6 @@
             }
         }
 
-        const itemName = row.getAttribute('data-item-name') || 'item';
         const isPriority = row.getAttribute('data-priority') === 'true' || Boolean(row.querySelector('form[action*="/priority/"] button, form[hx-post*="/priority/"] button[title*="Remove"]'));
 
         row.setAttribute('data-item-status', 'NEED');
@@ -351,10 +617,12 @@
             if (window.htmx) htmx.process(actionsWrap);
         }
 
+        updateRowAuditMeta(row);
         animateRow(row, '#dbeafe');
         if (!opts.silentToast) {
             triggerToast(`📋 Moved '${itemName}' back to To Buy`, { type: 'info' });
         }
+        return null;
     }
 
     function handleLocalHaveOrSkip(itemId, row, targetStatus, opts = {}) {
@@ -586,27 +854,38 @@
             ? (parsed.priority ? 'Priority Items' : 'Standard Items')
             : (groupBy === 'aisle' ? 'Other' : parsed.category);
 
-        const block = getOrCreateGroupBlock(sectionsContainer, groupName);
-        block.classList.remove('hidden');
-        document.getElementById('to-buy-empty-placeholder')?.classList.add('hidden');
-
         const tempId = meta.tempId;
         const row = document.createElement('div');
         row.id = `item-row-${tempId}`;
-        row.className = 'item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors bg-emerald-50/30';
+        row.className = `item-row py-1.5 px-3 flex items-center justify-between hover:bg-gray-50 text-xs transition-colors${mode === 'pantry' ? ' bg-blue-50/40' : ''}`;
         row.setAttribute('data-item-id', tempId);
         row.setAttribute('data-item-name', parsed.name);
         row.setAttribute('data-item-status', 'NEED');
+        row.setAttribute('data-item-amount', parsed.amountDisplay);
+        row.setAttribute('data-item-unit', parsed.unitDisplay || '');
+        row.setAttribute('data-item-unit-display', parsed.unitDisplay || '');
+        row.setAttribute('data-item-category', parsed.category.toLowerCase());
+        row.setAttribute('data-item-aisle', '');
+        row.setAttribute('data-item-brand', meta.brand || '');
+        row.setAttribute('data-item-vendor', meta.vendor || '');
+        row.setAttribute('data-item-purpose', meta.purpose || 'one-time purchase');
+        row.setAttribute('data-priority', parsed.priority ? 'true' : 'false');
         row.setAttribute('data-locked', 'true');
         row.setAttribute('data-optimistic-pending', '1');
         row.setAttribute('data-group-name', groupName);
 
-        const purposeText = meta.purpose && meta.purpose !== 'one-time purchase' ? `<span class="inline-block italic text-gray-600">For ${escapeHtml(meta.purpose)}</span>` : '';
+        const purposeText = meta.purpose && meta.purpose.toLowerCase() !== 'one-time purchase'
+            ? `<span class="inline-block italic text-gray-600">For ${escapeHtml(meta.purpose)}</span>`
+            : '<span class="inline-block italic text-gray-600">For one-time purchase</span>';
         const brandText = meta.brand ? `<span class="inline-block ml-1 italic text-gray-700">Brand: ${escapeHtml(meta.brand)}</span>` : '';
         const vendorText = meta.vendor ? `<span class="inline-block ml-1 italic text-gray-700">Vendor: ${escapeHtml(meta.vendor)}</span>` : '';
         const prioBadge = parsed.priority
-            ? '<span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020]">🚩 Priority</span>'
+            ? '<span class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none whitespace-nowrap"><span aria-hidden="true">🚩</span><span>Priority</span></span>'
             : '';
+        const pantryTag = mode === 'pantry'
+            ? '<span class="item-need-tag ml-1.5 px-1 py-0.2 text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300 select-none whitespace-nowrap inline-flex items-center">📋 Need</span>'
+            : '';
+        const auditMeta = getCurrentAuditMeta();
 
         row.innerHTML = `
             <div class="flex items-center space-x-2 flex-1 min-w-0 mr-2">
@@ -614,15 +893,18 @@
                 <div class="min-w-0 flex-1 leading-snug">
                     <span class="item-title font-semibold text-gray-900 text-sm">${escapeHtml(parsed.name)}</span>
                     ${prioBadge}
-                    <span class="font-normal text-gray-700 ml-1.5 whitespace-nowrap">${escapeHtml(parsed.amountDisplay)}${parsed.unitDisplay ? ' ' + escapeHtml(parsed.unitDisplay) : ''}</span>
-                    <span class="text-gray-600 ml-2">${purposeText}${brandText}${vendorText}</span>
-                    <span class="ml-1.5 text-[10px] text-emerald-700 font-semibold italic select-none">Adding...</span>
+                    ${pantryTag}
+                    <span class="item-qty font-normal text-gray-700 ml-1.5 whitespace-nowrap">${escapeHtml(parsed.amountDisplay)}${parsed.unitDisplay ? ' ' + escapeHtml(parsed.unitDisplay) : ''}</span>
+                    <span class="item-secondary-details text-gray-600 ml-2">${purposeText}${brandText}${vendorText}${auditMeta.html}</span>
                 </div>
             </div>
             <div class="item-actions flex items-center space-x-1 flex-shrink-0">
                 ${buildRowActionsHtml(tempId, parsed.name, 'NEED', { groupBy, mode, isLocked: true, isPriority: parsed.priority })}
             </div>
         `;
+        const block = getOrCreateGroupBlock(sectionsContainer, groupName);
+        block.classList.remove('hidden');
+        document.getElementById('to-buy-empty-placeholder')?.classList.add('hidden');
         const groupList = block.querySelector('.sortable-group');
         if (groupList) groupList.prepend(row);
         adjustCount('need-items-count', 1);
@@ -644,14 +926,36 @@
 
         const actionUrl = form.getAttribute('hx-post') || form.getAttribute('action');
         const body = Q().serializeForm(form);
+        const brandVal = brandEl?.value?.trim() || '';
+        const vendorVal = vendorEl?.value?.trim() || '';
+        const purposeVal = purposeEl?.value?.trim() || '';
         const parsed = parseQuickAddClient(rawName, amountEl?.value || '1', prioEl?.checked);
-        const tempId = Q().generateKey('tmp');
-        const ghostRow = insertOptimisticGhostRow(parsed, {
-            tempId,
-            brand: brandEl?.value?.trim() || '',
-            vendor: vendorEl?.value?.trim() || '',
-            purpose: purposeEl?.value?.trim() || ''
+
+        // Combine at 0ms if a matching NEED item already exists in To Buy
+        const existingMatchRow = findMatchingRowInContainer('#section-groups-container', parsed.name, {
+            brand: brandVal,
+            vendor: vendorVal,
+            unit: parsed.unitDisplay
         });
+
+        let tempId = null;
+        let ghostRow = null;
+        if (existingMatchRow) {
+            mergeIntoExistingRowDom(existingMatchRow, {
+                amount: parsed.amountDisplay,
+                unit: parsed.unitDisplay,
+                unitDisplay: parsed.unitDisplay,
+                priority: parsed.priority
+            }, { lockInPantry: getListMeta().mode === 'pantry' });
+        } else {
+            tempId = Q().generateKey('tmp');
+            ghostRow = insertOptimisticGhostRow(parsed, {
+                tempId,
+                brand: brandVal,
+                vendor: vendorVal,
+                purpose: purposeVal
+            });
+        }
 
         // Clear fields & keep focus in Quick Add immediately for rapid-fire grocery input!
         clearQuickAddDraft();
@@ -664,33 +968,39 @@
         renderQuickAddPreview();
 
         window.ShoppinHaptics?.tap?.(10);
-        triggerToast(`Added '${parsed.name}'`, {
-            type: 'success',
-            duration: 3000,
-            undoLabel: 'Undo',
-            onUndo: () => {
-                const realId = Q().tempIdMap.get(tempId) || tempId;
-                if (ghostRow && ghostRow.parentNode) {
-                    ghostRow.remove();
-                    adjustCount('need-items-count', -1);
-                }
-                const { groupBy, mode } = getListMeta();
-                Q().enqueue(`/item/${realId}/delete/?group_by=${groupBy}&mode=${mode}`, `csrfmiddlewaretoken=${encodeURIComponent(getCsrf())}`, {
-                    itemId: realId,
-                    type: 'delete',
-                    reconcileTarget: '#shopping-list-content'
-                }, {
-                    onSuccess: (_, html, ctx) => {
-                        if (html && !ctx?.hasMoreWork && window.ShoppinMorph) {
-                            window.ShoppinMorph.swapFromHtml('#shopping-list-content', html);
-                        }
+        if (existingMatchRow) {
+            const matchName = existingMatchRow.getAttribute('data-item-name') || parsed.name;
+            triggerToast(`Updated '${matchName}'`, { type: 'success', duration: 2800 });
+        } else {
+            triggerToast(`Added '${parsed.name}'`, {
+                type: 'success',
+                duration: 3000,
+                undoLabel: 'Undo',
+                onUndo: () => {
+                    const realId = Q().tempIdMap.get(tempId) || tempId;
+                    if (ghostRow && ghostRow.parentNode) {
+                        ghostRow.remove();
+                        adjustCount('need-items-count', -1);
                     }
-                });
-            }
-        });
+                    const { groupBy, mode } = getListMeta();
+                    Q().enqueue(`/item/${realId}/delete/?group_by=${groupBy}&mode=${mode}`, `csrfmiddlewaretoken=${encodeURIComponent(getCsrf())}`, {
+                        itemId: realId,
+                        type: 'delete',
+                        reconcileTarget: '#shopping-list-content'
+                    }, {
+                        onSuccess: (_, html, ctx) => {
+                            if (html && !ctx?.hasMoreWork && window.ShoppinMorph) {
+                                window.ShoppinMorph.swapFromHtml('#shopping-list-content', html);
+                            }
+                        }
+                    });
+                }
+            });
+        }
 
         Q().enqueue(actionUrl, body, {
             tempId,
+            itemId: existingMatchRow ? existingMatchRow.getAttribute('data-item-id') : null,
             type: 'add_item',
             reconcileTarget: '#shopping-list-content',
             idempotencyKey: Q().generateKey('add')
@@ -710,12 +1020,297 @@
         });
     }
 
+    // -------------------------------------------------------------------------
+    // 0ms Instant Edit Item Modal + Background History Hydration + Queued Save
+    // -------------------------------------------------------------------------
+
+    function extractAdvancedDetailsHtml(serverModalHtml) {
+        if (!serverModalHtml) return '';
+        const wrap = document.createElement('div');
+        wrap.innerHTML = serverModalHtml;
+        const detailsEl = wrap.querySelector('details');
+        return detailsEl ? detailsEl.outerHTML : '';
+    }
+
+    function buildEditModalHtml(itemData, opts = {}) {
+        const { resolvedId, groupBy, mode, token, isTemp, isOnline, cachedAdvancedHtml } = opts;
+        const csrf = getCsrf();
+        const amountFieldValue = itemData.unitDisplay
+            ? `${itemData.amount} ${itemData.unitDisplay}`.trim()
+            : (itemData.unit ? `${itemData.amount} ${itemData.unit}`.trim() : itemData.amount);
+        const advancedStatus = isTemp
+            ? 'Available once synced'
+            : (!isOnline ? 'Offline — changes will queue' : 'Loading history...');
+        const advancedInner = cachedAdvancedHtml || `
+            <details class="group border border-gray-300 bg-gray-50/70">
+                <summary class="cursor-pointer select-none px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-700 hover:text-gray-900 hover:bg-gray-100 flex items-center justify-between list-none">
+                    <span class="flex items-center gap-1.5">
+                        <span class="inline-block transition-transform duration-150 group-open:rotate-90 text-[10px]" aria-hidden="true">&#9654;</span>
+                        <span>Advanced</span>
+                    </span>
+                    <span class="edit-advanced-status text-[10px] font-medium normal-case tracking-normal text-gray-500">${escapeHtml(advancedStatus)}</span>
+                </summary>
+                <div class="p-2.5 border-t border-gray-300 bg-white text-[11px] text-gray-600 italic">
+                    ${escapeHtml(advancedStatus)}
+                </div>
+            </details>
+        `;
+
+        return `
+<div id="modal-container" role="dialog" aria-modal="true" aria-labelledby="edit-item-modal-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onclick="if(event.target === this){ const mp = document.getElementById('modal-placeholder'); if(mp) mp.innerHTML=''; }">
+    <div class="bg-white border border-gray-400 max-w-md w-full p-4 space-y-3 shadow-lg max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-gray-300 pb-2">
+            <h3 id="edit-item-modal-title" class="font-bold text-gray-900 text-sm uppercase">Edit Item</h3>
+            <button type="button" onclick="const mp = document.getElementById('modal-placeholder'); if(mp) mp.innerHTML=''; else document.getElementById('modal-container')?.remove();" aria-label="Close dialog" class="text-gray-500 hover:text-black font-bold text-lg cursor-pointer"><span aria-hidden="true">&times;</span></button>
+        </div>
+
+        <form hx-post="/item/${escapeHtml(resolvedId)}/edit/?group_by=${encodeURIComponent(groupBy)}&amp;mode=${encodeURIComponent(mode)}" hx-target="#shopping-list-content" hx-swap="outerHTML transition:true" class="space-y-2.5 text-xs">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${escapeHtml(csrf)}">
+            <input type="hidden" name="group_by" value="${escapeHtml(groupBy)}">
+            <input type="hidden" name="mode" value="${escapeHtml(mode)}">
+            <div>
+                <label for="edit-item-name" class="block font-bold text-gray-700 mb-0.5">Item Name</label>
+                <input type="text" id="edit-item-name" name="name" value="${escapeHtml(itemData.name)}" list="all-ingredients-datalist" autocomplete="off" required class="w-full px-2 py-1.5 border border-gray-400 bg-white text-xs">
+            </div>
+
+            <div>
+                <label for="edit-item-amount" class="block font-bold text-gray-700 mb-0.5">Amount &amp; Unit</label>
+                <input type="text" id="edit-item-amount" name="amount" value="${escapeHtml(amountFieldValue)}" placeholder="e.g. 2 lbs, 1/2 cup, 3 cans, 1" class="w-full px-2 py-1.5 border border-gray-400 bg-white text-xs">
+                <span class="text-[10px] text-gray-500">Type quantity and unit together (e.g. &quot;2 lbs&quot;, &quot;1/2 cup&quot;, &quot;1 can&quot;) &mdash; automatically parsed.</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label for="edit-item-category" class="block font-bold text-gray-700 mb-0.5">Category</label>
+                    <input type="text" id="edit-item-category" name="category" list="category-datalist" value="${escapeHtml(itemData.category)}" placeholder="Select or type category..." autocomplete="off" class="w-full px-2 py-1 border border-gray-400 bg-white rounded-none focus:outline-none focus:border-gray-700">
+                </div>
+                <div>
+                    <label for="edit-item-aisle" class="block font-bold text-gray-700 mb-0.5">Aisle</label>
+                    <input type="text" id="edit-item-aisle" name="aisle" list="aisle-datalist" value="${escapeHtml(itemData.aisle)}" placeholder="Select or type aisle..." autocomplete="off" class="w-full px-2 py-1 border border-gray-400 bg-white rounded-none focus:outline-none focus:border-gray-700">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label for="edit-item-brand" class="block font-bold text-gray-700 mb-0.5">Brand (optional)</label>
+                    <input type="text" id="edit-item-brand" name="brand" value="${escapeHtml(itemData.brand)}" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                </div>
+                <div>
+                    <label for="edit-item-vendor" class="block font-bold text-gray-700 mb-0.5">Vendor (optional)</label>
+                    <input type="text" id="edit-item-vendor" name="vendor" value="${escapeHtml(itemData.vendor)}" placeholder="King Soopers, etc" class="w-full px-2 py-1 border border-gray-400 bg-white">
+                </div>
+            </div>
+
+            <div>
+                <label for="edit-item-purpose" class="block font-bold text-gray-700 mb-0.5">Purpose</label>
+                <input type="text" id="edit-item-purpose" name="purpose" value="${escapeHtml(itemData.purpose)}" placeholder="e.g. one-time purchase, snack" class="w-full px-2 py-1 border border-gray-400 bg-white">
+            </div>
+
+            <div class="flex items-center space-x-2 pt-1 min-h-[28px]">
+                <input type="checkbox" id="edit-item-priority" name="priority" value="true" ${itemData.priority ? 'checked' : ''} class="h-4 w-4 text-[#800020] border-gray-400 rounded-none cursor-pointer focus:ring-1 focus:ring-[#800020]">
+                <label for="edit-item-priority" class="font-bold text-gray-800 flex items-center space-x-1.5 cursor-pointer select-none">
+                    <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase tracking-wider border border-[#800020]/40 bg-[#fdf2f4] text-[#800020] select-none inline-flex items-center gap-1 rounded-none whitespace-nowrap">
+                        <span aria-hidden="true">🚩</span>
+                        <span>Priority</span>
+                    </span>
+                    <span class="text-xs text-gray-700 font-normal">(Flag as high priority item)</span>
+                </label>
+            </div>
+
+            <div id="edit-item-advanced-slot" data-modal-token="${escapeHtml(token)}">
+                ${advancedInner}
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-gray-300">
+                <button type="button" onclick="const mp = document.getElementById('modal-placeholder'); if(mp) mp.innerHTML=''; else document.getElementById('modal-container')?.remove();" class="px-3 py-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 font-medium cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" class="px-3 py-1 bg-gray-900 hover:bg-black text-white font-bold cursor-pointer">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>`;
+    }
+
+    function applyHydratedAdvancedHtml(token, serverModalHtml) {
+        const slot = document.querySelector(`#edit-item-advanced-slot[data-modal-token="${token}"]`);
+        if (!slot) return;
+        const detailsHtml = extractAdvancedDetailsHtml(serverModalHtml);
+        if (!detailsHtml) return;
+        const wasOpen = Boolean(slot.querySelector('details')?.open);
+        slot.innerHTML = detailsHtml;
+        if (wasOpen) {
+            const nextDetails = slot.querySelector('details');
+            if (nextDetails) nextDetails.open = true;
+        }
+        if (window.htmx) window.htmx.process(slot);
+    }
+
+    function hydrateEditModalAdvanced(editUrl, token) {
+        if (!navigator.onLine) return;
+        const cached = window.ShoppinPrefetch && window.ShoppinPrefetch.getCached(editUrl);
+        if (cached && cached.html) {
+            applyHydratedAdvancedHtml(token, cached.html);
+            return;
+        }
+
+        const inflight = window.ShoppinPrefetch && window.ShoppinPrefetch.getInflight
+            ? window.ShoppinPrefetch.getInflight(editUrl)
+            : null;
+        if (inflight) {
+            inflight.then((entry) => {
+                if (entry && entry.html) {
+                    applyHydratedAdvancedHtml(token, entry.html);
+                } else {
+                    const slot = document.querySelector(`#edit-item-advanced-slot[data-modal-token="${token}"]`);
+                    const st = slot?.querySelector('.edit-advanced-status');
+                    if (st) st.textContent = 'History unavailable right now';
+                }
+            }).catch(() => {});
+            return;
+        }
+
+        fetch(editUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'HX-Request': 'true',
+                'X-Client-Id': window.CLIENT_ID || 'client_web'
+            }
+        }).then(async (resp) => {
+            const slot = document.querySelector(`#edit-item-advanced-slot[data-modal-token="${token}"]`);
+            if (!slot) return;
+            if (resp.ok) {
+                const html = await resp.text();
+                if (window.ShoppinPrefetch && window.ShoppinPrefetch.storeManual) {
+                    window.ShoppinPrefetch.storeManual(editUrl, html, 12000);
+                }
+                applyHydratedAdvancedHtml(token, html);
+            } else if (resp.status === 404) {
+                const st = slot.querySelector('.edit-advanced-status');
+                if (st) st.textContent = 'Item was merged or removed — refreshing list...';
+                triggerToast('Item was already updated or merged — refreshing list...', { type: 'info' });
+                const listEl = document.getElementById('shopping-list-content');
+                const refreshUrl = listEl?.getAttribute('data-refresh-url');
+                if (refreshUrl && window.ShoppinMorph) {
+                    fetch(refreshUrl, {
+                        credentials: 'same-origin',
+                        headers: { 'HX-Request': 'true', 'HX-Target': 'shopping-list-content', 'X-Client-Id': window.CLIENT_ID || 'client_web' }
+                    }).then((r) => (r.ok ? r.text() : '')).then((listHtml) => {
+                        if (listHtml) window.ShoppinMorph.swapFromHtml('#shopping-list-content', listHtml);
+                    }).catch(() => {});
+                }
+            } else {
+                const st = slot.querySelector('.edit-advanced-status');
+                if (st) st.textContent = 'History unavailable right now';
+            }
+        }).catch(() => {
+            const slot = document.querySelector(`#edit-item-advanced-slot[data-modal-token="${token}"]`);
+            const st = slot?.querySelector('.edit-advanced-status');
+            if (st) st.textContent = 'History unavailable right now';
+        });
+    }
+
+    function openInstantEditModal(editTrigger) {
+        const placeholder = document.getElementById('modal-placeholder');
+        if (!placeholder) return;
+
+        const row = editTrigger.closest('.item-row');
+        const rawHref = editTrigger.getAttribute('hx-get') || '';
+        const urlMatch = rawHref.match(/\/item\/([a-zA-Z0-9_-]+)\/edit/);
+        const rawId = (row && row.getAttribute('data-item-id')) || (urlMatch ? urlMatch[1] : '');
+        if (!rawId) return;
+
+        const resolvedId = (Q() && Q().tempIdMap && Q().tempIdMap.get(String(rawId))) || String(rawId);
+        const isNumericId = /^\d+$/.test(resolvedId);
+        const { groupBy, mode } = getListMeta();
+        const editUrl = `/item/${resolvedId}/edit/?group_by=${encodeURIComponent(groupBy)}&mode=${encodeURIComponent(mode)}`;
+        const itemData = row ? getRowData(row) : {
+            id: resolvedId,
+            name: '',
+            amount: '1',
+            unit: '',
+            unitDisplay: '',
+            category: '',
+            aisle: '',
+            brand: '',
+            vendor: '',
+            purpose: '',
+            priority: false
+        };
+
+        const token = Q() ? Q().generateKey('editmodal') : `em_${Date.now()}`;
+        const safeFetchUrl = (rawHref && rawHref.includes(`/item/${resolvedId}/edit/`)) ? rawHref : editUrl;
+        const cachedEntry = isNumericId && window.ShoppinPrefetch
+            ? (window.ShoppinPrefetch.getCached(safeFetchUrl) || window.ShoppinPrefetch.getCached(editUrl))
+            : null;
+        const cachedAdvancedHtml = cachedEntry && cachedEntry.html
+            ? extractAdvancedDetailsHtml(cachedEntry.html)
+            : '';
+
+        // Mount immediately at 0ms so the very first click ALWAYS opens the dialog cleanly!
+        placeholder.innerHTML = buildEditModalHtml(itemData, {
+            resolvedId,
+            groupBy,
+            mode,
+            token,
+            isTemp: !isNumericId,
+            isOnline: navigator.onLine,
+            cachedAdvancedHtml
+        });
+        if (window.htmx) window.htmx.process(placeholder);
+        const nameInput = document.getElementById('edit-item-name');
+        if (nameInput) nameInput.focus();
+
+        if (isNumericId && !cachedAdvancedHtml) {
+            hydrateEditModalAdvanced(safeFetchUrl, token);
+        }
+    }
+
+    function updateRowDetailsFromEdit(row, vals) {
+        if (!row) return;
+        const titleEl = row.querySelector('.item-title');
+        if (titleEl && vals.name) titleEl.textContent = vals.name;
+        if (vals.name) row.setAttribute('data-item-name', vals.name);
+
+        const parsedAmt = parseQuickAddClient(vals.name || 'item', vals.amountText || '1', vals.priority);
+        row.setAttribute('data-item-amount', parsedAmt.amountDisplay);
+        row.setAttribute('data-item-unit', parsedAmt.unitDisplay || '');
+        row.setAttribute('data-item-unit-display', parsedAmt.unitDisplay || '');
+        row.setAttribute('data-item-category', vals.category || '');
+        row.setAttribute('data-item-aisle', vals.aisle || '');
+        row.setAttribute('data-item-brand', vals.brand || '');
+        row.setAttribute('data-item-vendor', vals.vendor || '');
+        row.setAttribute('data-item-purpose', vals.purpose || 'one-time purchase');
+        row.setAttribute('data-priority', vals.priority ? 'true' : 'false');
+
+        const qtyEl = row.querySelector('.item-qty, .item-title ~ span.whitespace-nowrap');
+        if (qtyEl && vals.amountText) qtyEl.textContent = vals.amountText;
+
+        const secondaryEl = row.querySelector('.item-secondary-details');
+        if (secondaryEl) {
+            const parts = [];
+            if (vals.purpose) parts.push(`<span class="inline-block italic text-gray-600">For ${escapeHtml(vals.purpose)}</span>`);
+            if (vals.brand) parts.push(`<span class="inline-block ml-1 italic text-gray-700">Brand: ${escapeHtml(vals.brand)}</span>`);
+            if (vals.vendor) parts.push(`<span class="inline-block ml-1 italic text-gray-700">Vendor: ${escapeHtml(vals.vendor)}</span>`);
+            parts.push(getCurrentAuditMeta().html);
+            secondaryEl.innerHTML = parts.join('');
+        }
+        animateRow(row, '#dbeafe');
+    }
+
     function handleOptimisticEditSave(form) {
         if (typeof form.reportValidity === 'function' && !form.reportValidity()) return;
 
         let actionUrl = form.getAttribute('hx-post') || form.getAttribute('action') || '';
-        const match = actionUrl.match(/\/item\/(\d+)\/edit/);
-        const itemId = match ? match[1] : null;
+        const match = actionUrl.match(/\/item\/([a-zA-Z0-9_-]+)\/edit/);
+        const rawItemId = match ? match[1] : null;
+        const itemId = rawItemId && Q()?.tempIdMap?.get(rawItemId) ? Q().tempIdMap.get(rawItemId) : rawItemId;
+        if (rawItemId && itemId && rawItemId !== itemId) {
+            actionUrl = actionUrl.replace(`/item/${rawItemId}/edit`, `/item/${itemId}/edit`);
+        }
         const { groupBy, mode } = getListMeta();
         if (actionUrl && !actionUrl.includes('mode=')) {
             actionUrl += (actionUrl.includes('?') ? '&' : '?') + `mode=${encodeURIComponent(mode)}`;
@@ -730,17 +1325,46 @@
         }
         const body = Q().serializeForm(form);
 
-        if (itemId) {
-            const row = document.getElementById(`item-row-${itemId}`);
+        if (rawItemId) {
+            const row = document.getElementById(`item-row-${itemId}`) || document.getElementById(`item-row-${rawItemId}`);
             if (row) {
-                const newName = form.querySelector('#edit-item-name')?.value?.trim();
-                const newAmt = form.querySelector('#edit-item-amount')?.value?.trim();
-                const titleEl = row.querySelector('.item-title');
-                if (titleEl && newName) titleEl.textContent = newName;
-                if (newName) row.setAttribute('data-item-name', newName);
-                const qtyEl = row.querySelector('.item-title ~ span.whitespace-nowrap');
-                if (qtyEl && newAmt) qtyEl.textContent = newAmt;
-                animateRow(row, '#dbeafe');
+                const editVals = {
+                    name: form.querySelector('#edit-item-name')?.value?.trim() || '',
+                    amountText: form.querySelector('#edit-item-amount')?.value?.trim() || '',
+                    category: form.querySelector('#edit-item-category')?.value?.trim() || '',
+                    aisle: form.querySelector('#edit-item-aisle')?.value?.trim() || '',
+                    brand: form.querySelector('#edit-item-brand')?.value?.trim() || '',
+                    vendor: form.querySelector('#edit-item-vendor')?.value?.trim() || '',
+                    purpose: form.querySelector('#edit-item-purpose')?.value?.trim() || '',
+                    priority: Boolean(form.querySelector('#edit-item-priority')?.checked)
+                };
+                updateRowDetailsFromEdit(row, editVals);
+
+                // If edited to match another row in the same section, combine optimistically at 0ms
+                const rowStatus = row.getAttribute('data-item-status') || 'NEED';
+                const containerSel = rowStatus === 'NEED'
+                    ? '#section-groups-container'
+                    : (rowStatus === 'GOT' ? '#got-items-list' : '#pantry-items-list');
+                const updatedData = getRowData(row);
+                const dupMatch = findMatchingRowInContainer(containerSel, editVals.name, {
+                    brand: editVals.brand,
+                    vendor: editVals.vendor,
+                    unit: updatedData?.unit || '',
+                    excludeItemId: row.getAttribute('data-item-id')
+                });
+                if (dupMatch && dupMatch.getAttribute('data-item-status') === rowStatus) {
+                    const oldGroupBlock = row.closest('.section-group-block');
+                    row.remove();
+                    if (rowStatus === 'NEED') {
+                        adjustCount('need-items-count', -1);
+                        if (oldGroupBlock) checkAndUpdateSectionEmptyState(oldGroupBlock);
+                    } else if (rowStatus === 'GOT') {
+                        adjustCount('got-items-count', -1);
+                    } else {
+                        adjustCount('pantry-items-count', -1);
+                    }
+                    mergeIntoExistingRowDom(dupMatch, updatedData);
+                }
             }
         }
 
@@ -1157,11 +1781,11 @@
         }
 
         const editTrigger = target.closest('button[hx-get*="/edit/"]');
-        if (editTrigger && event.type === 'click' && !navigator.onLine) {
+        if (editTrigger && event.type === 'click' && editTrigger.closest('#shopping-list-content')) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
-            triggerToast('⚠️ Editing item details requires an internet connection', { type: 'warning' });
+            openInstantEditModal(editTrigger);
             return;
         }
 
@@ -1175,8 +1799,8 @@
             return;
         }
 
-        // Edit Item modal form submission
-        if (form && event.type === 'submit' && (form.getAttribute('hx-post') || '').match(/\/item\/\d+\/edit/)) {
+        // Edit Item modal form submission (supports both canonical IDs and pending temp IDs)
+        if (form && event.type === 'submit' && (form.getAttribute('hx-post') || '').match(/\/item\/[a-zA-Z0-9_-]+\/edit/)) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -1211,7 +1835,13 @@
             if (targetStatus === 'GOT') handleLocalGot(itemId, row);
             else if (targetStatus === 'NEED') handleLocalNeed(itemId, row);
             else handleLocalHaveOrSkip(itemId, row, targetStatus);
-            Q().enqueue(actionUrl, bodyParams, { itemId, targetStatus, type: 'status', coalesceKey: `status:item:${itemId}` });
+            Q().enqueue(actionUrl, bodyParams, {
+                itemId,
+                targetStatus,
+                type: 'status',
+                reconcileTarget: targetStatus === 'NEED' ? '#shopping-list-content' : null,
+                coalesceKey: `status:item:${itemId}`
+            });
         } else if (lockMatch) {
             const itemId = lockMatch[1];
             const nextLocked = handleLocalLockToggle(itemId, row, button);

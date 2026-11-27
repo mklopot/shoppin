@@ -305,9 +305,14 @@
     function isNodeProtected(node) {
         if (!node || node.nodeType !== 1) return false;
         const active = document.activeElement;
-        if (active && (node === active || node.contains(active))) {
+        if (active) {
             const tag = active.tagName;
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                // Protect ONLY the focused form control itself (or the Quick Add form while typing),
+                // NEVER ancestor containers like #shopping-list-content (which would abort morphing items!).
+                if (node === active) return true;
+                if (node.id === 'quick-add-form' && node.contains(active)) return true;
+            }
         }
         if (node.dataset) {
             if (node.dataset.pendingDelete === '1' || node.dataset.optimisticPending === '1') return true;
@@ -422,7 +427,8 @@
                 const container = morphedTarget.querySelector('#section-groups-container .sortable-group');
                 if (container) {
                     ghosts.forEach((g) => {
-                        if (!document.body.contains(g)) container.prepend(g);
+                        const alreadyPresent = g.id ? Boolean(document.getElementById(g.id)) : document.body.contains(g);
+                        if (!alreadyPresent) container.prepend(g);
                     });
                 }
             }

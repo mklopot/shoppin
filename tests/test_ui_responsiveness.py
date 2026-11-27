@@ -643,7 +643,7 @@ def test_browser_navbar_tab_loading_feedback(live_server):
                         const url = typeof input === 'string' ? input : (input && input.url) || '';
                         const hdrs = (init && init.headers) || {};
                         const isPrefetch = hdrs['X-Prefetch'] === '1';
-                        if ((!isPrefetch && url.includes('/pantry-check/')) || url.includes('/mealplans/')) {
+                        if (url.includes('/pantry-check/') || url.includes('/mealplans/')) {
                             return new Promise((resolve, reject) => {
                                 setTimeout(() => origFetch(input, init).then(resolve, reject), 320);
                             });
@@ -817,3 +817,187 @@ def test_browser_add_meal_from_archive_modal(live_server):
             browser.close()
 
     _run_in_thread(_run_archive_modal)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_browser_combine_on_need_instant_edit_and_quick_add_details(live_server):
+    """
+    End-to-end headless Chromium regression test covering:
+    1. Pressing Need on 'Apples' when 'Apple' is in To Buy combines immediately at 0ms and stays combined after single POST.
+    2. Quick Add never displays 'Adding...', shows actor & date immediately, and reconciles real server ID while #add-item-name stays focused.
+    3. Edit dialog opens on first click at 0ms (during slow network, offline, and on freshly quick-added temp items) and saves via queue.
+    """
+    sync_playwright = pytest.importorskip("playwright.sync_api").sync_playwright
+    from django.utils import timezone
+
+    from apps.core.models import TermsOfServiceAcceptance, WorkspaceRole
+    from apps.core.services.workspace_service import share_workspace
+
+    owner = User.objects.create_user(username="mike_bugfix", first_name="Mike", password="pw123456")
+    collaborator = User.objects.create_user(username="sam_bugfix", first_name="Sam", password="pw123456")
+    ws = Workspace.objects.create(name="Shared Family List", owner=owner)
+    share_workspace(ws, collaborator, WorkspaceRole.EDITOR)
+    TermsOfServiceAcceptance.objects.create(user=owner, version=TermsOfServiceAcceptance.CURRENT_VERSION)
+
+    s_list = ShoppingList.objects.create(name="Weekly Groceries", workspace=ws, owner=owner)
+    apple = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Apple",
+        amount=Decimal("1.00"),
+        category="produce",
+        status=ItemStatus.NEED,
+        order=1,
+    )
+    apples = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Apples",
+        amount=Decimal("2.00"),
+        category="produce",
+        status=ItemStatus.DONT_NEED,
+        order=2,
+    )
+    milk = ShoppingListItem.objects.create(
+        shopping_list=s_list,
+        name="Milk",
+        amount=Decimal("1.00"),
+        amount_unit="gallon",
+        brand="Horizon",
+        category="dairy",
+        status=ItemStatus.NEED,
+        order=3,
+    )
+
+    def _run_bugfixes():
+        base_url = live_server.url
+        today_mm_dd = timezone.localtime().strftime("%m/%d")
+        with sync_playwright() as p:
+            browser = _launch_browser(p)
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            console_errors = []
+            page.on("pageerror", lambda err: console_errors.append(str(err)))
+
+            _login_playwright_page(page, base_url, "mike_bugfix", "pw123456")
+
+            # Introduce deterministic latency on status/NEED, /add/, and GET /edit/ to validate 0ms UX + post-sync truth
+            page.add_init_script("""
+                (() => {
+                    const origFetch = window.fetch.bind(window);
+                    window.fetch = function(input, init) {
+                        const url = typeof input === 'string' ? input : (input && input.url) || '';
+                        const method = ((init && init.method) || 'GET').toUpperCase();
+                        let delayMs = 0;
+                        if (url.includes('/status/NEED/')) delayMs = 240;
+                        else if (url.includes('/add/') && method === 'POST') delayMs = 240;
+                        else if (url.includes('/edit/') && method === 'GET') delayMs = 450;
+                        if (delayMs > 0) {
+                            return new Promise((resolve, reject) => {
+                                setTimeout(() => origFetch(input, init).then(resolve, reject), delayMs);
+                            });
+                        }
+                        return origFetch(input, init);
+                    };
+                })();
+            """)
+
+            page.goto(f"{base_url}/", wait_until="networkidle")
+
+            # 1. Bug 1: Single click "Need" on "Apples" (from Skipped) combines immediately into "Apple" in To Buy!
+            assert page.locator(f"#pantry-items-list #item-row-{apples.id}").count() == 1
+            page.locator(f"#pantry-items-list #item-row-{apples.id} button:has-text('Need')").click()
+
+            # 0ms optimistic check (BEFORE 240ms POST finishes): no duplicate row, qty already 3!
+            assert page.locator(f"#item-row-{apples.id}").count() == 0
+            assert page.locator("#section-groups-container .item-row[data-item-name*='Apple' i]").count() == 1
+            assert page.locator(f"#item-row-{apple.id} .item-qty").inner_text().strip() == "3"
+
+            # Wait for single queued POST to complete and reconcile -> still 1 merged row with qty 3!
+            page.wait_for_function("() => window.ShoppinQueue.getQueue().length === 0", timeout=5000)
+            page.wait_for_timeout(120)
+            assert page.locator(f"#item-row-{apples.id}").count() == 0
+            assert page.locator("#section-groups-container .item-row[data-item-name*='Apple' i]").count() == 1
+            assert page.locator(f"#item-row-{apple.id} .item-qty").inner_text().strip() == "3"
+
+            # 2. Bug 3: Quick Add never shows "Adding...", displays actor & date immediately,
+            # and reconciles real server ID even while #add-item-name keeps focus!
+            page.fill("#add-item-name", "Avocados")
+            page.press("#add-item-name", "Enter")
+
+            # Immediately at 0ms while POST /add/ is still delayed (240ms):
+            assert page.evaluate("document.activeElement && document.activeElement.id") == "add-item-name"
+            avocado_row = page.locator("#section-groups-container .item-row[data-item-name='Avocados']")
+            assert avocado_row.count() == 1
+            avocado_text = avocado_row.inner_text()
+            assert "Adding..." not in avocado_text
+            assert "Mike" in avocado_text
+            assert today_mm_dd in avocado_text
+
+            # Wait for /add/ to complete WITHOUT blurring #add-item-name!
+            page.wait_for_function("() => window.ShoppinQueue.getQueue().length === 0", timeout=5000)
+            page.wait_for_timeout(120)
+            assert page.evaluate("document.activeElement && document.activeElement.id") == "add-item-name"
+            avocado_id = avocado_row.get_attribute("data-item-id")
+            assert avocado_id and avocado_id.isdigit(), f"Expected real numeric ID after sync while focused, got {avocado_id}"
+            assert "Adding..." not in avocado_row.inner_text()
+
+            # 3a. Bug 2: Click Edit on freshly quick-added item WHILE /add/ is still in flight (temp ID!)
+            page.fill("#add-item-name", "Baguette")
+            page.press("#add-item-name", "Enter")
+            baguette_row = page.locator("#section-groups-container .item-row[data-item-name='Baguette']")
+            assert baguette_row.count() == 1
+            baguette_row.locator("button[hx-get*='/edit/']").click()
+            # Opens immediately on click #1 even though item is still a temp ID!
+            assert page.locator("#modal-container #edit-item-modal-title").is_visible()
+            assert page.input_value("#edit-item-name") == "Baguette"
+            page.fill("#edit-item-name", "Sourdough Baguette")
+            page.click("#modal-container button[type='submit']")
+            assert page.locator("#modal-container").count() == 0
+            page.wait_for_function("() => window.ShoppinQueue.getQueue().length === 0", timeout=6000)
+            page.wait_for_timeout(120)
+            assert page.locator("#section-groups-container .item-row[data-item-name='Sourdough Baguette']").count() == 1
+
+            # 3b. Bug 2: Click Edit on existing item during slow (450ms) GET -> dialog opens immediately (<100ms)
+            page.evaluate("window.ShoppinPrefetch && window.ShoppinPrefetch.purgeAll()")
+            t0 = time.monotonic()
+            page.locator(f"#item-row-{milk.id} button[hx-get*='/edit/']").click()
+            assert page.locator("#modal-container #edit-item-modal-title").is_visible()
+            elapsed_ms = (time.monotonic() - t0) * 1000
+            assert elapsed_ms < 300, f"Edit dialog waited for network instead of 0ms open ({elapsed_ms:.0f}ms)"
+            assert page.input_value("#edit-item-name") == "Milk"
+            assert page.input_value("#edit-item-brand") == "Horizon"
+            # Wait for background Advanced history hydration to populate cleanly
+            page.wait_for_function(
+                "() => document.getElementById('edit-item-advanced-slot')?.innerText.includes('History (')",
+                timeout=4000,
+            )
+            page.click("#modal-container button:has-text('Cancel')")
+            assert page.locator("#modal-container").count() == 0
+
+            # 3c. Bug 2: Click Edit while OFFLINE -> opens immediately on click #1 and queues edit until online!
+            context.set_offline(True)
+            page.wait_for_timeout(80)
+            page.locator(f"#item-row-{milk.id} button[hx-get*='/edit/']").click()
+            assert page.locator("#modal-container #edit-item-modal-title").is_visible()
+            page.fill("#edit-item-brand", "Organic Valley")
+            page.click("#modal-container button[type='submit']")
+            assert page.locator("#modal-container").count() == 0
+            assert "Organic Valley" in page.locator(f"#item-row-{milk.id}").inner_text()
+            assert page.evaluate("window.ShoppinQueue.getQueue().length") >= 1
+
+            context.set_offline(False)
+            page.wait_for_function("() => window.ShoppinQueue.getQueue().length === 0", timeout=8000)
+            page.wait_for_timeout(150)
+
+            assert not console_errors, f"Uncaught browser console/page errors: {console_errors}"
+            browser.close()
+
+    _run_in_thread(_run_bugfixes)
+
+    # Final DB truth verification across all 3 bugs
+    assert not ShoppingListItem.objects.filter(id=apples.id).exists()
+    apple.refresh_from_db()
+    assert apple.amount == Decimal("3.00")
+    assert ShoppingListItem.objects.filter(shopping_list=s_list, name="Avocados").exists()
+    assert ShoppingListItem.objects.filter(shopping_list=s_list, name="Sourdough Baguette").exists()
+    milk.refresh_from_db()
+    assert milk.brand == "Organic Valley"

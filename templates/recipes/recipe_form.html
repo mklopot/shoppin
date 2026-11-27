@@ -194,6 +194,14 @@
                             {% endif %}
                         </div>
                     </div>
+                    {% elif is_edit and recipe.photo_file and not recipe.photo_approved %}
+                    <div class="flex items-center justify-between gap-3 p-2.5 bg-amber-50 border border-amber-300 text-xs text-amber-900">
+                        <span>⏳ Uploaded photo is pending moderator review before appearing publicly.</span>
+                        <label class="inline-flex items-center space-x-1.5 text-red-700 hover:text-red-900 cursor-pointer shrink-0">
+                            <input type="checkbox" name="clear_photo" value="1" class="rounded-none border-gray-300 text-red-600 focus:ring-0">
+                            <span>Remove</span>
+                        </label>
+                    </div>
                     {% endif %}
 
                     <!-- Local File Upload Input -->

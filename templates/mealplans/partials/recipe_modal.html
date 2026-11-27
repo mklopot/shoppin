@@ -123,6 +123,20 @@
                 </div>
             </div>
 
+            <!-- User-Submitted Photos Preview -->
+            {% if user_photos %}
+            <div>
+                <h4 class="font-bold text-gray-900 uppercase tracking-wider text-xs border-b border-gray-200 pb-1 mb-2">User-Submitted Photos ({{ user_photos|length }})</h4>
+                <div class="grid grid-cols-3 gap-2">
+                    {% for photo in user_photos %}
+                    <a href="{{ recipe.get_absolute_url }}#user-submitted-photos-section" class="block aspect-square bg-gray-100 border border-gray-300 overflow-hidden">
+                        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:recipe.name }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <!-- Directions -->
             {% if recipe.directions %}
             <div>

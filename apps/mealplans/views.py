@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -43,6 +44,7 @@ from apps.mealplans.services.suggestion_service import (
 from apps.recipes.models import Recipe, RecipeRating
 from apps.recipes.services.recipe_service import (
     attach_recipe_made_counts,
+    create_user_recipe_photo,
     get_complementary_recipe_candidates,
     record_recipe_made,
     submit_recipe_rating,
@@ -596,9 +598,10 @@ def mark_meal_made(request: HttpRequest, meal_id: int) -> HttpResponse:
 @require_POST
 def submit_made_ratings(request: HttpRequest) -> HttpResponse:
     """
-    Handle submission of recipe ratings prompted after marking dishes as made.
+    Handle submission of recipe ratings and optional dish photos prompted after marking dishes as made.
     """
     user = getattr(request, "user", None)
+    workspace = get_active_workspace(request)
     recipe_ids = request.POST.getlist("recipe_id")
     toast_messages = []
 
@@ -618,6 +621,43 @@ def submit_made_ratings(request: HttpRequest) -> HttpResponse:
 
             submit_recipe_rating(recipe, user, stars, thumbs_val)
             toast_messages.append(f"⭐ Saved {stars}★ rating for '{recipe.name}'")
+
+            uploaded_files = (
+                list(request.FILES.getlist(f"photos_{rid}"))
+                + list(request.FILES.getlist(f"camera_photo_{rid}"))
+            )
+            if uploaded_files:
+                caption = request.POST.get(f"photo_caption_{rid}", "").strip()
+                saved_approved = 0
+                saved_pending = 0
+                for photo_file in uploaded_files:
+                    try:
+                        photo = create_user_recipe_photo(
+                            recipe,
+                            photo_file,
+                            user=user,
+                            workspace=workspace,
+                            caption=caption,
+                        )
+                        if photo.is_approved:
+                            saved_approved += 1
+                        else:
+                            saved_pending += 1
+                    except ValidationError as ve:
+                        err_msg = (
+                            getattr(ve, "message", None)
+                            or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
+                        )
+                        toast_messages.append(f"⚠️ Could not save photo for '{recipe.name}': {err_msg}")
+                if saved_approved > 0:
+                    noun = "photo" if saved_approved == 1 else "photos"
+                    toast_messages.append(f"📸 Added {saved_approved} {noun} for '{recipe.name}'")
+                if saved_pending > 0:
+                    noun = "photo" if saved_pending == 1 else "photos"
+                    toast_messages.append(
+                        f"⏳ Saved {saved_pending} {noun} for '{recipe.name}' "
+                        "(pending moderator review before appearing publicly)"
+                    )
     else:
         toast_messages.append("⭐ Rating noted! Log in to save ratings to your profile.")
 
@@ -703,10 +743,12 @@ def recipe_modal(request: HttpRequest, recipe_id: int) -> HttpResponse:
     )
     meals = meal_plan.meals.all() if meal_plan else []
     attach_recipe_made_counts(recipe, user=user, workspace=effective_workspace)
+    user_photos = list(recipe.user_photos.filter(is_approved=True).select_related("user")[:6])
 
     context = {
         "workspace": effective_workspace,
         "recipe": recipe,
+        "user_photos": user_photos,
         "ingredients_with_status": ingredients_with_status,
         "total_ingredients": total_ingredients,
         "need_count": need_count,

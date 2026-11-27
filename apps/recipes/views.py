@@ -22,12 +22,15 @@ from apps.mealplans.services.mealplan_service import (
     add_recipe_to_meal,
     get_active_meal_plan,
 )
-from apps.recipes.models import Recipe, RecipeRating
+from apps.recipes.models import Recipe, RecipeRating, RecipeUserPhoto
 from apps.recipes.services.ingredient_lint_service import lint_recipe_ingredients
 from apps.recipes.services.recipe_scraper import import_recipe_from_url, scrape_recipe_data
 from apps.recipes.services.recipe_service import (
     attach_recipe_made_counts,
+    can_delete_user_recipe_photo,
     create_or_update_recipe,
+    create_user_recipe_photo,
+    delete_user_recipe_photo,
     fork_recipe,
     get_complementary_recipe_candidates,
     get_filter_options,
@@ -299,6 +302,10 @@ def recipe_detail_view(
         elif recipe.created_by:
             sharer_display = recipe.created_by.get_full_name() or recipe.created_by.username
 
+    user_photos = list(recipe.user_photos.filter(is_approved=True).select_related("user", "workspace"))
+    for photo in user_photos:
+        photo.can_delete = can_delete_user_recipe_photo(photo, user)
+
     context: dict[str, Any] = {
         "workspace": workspace,
         "shopping_list": shopping_list,
@@ -314,6 +321,7 @@ def recipe_detail_view(
         "is_in_current_workspace": is_in_current_workspace,
         "is_owner": is_owner,
         "sharer_display": sharer_display,
+        "user_photos": user_photos,
     }
 
     if request.headers.get("HX-Request") and request.GET.get("modal") == "1":
@@ -349,6 +357,11 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
         try:
             recipe = create_or_update_recipe(request.POST, files=request.FILES, user=user, workspace=workspace)
             messages.success(request, f"Recipe '{recipe.name}' created successfully!")
+            if request.FILES.get("photo_file") and not recipe.photo_approved:
+                messages.info(
+                    request,
+                    "⏳ Your uploaded recipe photo is pending moderator review before appearing publicly.",
+                )
             _emit_ingredient_lint_messages(request, request.POST)
             return redirect(recipe.get_absolute_url())
         except ValidationError as ve:
@@ -592,6 +605,11 @@ def recipe_edit_view(
                 )
             else:
                 messages.success(request, f"Recipe '{saved_recipe.name}' updated successfully!")
+            if request.FILES.get("photo_file") and not saved_recipe.photo_approved:
+                messages.info(
+                    request,
+                    "⏳ Your uploaded recipe photo is pending moderator review before appearing publicly.",
+                )
             _emit_ingredient_lint_messages(request, request.POST)
             return redirect(saved_recipe.get_absolute_url())
         except ValidationError as ve:
@@ -673,6 +691,121 @@ def recipe_rate_view(
         "user_rating": rating,
     }
     return render(request, "recipes/partials/rating_widget.html", context)
+
+
+def _render_user_photos_response(
+    request: HttpRequest,
+    recipe: Recipe,
+    *,
+    toast_messages: list[str] | None = None,
+) -> HttpResponse:
+    """Render updated user-submitted photos partial (HTMX) or redirect to recipe detail."""
+    user = getattr(request, "user", None)
+    user_photos = list(recipe.user_photos.filter(is_approved=True).select_related("user", "workspace"))
+    for photo in user_photos:
+        photo.can_delete = can_delete_user_recipe_photo(photo, user)
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return render(
+            request,
+            "recipes/partials/user_photos_section.html",
+            {
+                "recipe": recipe,
+                "user_photos": user_photos,
+                "toast_messages": toast_messages or [],
+            },
+        )
+    for msg in toast_messages or []:
+        messages.info(request, msg)
+    return redirect(recipe.get_absolute_url())
+
+
+@require_POST
+def recipe_upload_user_photo_view(request: HttpRequest, recipe_id: int) -> HttpResponse:
+    """
+    Upload one or more user-submitted dish photographs directly from a recipe page.
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Please sign in to upload dish photos.")
+
+    recipe = _get_recipe_by_id_or_slug(recipe_id=recipe_id)
+    workspace = get_active_workspace(request)
+
+    # Enforce recipe access before accepting photo upload
+    if not (recipe.is_public and recipe.is_approved):
+        is_creator = recipe.created_by == user
+        is_staff = getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)
+        is_in_user_workspace = recipe.shared_workspaces.filter(
+            Q(owner=user) | Q(memberships__user=user)
+        ).exists()
+        if not (is_creator or is_staff or is_in_user_workspace):
+            return HttpResponseForbidden("Access denied.")
+
+    uploaded_files = (
+        list(request.FILES.getlist("photos"))
+        + list(request.FILES.getlist("camera_photo"))
+    )
+    caption = request.POST.get("caption", "").strip()
+    toast_messages: list[str] = []
+
+    if not uploaded_files:
+        toast_messages.append("⚠️ Please choose or take a photo first.")
+        return _render_user_photos_response(request, recipe, toast_messages=toast_messages)
+
+    saved_approved = 0
+    saved_pending = 0
+    for photo_file in uploaded_files:
+        try:
+            photo = create_user_recipe_photo(
+                recipe,
+                photo_file,
+                user=user,
+                workspace=workspace,
+                caption=caption,
+            )
+            if photo.is_approved:
+                saved_approved += 1
+            else:
+                saved_pending += 1
+        except ValidationError as ve:
+            err_msg = (
+                getattr(ve, "message", None)
+                or (ve.messages[0] if getattr(ve, "messages", None) else str(ve))
+            )
+            toast_messages.append(f"⚠️ {err_msg}")
+
+    if saved_approved > 0:
+        noun = "photo" if saved_approved == 1 else "photos"
+        toast_messages.append(f"📸 Uploaded {saved_approved} {noun} for '{recipe.name}'")
+    if saved_pending > 0:
+        noun = "photo" if saved_pending == 1 else "photos"
+        toast_messages.append(
+            f"⏳ Uploaded {saved_pending} {noun} for '{recipe.name}' "
+            "(pending moderator review before appearing publicly)"
+        )
+
+    return _render_user_photos_response(request, recipe, toast_messages=toast_messages)
+
+
+@require_POST
+def recipe_delete_user_photo_view(request: HttpRequest, photo_id: int) -> HttpResponse:
+    """
+    Delete a user-submitted dish photograph (allowed for uploader, workspace owner, or staff).
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        return HttpResponseForbidden("Authentication required.")
+
+    photo = get_object_or_404(RecipeUserPhoto.objects.select_related("recipe", "workspace"), id=photo_id)
+    recipe = photo.recipe
+    if not delete_user_recipe_photo(photo, user=user):
+        return HttpResponseForbidden("You do not have permission to delete this photo.")
+
+    return _render_user_photos_response(
+        request,
+        recipe,
+        toast_messages=["🗑 Removed photo."],
+    )
 
 
 def recipe_prompt_mealplan_view(

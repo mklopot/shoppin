@@ -9,6 +9,7 @@ Items connected to preset lists or recipes are preserved and never purged.
 import datetime
 import logging
 import sys
+import threading
 import time
 from typing import TYPE_CHECKING
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 _LAST_PURGE_TIMES: dict[int, float] = {}
 _PURGE_INTERVAL_SECONDS = 60.0  # 1 minute
+_PURGE_LOCK = threading.Lock()
 
 
 def purge_expired_completed_items(workspace: "Workspace | None", force: bool = False) -> int:
@@ -98,7 +100,12 @@ def purge_expired_completed_items(workspace: "Workspace | None", force: bool = F
         )
     )
 
-    _, deleted_counts = qs.delete()
+    expired_ids = list(qs.values_list("id", flat=True))
+    if not expired_ids:
+        return 0
+
+    with _PURGE_LOCK:
+        _, deleted_counts = ShoppingListItem.objects.filter(id__in=expired_ids).delete()
     count = deleted_counts.get(ShoppingListItem._meta.label, 0)
     if count > 0:
         logger.info(

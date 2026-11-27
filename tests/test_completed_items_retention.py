@@ -806,3 +806,17 @@ def test_migration_0018_clears_orphaned_onetime_sources(retention_setup):
     assert orphan.source_recipe is None
     assert orphan.source_meal is None
     assert active_preset.source_preset == preset
+
+
+@pytest.mark.django_db
+def test_purge_expired_completed_items_skips_write_transaction_when_none_expired(retention_setup):
+    """When no items are expired, purge_expired_completed_items must perform a read-only check with zero DELETE queries."""
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    ws = retention_setup["workspace"]
+    with CaptureQueriesContext(connection) as ctx:
+        deleted = purge_expired_completed_items(ws, force=True)
+
+    assert deleted == 0
+    assert not any("DELETE" in q["sql"].upper() for q in ctx.captured_queries)

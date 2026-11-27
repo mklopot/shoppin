@@ -5,7 +5,7 @@
  * 2. Safe NetworkFirst (with 1.8s fast timeout fallback) ONLY for offline resilience
  * 3. Instant full purge of HTML caches on logout / workspace / persona switches
  */
-const STATIC_CACHE = 'shoppin-static-v3';
+const STATIC_CACHE = 'shoppin-static-v4';
 const PAGE_CACHE = 'shoppin-pages-v1';
 
 const PRECACHE_ASSETS = [
@@ -15,6 +15,7 @@ const PRECACHE_ASSETS = [
     '/static/js/app_shell.js',
     '/static/js/shopping_sync.js',
     '/static/js/shortcuts.js',
+    '/static/js/dish_camera.js',
     '/static/images/icon.svg'
 ];
 

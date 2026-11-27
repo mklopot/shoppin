@@ -1,0 +1,208 @@
+{% if toast_messages %}
+<div id="toast-container" hx-swap-oob="beforeend">
+    {% for msg in toast_messages %}
+    <div class="toast-item pointer-events-auto flex items-center justify-between bg-white/95 backdrop-blur-sm text-gray-900 text-xs px-3.5 py-2.5 shadow-lg border border-gray-300 min-w-[260px] max-w-sm rounded-none">
+        <span class="font-medium pr-2">{{ msg }}</span>
+        <button type="button" onclick="dismissToast(this.closest('.toast-item'))" aria-label="Dismiss notification" class="text-gray-700 hover:text-gray-950 font-bold text-base ml-2 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"><span aria-hidden="true">&times;</span></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div id="user-submitted-photos-section" class="bg-white border border-gray-300 p-4 space-y-3">
+    <div class="border-b border-gray-200 pb-2 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+            <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider">User-Submitted Photos</h2>
+            <span class="text-xs text-gray-500 font-normal">({{ user_photos|length }})</span>
+        </div>
+
+        {% if request.user.is_authenticated %}
+        <button type="button"
+                onclick="const box = document.getElementById('detail-photo-upload-drawer'); if (box) box.classList.toggle('hidden');"
+                class="inline-flex items-center space-x-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-semibold px-2.5 py-1 text-[11px] rounded-none cursor-pointer">
+            <span aria-hidden="true">📷</span>
+            <span>Add Photo</span>
+        </button>
+        {% endif %}
+    </div>
+
+    {% if request.user.is_authenticated %}
+    <div id="detail-photo-upload-drawer" class="hidden border border-gray-200 bg-gray-50 p-3 space-y-2.5 text-xs">
+        <form hx-post="{% url 'recipes:upload_user_photo' recipe.id %}"
+              hx-target="#user-submitted-photos-section"
+              hx-swap="outerHTML"
+              hx-encoding="multipart/form-data"
+              enctype="multipart/form-data"
+              hx-disabled-elt="find button[type='submit']"
+              class="space-y-2.5">
+            {% csrf_token %}
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="file"
+                       id="detail-photo-camera"
+                       name="camera_photo"
+                       accept="image/*"
+                       capture="environment"
+                       onchange="previewDetailPhotos()"
+                       class="hidden">
+                <input type="file"
+                       id="detail-photo-upload"
+                       name="photos"
+                       accept="image/*"
+                       multiple
+                       onchange="previewDetailPhotos()"
+                       class="hidden">
+                <button type="button"
+                        data-camera-trigger="1"
+                        onclick="window.ShoppinDishCamera ? window.ShoppinDishCamera.openTakePhoto('detail-photo-camera', 'detail-photo-upload') : document.getElementById('detail-photo-camera').click()"
+                        class="inline-flex items-center space-x-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1 text-xs rounded-none cursor-pointer">
+                    <span aria-hidden="true">📷</span>
+                    <span>Take Photo</span>
+                </button>
+                <button type="button"
+                        onclick="document.getElementById('detail-photo-upload').click()"
+                        class="inline-flex items-center space-x-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1 text-xs rounded-none cursor-pointer">
+                    <span aria-hidden="true">🖼️</span>
+                    <span>Upload Photo</span>
+                </button>
+                <span id="detail-photo-selected-count" class="text-[11px] font-medium text-emerald-800"></span>
+            </div>
+
+            <div id="detail-photo-thumbs" class="flex flex-wrap gap-2 hidden"></div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <input type="text"
+                       name="caption"
+                       maxlength="255"
+                       placeholder="Optional caption (e.g. 'Turned out great with fresh basil!')"
+                       class="flex-1 min-w-[200px] border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
+                <button type="submit"
+                        class="bg-gray-900 hover:bg-black text-white font-bold px-3.5 py-1.5 text-xs rounded-none cursor-pointer">
+                    Upload
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if user_photos %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {% for photo in user_photos %}
+        <div class="user-photo-card border border-gray-200 bg-gray-50 flex flex-col overflow-hidden group">
+            <button type="button"
+                    onclick="openUserPhotoLightbox(this)"
+                    data-photo-src="{{ photo.image.url }}"
+                    data-photo-author="{{ photo.submitter_display }}"
+                    data-photo-date="{{ photo.created_at|date:'M j, Y' }}"
+                    data-photo-caption="{{ photo.caption }}"
+                    class="block w-full aspect-square bg-gray-100 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 cursor-pointer"
+                    aria-label="View full-size photo of {{ recipe.name }} submitted by {{ photo.submitter_display }}">
+                <img src="{{ photo.image.url }}"
+                     alt="{% if photo.caption %}{{ photo.caption }}{% else %}{{ recipe.name }} made by {{ photo.submitter_display }}{% endif %}"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                     loading="lazy"
+                     decoding="async">
+            </button>
+            <div class="p-2 text-[11px] space-y-1 flex-1 flex flex-col justify-between bg-white border-t border-gray-200">
+                {% if photo.caption %}
+                <p class="text-gray-800 leading-snug line-clamp-2">{{ photo.caption }}</p>
+                {% endif %}
+                <div class="flex items-center justify-between gap-1 text-[10px] text-gray-500 pt-0.5">
+                    <span class="truncate">
+                        <strong class="text-gray-700">{{ photo.submitter_display }}</strong> &bull; {{ photo.created_at|date:"M j, Y" }}
+                    </span>
+                    {% if photo.can_delete %}
+                    <form hx-post="{% url 'recipes:delete_user_photo' photo.id %}"
+                          hx-target="#user-submitted-photos-section"
+                          hx-swap="outerHTML"
+                          hx-confirm="Remove this photo?"
+                          class="inline flex-shrink-0">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-gray-500 hover:text-red-700 px-1 py-0.5 cursor-pointer"
+                                aria-label="Delete photo"
+                                title="Delete photo">
+                            <span aria-hidden="true">🗑</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-gray-500 italic">
+        No user-submitted photos yet. Mark this dish as made on your Meal Plan to snap or upload a photo when rating it{% if request.user.is_authenticated %}, or use <strong>Add Photo</strong> above{% endif %}.
+    </p>
+    {% endif %}
+</div>
+
+<script>
+function previewDetailPhotos() {
+    const camInput = document.getElementById('detail-photo-camera');
+    const upInput = document.getElementById('detail-photo-upload');
+    const thumbs = document.getElementById('detail-photo-thumbs');
+    const countEl = document.getElementById('detail-photo-selected-count');
+    if (!thumbs) return;
+
+    const files = []
+        .concat(camInput && camInput.files ? Array.from(camInput.files) : [])
+        .concat(upInput && upInput.files ? Array.from(upInput.files) : []);
+
+    thumbs.innerHTML = '';
+    if (!files.length) {
+        thumbs.classList.add('hidden');
+        if (countEl) countEl.textContent = '';
+        return;
+    }
+
+    thumbs.classList.remove('hidden');
+    if (countEl) {
+        countEl.textContent = files.length + (files.length === 1 ? ' photo ready to upload' : ' photos ready to upload');
+    }
+
+    files.forEach((file) => {
+        const url = URL.createObjectURL(file);
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = file.name || 'Selected dish photo';
+        img.className = 'w-14 h-14 object-cover border border-gray-300 bg-white';
+        img.onload = () => { try { URL.revokeObjectURL(url); } catch (_) {} };
+        thumbs.appendChild(img);
+    });
+}
+
+function openUserPhotoLightbox(btn) {
+    const mp = document.getElementById('modal-placeholder');
+    if (!mp || !btn) return;
+    const src = btn.getAttribute('data-photo-src') || '';
+    const author = btn.getAttribute('data-photo-author') || '';
+    const date = btn.getAttribute('data-photo-date') || '';
+    const caption = btn.getAttribute('data-photo-caption') || '';
+    if (!src) return;
+
+    const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    mp.innerHTML = `
+        <div id="user-photo-lightbox"
+             role="dialog"
+             aria-modal="true"
+             aria-label="User-submitted dish photo"
+             onclick="if (event.target === this) document.getElementById('modal-placeholder').innerHTML = '';"
+             class="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+            <div class="bg-white border border-gray-400 max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+                <div class="px-4 py-2.5 bg-gray-100 border-b border-gray-300 flex items-center justify-between text-xs">
+                    <span class="font-semibold text-gray-800">Submitted by ${esc(author)}${date ? ' &bull; ' + esc(date) : ''}</span>
+                    <button type="button"
+                            onclick="document.getElementById('modal-placeholder').innerHTML = '';"
+                            aria-label="Close dialog"
+                            class="text-gray-600 hover:text-black font-bold text-lg leading-none px-1 cursor-pointer">&times;</button>
+                </div>
+                <div class="bg-black flex items-center justify-center overflow-hidden flex-1 min-h-0">
+                    <img src="${esc(src)}" alt="${esc(caption || 'User-submitted dish photo')}" class="max-h-[75vh] w-auto object-contain">
+                </div>
+                ${caption ? `<div class="px-4 py-2.5 bg-white border-t border-gray-200 text-xs text-gray-800">${esc(caption)}</div>` : ''}
+            </div>
+        </div>
+    `;
+}
+</script>

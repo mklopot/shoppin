@@ -132,6 +132,10 @@ class Recipe(models.Model):
         null=True,
         help_text="Uploaded photo of the prepared dish",
     )
+    photo_approved = models.BooleanField(
+        default=True,
+        help_text="Whether the uploaded main recipe photo passed image content moderation",
+    )
     bibliography = models.JSONField(
         default=list,
         blank=True,
@@ -407,7 +411,7 @@ class Recipe(models.Model):
     @property
     def primary_photo_url(self) -> str:
         """Return the primary photo URL (uploaded file or external URL) if available, else empty string."""
-        if self.photo_file:
+        if self.photo_file and self.photo_approved:
             try:
                 url = self.photo_file.url
                 if self.updated_at:
@@ -623,3 +627,73 @@ class RecipeMadeLog(models.Model):
     def __str__(self) -> str:
         """Return made log summary string."""
         return f"{self.recipe.name} made on {self.made_at.strftime('%Y-%m-%d')}"
+
+
+class RecipeUserPhoto(models.Model):
+    """
+    User-submitted photograph of a prepared dish uploaded when rating a made meal or from a recipe page.
+    """
+
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="user_photos",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submitted_recipe_photos",
+    )
+    submitted_by_name = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        help_text="Snapshot of the submitter display name",
+    )
+    workspace = models.ForeignKey(
+        "core.Workspace",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recipe_user_photos",
+    )
+    image = models.ImageField(
+        upload_to="recipes/user_photos/%Y/%m/",
+        help_text="Photograph of the prepared dish submitted by a cook",
+    )
+    caption = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Optional short note about how the dish turned out",
+    )
+    is_approved = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="Whether this user-submitted photo is visible on the recipe display",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    @property
+    def submitter_display(self) -> str:
+        """Return first name (or username) of the cook who submitted this photo."""
+        if self.user:
+            first_name = (self.user.first_name or "").strip()
+            return first_name or self.user.username
+        return self.submitted_by_name or "Community Cook"
+
+    def clean(self) -> None:
+        """Validate caption text against content moderation rules."""
+        super().clean()
+        from apps.core.services.moderation_service import check_model_instance_for_moderation
+
+        check_model_instance_for_moderation(self)
+
+    def __str__(self) -> str:
+        """Return photo summary string."""
+        return f"Photo of {self.recipe.name} by {self.submitter_display}"

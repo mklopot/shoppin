@@ -2,10 +2,14 @@
 Service layer for recipe search, multi-faceted filtering, creation, and synchronization.
 """
 
+import re
+import uuid
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db.models import (
     Avg,
     Case,
@@ -23,6 +27,10 @@ from django.db.models.functions import Coalesce
 from django.http import HttpRequest
 
 from apps.core.categorizer import categorizer
+from apps.core.services.image_moderation_service import (
+    moderate_image_bytes,
+    prepare_uploaded_image_jpeg,
+)
 from apps.core.services.moderation_service import validate_content_clean
 from apps.core.utils import (
     can_combine_units,
@@ -31,7 +39,7 @@ from apps.core.utils import (
     parse_ingredient_line,
     singularize,
 )
-from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating
+from apps.recipes.models import Ingredient, Recipe, RecipeMadeLog, RecipeRating, RecipeUserPhoto
 from apps.recipes.services.nutrition_service import update_recipe_nutrition
 from apps.shopping.models import ItemStatus, ShoppingList, ShoppingListItem, ShoppingListItemSource
 from apps.shopping.services.broadcaster import broadcast_shopping_list_update
@@ -551,6 +559,15 @@ def create_or_update_recipe(
     else:
         is_public = False
 
+    clear_photo = data.get("clear_photo") in ("1", "true", True)
+    uploaded_main_photo = files.get("photo_file") if (files and "photo_file" in files) else None
+    prepared_photo_file: ContentFile | None = None
+    prepared_photo_approved: bool | None = None
+    if not clear_photo and uploaded_main_photo:
+        prepared_photo_file, prepared_photo_approved = _prepare_and_moderate_recipe_photo(
+            uploaded_main_photo
+        )
+
     existing_recipe: Recipe | None = None
     is_owner = True
     if recipe_id:
@@ -602,7 +619,24 @@ def create_or_update_recipe(
                 special_equipment=special_equipment,
                 bibliography=bibliography,
                 photo_urls=photo_urls,
-                photo_file=files.get("photo_file") if (files and "photo_file" in files) else existing_recipe.photo_file,
+                photo_file=(
+                    None
+                    if clear_photo
+                    else (
+                        prepared_photo_file
+                        if prepared_photo_file is not None
+                        else existing_recipe.photo_file
+                    )
+                ),
+                photo_approved=(
+                    True
+                    if clear_photo
+                    else (
+                        bool(prepared_photo_approved)
+                        if prepared_photo_file is not None
+                        else existing_recipe.photo_approved
+                    )
+                ),
                 is_public=False,
                 is_approved=False,
                 is_web_imported=bool(existing_recipe.is_web_imported),
@@ -668,10 +702,12 @@ def create_or_update_recipe(
             if recipe.created_by is None and user and user.is_authenticated:
                 recipe.created_by = user
 
-            if data.get("clear_photo") in ("1", "true", True):
+            if clear_photo:
                 recipe.photo_file = None
-            elif files and "photo_file" in files and files["photo_file"]:
-                recipe.photo_file = files["photo_file"]
+                recipe.photo_approved = True
+            elif prepared_photo_file is not None:
+                recipe.photo_file = prepared_photo_file
+                recipe.photo_approved = bool(prepared_photo_approved)
 
             recipe.full_clean()
             recipe.save()
@@ -715,7 +751,8 @@ def create_or_update_recipe(
             special_equipment=special_equipment,
             bibliography=bibliography,
             photo_urls=photo_urls,
-            photo_file=files.get("photo_file") if (files and "photo_file" in files) else None,
+            photo_file=prepared_photo_file,
+            photo_approved=True if prepared_photo_file is None else bool(prepared_photo_approved),
             is_public=is_public,
             is_approved=is_approved,
             is_web_imported=is_web_imported,
@@ -1156,4 +1193,105 @@ def get_featured_carousel_recipes(limit: int = 10) -> list[Recipe]:
         reverse=True,
     )
     return recipes_with_photos[:limit]
+
+
+MAX_USER_PHOTO_BYTES = 12 * 1024 * 1024  # 12 MB raw upload cap
+MAX_USER_PHOTO_DIMENSION = 1600
+
+
+def _prepare_and_moderate_recipe_photo(uploaded_file: Any) -> tuple[ContentFile, bool]:
+    """
+    Validate, orient, resize, strip EXIF, and screen a main recipe photo upload
+    through AWS Rekognition moderation.
+
+    Returns:
+        (ContentFile, photo_approved) where `photo_approved` is True if approved
+        immediately or False if held for manual moderator review.
+    Raises:
+        ValidationError: If the file is invalid or flagged as explicit/age-restricted.
+    """
+    jpeg_bytes = prepare_uploaded_image_jpeg(
+        uploaded_file,
+        max_bytes=MAX_USER_PHOTO_BYTES,
+        max_dimension=MAX_USER_PHOTO_DIMENSION,
+    )
+    mod_result = moderate_image_bytes(jpeg_bytes)
+    if mod_result.status == "rejected":
+        raise ValidationError(mod_result.reason)
+
+    raw_name = getattr(uploaded_file, "name", "") or "recipe_photo"
+    stem = re.sub(r"[^A-Za-z0-9_-]+", "_", Path(raw_name).stem).strip("_")[:60] or "recipe_photo"
+    filename = f"{stem}_{uuid.uuid4().hex[:8]}.jpg"
+    return ContentFile(jpeg_bytes, name=filename), (mod_result.status == "approved")
+
+
+def create_user_recipe_photo(
+    recipe: Recipe,
+    uploaded_file: Any,
+    *,
+    user: Any,
+    workspace: Any = None,
+    caption: str = "",
+) -> RecipeUserPhoto:
+    """
+    Validate, orient, compress (stripping EXIF GPS metadata), moderate for explicit or
+    age-restricted imagery, and store a user-submitted photograph of a prepared dish.
+    """
+    if not (user and getattr(user, "is_authenticated", False)):
+        raise ValidationError("Please sign in to upload dish photos.")
+
+    dmca_profile = getattr(user, "dmca_profile", None)
+    if dmca_profile and (dmca_profile.is_banned or dmca_profile.strikes >= 3):
+        raise ValidationError("Your account is restricted from uploading photos.")
+
+    clean_caption = str(caption or "").strip()[:255]
+    if clean_caption:
+        validate_content_clean(clean_caption, "Photo caption")
+
+    jpeg_bytes = prepare_uploaded_image_jpeg(
+        uploaded_file,
+        max_bytes=MAX_USER_PHOTO_BYTES,
+        max_dimension=MAX_USER_PHOTO_DIMENSION,
+    )
+    mod_result = moderate_image_bytes(jpeg_bytes)
+    if mod_result.status == "rejected":
+        raise ValidationError(mod_result.reason)
+
+    submitter_name = (getattr(user, "first_name", "") or "").strip() or getattr(user, "username", "")
+    filename = f"dish_{recipe.id}_{uuid.uuid4().hex[:10]}.jpg"
+
+    photo = RecipeUserPhoto(
+        recipe=recipe,
+        user=user,
+        submitted_by_name=submitter_name,
+        workspace=workspace,
+        caption=clean_caption,
+        is_approved=(mod_result.status == "approved"),
+    )
+    photo.image.save(filename, ContentFile(jpeg_bytes), save=False)
+    photo.save()
+    return photo
+
+
+def can_delete_user_recipe_photo(photo: RecipeUserPhoto, user: Any) -> bool:
+    """Return True if `user` is permitted to delete `photo`."""
+    if not (user and getattr(user, "is_authenticated", False)):
+        return False
+    if photo.user_id == user.id:
+        return True
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return True
+    if photo.workspace_id and photo.workspace and photo.workspace.owner_id == user.id:
+        return True
+    return False
+
+
+def delete_user_recipe_photo(photo: RecipeUserPhoto, *, user: Any) -> bool:
+    """Delete a user-submitted recipe photo and its media file if `user` has permission."""
+    if not can_delete_user_recipe_photo(photo, user):
+        return False
+    if photo.image:
+        photo.image.delete(save=False)
+    photo.delete()
+    return True
 

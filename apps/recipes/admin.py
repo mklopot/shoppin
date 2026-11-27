@@ -10,6 +10,7 @@ from apps.recipes.models import (
     RecipeComment,
     RecipeMadeLog,
     RecipeRating,
+    RecipeUserPhoto,
 )
 
 
@@ -26,6 +27,7 @@ class RecipeAdmin(admin.ModelAdmin):
         "name",
         "cuisine",
         "dish_type",
+        "photo_approved",
         "difficulty_level",
         "portions",
         "is_public",
@@ -34,12 +36,13 @@ class RecipeAdmin(admin.ModelAdmin):
         "copyright_cleared",
         "created_at",
     )
-    list_editable = ("is_public", "is_approved", "copyright_cleared")
+    list_editable = ("is_public", "is_approved", "photo_approved", "copyright_cleared")
     list_filter = (
         "is_public",
         "is_approved",
         "is_web_imported",
         "copyright_cleared",
+        "photo_approved",
         "difficulty_level",
         "cuisine",
         "dish_type",
@@ -54,6 +57,8 @@ class RecipeAdmin(admin.ModelAdmin):
         "revoke_copyright",
         "make_public",
         "make_private",
+        "approve_recipe_photos",
+        "hide_recipe_photos",
     ]
 
     @admin.action(description="Approve selected recipes for public browse")
@@ -102,6 +107,18 @@ class RecipeAdmin(admin.ModelAdmin):
         count = queryset.update(is_public=False)
         self.message_user(request, f"{count} recipe(s) set to Private.")
 
+    @admin.action(description="Approve uploaded main recipe photos")
+    def approve_recipe_photos(self, request, queryset):
+        """Batch approve main recipe photos held for moderation."""
+        count = queryset.update(photo_approved=True)
+        self.message_user(request, f"{count} recipe photo(s) approved.")
+
+    @admin.action(description="Hide uploaded main recipe photos")
+    def hide_recipe_photos(self, request, queryset):
+        """Batch hide main recipe photos."""
+        count = queryset.update(photo_approved=False)
+        self.message_user(request, f"{count} recipe photo(s) hidden.")
+
 
 @admin.register(RecipeRating)
 class RecipeRatingAdmin(admin.ModelAdmin):
@@ -123,3 +140,25 @@ class RecipeMadeLogAdmin(admin.ModelAdmin):
     list_display = ("recipe", "user", "workspace", "made_at")
     list_filter = ("workspace",)
     search_fields = ("recipe__name", "user__username", "workspace__name")
+
+
+@admin.register(RecipeUserPhoto)
+class RecipeUserPhotoAdmin(admin.ModelAdmin):
+    """Admin interface for moderating user-submitted dish photos."""
+    list_display = ("recipe", "user", "workspace", "caption", "is_approved", "created_at")
+    list_editable = ("is_approved",)
+    list_filter = ("is_approved", "workspace")
+    search_fields = ("recipe__name", "user__username", "submitted_by_name", "caption")
+    actions = ["approve_photos", "hide_photos"]
+
+    @admin.action(description="Approve selected user-submitted photos")
+    def approve_photos(self, request, queryset):
+        """Batch approve user-submitted dish photos."""
+        count = queryset.update(is_approved=True)
+        self.message_user(request, f"{count} user photo(s) approved.")
+
+    @admin.action(description="Hide selected user-submitted photos")
+    def hide_photos(self, request, queryset):
+        """Batch hide user-submitted dish photos."""
+        count = queryset.update(is_approved=False)
+        self.message_user(request, f"{count} user photo(s) hidden.")

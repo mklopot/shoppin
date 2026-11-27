@@ -153,7 +153,7 @@ def _build_list_context(
     """
     active_mode = ShoppingListOrganizer.resolve_view_mode(request, mode)
     workspace = shopping_list.workspace or get_active_workspace(request)
-    if workspace:
+    if workspace and not ShoppingListOrganizer.is_background_prefetch(request):
         purge_expired_completed_items(workspace)
     items = shopping_list.items.select_related("status_changed_by").order_by("order", "id")
 

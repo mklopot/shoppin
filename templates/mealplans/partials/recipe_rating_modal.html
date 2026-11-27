@@ -47,6 +47,9 @@
         <form hx-post="{% url 'mealplans:submit_made_ratings' %}"
               hx-target="#modal-placeholder"
               hx-swap="outerHTML"
+              hx-encoding="multipart/form-data"
+              enctype="multipart/form-data"
+              hx-disabled-elt="find button[type='submit']"
               class="space-y-4">
             {% csrf_token %}
 
@@ -91,6 +94,62 @@
                         <span class="font-medium">👍 Would make again / recommend</span>
                     </label>
                 </div>
+
+                <!-- Optional Dish Photo Upload / Camera Capture -->
+                <div class="pt-2 border-t border-gray-200 space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-gray-600">Dish Photo (Optional)</span>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <input type="file"
+                                   id="dish-photo-camera-{{ r.id }}"
+                                   name="camera_photo_{{ r.id }}"
+                                   accept="image/*"
+                                   capture="environment"
+                                   onchange="previewDishPhotos('{{ r.id }}')"
+                                   class="hidden">
+                            <input type="file"
+                                   id="dish-photo-upload-{{ r.id }}"
+                                   name="photos_{{ r.id }}"
+                                   accept="image/*"
+                                   multiple
+                                   onchange="previewDishPhotos('{{ r.id }}')"
+                                   class="hidden">
+                            <button type="button"
+                                    data-camera-trigger="1"
+                                    onclick="window.ShoppinDishCamera ? window.ShoppinDishCamera.openTakePhoto('dish-photo-camera-{{ r.id }}', 'dish-photo-upload-{{ r.id }}') : document.getElementById('dish-photo-camera-{{ r.id }}').click()"
+                                    class="inline-flex items-center space-x-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1 text-[11px] rounded-none cursor-pointer"
+                                    aria-label="Take photo of {{ r.name }}">
+                                <span aria-hidden="true">📷</span>
+                                <span>Take Photo</span>
+                            </button>
+                            <button type="button"
+                                    onclick="document.getElementById('dish-photo-upload-{{ r.id }}').click()"
+                                    class="inline-flex items-center space-x-1 border border-gray-400 bg-white hover:bg-gray-100 text-gray-800 font-medium px-2.5 py-1 text-[11px] rounded-none cursor-pointer"
+                                    aria-label="Upload photo of {{ r.name }}">
+                                <span aria-hidden="true">🖼️</span>
+                                <span>Upload Photo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="dish-photo-preview-wrap-{{ r.id }}" class="hidden space-y-2">
+                        <div class="flex items-center justify-between text-[11px] text-gray-600">
+                            <span id="dish-photo-count-{{ r.id }}" class="font-medium text-emerald-800"></span>
+                            <button type="button"
+                                    onclick="clearDishPhotos('{{ r.id }}')"
+                                    class="text-red-700 hover:underline font-medium cursor-pointer">
+                                Clear photos
+                            </button>
+                        </div>
+                        <div id="dish-photo-thumbs-{{ r.id }}" class="flex flex-wrap gap-2"></div>
+                        <input type="text"
+                               name="photo_caption_{{ r.id }}"
+                               id="dish-photo-caption-{{ r.id }}"
+                               maxlength="255"
+                               placeholder="Optional caption (e.g. 'Added extra roasted garlic!')"
+                               class="w-full border border-gray-300 bg-white px-2.5 py-1.5 text-xs text-gray-900 rounded-none focus:outline-none focus:border-gray-700">
+                    </div>
+                </div>
             </div>
             {% endfor %}
 
@@ -129,6 +188,51 @@
                 btn.classList.add('text-gray-300');
             }
         });
+    }
+
+    function previewDishPhotos(recipeId) {
+        const camInput = document.getElementById('dish-photo-camera-' + recipeId);
+        const upInput = document.getElementById('dish-photo-upload-' + recipeId);
+        const wrap = document.getElementById('dish-photo-preview-wrap-' + recipeId);
+        const thumbs = document.getElementById('dish-photo-thumbs-' + recipeId);
+        const countEl = document.getElementById('dish-photo-count-' + recipeId);
+        if (!wrap || !thumbs) return;
+
+        const files = []
+            .concat(camInput && camInput.files ? Array.from(camInput.files) : [])
+            .concat(upInput && upInput.files ? Array.from(upInput.files) : []);
+
+        thumbs.innerHTML = '';
+        if (!files.length) {
+            wrap.classList.add('hidden');
+            if (countEl) countEl.textContent = '';
+            return;
+        }
+
+        wrap.classList.remove('hidden');
+        if (countEl) {
+            countEl.textContent = files.length + (files.length === 1 ? ' photo selected' : ' photos selected');
+        }
+
+        files.forEach((file) => {
+            const url = URL.createObjectURL(file);
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = file.name || 'Selected dish photo';
+            img.className = 'w-16 h-16 object-cover border border-gray-300 bg-white';
+            img.onload = () => { try { URL.revokeObjectURL(url); } catch (_) {} };
+            thumbs.appendChild(img);
+        });
+    }
+
+    function clearDishPhotos(recipeId) {
+        const camInput = document.getElementById('dish-photo-camera-' + recipeId);
+        const upInput = document.getElementById('dish-photo-upload-' + recipeId);
+        const capInput = document.getElementById('dish-photo-caption-' + recipeId);
+        if (camInput) camInput.value = '';
+        if (upInput) upInput.value = '';
+        if (capInput) capInput.value = '';
+        previewDishPhotos(recipeId);
     }
 </script>
 {% endif %}

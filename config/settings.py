@@ -3,6 +3,7 @@ Django settings for Shoppin project.
 """
 
 import os
+import sys
 from pathlib import Path
 
 from django.db.backends.signals import connection_created
@@ -190,6 +191,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024  # 15 MB for mobile multi-photo uploads
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -218,5 +220,15 @@ KROGER_CLIENT_SECRET = os.getenv('KROGER_CLIENT_SECRET', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'recipe.klopot.tech <support@recipe.klopot.tech>')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', 'support@recipe.klopot.tech')
 SUPPORT_EMAIL = 'support@recipe.klopot.tech'
+
+# AWS Credentials & Image Content Moderation (Amazon Rekognition DetectModerationLabels)
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_SESSION_TOKEN = os.getenv('AWS_SESSION_TOKEN', '')
+AWS_REKOGNITION_REGION = os.getenv('AWS_REKOGNITION_REGION') or os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+_DEFAULT_IMAGE_MODERATION = 'False' if (DEBUG or 'pytest' in sys.modules) else 'True'
+IMAGE_MODERATION_ENABLED = os.getenv('IMAGE_MODERATION_ENABLED', _DEFAULT_IMAGE_MODERATION).lower() in ('true', '1', 'yes')
+IMAGE_MODERATION_MIN_CONFIDENCE = float(os.getenv('IMAGE_MODERATION_MIN_CONFIDENCE', '60.0'))
+IMAGE_MODERATION_BLOCK_ALCOHOL = os.getenv('IMAGE_MODERATION_BLOCK_ALCOHOL', 'False').lower() in ('true', '1', 'yes')
 
 

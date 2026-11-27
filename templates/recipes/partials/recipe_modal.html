@@ -68,6 +68,20 @@
             </ul>
         </div>
 
+        <!-- User-Submitted Photos Preview -->
+        {% if user_photos %}
+        <div class="space-y-1.5 text-xs">
+            <h3 class="font-bold text-gray-800 uppercase tracking-wider text-[11px]">User-Submitted Photos ({{ user_photos|length }})</h3>
+            <div class="grid grid-cols-4 gap-2">
+                {% for photo in user_photos|slice:":4" %}
+                <a href="{{ recipe.get_absolute_url }}#user-submitted-photos-section" class="block aspect-square bg-gray-100 border border-gray-300 overflow-hidden">
+                    <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:recipe.name }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Actions -->
         <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 text-xs">
             <a href="{{ recipe.get_absolute_url }}" class="bg-gray-900 hover:bg-black text-white font-bold px-3 py-1.5 shadow-sm">

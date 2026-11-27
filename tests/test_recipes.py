@@ -1931,3 +1931,17 @@ def test_recipe_search_facet_labels(client: Client):
     assert "All Difficultys" not in html
     assert "All Dietarys" not in html
     assert "All Equipments" not in html
+
+
+@pytest.mark.django_db
+def test_recipe_create_form_prepends_live_hint_prep_steps(client: Client, auth_user):
+    """Live ingredient hint actions prepend prep notes to the beginning of directions."""
+    user, workspace = auth_user
+    client.force_login(user)
+    resp = client.get(reverse("recipes:create"))
+    assert resp.status_code == 200
+    html = resp.content.decode("utf-8")
+    assert "function prependPrepNoteToDirections(" in html
+    assert "prependPrepNoteToDirections(noteStr, cleanTarget);" in html
+    assert "appendPrepNoteToDirections" not in html
+    assert "strippedLines.splice(insertIdx, 0, prepLine);" in html

@@ -1068,14 +1068,35 @@ function createChipButton(label, classes, onClickHandler) {
     return btn;
 }
 
-function appendPrepNoteToDirections(prepText, itemName) {
+function prependPrepNoteToDirections(prepText, itemName) {
     const directionsEl = document.getElementById('id_directions');
     if (!directionsEl || !prepText) return;
     const cleanNote = `${prepText} ${itemName || ''}`.trim();
     const current = directionsEl.value.trim();
-    if (!current.toLowerCase().includes(prepText.toLowerCase())) {
-        directionsEl.value = current ? `${current}\nPrep: ${cleanNote}.` : `1. Prep: ${cleanNote}.`;
+    if (current.toLowerCase().includes(cleanNote.toLowerCase())) {
+        return;
     }
+
+    const prepLine = `Prep: ${cleanNote}.`;
+    if (!current) {
+        directionsEl.value = `1. ${prepLine}`;
+        return;
+    }
+
+    const lines = current.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const isNumbered = lines.length > 0 && lines.every(l => /^\d+\.\s+/.test(l));
+    const strippedLines = isNumbered ? lines.map(l => l.replace(/^\d+\.\s+/, '')) : lines;
+
+    // Place prep steps at the beginning of directions (preserving order across multiple prep notes)
+    let insertIdx = 0;
+    while (insertIdx < strippedLines.length && /^prep:/i.test(strippedLines[insertIdx])) {
+        insertIdx += 1;
+    }
+    strippedLines.splice(insertIdx, 0, prepLine);
+
+    directionsEl.value = isNumbered
+        ? strippedLines.map((line, idx) => `${idx + 1}. ${line}`).join('\n')
+        : strippedLines.join('\n');
 }
 
 function renderRowLintFeedback(rowEl, rowResult) {
@@ -1138,7 +1159,7 @@ function renderRowLintFeedback(rowEl, rowResult) {
                 `+ Move "${noteStr}" to Directions`,
                 'px-1.5 py-0.5 bg-white border border-gray-400 hover:bg-gray-100 text-gray-800 font-medium cursor-pointer text-[10px]',
                 () => {
-                    appendPrepNoteToDirections(noteStr, cleanTarget);
+                    prependPrepNoteToDirections(noteStr, cleanTarget);
                     if (w.suggested_name && nameInput) {
                         nameInput.value = w.suggested_name;
                     }

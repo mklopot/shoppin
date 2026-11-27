@@ -14,7 +14,13 @@
         </div>
 
         {% if can_write %}
-        <div id="recipe-action-buttons" class="flex items-center space-x-2">
+        <div id="recipe-action-buttons" class="flex flex-wrap items-center gap-2">
+            <button type="button"
+                    onclick="const m = document.getElementById('import-photo-modal'); m.classList.remove('hidden'); if (window.ShoppinDishCamera) window.ShoppinDishCamera.syncCameraButtonsVisibility(m);"
+                    class="border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold px-3 py-1.5 text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer">
+                <span>📷</span>
+                <span>Scan from Photo</span>
+            </button>
             <button type="button"
                     onclick="document.getElementById('import-url-modal').classList.remove('hidden')"
                     class="border border-indigo-300 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold px-3 py-1.5 text-xs flex items-center space-x-1.5 shadow-sm">
@@ -208,6 +214,31 @@
 
     <!-- Results Grid Container -->
     {% include "recipes/partials/recipe_grid.html" %}
+</div>
+
+<!-- Modal: Scan Recipe from Cookbook / Handwritten Card Photo -->
+<div id="import-photo-modal" role="dialog" aria-modal="true" aria-labelledby="import-photo-modal-title" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white border border-gray-400 shadow-2xl max-w-lg w-full p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl" aria-hidden="true">📷</span>
+                <h2 id="import-photo-modal-title" class="font-bold text-sm text-gray-900 uppercase tracking-wider">Scan Recipe from Photo</h2>
+            </div>
+            <button type="button"
+                    onclick="document.getElementById('import-photo-modal').classList.add('hidden')"
+                    aria-label="Close dialog"
+                    class="text-gray-500 hover:text-gray-800 font-bold text-lg leading-none cursor-pointer">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+
+        <p class="text-xs text-gray-600 leading-relaxed">
+            Photograph or upload a cookbook page, magazine clipping, or handwritten recipe card (up to 4 pages).
+            Shoppin will transcribe ingredients, amounts, timings, and directions into the recipe form for you to review.
+        </p>
+
+        {% include "recipes/partials/scan_photo_form.html" with prefix="modal" show_cancel=True %}
+    </div>
 </div>
 
 <!-- Modal: Import Recipe from Webpage URL -->

@@ -248,7 +248,7 @@
         }
     }
 
-    function openWebcamModal(cameraInputId, uploadInputId) {
+    function openWebcamModal(cameraInputId, uploadInputId, modalTitle) {
         closeWebcamModal();
         activeTargetCameraInputId = cameraInputId;
         activeTargetUploadInputId = uploadInputId || null;
@@ -265,7 +265,7 @@
                 <div class="px-4 py-2.5 bg-gray-100 border-b border-gray-300 flex items-center justify-between">
                     <h3 id="dish-webcam-title" class="text-sm font-bold text-gray-900 flex items-center space-x-1.5">
                         <span aria-hidden="true">📷</span>
-                        <span>Take Dish Photo</span>
+                        <span id="dish-webcam-title-text">Take Dish Photo</span>
                     </h3>
                     <button type="button"
                             id="dish-webcam-close-btn"
@@ -334,12 +334,17 @@
             if (el) el.click();
         });
 
+        if (modalTitle) {
+            const titleEl = modal.querySelector('#dish-webcam-title-text');
+            if (titleEl) titleEl.textContent = String(modalTitle);
+        }
+
         document.body.appendChild(modal);
         activeModalEl = modal;
         startCameraStream(null);
     }
 
-    function openTakePhoto(cameraInputId, uploadInputId) {
+    function openTakePhoto(cameraInputId, uploadInputId, modalTitle) {
         const camInput = document.getElementById(cameraInputId);
         if (!camInput) return;
 
@@ -349,7 +354,7 @@
             return;
         }
 
-        openWebcamModal(cameraInputId, uploadInputId);
+        openWebcamModal(cameraInputId, uploadInputId, modalTitle);
     }
 
     // Intercept Escape in capture phase so closing webcam does NOT dismiss the underlying Rating Modal

@@ -14,6 +14,7 @@ from apps.recipes.services.nutrition_service import (
     suggest_recipes_by_macro_goal,
     update_recipe_nutrition,
 )
+from apps.recipes.services.recipe_photo_ocr import extract_recipe_from_photos
 from apps.recipes.services.recipe_scraper import (
     fetch_recipe_html,
     import_recipe_from_url,
@@ -42,6 +43,7 @@ __all__ = [
     "filter_recipes_by_nutrition",
     "suggest_recipes_by_macro_goal",
     "update_recipe_nutrition",
+    "extract_recipe_from_photos",
     "fetch_recipe_html",
     "import_recipe_from_url",
     "parse_ingredient_line",

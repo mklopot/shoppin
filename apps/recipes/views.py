@@ -24,6 +24,7 @@ from apps.mealplans.services.mealplan_service import (
 )
 from apps.recipes.models import Recipe, RecipeRating, RecipeUserPhoto
 from apps.recipes.services.ingredient_lint_service import lint_recipe_ingredients
+from apps.recipes.services.recipe_photo_ocr import extract_recipe_from_photos
 from apps.recipes.services.recipe_scraper import import_recipe_from_url, scrape_recipe_data
 from apps.recipes.services.recipe_service import (
     attach_recipe_made_counts,
@@ -454,6 +455,92 @@ def recipe_import_url_view(request: HttpRequest) -> HttpResponse:
     except Exception as exc:
         messages.error(request, f"Could not import recipe from '{url}': {exc}")
         return redirect("recipes:list")
+
+
+@require_POST
+def recipe_import_photo_view(request: HttpRequest) -> HttpResponse:
+    """
+    Scan one or more uploaded photographs of a cookbook page or handwritten recipe card
+    using Amazon Bedrock vision OCR and render the recipe creation form pre-filled.
+    """
+    user = getattr(request, "user", None)
+    if not (user and user.is_authenticated):
+        messages.info(request, "Please sign in to scan recipes from photos.")
+        return redirect(f"{reverse('core:login')}?next={reverse('recipes:create')}")
+
+    dmca_profile = getattr(user, "dmca_profile", None)
+    if dmca_profile and (dmca_profile.is_banned or dmca_profile.strikes >= 3):
+        messages.error(
+            request,
+            "Your account has been restricted from creating or importing recipes due to repeated copyright infringement under our DMCA policy.",
+        )
+        return redirect("recipes:list")
+
+    workspace = get_active_workspace(request)
+    if workspace and not workspace.can_write(user):
+        return HttpResponseForbidden("You have read-only access to this workspace.")
+
+    uploaded_files = (
+        list(request.FILES.getlist("recipe_photos"))
+        + list(request.FILES.getlist("camera_recipe_photo"))
+    )
+    source_type = (request.POST.get("source_type") or "handwritten").strip().lower()
+    is_cookbook = source_type == "cookbook"
+    source_citation = (request.POST.get("source_citation") or "").strip()
+
+    try:
+        data = extract_recipe_from_photos(uploaded_files, source_citation=source_citation)
+    except ValidationError as ve:
+        err_msg = getattr(ve, "message", None) or (
+            ve.messages[0] if getattr(ve, "messages", None) else str(ve)
+        )
+        messages.error(request, err_msg)
+        return redirect("recipes:create")
+
+    recipe = Recipe(
+        name=data["name"],
+        description=data["description"],
+        directions=data["directions"],
+        portions=data["portions"],
+        prep_time_minutes=data["prep_time_minutes"],
+        cook_time_minutes=data["cook_time_minutes"],
+        cuisine=data["cuisine"],
+        dish_type=data["dish_type"],
+        difficulty_level=data["difficulty_level"],
+        meal_type=data["meal_type"],
+        dietary_restrictions=data["dietary_restrictions"],
+        occasions=data["occasions"],
+        special_equipment=data["special_equipment"],
+        storage_instructions=data["storage_instructions"],
+        reheating_instructions=data["reheating_instructions"],
+        bibliography=data["bibliography"],
+        is_public=False,
+        is_approved=not is_cookbook,
+        is_web_imported=is_cookbook,
+        copyright_cleared=False,
+    )
+
+    page_label = "1 photo" if len(uploaded_files) == 1 else f"{len(uploaded_files)} photos"
+    messages.success(
+        request,
+        f"📸 Extracted '{data['name']}' from {page_label}! Review the details and ingredients below, then click Create Recipe.",
+    )
+    if data.get("ocr_notes"):
+        messages.warning(request, f"Note from photo scan: {data['ocr_notes']}")
+
+    filter_options = get_filter_options()
+    all_recipes = get_complementary_recipe_candidates(workspace=workspace, user=user)
+    context: dict[str, Any] = {
+        "workspace": workspace,
+        "filter_options": filter_options,
+        "all_recipes": all_recipes,
+        "recipe": recipe,
+        "ingredients": data["ingredients"],
+        "import_url": "",
+        "photo_scan_source_type": "cookbook" if is_cookbook else "handwritten",
+        "is_edit": False,
+    }
+    return render(request, "recipes/recipe_form.html", context)
 
 
 @csrf_exempt

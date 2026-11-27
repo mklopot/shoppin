@@ -42,29 +42,46 @@
     {% endif %}
 
     {% if not is_edit %}
-    <!-- Import from Webpage URL Bar -->
-    <div class="bg-indigo-50/70 border border-indigo-200 p-4 space-y-2">
-        <div class="flex items-center space-x-2">
-            <span class="text-base">🌐</span>
-            <span class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Import Recipe from Webpage URL</span>
+    <!-- Quick Import Options: Webpage URL or Cookbook / Handwritten Photo -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Import from Webpage URL Bar -->
+        <div class="bg-indigo-50/70 border border-indigo-200 p-4 space-y-2 flex flex-col justify-between">
+            <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-base" aria-hidden="true">🌐</span>
+                    <span class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Import from Webpage URL</span>
+                </div>
+                <p class="text-xs text-indigo-800">
+                    Paste any third-party recipe link (Allrecipes, Serious Eats, Food Network, blogs, etc.) to automatically extract ingredients, timings, and directions into this form.
+                </p>
+            </div>
+            <form method="get" action="{% url 'recipes:create' %}" class="flex flex-wrap items-center gap-2 pt-2">
+                <input type="url"
+                       name="import_url"
+                       value="{{ import_url }}"
+                       required
+                       placeholder="https://www.allrecipes.com/recipe/... or https://..."
+                       aria-label="Webpage URL to import recipe from"
+                       class="flex-1 min-w-[200px] border border-indigo-300 p-2 text-xs text-gray-900 bg-white focus:outline-none focus:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-none">
+                <button type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer">
+                    <span aria-hidden="true">📥</span>
+                    <span>Fetch &amp; Pre-fill Form</span>
+                </button>
+            </form>
         </div>
-        <p class="text-xs text-indigo-800">
-            Paste any third-party recipe link (Allrecipes, Serious Eats, Food Network, blogs, etc.) to automatically extract ingredients, timings, and directions into this form.
-        </p>
-        <form method="get" action="{% url 'recipes:create' %}" class="flex flex-wrap items-center gap-2 pt-1">
-            <input type="url"
-                   name="import_url"
-                   value="{{ import_url }}"
-                   required
-                   placeholder="https://www.allrecipes.com/recipe/... or https://..."
-                   aria-label="Webpage URL to import recipe from"
-                   class="flex-1 min-w-[260px] border border-indigo-300 p-2 text-xs text-gray-900 bg-white focus:outline-none focus:border-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-600 rounded-none">
-            <button type="submit"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 text-xs flex items-center space-x-1.5 shadow-sm">
-                <span>📥</span>
-                <span>Fetch & Pre-fill Form</span>
-            </button>
-        </form>
+
+        <!-- Scan from Cookbook Page or Handwritten Recipe Card -->
+        <div class="bg-emerald-50/70 border border-emerald-200 p-4 space-y-2">
+            <div class="flex items-center space-x-2">
+                <span class="text-base" aria-hidden="true">📷</span>
+                <span class="text-xs font-bold text-emerald-950 uppercase tracking-wider">Scan Cookbook or Handwritten Card</span>
+            </div>
+            <p class="text-xs text-emerald-900">
+                Take or upload photos of a cookbook page or handwritten recipe card to transcribe ingredients, steps, and timings automatically.
+            </p>
+            {% include "recipes/partials/scan_photo_form.html" with prefix="create" show_cancel=False %}
+        </div>
     </div>
     {% endif %}
 
@@ -93,7 +110,7 @@
             <!-- Public Sharing Slider with Info Circle (Top) -->
             <div class="flex items-center space-x-2 bg-white border border-gray-300 px-3 py-1.5 shadow-sm">
                 {% if recipe.is_locked_from_public and not user.is_staff and not user.is_superuser %}
-                <label for="id_is_public_top" class="inline-flex items-center cursor-not-allowed opacity-70 select-none" title="Web-imported recipes require administrator review for re-wording and copyright clearance before they can be made public.">
+                <label for="id_is_public_top" class="inline-flex items-center cursor-not-allowed opacity-70 select-none" title="Web-imported and cookbook-scanned recipes require administrator review for re-wording and copyright clearance before they can be made public.">
                     <input type="checkbox"
                            id="id_is_public_top"
                            name="is_public"
@@ -292,9 +309,9 @@
                     <select id="id_difficulty_level"
                             name="difficulty_level"
                             class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none bg-white">
-                        <option value="easy" {% if is_edit and recipe.difficulty_level == 'easy' %}selected{% endif %}>Easy</option>
-                        <option value="medium" {% if not is_edit or recipe.difficulty_level == 'medium' %}selected{% endif %}>Medium</option>
-                        <option value="hard" {% if is_edit and recipe.difficulty_level == 'hard' %}selected{% endif %}>Hard</option>
+                        <option value="easy" {% if recipe and recipe.difficulty_level == 'easy' %}selected{% endif %}>Easy</option>
+                        <option value="medium" {% if not recipe or not recipe.difficulty_level or recipe.difficulty_level == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="hard" {% if recipe and recipe.difficulty_level == 'hard' %}selected{% endif %}>Hard</option>
                     </select>
                 </div>
             </div>
@@ -310,7 +327,7 @@
                         <input type="checkbox"
                                name="meal_type"
                                value="{{ m }}"
-                               {% if is_edit and m in recipe.meal_type %}checked{% endif %}
+                               {% if recipe and m in recipe.meal_type %}checked{% endif %}
                                class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                         <span>{{ m }}</span>
                     </label>
@@ -329,7 +346,7 @@
                         <input type="checkbox"
                                name="dietary_restrictions"
                                value="{{ diet }}"
-                               {% if is_edit and diet in recipe.dietary_restrictions %}checked{% endif %}
+                               {% if recipe and diet in recipe.dietary_restrictions %}checked{% endif %}
                                class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                         <span>{{ diet }}</span>
                     </label>
@@ -348,7 +365,7 @@
                         <input type="checkbox"
                                name="occasions"
                                value="{{ occ }}"
-                               {% if is_edit and occ in recipe.occasions %}checked{% endif %}
+                               {% if recipe and occ in recipe.occasions %}checked{% endif %}
                                class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                         <span>{{ occ }}</span>
                     </label>
@@ -367,7 +384,7 @@
                         <input type="checkbox"
                                name="special_equipment"
                                value="{{ eq }}"
-                               {% if is_edit and eq in recipe.special_equipment %}checked{% endif %}
+                               {% if recipe and eq in recipe.special_equipment %}checked{% endif %}
                                class="rounded-none border-gray-300 text-gray-900 focus:ring-0">
                         <span>{{ eq }}</span>
                     </label>
@@ -636,7 +653,7 @@
                               name="storage_instructions"
                               rows="3"
                               placeholder="e.g. Keep in an airtight container in the refrigerator for up to 4 days, or freeze for up to 3 months."
-                              class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">{% if is_edit %}{{ recipe.storage_instructions }}{% endif %}</textarea>
+                              class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">{% if recipe %}{{ recipe.storage_instructions }}{% endif %}</textarea>
                 </div>
 
                 <div>
@@ -647,7 +664,7 @@
                               name="reheating_instructions"
                               rows="3"
                               placeholder="e.g. Reheat in a 350°F oven for 15 minutes, or microwave on high for 1.5 - 2 minutes."
-                              class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">{% if is_edit %}{{ recipe.reheating_instructions }}{% endif %}</textarea>
+                              class="w-full border border-gray-300 p-2 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none">{% if recipe %}{{ recipe.reheating_instructions }}{% endif %}</textarea>
                 </div>
             </div>
         </div>

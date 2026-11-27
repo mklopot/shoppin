@@ -231,4 +231,16 @@ IMAGE_MODERATION_ENABLED = os.getenv('IMAGE_MODERATION_ENABLED', _DEFAULT_IMAGE_
 IMAGE_MODERATION_MIN_CONFIDENCE = float(os.getenv('IMAGE_MODERATION_MIN_CONFIDENCE', '60.0'))
 IMAGE_MODERATION_BLOCK_ALCOHOL = os.getenv('IMAGE_MODERATION_BLOCK_ALCOHOL', 'False').lower() in ('true', '1', 'yes')
 
+# Recipe Photo OCR / Handwriting Recognition (Amazon Bedrock Converse API)
+AWS_BEDROCK_REGION = os.getenv('AWS_BEDROCK_REGION') or os.getenv('AWS_DEFAULT_REGION', 'us-east-2')
+AWS_BEDROCK_RECIPE_OCR_MODEL_ID = os.getenv(
+    'AWS_BEDROCK_RECIPE_OCR_MODEL_ID',
+    'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+)
+AWS_BEDROCK_RECIPE_OCR_FALLBACK_MODEL_ID = os.getenv(
+    'AWS_BEDROCK_RECIPE_OCR_FALLBACK_MODEL_ID',
+    'us.amazon.nova-pro-v1:0',
+)
+RECIPE_PHOTO_OCR_MAX_PAGES = int(os.getenv('RECIPE_PHOTO_OCR_MAX_PAGES', '4'))
+
 

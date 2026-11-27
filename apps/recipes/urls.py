@@ -12,6 +12,7 @@ urlpatterns = [
     path("", views.recipe_list_view, name="list"),
     path("create/", views.recipe_create_view, name="create"),
     path("import-url/", views.recipe_import_url_view, name="import_url"),
+    path("import-photo/", views.recipe_import_photo_view, name="import_photo"),
     path("import-bookmarklet/", views.recipe_bookmarklet_import_view, name="import_bookmarklet"),
     path("ingredients/lint/", views.recipe_ingredients_lint_view, name="lint_ingredients"),
     path("<int:recipe_id>/", views.recipe_detail_view, name="detail"),

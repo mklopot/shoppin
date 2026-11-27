@@ -1,0 +1,246 @@
+{# Reusable form to scan 1-4 photos of a cookbook page or handwritten recipe card #}
+<form method="post"
+      action="{% url 'recipes:import_photo' %}"
+      enctype="multipart/form-data"
+      id="scan-photo-form-{{ prefix }}"
+      onsubmit="return handleRecipePhotoScanSubmit('{{ prefix }}')"
+      class="space-y-3">
+    {% csrf_token %}
+
+    <!-- Hidden file inputs: multi-page upload + native mobile camera / desktop webcam target -->
+    <input type="file"
+           id="scan-upload-input-{{ prefix }}"
+           name="recipe_photos"
+           accept="image/*"
+           multiple
+           class="hidden"
+           onchange="renderRecipeScanPreviews('{{ prefix }}')">
+    <input type="file"
+           id="scan-camera-input-{{ prefix }}"
+           name="camera_recipe_photo"
+           accept="image/*"
+           capture="environment"
+           class="hidden"
+           onchange="appendCameraPhotoToScan('{{ prefix }}')">
+
+    <!-- Source Type Selector (controls copyright / public-sharing rules) -->
+    <fieldset class="space-y-1.5">
+        <legend class="block text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+            Recipe Source Type
+        </legend>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <label class="flex items-start space-x-2 p-2 bg-white border border-gray-300 hover:border-emerald-500 cursor-pointer">
+                <input type="radio"
+                       name="source_type"
+                       value="handwritten"
+                       {% if photo_scan_source_type != 'cookbook' %}checked{% endif %}
+                       class="mt-0.5 text-emerald-700 focus:ring-emerald-600">
+                <span class="leading-snug">
+                    <strong class="block text-gray-900">✍️ Personal / Handwritten Card</strong>
+                    <span class="text-[11px] text-gray-600">Private by default; can be shared publicly anytime.</span>
+                </span>
+            </label>
+            <label class="flex items-start space-x-2 p-2 bg-white border border-gray-300 hover:border-emerald-500 cursor-pointer">
+                <input type="radio"
+                       name="source_type"
+                       value="cookbook"
+                       {% if photo_scan_source_type == 'cookbook' %}checked{% endif %}
+                       class="mt-0.5 text-emerald-700 focus:ring-emerald-600">
+                <span class="leading-snug">
+                    <strong class="block text-gray-900">📖 Cookbook / Magazine</strong>
+                    <span class="text-[11px] text-gray-600">Private until re-worded &amp; cleared by admin for public sharing.</span>
+                </span>
+            </label>
+        </div>
+    </fieldset>
+
+    <!-- Camera & File Upload Triggers -->
+    <div class="flex flex-wrap items-center gap-2">
+        <button type="button"
+                data-camera-trigger="1"
+                onclick="if (window.ShoppinDishCamera) { window.ShoppinDishCamera.openTakePhoto('scan-camera-input-{{ prefix }}', 'scan-upload-input-{{ prefix }}', 'Scan Recipe Photo'); } else { document.getElementById('scan-camera-input-{{ prefix }}').click(); }"
+                class="border border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 font-bold px-3 py-1.5 text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer">
+            <span aria-hidden="true">📷</span>
+            <span>Take Photo</span>
+        </button>
+        <button type="button"
+                onclick="document.getElementById('scan-upload-input-{{ prefix }}').click()"
+                class="border border-emerald-400 bg-white hover:bg-emerald-50 text-emerald-900 font-bold px-3 py-1.5 text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer">
+            <span aria-hidden="true">🖼️</span>
+            <span>Upload Photo(s)</span>
+        </button>
+        <button type="button"
+                id="scan-clear-btn-{{ prefix }}"
+                onclick="clearRecipeScanPhotos('{{ prefix }}')"
+                class="hidden border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 font-medium px-2.5 py-1.5 text-xs cursor-pointer">
+            Clear
+        </button>
+        <span id="scan-count-label-{{ prefix }}" class="text-[11px] text-gray-600">
+            Up to 4 pages (e.g., front &amp; back of card)
+        </span>
+    </div>
+
+    <!-- Live Thumbnail Preview Strip -->
+    <div id="scan-preview-strip-{{ prefix }}" class="hidden flex flex-wrap gap-2 p-2 bg-white border border-emerald-200"></div>
+
+    <!-- Optional Source Citation -->
+    <div>
+        <label for="scan-citation-{{ prefix }}" class="block text-[11px] font-semibold text-gray-700 mb-1">
+            Source / Cookbook Note (Optional)
+        </label>
+        <input type="text"
+               id="scan-citation-{{ prefix }}"
+               name="source_citation"
+               placeholder="e.g. Grandma's Recipe Box or Joy of Cooking, p. 240"
+               class="w-full border border-emerald-300 p-2 text-xs text-gray-900 bg-white focus:outline-none focus:border-emerald-600 rounded-none">
+    </div>
+
+    <!-- Inline validation error -->
+    <div id="scan-client-error-{{ prefix }}" role="alert" class="hidden text-xs text-red-700 bg-red-50 border border-red-200 px-2.5 py-1.5"></div>
+
+    <!-- Submit Action -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <span class="text-[11px] text-emerald-900/80">
+            Pre-fills the recipe form so you can review &amp; edit before saving.
+        </span>
+        <div class="flex items-center gap-2">
+            {% if show_cancel %}
+            <button type="button"
+                    onclick="document.getElementById('import-photo-modal').classList.add('hidden')"
+                    class="border border-gray-400 bg-white hover:bg-gray-100 text-gray-700 text-xs font-medium px-3.5 py-2 cursor-pointer">
+                Cancel
+            </button>
+            {% endif %}
+            <button type="submit"
+                    id="scan-submit-btn-{{ prefix }}"
+                    class="bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white font-bold px-3.5 py-2 text-xs flex items-center space-x-1.5 shadow-sm cursor-pointer">
+                <span id="scan-submit-icon-{{ prefix }}" aria-hidden="true">✨</span>
+                <span id="scan-submit-text-{{ prefix }}">Scan &amp; Pre-fill Form</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    if (!window._shoppinRecipePhotoScanHelpersBound) {
+        window._shoppinRecipePhotoScanHelpersBound = true;
+
+        window._recipeScanFiles = window._recipeScanFiles || {};
+
+        window.appendCameraPhotoToScan = function (prefix) {
+            const camInput = document.getElementById(`scan-camera-input-${prefix}`);
+            const uploadInput = document.getElementById(`scan-upload-input-${prefix}`);
+            if (!camInput || !uploadInput || !camInput.files || !camInput.files.length) return;
+            try {
+                const dt = new DataTransfer();
+                Array.from(uploadInput.files || []).forEach((f) => dt.items.add(f));
+                Array.from(camInput.files).forEach((f) => {
+                    if (dt.items.length < 4) dt.items.add(f);
+                });
+                uploadInput.files = dt.files;
+                camInput.value = '';
+            } catch (_) {
+                // Fallback: leave file in camera input; backend reads both inputs
+            }
+            window.renderRecipeScanPreviews(prefix);
+        };
+
+        window.renderRecipeScanPreviews = function (prefix) {
+            const uploadInput = document.getElementById(`scan-upload-input-${prefix}`);
+            const camInput = document.getElementById(`scan-camera-input-${prefix}`);
+            const strip = document.getElementById(`scan-preview-strip-${prefix}`);
+            const countLabel = document.getElementById(`scan-count-label-${prefix}`);
+            const clearBtn = document.getElementById(`scan-clear-btn-${prefix}`);
+            const errBox = document.getElementById(`scan-client-error-${prefix}`);
+            if (!strip) return;
+
+            const files = [
+                ...Array.from((uploadInput && uploadInput.files) || []),
+                ...Array.from((camInput && camInput.files) || []),
+            ];
+
+            if (errBox) {
+                if (files.length > 4) {
+                    errBox.textContent = 'Please select at most 4 photos per recipe scan.';
+                    errBox.classList.remove('hidden');
+                } else {
+                    errBox.classList.add('hidden');
+                    errBox.textContent = '';
+                }
+            }
+
+            strip.innerHTML = '';
+            if (!files.length) {
+                strip.classList.add('hidden');
+                if (clearBtn) clearBtn.classList.add('hidden');
+                if (countLabel) countLabel.textContent = 'Up to 4 pages (e.g., front & back of card)';
+                return;
+            }
+
+            strip.classList.remove('hidden');
+            if (clearBtn) clearBtn.classList.remove('hidden');
+            if (countLabel) {
+                countLabel.textContent = files.length === 1
+                    ? '1 photo selected'
+                    : `${files.length} photos selected`;
+            }
+
+            files.slice(0, 4).forEach((file, idx) => {
+                const card = document.createElement('div');
+                card.className = 'relative w-16 h-16 border border-gray-300 bg-gray-100 overflow-hidden shrink-0';
+                const img = document.createElement('img');
+                img.alt = `Page ${idx + 1}`;
+                img.className = 'w-full h-full object-cover';
+                const url = URL.createObjectURL(file);
+                img.src = url;
+                img.onload = () => URL.revokeObjectURL(url);
+                const badge = document.createElement('span');
+                badge.className = 'absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] font-bold text-center leading-tight py-0.5';
+                badge.textContent = `Page ${idx + 1}`;
+                card.appendChild(img);
+                card.appendChild(badge);
+                strip.appendChild(card);
+            });
+        };
+
+        window.clearRecipeScanPhotos = function (prefix) {
+            const uploadInput = document.getElementById(`scan-upload-input-${prefix}`);
+            const camInput = document.getElementById(`scan-camera-input-${prefix}`);
+            if (uploadInput) uploadInput.value = '';
+            if (camInput) camInput.value = '';
+            window.renderRecipeScanPreviews(prefix);
+        };
+
+        window.handleRecipePhotoScanSubmit = function (prefix) {
+            const uploadInput = document.getElementById(`scan-upload-input-${prefix}`);
+            const camInput = document.getElementById(`scan-camera-input-${prefix}`);
+            const errBox = document.getElementById(`scan-client-error-${prefix}`);
+            const submitBtn = document.getElementById(`scan-submit-btn-${prefix}`);
+            const submitIcon = document.getElementById(`scan-submit-icon-${prefix}`);
+            const submitText = document.getElementById(`scan-submit-text-${prefix}`);
+
+            const count = ((uploadInput && uploadInput.files && uploadInput.files.length) || 0)
+                + ((camInput && camInput.files && camInput.files.length) || 0);
+
+            if (count === 0) {
+                if (errBox) {
+                    errBox.textContent = 'Please take or upload at least one photo of a recipe first.';
+                    errBox.classList.remove('hidden');
+                }
+                return false;
+            }
+            if (count > 4) {
+                if (errBox) {
+                    errBox.textContent = 'Please select at most 4 photos per recipe scan.';
+                    errBox.classList.remove('hidden');
+                }
+                return false;
+            }
+            if (errBox) errBox.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+            if (submitIcon) submitIcon.textContent = '⏳';
+            if (submitText) submitText.textContent = 'Scanning recipe...';
+            return true;
+        };
+    }
+</script>

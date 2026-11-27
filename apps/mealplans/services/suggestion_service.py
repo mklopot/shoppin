@@ -24,6 +24,7 @@ from typing import Any, Callable
 
 from apps.mealplans.models import Meal, MealPlanRule
 from apps.recipes.models import Recipe
+from apps.recipes.services.recipe_service import get_complementary_recipe_candidates
 
 
 @dataclass
@@ -267,19 +268,23 @@ def get_dish_suggestions(meal: Meal, limit: int = 4) -> list[DishSuggestion]:
     Returns:
         List of DishSuggestion objects ordered from highest to lowest recommendation score.
     """
-    # 1. Planned recipes to exclude
+    # 1. Planned recipes to exclude; scope candidates to public/approved + workspace-shared recipes
     existing_recipe_ids = set(meal.recipes.values_list("id", flat=True))
+    workspace = meal.meal_plan.workspace if meal.meal_plan_id else None
 
     candidate_recipes = (
-        Recipe.objects.exclude(id__in=existing_recipe_ids)
+        get_complementary_recipe_candidates(workspace=workspace)
+        .exclude(id__in=existing_recipe_ids)
         .prefetch_related("ingredients")
-        .all()
     )
     if not candidate_recipes.exists():
         return []
 
     # 2. Analyze current meal state
-    current_recipes = list(meal.recipes.all())
+    current_recipes = list(meal.recipes.prefetch_related("serve_with").all())
+    explicit_pairing_ids: set[int] = {
+        paired.id for cur_rec in current_recipes for paired in cur_rec.serve_with.all()
+    }
     current_roles = {get_recipe_role(r) for r in current_recipes}
     has_main = "main" in current_roles
     has_salad = "salad" in current_roles
@@ -297,12 +302,11 @@ def get_dish_suggestions(meal: Meal, limit: int = 4) -> list[DishSuggestion]:
     current_protein = current_nutrition["protein"]
     current_fiber = current_nutrition["fiber"]
 
-    # 4. Historical pairings from other meals with matching name
-    historical_meals = (
-        Meal.objects.filter(name__iexact=meal.name)
-        .exclude(id=meal.id)
-        .prefetch_related("recipes")
-    )
+    # 4. Historical pairings from other meals with matching name in this workspace
+    historical_qs = Meal.objects.filter(name__iexact=meal.name).exclude(id=meal.id)
+    if workspace is not None:
+        historical_qs = historical_qs.filter(meal_plan__workspace=workspace)
+    historical_meals = historical_qs.prefetch_related("recipes")
     historical_recipe_counts: dict[int, int] = {}
     for h_meal in historical_meals:
         for h_recipe in h_meal.recipes.all():
@@ -353,6 +357,11 @@ def get_dish_suggestions(meal: Meal, limit: int = 4) -> list[DishSuggestion]:
                 reasons.append("🍰 Sweet dessert finish for the meal")
             elif candidate_role == "main":
                 score -= 20.0  # Meal already has a main dish
+
+        # Explicit Serve With (Complementary Recipe) Pairing Boost
+        if candidate.id in explicit_pairing_ids:
+            score += 40.0
+            reasons.append("?? Recommended pairing for a dish in this meal")
 
         # ---------------------------------------------------------
         # Historical Pairing Logic

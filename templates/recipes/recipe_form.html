@@ -655,6 +655,7 @@
                     <label class="block font-bold text-gray-700 mb-1" for="id_serve_with">
                         Serve With (Complementary Recipes)
                     </label>
+                    <input type="hidden" name="has_serve_with" value="1">
                     <select id="id_serve_with"
                             name="serve_with[]"
                             multiple
@@ -662,11 +663,11 @@
                             class="w-full border border-gray-300 p-1.5 text-xs text-gray-900 focus:outline-none focus:border-gray-600 rounded-none bg-white">
                         {% for r in all_recipes %}
                         <option value="{{ r.id }}" {% if is_edit and r in recipe.serve_with.all %}selected{% endif %}>
-                            {{ r.name }}
+                            {{ r.name }}{% if not r.is_public %} (Workspace){% endif %}
                         </option>
                         {% endfor %}
                     </select>
-                    <span class="text-[11px] text-gray-500 mt-1 block">Hold Ctrl (Windows) or Cmd (Mac) to select multiple recipes.</span>
+                    <span class="text-[11px] text-gray-500 mt-1 block">Includes public recipes and recipes shared with this workspace. Hold Ctrl (Windows) or Cmd (Mac) to select multiple recipes.</span>
                 </div>
 
                 <div>

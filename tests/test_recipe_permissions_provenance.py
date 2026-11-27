@@ -330,3 +330,136 @@ def test_copy_to_workspace_view(permissions_setup):
     fork = Recipe.objects.filter(created_by=charlie, forked_from=r_alice).first()
     assert fork is not None
     assert fork.shared_workspaces.filter(id=ws_bob.id).exists()
+
+
+
+@pytest.mark.django_db
+def test_complementary_recipes_include_public_and_workspace_shared_only(permissions_setup):
+    """Complementary ('Serve With') recipes include public approved recipes and workspace-shared recipes, excluding other workspaces' private recipes."""
+    alice = permissions_setup["alice"]
+    bob = permissions_setup["bob"]
+    charlie = permissions_setup["charlie"]
+    ws_alice = permissions_setup["ws_alice"]
+    ws_bob = permissions_setup["ws_bob"]
+    r_alice = permissions_setup["recipe_alice"]
+
+    public_salad = Recipe.objects.create(
+        name="Public Caesar Salad",
+        directions="Toss greens.",
+        is_public=True,
+        is_approved=True,
+        created_by=charlie,
+    )
+    ws_alice_bread = Recipe.objects.create(
+        name="Alice Workspace Garlic Bread",
+        directions="Toast with garlic butter.",
+        is_public=False,
+        is_approved=False,
+        created_by=alice,
+    )
+    ws_alice_bread.shared_workspaces.add(ws_alice)
+
+    ws_bob_secret = Recipe.objects.create(
+        name="Charlie Secret Dip",
+        directions="Mix dip.",
+        is_public=False,
+        is_approved=False,
+        created_by=charlie,
+    )
+    ws_bob_secret.shared_workspaces.add(ws_bob)
+
+    # 1. Alice in ws_alice sees public_salad + ws_alice_bread in create & edit forms, NOT ws_bob_secret
+    client = Client()
+    client.force_login(alice)
+    session = client.session
+    session["active_workspace_id"] = ws_alice.id
+    session.save()
+
+    create_resp = client.get(reverse("recipes:create"))
+    assert create_resp.status_code == 200
+    create_options = list(create_resp.context["all_recipes"])
+    assert public_salad in create_options
+    assert ws_alice_bread in create_options
+    assert ws_bob_secret not in create_options
+    assert b"Alice Workspace Garlic Bread (Workspace)" in create_resp.content
+
+    edit_resp = client.get(reverse("recipes:edit", kwargs={"recipe_id": r_alice.id}))
+    assert edit_resp.status_code == 200
+    edit_options = list(edit_resp.context["all_recipes"])
+    assert public_salad in edit_options
+    assert ws_alice_bread in edit_options
+    assert r_alice not in edit_options
+    assert ws_bob_secret not in edit_options
+
+    # 2. Bob (editor in ws_alice) creates a recipe linked to public + ws_alice_bread + attempted unauthorized ws_bob_secret
+    bob_client = Client()
+    bob_client.force_login(bob)
+    bob_sess = bob_client.session
+    bob_sess["active_workspace_id"] = ws_alice.id
+    bob_sess.save()
+
+    post_resp = bob_client.post(
+        reverse("recipes:create"),
+        {
+            "name": "Family Pasta Night",
+            "directions": "Boil pasta and sauce.",
+            "portions": "4",
+            "has_serve_with": "1",
+            "serve_with[]": [str(public_salad.id), str(ws_alice_bread.id), str(ws_bob_secret.id)],
+            "sharing_destination": "current",
+        },
+        follow=True,
+    )
+    assert post_resp.status_code == 200
+    pasta = Recipe.objects.get(name="Family Pasta Night")
+    linked_ids = set(pasta.serve_with.values_list("id", flat=True))
+    assert public_salad.id in linked_ids
+    assert ws_alice_bread.id in linked_ids
+    assert ws_bob_secret.id not in linked_ids
+
+    # 3. Detail view visibility of serve_with_recipes:
+    # Make pasta public so Charlie and anonymous guests can view it, while ws_alice_bread stays workspace-private
+    pasta.is_public = True
+    pasta.is_approved = True
+    pasta.save(update_fields=["is_public", "is_approved"])
+
+    # Alice (in ws_alice) sees both public_salad and ws_alice_bread
+    alice_detail = client.get(pasta.get_absolute_url())
+    assert alice_detail.status_code == 200
+    alice_pairings = list(alice_detail.context["serve_with_recipes"])
+    assert public_salad in alice_pairings
+    assert ws_alice_bread in alice_pairings
+
+    # Charlie (in ws_bob only) sees public_salad ONLY, not ws_alice_bread
+    charlie_client = Client()
+    charlie_client.force_login(charlie)
+    c_sess = charlie_client.session
+    c_sess["active_workspace_id"] = ws_bob.id
+    c_sess.save()
+    charlie_detail = charlie_client.get(pasta.get_absolute_url())
+    assert charlie_detail.status_code == 200
+    charlie_pairings = list(charlie_detail.context["serve_with_recipes"])
+    assert public_salad in charlie_pairings
+    assert ws_alice_bread not in charlie_pairings
+
+    # Anonymous guest sees public_salad ONLY
+    anon_detail = Client().get(pasta.get_absolute_url())
+    assert anon_detail.status_code == 200
+    anon_pairings = list(anon_detail.context["serve_with_recipes"])
+    assert public_salad in anon_pairings
+    assert ws_alice_bread not in anon_pairings
+
+    # 4. Submitting edit with has_serve_with=1 and empty serve_with[] clears pairings cleanly
+    clear_resp = bob_client.post(
+        reverse("recipes:edit", kwargs={"recipe_id": pasta.id}),
+        {
+            "name": "Family Pasta Night",
+            "directions": "Boil pasta and sauce.",
+            "portions": "4",
+            "has_serve_with": "1",
+            "sharing_destination": "current",
+        },
+        follow=True,
+    )
+    assert clear_resp.status_code == 200
+    assert pasta.serve_with.count() == 0

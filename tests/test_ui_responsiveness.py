@@ -223,7 +223,8 @@ def _login_playwright_page(page, base_url, username, password):
     page.goto(f"{base_url}/login/", wait_until="domcontentloaded")
     page.fill('input[name="username"]', username)
     page.fill('input[name="password"]', password)
-    page.click('button[type="submit"]')
+    with page.expect_navigation(wait_until="domcontentloaded"):
+        page.click('button[type="submit"]')
     page.wait_for_load_state("networkidle")
 
 
@@ -558,10 +559,17 @@ def test_browser_rapid_pantry_burst_never_drops_or_reverts_skip(live_server):
             assert page.locator(f"#pantry-items-list #item-row-{items[2].id}").count() == 1
             assert page.locator(f"#pantry-items-list #item-row-{items[3].id}").count() == 1
 
-            # Simulate a stale Idiomorph swap arriving while rows remain protected in outbox
-            if page.evaluate("() => window.ShoppinQueue.hasPendingWork()"):
-                page.evaluate("(html) => window.ShoppinMorph.swapFromHtml('#shopping-list-content', html)", stale_html)
-                assert page.locator(f"#pantry-items-list #item-row-{items[2].id}").count() == 1, (
+            # Simulate a stale Idiomorph swap arriving while rows remain protected in outbox (atomic check+swap)
+            still_protected = page.evaluate(
+                """(html) => {
+                    if (!window.ShoppinQueue.hasPendingWork()) return null;
+                    window.ShoppinMorph.swapFromHtml('#shopping-list-content', html);
+                    return Boolean(document.querySelector('#pantry-items-list #item-row-%s'));
+                }""" % items[2].id,
+                stale_html,
+            )
+            if still_protected is not None:
+                assert still_protected is True, (
                     "Idiomorph teleported protected Cheese back into To Buy during pending skip!"
                 )
 
@@ -645,7 +653,7 @@ def test_browser_navbar_tab_loading_feedback(live_server):
                         const isPrefetch = hdrs['X-Prefetch'] === '1';
                         if (url.includes('/pantry-check/') || url.includes('/mealplans/')) {
                             return new Promise((resolve, reject) => {
-                                setTimeout(() => origFetch(input, init).then(resolve, reject), 320);
+                                setTimeout(() => origFetch(input, init).then(resolve, reject), 500);
                             });
                         }
                         return origFetch(input, init);
@@ -660,7 +668,7 @@ def test_browser_navbar_tab_loading_feedback(live_server):
                     XMLHttpRequest.prototype.send = function(body) {
                         if (this.__navTestUrl && this.__navTestUrl.includes('/mealplans/')) {
                             const self = this;
-                            setTimeout(() => origSend.call(self, body), 320);
+                            setTimeout(() => origSend.call(self, body), 500);
                             return;
                         }
                         return origSend.apply(this, arguments);
@@ -674,18 +682,24 @@ def test_browser_navbar_tab_loading_feedback(live_server):
 
             # 1. Click Pantry Check tab -> immediate pending feedback while request is in flight
             pantry_dt = page.locator("nav[aria-label='Primary Navigation'] a[data-mode-switch='pantry']")
-            pantry_mb = page.locator("#mobile-nav-tabs a[data-mode-switch='pantry']")
             pantry_dt.click()
 
-            assert pantry_dt.get_attribute("data-nav-loading") == "true"
-            assert pantry_dt.get_attribute("aria-busy") == "true"
-            assert pantry_dt.get_attribute("aria-current") == "page"
-            assert pantry_mb.get_attribute("data-nav-loading") == "true"
-            spinner_width = page.evaluate("""() => {
-                const el = document.querySelector("nav[aria-label='Primary Navigation'] a[data-mode-switch='pantry']");
-                return el ? getComputedStyle(el, '::after').width : '';
+            pantry_state = page.evaluate("""() => {
+                const dt = document.querySelector("nav[aria-label='Primary Navigation'] a[data-mode-switch='pantry']");
+                const mb = document.querySelector("#mobile-nav-tabs a[data-mode-switch='pantry']");
+                return {
+                    dtLoading: dt ? dt.getAttribute('data-nav-loading') : null,
+                    dtBusy: dt ? dt.getAttribute('aria-busy') : null,
+                    dtCurrent: dt ? dt.getAttribute('aria-current') : null,
+                    mbLoading: mb ? mb.getAttribute('data-nav-loading') : null,
+                    spinnerWidth: dt ? getComputedStyle(dt, '::after').width : ''
+                };
             }""")
-            assert spinner_width == "11px"
+            assert pantry_state["dtLoading"] == "true"
+            assert pantry_state["dtBusy"] == "true"
+            assert pantry_state["dtCurrent"] == "page"
+            assert pantry_state["mbLoading"] == "true"
+            assert pantry_state["spinnerWidth"] == "11px"
 
             page.wait_for_function(
                 "() => document.getElementById('shopping-list-content')?.getAttribute('data-mode') === 'pantry'",
@@ -699,13 +713,22 @@ def test_browser_navbar_tab_loading_feedback(live_server):
             # 2. Click Meal Plan tab -> immediate pending feedback during boosted HTMX wait, clears on settle
             page.evaluate("window.ShoppinPrefetch && window.ShoppinPrefetch.purgeAll()")
             mp_dt = page.locator("nav[aria-label='Primary Navigation'] a[href='/mealplans/']")
-            mp_mb = page.locator("#mobile-nav-tabs a[href='/mealplans/']")
             mp_dt.click()
 
-            assert mp_dt.get_attribute("data-nav-loading") == "true"
-            assert mp_dt.get_attribute("aria-busy") == "true"
-            assert mp_dt.get_attribute("aria-current") == "page"
-            assert mp_mb.get_attribute("data-nav-loading") == "true"
+            mp_state = page.evaluate("""() => {
+                const dt = document.querySelector("nav[aria-label='Primary Navigation'] a[href='/mealplans/']");
+                const mb = document.querySelector("#mobile-nav-tabs a[href='/mealplans/']");
+                return {
+                    dtLoading: dt ? dt.getAttribute('data-nav-loading') : null,
+                    dtBusy: dt ? dt.getAttribute('aria-busy') : null,
+                    dtCurrent: dt ? dt.getAttribute('aria-current') : null,
+                    mbLoading: mb ? mb.getAttribute('data-nav-loading') : null
+                };
+            }""")
+            assert mp_state["dtLoading"] == "true"
+            assert mp_state["dtBusy"] == "true"
+            assert mp_state["dtCurrent"] == "page"
+            assert mp_state["mbLoading"] == "true"
 
             page.wait_for_selector("#mealplan-content", timeout=5000)
             page.wait_for_timeout(40)
@@ -889,7 +912,7 @@ def test_browser_combine_on_need_instant_edit_and_quick_add_details(live_server)
                         let delayMs = 0;
                         if (url.includes('/status/NEED/')) delayMs = 240;
                         else if (url.includes('/add/') && method === 'POST') delayMs = 240;
-                        else if (url.includes('/edit/') && method === 'GET') delayMs = 450;
+                        else if (url.includes('/edit/') && method === 'GET') delayMs = 800;
                         if (delayMs > 0) {
                             return new Promise((resolve, reject) => {
                                 setTimeout(() => origFetch(input, init).then(resolve, reject), delayMs);
@@ -956,15 +979,25 @@ def test_browser_combine_on_need_instant_edit_and_quick_add_details(live_server)
             page.wait_for_timeout(120)
             assert page.locator("#section-groups-container .item-row[data-item-name='Sourdough Baguette']").count() == 1
 
-            # 3b. Bug 2: Click Edit on existing item during slow (450ms) GET -> dialog opens immediately (<100ms)
+            # 3b. Bug 2: Click Edit on existing item during slow (800ms) GET -> dialog opens immediately BEFORE network finishes
             page.evaluate("window.ShoppinPrefetch && window.ShoppinPrefetch.purgeAll()")
-            t0 = time.monotonic()
             page.locator(f"#item-row-{milk.id} button[hx-get*='/edit/']").click()
-            assert page.locator("#modal-container #edit-item-modal-title").is_visible()
-            elapsed_ms = (time.monotonic() - t0) * 1000
-            assert elapsed_ms < 300, f"Edit dialog waited for network instead of 0ms open ({elapsed_ms:.0f}ms)"
-            assert page.input_value("#edit-item-name") == "Milk"
-            assert page.input_value("#edit-item-brand") == "Horizon"
+            instant_state = page.evaluate("""() => {
+                const title = document.querySelector('#modal-container #edit-item-modal-title');
+                const slot = document.getElementById('edit-item-advanced-slot');
+                return {
+                    open: Boolean(title),
+                    name: document.getElementById('edit-item-name')?.value || '',
+                    brand: document.getElementById('edit-item-brand')?.value || '',
+                    slotText: slot ? slot.innerText : ''
+                };
+            }""")
+            assert instant_state["open"] is True
+            assert instant_state["name"] == "Milk"
+            assert instant_state["brand"] == "Horizon"
+            assert "Loading history" in instant_state["slotText"], (
+                f"Expected modal to open before 800ms GET completed, saw slot text: {instant_state['slotText']!r}"
+            )
             # Wait for background Advanced history hydration to populate cleanly
             page.wait_for_function(
                 "() => document.getElementById('edit-item-advanced-slot')?.innerText.includes('History (')",

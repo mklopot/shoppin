@@ -43,6 +43,7 @@ from apps.mealplans.services.suggestion_service import (
 from apps.recipes.models import Recipe, RecipeRating
 from apps.recipes.services.recipe_service import (
     attach_recipe_made_counts,
+    get_complementary_recipe_candidates,
     record_recipe_made,
     submit_recipe_rating,
 )
@@ -66,7 +67,7 @@ def _build_mealplan_context(
 ) -> dict[str, Any]:
     """Assemble shared meal plan rendering context with readiness statuses and dish metadata."""
     status_info = compute_cooking_status(meal_plan, shopping_list)
-    available_recipes = Recipe.objects.all().order_by("name")
+    available_recipes = get_complementary_recipe_candidates(workspace=workspace, user=user)
     can_write = workspace.can_write(user) if (user and user.is_authenticated and workspace) else False
     meals = meal_plan.meals.prefetch_related("recipes", "dishes__recipe", "dishes__made_by").all() if meal_plan else []
     rules = meal_plan.rules.all() if meal_plan else []

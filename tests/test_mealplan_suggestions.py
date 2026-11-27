@@ -341,3 +341,52 @@ def test_add_toggle_delete_meal_rules(client, suggestions_setup):
     resp_delete = client.post(delete_url)
     assert resp_delete.status_code == 200
     assert not MealPlanRule.objects.filter(id=rule.id).exists()
+
+
+
+@pytest.mark.django_db
+def test_suggestions_include_public_and_workspace_shared_and_exclude_other_workspace_private(suggestions_setup):
+    """Complementary meal dish suggestions include public recipes and workspace-shared recipes, never private recipes from other workspaces."""
+    owner = suggestions_setup["owner"]
+    ws = suggestions_setup["workspace"]
+    meal_plan = suggestions_setup["meal_plan"]
+    shopping_list = suggestions_setup["shopping_list"]
+    steak = suggestions_setup["steak"]
+    salad = suggestions_setup["salad"]
+
+    other_user = User.objects.create_user(username="outsider_chef", password="password")
+    other_ws = create_workspace("Outsider Kitchen", other_user)
+
+    ws_shared_side = Recipe.objects.create(
+        name="Workspace Rosemary Potatoes",
+        dish_type="Side Dish",
+        meal_type=["dinner"],
+        is_public=False,
+        is_approved=False,
+        created_by=owner,
+    )
+    ws_shared_side.shared_workspaces.add(ws)
+    steak.serve_with.add(ws_shared_side)
+
+    other_ws_private_side = Recipe.objects.create(
+        name="Outsider Secret Salad",
+        dish_type="Salad",
+        meal_type=["dinner"],
+        is_public=False,
+        is_approved=False,
+        created_by=other_user,
+    )
+    other_ws_private_side.shared_workspaces.add(other_ws)
+
+    meal = add_meal_to_plan(meal_plan, "Friday Dinner")
+    add_recipe_to_meal(meal, steak, shopping_list)
+
+    suggestions = get_dish_suggestions(meal, limit=10)
+    suggested_ids = [s.recipe.id for s in suggestions]
+
+    assert salad.id in suggested_ids
+    assert ws_shared_side.id in suggested_ids
+    assert other_ws_private_side.id not in suggested_ids
+    # Explicit Serve With pairing on steak boosts workspace-shared side to the top
+    assert suggestions[0].recipe.id == ws_shared_side.id
+    assert any("pairing" in r.lower() for r in suggestions[0].reasons)

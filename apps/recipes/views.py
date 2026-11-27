@@ -29,7 +29,9 @@ from apps.recipes.services.recipe_service import (
     attach_recipe_made_counts,
     create_or_update_recipe,
     fork_recipe,
+    get_complementary_recipe_candidates,
     get_filter_options,
+    get_visible_serve_with_recipes,
     search_recipes,
     submit_recipe_rating,
 )
@@ -303,7 +305,7 @@ def recipe_detail_view(
         "meal_plan": meal_plan,
         "recipe": recipe,
         "ingredients": recipe.ingredients.all(),
-        "serve_with_recipes": recipe.serve_with.filter(is_public=True, is_approved=True) if not is_authenticated else recipe.serve_with.all(),
+        "serve_with_recipes": get_visible_serve_with_recipes(recipe, user=user, workspace=workspace),
         "user_rating": user_rating,
         "can_write": can_write,
         "meals": meal_plan.meals.all() if meal_plan else [],
@@ -354,7 +356,7 @@ def recipe_create_view(request: HttpRequest) -> HttpResponse:
             messages.error(request, err_msg)
 
     filter_options = get_filter_options()
-    all_recipes = Recipe.objects.all().order_by("name")
+    all_recipes = get_complementary_recipe_candidates(workspace=workspace, user=user)
 
     recipe = None
     ingredients = []
@@ -523,7 +525,7 @@ def recipe_bookmarklet_import_view(request: HttpRequest) -> HttpResponse:
             f"Pre-filled recipe from {domain} via bookmarklet! Review details below and click Save Recipe.",
         )
         filter_options = get_filter_options()
-        all_recipes = Recipe.objects.all().order_by("name")
+        all_recipes = get_complementary_recipe_candidates(workspace=workspace, user=user)
         context: dict[str, Any] = {
             "workspace": workspace,
             "filter_options": filter_options,
@@ -597,7 +599,12 @@ def recipe_edit_view(
             messages.error(request, err_msg)
 
     filter_options = get_filter_options()
-    all_recipes = Recipe.objects.exclude(id=recipe.id).order_by("name")
+    all_recipes = get_complementary_recipe_candidates(
+        workspace=workspace,
+        user=user,
+        exclude_recipe_id=recipe.id,
+        include_ids=recipe.serve_with.values_list("id", flat=True),
+    )
 
     user_display = (user.first_name or user.username) if user else "My"
     suggested_fork_name = f"{user_display}'s version of {recipe.name}"

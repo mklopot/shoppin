@@ -773,10 +773,25 @@ def create_or_update_recipe(
                 order=i,
             )
 
-    # Process serve_with relationships
+    # Process serve_with relationships (scoped to public/approved + workspace-shared pairings)
+    has_serve_with = "has_serve_with" in data
     serve_with_ids = data.getlist("serve_with[]") if hasattr(data, "getlist") else data.get("serve_with[]", [])
     if serve_with_ids:
-        recipe.serve_with.set(Recipe.objects.filter(id__in=serve_with_ids))
+        is_staff_or_super = bool(
+            user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False))
+        )
+        if user and getattr(user, "is_authenticated", False) and not is_staff_or_super:
+            eligible_qs = get_complementary_recipe_candidates(
+                workspace=workspace,
+                user=user,
+                exclude_recipe_id=recipe.id,
+                include_ids=serve_with_ids,
+            )
+            recipe.serve_with.set(eligible_qs.filter(id__in=serve_with_ids))
+        else:
+            recipe.serve_with.set(Recipe.objects.filter(id__in=serve_with_ids).exclude(id=recipe.id))
+    elif has_serve_with:
+        recipe.serve_with.clear()
 
     # Workspace Association & Sharing Destinations
     sharing_dest = str(data.get("sharing_destination", "")).strip().lower()
@@ -1057,6 +1072,58 @@ def add_recipe_to_shopping_list(
     )
 
     return added_descriptions
+
+
+def get_complementary_recipe_candidates(
+    *,
+    workspace: Any = None,
+    user: Any = None,
+    exclude_recipe_id: int | None = None,
+    include_ids: Any = None,
+) -> QuerySet[Recipe]:
+    """
+    Return recipes eligible to be selected or suggested as complementary recipes.
+
+    Includes all publicly published, moderator-approved recipes plus any recipes
+    shared with the active workspace (even if private or pending moderation).
+    Optionally preserves already-selected pairings owned by `user` while editing.
+    """
+    visibility_q = Q(is_public=True, is_approved=True)
+    if workspace is not None:
+        visibility_q |= Q(shared_workspaces=workspace)
+    if include_ids and user and getattr(user, "is_authenticated", False):
+        visibility_q |= Q(id__in=include_ids, created_by=user)
+
+    qs = Recipe.objects.filter(visibility_q).distinct()
+    if exclude_recipe_id is not None:
+        qs = qs.exclude(id=exclude_recipe_id)
+    return qs.order_by("name")
+
+
+def get_visible_serve_with_recipes(
+    recipe: Recipe,
+    *,
+    user: Any = None,
+    workspace: Any = None,
+) -> QuerySet[Recipe]:
+    """
+    Return complementary ('Serve With') pairings on `recipe` visible to the viewer.
+
+    Anonymous visitors see public, approved recipes only; authenticated members also
+    see pairings shared with their active workspace (or created by them); staff see all.
+    """
+    is_authenticated = bool(user and getattr(user, "is_authenticated", False))
+    if not is_authenticated:
+        return recipe.serve_with.filter(is_public=True, is_approved=True).order_by("name")
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return recipe.serve_with.all().order_by("name")
+
+    visibility_q = Q(is_public=True, is_approved=True) | Q(created_by=user)
+    if workspace is not None:
+        visibility_q |= Q(shared_workspaces=workspace)
+    else:
+        visibility_q |= Q(shared_workspaces__owner=user) | Q(shared_workspaces__memberships__user=user)
+    return recipe.serve_with.filter(visibility_q).distinct().order_by("name")
 
 
 def get_featured_carousel_recipes(limit: int = 10) -> list[Recipe]:
